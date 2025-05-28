@@ -19,6 +19,8 @@ ColorScheme appColorScheme = ColorScheme(
     onPrimary: offWhite,
     secondary: lightRoyalBlue,
     onSecondary: Colors.black,
+    tertiary: grey,
+    onTertiary: Colors.black,
     error: red,
     onError: offWhite,
     surface: offWhite,

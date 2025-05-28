@@ -1,4 +1,4 @@
-# Quiz
+# Game
 
 This folder is for Game Screen and other related files
 
