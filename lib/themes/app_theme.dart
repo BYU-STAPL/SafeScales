@@ -15,19 +15,24 @@ Color green = const Color(0xff74A159);
 Color red = const Color(0xffB72512);
 
 ColorScheme appColorScheme = ColorScheme(
-    brightness: Brightness.light,
-    primary: royalBlue,
-    onPrimary: offWhite,
-    secondary: lightRoyalBlue,
-    onSecondary: Colors.black,
-    tertiary: lightGrey,
-    onTertiary: Colors.black,
-    error: red,
-    onError: offWhite,
-    surface: offWhite,
-    onSurface: Colors.black,
-    outline: darkGrey,
-    shadow: grey,
+  brightness: Brightness.light,
+  primary: royalBlue,
+  onPrimary: offWhite,
+  secondary: lightRoyalBlue,
+  onSecondary: Colors.black,
+  tertiary: grey,
+  onTertiary: Colors.black,
+  error: red,
+  onError: offWhite,
+  surface: offWhite,
+  onSurface: Colors.black,
+  surfaceDim: lightGrey,
+  surfaceContainer: lightGrey, // Add this
+  onSurfaceVariant: grey, // Use for disabled text
+  outline: darkGrey,
+  outlineVariant: lightGrey, // Add this
+  shadow: Colors.black,
+  scrim: Colors.black.withValues(alpha: 0.5), // Add this
 );
 
 
@@ -76,7 +81,23 @@ ThemeData buildLightAppTheme() {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
+        shadowColor: appColorScheme.shadow,
       ),
+    ),
+
+
+    //Icon Button
+    iconButtonTheme: IconButtonThemeData(
+      style: ButtonStyle(
+        iconColor: WidgetStateProperty.all(appColorScheme.primary),
+        shadowColor: WidgetStateProperty.all(appColorScheme.shadow),
+      )
+    ),
+
+    // Info Card Theme
+    cardTheme: CardThemeData(
+      color: appColorScheme.surfaceDim,
+      shadowColor: appColorScheme.shadow,
     ),
 
     // Input decoration theme
@@ -127,11 +148,6 @@ ThemeData buildDarkAppTheme() {
           borderRadius: BorderRadius.circular(8),
         ),
       ),
-    ),
-
-    cardTheme: CardThemeData(
-      color: appColorScheme.tertiary,
-      shadowColor: appColorScheme.shadow,
     ),
 
     // Input decoration theme

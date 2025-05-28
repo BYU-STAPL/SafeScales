@@ -75,13 +75,11 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   @override
   Widget build(BuildContext context) {
 
-    // TODO: Is there a different way to access the Theme?
     ThemeData theme = Theme.of(context);
 
     AppBar appBar = AppBar(
       centerTitle: true,
       title: Text('Pre-Quiz'),
-      // backgroundColor: Colors.orange,
     );
 
     if (!isStarted) {
@@ -97,9 +95,10 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
                 style: theme.textTheme.headlineSmall,
               ),
               SizedBox(height: 15),
+
               Card(
                 child: Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Column(
                     children: [
                       SizedBox(height: 8),
@@ -136,6 +135,8 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
                   ),
                 ),
               ),
+
+              SizedBox(height: 30),
             ],
           ),
         ),
@@ -176,36 +177,60 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
               child: Row(
                 children: [
                   if (currentQuestionIndex > 0)
-                    ElevatedButton(
+                    IconButton(
                       onPressed: () {
                         setState(() {
                           currentQuestionIndex--;
                         });
                       },
-                      child: Text('Previous'),
+                      iconSize: 30,
+                      icon: Icon(Icons.arrow_back_ios_rounded),
                     ),
                   Spacer(),
-                  ElevatedButton(
-                    onPressed: userAnswers[currentQuestionIndex].isNotEmpty
-                        ? () {
-                      if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
-                        setState(() {
-                          currentQuestionIndex++;
-                        });
-                      } else {
-                        _finishPreQuiz();
-                      }
-                    }
-                        : null,
-                    child: Text(
-                      currentQuestionIndex == widget.questionSet.questions.length - 1
-                          ? 'Finish'
-                          : 'Next',
-                    ),
-                  ),
+
+                  currentQuestionIndex == widget.questionSet.questions.length - 1 ?
+                      TextButton(
+                        onPressed: userAnswers[currentQuestionIndex].isNotEmpty ? () {
+                            if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
+                              setState(() {
+                                currentQuestionIndex++;
+                              });
+                            }
+                            else {
+                              _finishPreQuiz();
+                            }
+                        }
+                          : null,
+                        child: Text(
+                          'Submit'.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: theme.textTheme.bodyLarge?.fontSize,
+                          ),
+                        ),
+                      )
+                      : IconButton(
+                          onPressed: userAnswers[currentQuestionIndex].isNotEmpty
+                              ? () {
+                            if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
+                              setState(() {
+                                currentQuestionIndex++;
+                              });
+                            } else {
+                              _finishPreQuiz();
+                            }
+                          }
+                              : null,
+                          iconSize: 30,
+                          icon: Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            color: userAnswers[currentQuestionIndex].isEmpty ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.primary,
+                          ),
+                        ),
                 ],
               ),
             ),
+
+            SizedBox(height: 10),
           ],
         ),
       )

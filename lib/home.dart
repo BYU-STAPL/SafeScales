@@ -27,8 +27,16 @@ class _HomePageState extends State<HomePage> {
       explanation: 'The Sky is blue', // Blue is at index 1
     );
 
-    Question multipleQ = Question.multipleAnswer(
+    Question singleQ2 = Question.singleAnswer(
       id: 'q2',
+      questionText: 'What season are oranges ripe?',
+      options: ['Spring', 'Summer', 'Fall', 'Winter'],
+      correctAnswerIndex: 3,
+      explanation: 'Oranges taste best during the winter',
+    );
+
+    Question multipleQ = Question.multipleAnswer(
+      id: 'q3',
       text: "At your school, there is a security guard named Quinn. You have never met or talked to Quinn, but some of your school mates have.",
       questionText: 'What social tag(s) apply to Quinn?',
       options: ['Acquaintance', 'Community Helper', 'Stranger', 'Work Peer', ],

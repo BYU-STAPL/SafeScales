@@ -19,55 +19,91 @@ class PreQuizResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String readinessLevel = score >= 80 ? 'Ready' : score >= 60 ? 'Partially Ready' : 'Needs Practice';
-    Color readinessColor = score >= 80 ? Colors.green : score >= 60 ? Colors.orange : Colors.red;
+    // String readinessLevel = score >= 80 ? 'Ready' : score >= 60 ? 'Partially Ready' : 'Needs Practice';
+    // Color readinessColor = score >= 80 ? Colors.green : score >= 60 ? Colors.orange : Colors.red;
+
+    ThemeData theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Assessment Results'),
+        title: Text('Results'),
         // backgroundColor: Colors.orange,
       ),
       body: Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
         child: Column(
           children: [
-            Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Text(
-                      '$score%',
-                      style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: readinessColor),
-                    ),
-                    Text(
-                      readinessLevel,
-                      style: TextStyle(fontSize: 24, color: readinessColor),
-                    ),
-                    SizedBox(height: 16),
-                    Text('$correctAnswers out of $totalQuestions questions correct'),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 16),
+            // Card(
+            //   child: Padding(
+            //     padding: EdgeInsets.all(16),
+            //     child: Column(
+            //       children: [
+            //         Text(
+            //           '$score%',
+            //           style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: readinessColor),
+            //         ),
+            //         Text(
+            //           readinessLevel,
+            //           style: TextStyle(fontSize: 24, color: readinessColor),
+            //         ),
+            //         SizedBox(height: 16),
+            //         Text('$correctAnswers out of $totalQuestions questions correct'),
+            //       ],
+            //     ),
+            //   ),
+            // ),
+            SizedBox(height: 20),
             Text(
-              score >= 80
-                  ? 'Great! You\'re ready to start the course.'
-                  : score >= 60
-                  ? 'You have some knowledge. Consider reviewing key concepts.'
-                  : 'We recommend starting with practice exercises.',
+              'Good job completing the ${questionSet.title}!',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
+              style: theme.textTheme.bodyLarge,
             ),
+            SizedBox(height: 50),
+            Text(
+              'Your dragon has hatched!',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge,
+            ),
+            SizedBox(height: 25),
+
+            // TODO: Replace later with dragon hatching
+            Image.asset("assets/images/other/QuestionMark.png"),
+
+            SizedBox(height: 25),
+            Text(
+              'You can give your new dragon a name on the Play screen.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium,
+            ),
+
+            TextButton.icon(
+                onPressed: (){
+                  // TODO: Link to play screen, once that's built
+                },
+                icon: Icon(Icons.gamepad_outlined),
+                label: Text(
+                  'Play',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+            ),
+
             Spacer(),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Continue'),
+                child: Text(
+                  'return to lesson'.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: theme.textTheme.bodyMedium?.fontSize,
+                  ),
+                ),
               ),
             ),
+
+            SizedBox(height: 30),
           ],
         ),
       ),

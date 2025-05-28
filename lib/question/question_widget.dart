@@ -72,7 +72,7 @@ class QuestionWidget extends StatelessWidget {
 
         ],
 
-        SizedBox(height: 20,),
+        Spacer(),
 
         Text(
           question.questionText,
@@ -118,7 +118,7 @@ class QuestionWidget extends StatelessWidget {
                 color: isSelected
                     ? theme.colorScheme.secondary.withValues(alpha: 0.2)
                     : isDisabled
-                    ? theme.colorScheme.shadow
+                    ? theme.colorScheme.surfaceDim
                     : null,
               ),
               child: Row(
