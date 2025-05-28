@@ -6,6 +6,7 @@ Color royalBlue = const Color(0xff2E83E8);
 
 Color lightRoyalBlue = const Color(0xff70C0EE);
 
+Color darkGrey = const Color(0xff888888);
 Color grey = const Color(0xffAAAAAA);
 Color lightGrey = const Color(0xffE1E1E1);
 Color offWhite = const Color(0xffF4F4F4);
@@ -25,6 +26,7 @@ ColorScheme appColorScheme = ColorScheme(
     onError: offWhite,
     surface: offWhite,
     onSurface: Colors.black,
+    outline: darkGrey,
     shadow: grey,
 );
 
@@ -32,9 +34,11 @@ ColorScheme appColorScheme = ColorScheme(
 var appTextTheme = TextTheme(
   headlineLarge: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 32, fontWeight: FontWeight.bold,),
   headlineMedium: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 28, fontWeight: FontWeight.normal),
-  bodyLarge: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.normal),
-  bodyMedium: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 15, fontWeight: FontWeight.normal),
-  labelMedium: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 15, fontWeight: FontWeight.normal),
+  bodyLarge: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 22, fontWeight: FontWeight.normal),
+  bodyMedium: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.normal),
+  bodySmall: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 15, fontWeight: FontWeight.normal),
+
+  labelMedium: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.normal),
 );
 
 ThemeData buildLightAppTheme() {
@@ -52,9 +56,14 @@ ThemeData buildLightAppTheme() {
       centerTitle: false,
       titleTextStyle: TextStyle(
         color: appColorScheme.onSurface,
-        fontSize: 25,
-        fontWeight: FontWeight.normal,
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
       ),
+      iconTheme: IconThemeData(
+        color: appColorScheme.primary,
+        size: 25,
+      ),
+      // actionsPadding: EdgeInsets.symmetric(horizontal: 100),
     ),
 
     // Button themes

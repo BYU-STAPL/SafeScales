@@ -16,6 +16,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
 
+    ThemeData theme = Theme.of(context);
+
     //TODO: Remove later after testing
     Question singleQ = Question.singleAnswer(
       id: 'q1',
@@ -27,10 +29,11 @@ class _HomePageState extends State<HomePage> {
 
     Question multipleQ = Question.multipleAnswer(
       id: 'q2',
-      questionText: 'Which are fruits?',
-      options: ['Apple', 'Car', 'Banana', 'House', 'Orange'],
-      correctAnswerIndices: [0, 2, 4],
-      explanation: 'Apples, Bananas, and Oranges are all fruits', // Apple, Banana, Orange
+      text: "At your school, there is a security guard named Quinn. You have never met or talked to Quinn, but some of your school mates have.",
+      questionText: 'What social tag(s) apply to Quinn?',
+      options: ['Acquaintance', 'Community Helper', 'Stranger', 'Work Peer', ],
+      correctAnswerIndices: [1, 2,],
+      explanation: 'Quinn serves the community, but don\'t know him', // Apple, Banana, Orange
     );
 
     QuestionSet questionSet = QuestionSet(
@@ -45,7 +48,13 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(
+            widget.title,
+          style: theme.appBarTheme.titleTextStyle?.copyWith(
+            fontSize: 25,
+            fontWeight: FontWeight.normal,
+          ),
+        ),
       ),
       body: Center(
         child: Column(

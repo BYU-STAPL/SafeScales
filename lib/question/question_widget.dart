@@ -21,26 +21,69 @@ class QuestionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    ThemeData theme = Theme.of(context);
+
+
+    Text instructionText = Text(
+      'Choose one option:',
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        fontStyle: FontStyle.italic,
+        color: theme.colorScheme.outline,
+      ),
+    );
+
+    if (question.isMultipleChoice) {
+      instructionText = Text(
+        'Select all that apply:',
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          fontStyle: FontStyle.italic,
+          color: theme.colorScheme.outline,
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          question.questionText,
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
+        if (question.text != null) ... [
 
-        if (question.isMultipleChoice) ...[
-          SizedBox(height: 8),
-          Text(
-            'Select all that apply:',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontStyle: FontStyle.italic,
-              color: Colors.grey[600],
+          SizedBox(height: 15,),
+
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(15)),
+              border: Border.all(
+                color: Colors.black,
+                width: 3,
+                style: BorderStyle.solid,
+              )
+            ),
+            child: Padding (
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              child: Text(
+                question.text!,
+                style: theme.textTheme.bodyMedium,
+              ),
             ),
           ),
+
+          SizedBox(height: 10,),
+
         ],
 
-        SizedBox(height: 16),
+        SizedBox(height: 20,),
+
+        Text(
+          question.questionText,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.bold
+          ),
+        ),
+
+        SizedBox(height: 10,),
+
+        instructionText,
 
         ...question.options.asMap().entries.map((entry) {
           final index = entry.key;
@@ -67,27 +110,34 @@ class QuestionWidget extends StatelessWidget {
               margin: EdgeInsets.symmetric(vertical: 10),
               padding: EdgeInsets.all(15),
               decoration: BoxDecoration(
-                border: Border.all(
-                  color: isSelected ? Colors.blue : Colors.grey,
-                  width: isSelected ? 2 : 1,
-                ),
+                // border: Border.all(
+                //   color: isSelected ? theme.colorScheme.secondary : Colors.transparent,
+                //   width: 0,//isSelected ? 2 : 0,
+                // ),
                 borderRadius: BorderRadius.circular(8),
                 color: isSelected
-                    ? Colors.blue.withOpacity(0.1)
+                    ? theme.colorScheme.secondary.withValues(alpha: 0.2)
                     : isDisabled
-                    ? Colors.grey.withOpacity(0.1)
+                    ? theme.colorScheme.shadow
                     : null,
               ),
               child: Row(
                 children: [
                   Icon(
                     question.isMultipleChoice
-                        ? (isSelected ? Icons.check_box : Icons.check_box_outline_blank)
+                        ? (isSelected ? Icons.check_box : Icons.check_box_outline_blank_rounded)
                         : (isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked),
-                    color: isSelected ? Colors.blue : Colors.grey,
+                    color: theme.colorScheme.primary, //isSelected ? theme.colorScheme.primary : theme.colorScheme.shadow,
                   ),
                   SizedBox(width: 12),
-                  Expanded(child: Text(option)),
+                  Expanded(
+                      child: Text(
+                        option,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                          ),
+                      ),
+                  )
                 ],
               ),
             ),
