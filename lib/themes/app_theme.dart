@@ -19,12 +19,13 @@ ColorScheme appColorScheme = ColorScheme(
     onPrimary: offWhite,
     secondary: lightRoyalBlue,
     onSecondary: Colors.black,
-    tertiary: grey,
+    tertiary: lightGrey,
     onTertiary: Colors.black,
     error: red,
     onError: offWhite,
     surface: offWhite,
     onSurface: Colors.black,
+    shadow: grey,
 );
 
 
@@ -117,6 +118,11 @@ ThemeData buildDarkAppTheme() {
           borderRadius: BorderRadius.circular(8),
         ),
       ),
+    ),
+
+    cardTheme: CardThemeData(
+      color: appColorScheme.tertiary,
+      shadowColor: appColorScheme.shadow,
     ),
 
     // Input decoration theme

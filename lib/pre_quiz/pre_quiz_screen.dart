@@ -3,7 +3,7 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
-import 'package:safe_scales/pre_quiz/pre_quiz_results.dart';
+import 'package:safe_scales/pre_quiz/pre_quiz_results_screen.dart';
 import 'package:safe_scales/question/question.dart';
 
 import '../question/question_widget.dart';
@@ -78,16 +78,17 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
     // TODO: Is there a different way to access the Theme?
     ThemeData theme = Theme.of(context);
 
-
+    AppBar appBar = AppBar(
+      centerTitle: true,
+      title: Text('Pre-Quiz'),
+      // backgroundColor: Colors.orange,
+    );
 
     if (!isStarted) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text('Pre-Assessment'),
-          // backgroundColor: Colors.orange,
-        ),
+        appBar: appBar,
         body: Padding(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -95,9 +96,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
                 widget.questionSet.title,
                 style: theme.textTheme.headlineSmall,
               ),
-              SizedBox(height: 16),
-              Text(widget.questionSet.description),
-              SizedBox(height: 24),
+              SizedBox(height: 15),
               Card(
                 child: Padding(
                   padding: EdgeInsets.all(16),
@@ -116,7 +115,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
                         children: [
                           Icon(Icons.info_outline, color: theme.colorScheme.secondary),
                           SizedBox(width: 8),
-                          Expanded(child: Text('This assesses your current knowledge level')),
+                          Expanded(child: Text(widget.questionSet.description)),
                         ],
                       ),
                     ],
@@ -128,11 +127,13 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _startPreQuiz,
-                  style: ElevatedButton.styleFrom(
-                    // backgroundColor: color: theme.colorScheme.pr,
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    'Start'.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: theme.textTheme.bodyLarge?.fontSize,
+                      color: theme.colorScheme.onPrimary,
+                    ),
                   ),
-                  child: Text('Start Assessment', style: TextStyle(fontSize: 18)),
                 ),
               ),
             ],
@@ -142,72 +143,72 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Pre-Assessment'),
-        // backgroundColor: Colors.orange,
-        actions: [
-        ],
-      ),
-      body: Column(
-        children: [
-          LinearProgressIndicator(
-            value: (currentQuestionIndex + 1) / widget.questionSet.questions.length,
-            backgroundColor: theme.colorScheme.tertiary,
-            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
-          ),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: QuestionWidget(
-                question: widget.questionSet.questions[currentQuestionIndex],
-                selectedAnswers: userAnswers[currentQuestionIndex],
-                onAnswerChanged: (answers) {
-                  setState(() {
-                    userAnswers[currentQuestionIndex] = answers;
-                  });
-                },
-                showCorrectAnswer: widget.questionSet.showCorrectAnswers,
-                showExplanation: widget.questionSet.showExplanations,
+      appBar: appBar,
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+        child: Column(
+          children: [
+            LinearProgressIndicator(
+              value: (currentQuestionIndex + 1) / widget.questionSet.questions.length,
+              backgroundColor: theme.colorScheme.tertiary,
+              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+              minHeight: 15,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: QuestionWidget(
+                  question: widget.questionSet.questions[currentQuestionIndex],
+                  selectedAnswers: userAnswers[currentQuestionIndex],
+                  onAnswerChanged: (answers) {
+                    setState(() {
+                      userAnswers[currentQuestionIndex] = answers;
+                    });
+                  },
+                  showCorrectAnswer: widget.questionSet.showCorrectAnswers,
+                  showExplanation: widget.questionSet.showExplanations,
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              children: [
-                if (currentQuestionIndex > 0)
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  if (currentQuestionIndex > 0)
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          currentQuestionIndex--;
+                        });
+                      },
+                      child: Text('Previous'),
+                    ),
+                  Spacer(),
                   ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        currentQuestionIndex--;
-                      });
-                    },
-                    child: Text('Previous'),
-                  ),
-                Spacer(),
-                ElevatedButton(
-                  onPressed: userAnswers[currentQuestionIndex].isNotEmpty
-                      ? () {
-                    if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
-                      setState(() {
-                        currentQuestionIndex++;
-                      });
-                    } else {
-                      _finishPreQuiz();
+                    onPressed: userAnswers[currentQuestionIndex].isNotEmpty
+                        ? () {
+                      if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
+                        setState(() {
+                          currentQuestionIndex++;
+                        });
+                      } else {
+                        _finishPreQuiz();
+                      }
                     }
-                  }
-                      : null,
-                  child: Text(
-                    currentQuestionIndex == widget.questionSet.questions.length - 1
-                        ? 'Finish'
-                        : 'Next',
+                        : null,
+                    child: Text(
+                      currentQuestionIndex == widget.questionSet.questions.length - 1
+                          ? 'Finish'
+                          : 'Next',
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      )
     );
   }
 }

@@ -64,8 +64,8 @@ class QuestionWidget extends StatelessWidget {
               onAnswerChanged(newAnswers);
             },
             child: Container(
-              margin: EdgeInsets.symmetric(vertical: 4),
-              padding: EdgeInsets.all(12),
+              margin: EdgeInsets.symmetric(vertical: 10),
+              padding: EdgeInsets.all(15),
               decoration: BoxDecoration(
                 border: Border.all(
                   color: isSelected ? Colors.blue : Colors.grey,
