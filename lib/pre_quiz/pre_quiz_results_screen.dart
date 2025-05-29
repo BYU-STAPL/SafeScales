@@ -112,7 +112,13 @@ class PreQuizResultScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  Navigator.pop(context); // Pop to PreQuizScreen
+                  Navigator.pop(
+                    context,
+                    true,
+                  ); // Pop back to SocialMediaNormsPage with completion status
+                },
                 child: Text(
                   'return to lesson'.toUpperCase(),
                   style: TextStyle(
