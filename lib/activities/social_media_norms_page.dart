@@ -4,6 +4,7 @@ import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/question/question.dart';
 import 'package:safe_scales/pre_quiz/pre_quiz_screen.dart';
 import 'package:safe_scales/quiz/post_quiz_screen.dart';
+import 'package:safe_scales/services/quiz_service.dart';
 
 class SocialMediaNormsPage extends StatefulWidget {
   const SocialMediaNormsPage({super.key});
@@ -17,246 +18,307 @@ class _SocialMediaNormsPageState extends State<SocialMediaNormsPage> {
   bool readingCompleted = false;
   bool postQuizCompleted = false;
 
+  final QuizService _quizService = QuizService();
+  QuestionSet? _preQuiz;
+  QuestionSet? _postQuiz;
+  bool _isLoading = true;
+  String _topicName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQuizzes();
+  }
+
+  Future<void> _loadQuizzes() async {
+    try {
+      // Get pre-quiz for Social Media Norms topic
+      final preQuiz = await _quizService.getQuizByTopicAndActivityType(
+        topic: 'Social Media Norms',
+        activityType: 'preQuiz',
+      );
+
+      // Get post-quiz for Social Media Norms topic
+      final postQuiz = await _quizService.getQuizByTopicAndActivityType(
+        topic: 'Social Media Norms',
+        activityType: 'postQuiz',
+      );
+
+      setState(() {
+        _preQuiz = preQuiz;
+        _postQuiz = postQuiz;
+        _topicName = 'Social Media Norms';
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading quizzes: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final Color primary = Theme.of(context).colorScheme.primary;
     final Color cardBg = Theme.of(context).colorScheme.surface;
-    final Color greyColor = Colors.grey[400]!;
     final Color textColor = Theme.of(context).colorScheme.onSurface;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back_ios, color: primary, size: 24),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  Expanded(
-                    child: Text(
-                      'SOCIAL MEDIA NORMS',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18 * AppTheme.fontSizeScale,
-                        fontWeight: FontWeight.w600,
-                        color: textColor,
-                        letterSpacing: 0.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(width: 48), // Balance the back button
-                ],
-              ),
-            ),
-            // Dragon name with arrow
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Boskaris Dragon',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16 * AppTheme.fontSizeScale,
-                      color: textColor.withOpacity(0.7),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(Icons.arrow_forward, color: Colors.red, size: 20),
-                ],
-              ),
-            ),
-            // Dragon egg
-            Expanded(
-              child: Center(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: textColor),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          _topicName,
+          style: GoogleFonts.poppins(
+            color: textColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Padding(
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Egg container
+                    // Dragon Display Section
                     Container(
-                      width: 160,
-                      height: 200,
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.green[100],
-                        borderRadius: BorderRadius.circular(80),
+                        gradient: LinearGradient(
+                          colors: [primary, primary.withOpacity(0.8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.green.withOpacity(0.3),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
+                            color: primary.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
                           ),
                         ],
                       ),
-                      child: Stack(
-                        alignment: Alignment.center,
+                      child: Column(
                         children: [
-                          // Egg pattern
+                          // Placeholder for dragon image
                           Container(
-                            width: 140,
-                            height: 180,
+                            width: 240,
+                            height: 240,
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.green[300]!,
-                                  Colors.green[400]!,
-                                  Colors.green[500]!,
-                                ],
-                              ),
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(70),
-                                topRight: Radius.circular(70),
-                                bottomLeft: Radius.circular(60),
-                                bottomRight: Radius.circular(60),
-                              ),
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.pets,
+                              size: 120,
+                              color: Colors.white,
                             ),
                           ),
-                          // Dots pattern
-                          ...List.generate(15, (index) {
-                            final random = index * 37;
-                            return Positioned(
-                              top: 30 + (random % 100).toDouble(),
-                              left: 20 + (random % 80).toDouble(),
-                              child: Container(
-                                width: 12,
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  color: Colors.green[700]!.withOpacity(0.6),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            );
-                          }),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Your Dragon',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Complete activities to help your dragon grow!',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 17,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 40),
-                    Text(
-                      'Do an activity to help me grow',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16 * AppTheme.fontSizeScale,
-                        color: textColor.withOpacity(0.8),
+                    const SizedBox(height: 16),
+
+                    // Activities Section
+                    Row(
+                      children: [
+                        Text(
+                          'Activities',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: textColor,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${preQuizCompleted ? 1 : 0}/${3} Completed',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: textColor.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Activities List
+                    Expanded(
+                      child: Column(
+                        children: [
+                          // Pre-Quiz
+                          _buildActivityCard(
+                            title: 'Pre-Quiz',
+                            subtitle:
+                                _preQuiz?.description ??
+                                'Test your current knowledge',
+                            icon: Icons.quiz,
+                            color: primary,
+                            isCompleted: preQuizCompleted,
+                            isLocked: false,
+                            isAvailable: true,
+                            onTap: () {
+                              if (_preQuiz != null) {
+                                _startPreQuiz(context);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Reading Activity
+                          _buildActivityCard(
+                            title: 'Reading Activity',
+                            subtitle: 'Learn about $_topicName',
+                            icon: Icons.menu_book,
+                            color: primary,
+                            isCompleted: readingCompleted,
+                            isLocked: !preQuizCompleted,
+                            isAvailable: preQuizCompleted,
+                            onTap: () {
+                              if (preQuizCompleted) {
+                                _startReading(context);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Post-Quiz
+                          _buildActivityCard(
+                            title: 'Post-Quiz',
+                            subtitle:
+                                _postQuiz?.description ??
+                                'Test what you learned',
+                            icon: Icons.assignment,
+                            color: primary,
+                            isCompleted: postQuizCompleted,
+                            isLocked: !readingCompleted,
+                            isAvailable: readingCompleted,
+                            onTap: () {
+                              if (readingCompleted && _postQuiz != null) {
+                                _startPostQuiz(context);
+                              }
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
+    );
+  }
+
+  Widget _buildActivityCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required bool isCompleted,
+    required bool isLocked,
+    required bool isAvailable,
+    VoidCallback? onTap,
+  }) {
+    final cardColor =
+        isLocked
+            ? Colors.grey[300]!
+            : isCompleted
+            ? color.withOpacity(0.1)
+            : Theme.of(context).colorScheme.surface;
+
+    final iconColor =
+        isLocked
+            ? Colors.grey[600]!
+            : isCompleted
+            ? color
+            : color.withOpacity(0.8);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isCompleted ? color : Colors.grey[300]!,
+            width: isCompleted ? 2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            // Activity buttons
-            Padding(
-              padding: const EdgeInsets.all(24.0),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                isLocked ? Icons.lock : icon,
+                color: iconColor,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Pre-Quiz button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed:
-                          preQuizCompleted
-                              ? null
-                              : () {
-                                _startPreQuiz(context);
-                              },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: preQuizCompleted ? greyColor : primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(28),
-                        ),
-                        elevation: preQuizCompleted ? 0 : 3,
-                      ),
-                      child: Text(
-                        'PRE-QUIZ',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18 * AppTheme.fontSizeScale,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1,
-                        ),
-                      ),
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isLocked ? Colors.grey[600] : null,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Reading button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed:
-                          !preQuizCompleted || readingCompleted
-                              ? null
-                              : () {
-                                _startReading(context);
-                              },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            (!preQuizCompleted || readingCompleted)
-                                ? greyColor
-                                : primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(28),
-                        ),
-                        elevation:
-                            (!preQuizCompleted || readingCompleted) ? 0 : 3,
-                      ),
-                      child: Text(
-                        'READING',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18 * AppTheme.fontSizeScale,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Post-Quiz button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed:
-                          !readingCompleted || postQuizCompleted
-                              ? null
-                              : () {
-                                _startPostQuiz(context);
-                              },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            (!readingCompleted || postQuizCompleted)
-                                ? greyColor
-                                : primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(28),
-                        ),
-                        elevation:
-                            (!readingCompleted || postQuizCompleted) ? 0 : 3,
-                      ),
-                      child: Text(
-                        'POST-QUIZ',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18 * AppTheme.fontSizeScale,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1,
-                        ),
-                      ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: isLocked ? Colors.grey[600] : Colors.grey[600],
                     ),
                   ),
                 ],
               ),
             ),
+            if (isCompleted)
+              Icon(Icons.check_circle, color: color, size: 24)
+            else if (!isLocked && isAvailable)
+              Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
           ],
         ),
       ),
@@ -264,35 +326,19 @@ class _SocialMediaNormsPageState extends State<SocialMediaNormsPage> {
   }
 
   void _startPreQuiz(BuildContext context) {
-    final singleQ = Question.singleAnswer(
-      id: 'q1',
-      questionText: 'What color is the sky?',
-      options: ['Red', 'Blue', 'Green', 'Yellow'],
-      correctAnswerIndex: 1,
-      explanation: 'The Sky is blue',
-    );
-    final multipleQ = Question.multipleAnswer(
-      id: 'q3',
-      text:
-          "At your school, there is a security guard named Quinn. You have never met or talked to Quinn, but some of your school mates have.",
-      questionText: 'What social tag(s) apply to Quinn?',
-      options: ['Acquaintance', 'Community Helper', 'Stranger', 'Work Peer'],
-      correctAnswerIndices: [1, 2],
-      explanation: 'Quinn serves the community, but don\'t know him',
-    );
-    final questionSet = QuestionSet(
-      id: "qset0",
-      title: "Social Media Norms Pre-Quiz",
-      description: "Test your knowledge before the lesson",
-      activityType: ActivityType.preQuiz,
-      subject: "Social Media Norms",
-      questions: [singleQ, multipleQ],
-    );
+    if (_preQuiz == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pre-quiz not available. Please upload it first.'),
+        ),
+      );
+      return;
+    }
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PreQuizScreen(questionSet: questionSet),
+        builder: (context) => PreQuizScreen(questionSet: _preQuiz!),
       ),
     ).then((completed) {
       if (completed == true) {
@@ -315,26 +361,19 @@ class _SocialMediaNormsPageState extends State<SocialMediaNormsPage> {
   }
 
   void _startPostQuiz(BuildContext context) {
-    final singleQ2 = Question.singleAnswer(
-      id: 'q2',
-      questionText: 'What season are oranges ripe?',
-      options: ['Spring', 'Summer', 'Fall', 'Winter'],
-      correctAnswerIndex: 3,
-      explanation: 'Oranges taste best during the winter',
-    );
-    final questionSet2 = QuestionSet(
-      id: "qset1",
-      title: "Social Media Norms Post-Quiz",
-      description: "Test your knowledge after the lesson",
-      activityType: ActivityType.postQuiz,
-      subject: "Social Media Norms",
-      questions: [singleQ2],
-    );
+    if (_postQuiz == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Post-quiz not available. Please upload it first.'),
+        ),
+      );
+      return;
+    }
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PostQuizScreen(questionSet: questionSet2),
+        builder: (context) => PostQuizScreen(questionSet: _postQuiz!),
       ),
     ).then((completed) {
       if (completed == true) {
@@ -358,7 +397,7 @@ class _SocialMediaNormsPageState extends State<SocialMediaNormsPage> {
               style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
             ),
             content: Text(
-              'You have completed the Social Media Norms activity!',
+              'You have completed the $_topicName activity!',
               style: GoogleFonts.poppins(),
             ),
             actions: [

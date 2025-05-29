@@ -36,15 +36,30 @@ class AuthService {
   }
 
   Future<bool> signIn({required String email, required String password}) async {
-    final response =
-        await supabase
-            .from('Users')
-            .select()
-            .eq('Email', email)
-            .eq('password', hashPassword(password)) // Compare hashed password
-            .single();
+    try {
+      // Sign in with Supabase auth
+      final authResponse = await supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
 
-    return response != null;
+      if (authResponse.user != null) {
+        // Verify user exists in our Users table
+        final response =
+            await supabase
+                .from('Users')
+                .select()
+                .eq('Email', email)
+                .eq('password', hashPassword(password))
+                .single();
+
+        return response != null;
+      }
+      return false;
+    } catch (e) {
+      print('Error signing in: $e');
+      return false;
+    }
   }
 
   Future<void> signOut() async {

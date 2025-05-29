@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:safe_scales/pre_quiz/pre_quiz_results_screen.dart';
 import 'package:safe_scales/question/question.dart';
 import 'package:safe_scales/quiz/post_quiz_results_screen.dart';
+import 'package:safe_scales/services/quiz_service.dart';
+import 'package:safe_scales/config/supabase_config.dart';
 
 import '../question/question_widget.dart';
 
@@ -35,26 +37,53 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     });
   }
 
-  void _finishPostQuiz() {
-
+  void _finishPostQuiz() async {
     int correctAnswers = 0;
     for (int i = 0; i < widget.questionSet.questions.length; i++) {
       if (_isAnswerCorrect(i)) correctAnswers++;
     }
 
-    int scorePercentage = ((correctAnswers / widget.questionSet.questions.length) * 100).round();
+    int scorePercentage =
+        ((correctAnswers / widget.questionSet.questions.length) * 100).round();
+
+    print('Quiz completed:');
+    print('Quiz ID: ${widget.questionSet.id}');
+    print('Total questions: ${widget.questionSet.questions.length}');
+    print('Correct answers: $correctAnswers');
+    print('Score percentage: $scorePercentage');
+    print('User answers: $userAnswers');
+
+    // Save quiz progress
+    try {
+      final supabase = SupabaseConfig.client;
+      final user = supabase.auth.currentUser;
+      if (user != null) {
+        print('Saving quiz progress for user: ${user.id}');
+        await QuizService().saveQuizProgress(
+          userId: user.id,
+          quizId: widget.questionSet.id,
+          answers: userAnswers,
+        );
+      } else {
+        print('No user logged in, skipping quiz progress save');
+      }
+    } catch (e) {
+      print('Error saving quiz progress: $e');
+      // Continue to show results even if saving fails
+    }
 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => PostQuizResultScreen(
-          questionSet: widget.questionSet,
-          passingScore: widget.questionSet.passingScore,
-          score: scorePercentage,
-          correctAnswers: correctAnswers,
-          totalQuestions: widget.questionSet.questions.length,
-          userAnswers: userAnswers,
-        ),
+        builder:
+            (context) => PostQuizResultScreen(
+              questionSet: widget.questionSet,
+              passingScore: widget.questionSet.passingScore,
+              score: scorePercentage,
+              correctAnswers: correctAnswers,
+              totalQuestions: widget.questionSet.questions.length,
+              userAnswers: userAnswers,
+            ),
       ),
     );
   }
@@ -76,13 +105,9 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     ThemeData theme = Theme.of(context);
 
-    AppBar appBar = AppBar(
-      centerTitle: true,
-      title: Text('Post-Quiz'),
-    );
+    AppBar appBar = AppBar(centerTitle: true, title: Text('Post-Quiz'));
 
     if (!isStarted) {
       return Scaffold(
@@ -97,7 +122,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                 style: theme.textTheme.headlineSmall,
               ),
 
-              SizedBox(height: 15,),
+              SizedBox(height: 15),
 
               Card(
                 child: Padding(
@@ -107,7 +132,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                       SizedBox(height: 10),
 
                       Text(
-                          '${widget.questionSet.passingScore}% or higher is required to pass',
+                        '${widget.questionSet.passingScore}% or higher is required to pass',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -116,15 +141,23 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                       SizedBox(height: 10),
                       Row(
                         children: [
-                          Icon(Icons.help_outline, color: theme.colorScheme.secondary),
+                          Icon(
+                            Icons.help_outline,
+                            color: theme.colorScheme.secondary,
+                          ),
                           SizedBox(width: 10),
-                          Text('${widget.questionSet.questions.length} questions'),
+                          Text(
+                            '${widget.questionSet.questions.length} questions',
+                          ),
                         ],
                       ),
                       SizedBox(height: 10),
                       Row(
                         children: [
-                          Icon(Icons.info_outline, color: theme.colorScheme.secondary),
+                          Icon(
+                            Icons.info_outline,
+                            color: theme.colorScheme.secondary,
+                          ),
                           SizedBox(width: 10),
                           Expanded(child: Text(widget.questionSet.description)),
                         ],
@@ -156,96 +189,108 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     }
 
     return Scaffold(
-        appBar: appBar,
-        body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-          child: Column(
-            children: [
-              LinearProgressIndicator(
-                value: (currentQuestionIndex + 1) / widget.questionSet.questions.length,
-                backgroundColor: theme.colorScheme.tertiary,
-                valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
-                minHeight: 15,
-                borderRadius: BorderRadius.circular(10),
+      appBar: appBar,
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+        child: Column(
+          children: [
+            LinearProgressIndicator(
+              value:
+                  (currentQuestionIndex + 1) /
+                  widget.questionSet.questions.length,
+              backgroundColor: theme.colorScheme.tertiary,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                theme.colorScheme.primary,
               ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: QuestionWidget(
-                    question: widget.questionSet.questions[currentQuestionIndex],
-                    selectedAnswers: userAnswers[currentQuestionIndex],
-                    onAnswerChanged: (answers) {
-                      setState(() {
-                        userAnswers[currentQuestionIndex] = answers;
-                      });
-                    },
-                    showCorrectAnswer: widget.questionSet.showCorrectAnswers,
-                    showExplanation: widget.questionSet.showExplanations,
-                  ),
+              minHeight: 15,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: QuestionWidget(
+                  question: widget.questionSet.questions[currentQuestionIndex],
+                  selectedAnswers: userAnswers[currentQuestionIndex],
+                  onAnswerChanged: (answers) {
+                    setState(() {
+                      userAnswers[currentQuestionIndex] = answers;
+                    });
+                  },
+                  showCorrectAnswer: widget.questionSet.showCorrectAnswers,
+                  showExplanation: widget.questionSet.showExplanations,
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    if (currentQuestionIndex > 0)
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            currentQuestionIndex--;
-                          });
-                        },
-                        iconSize: 30,
-                        icon: Icon(Icons.arrow_back_ios_rounded),
-                      ),
-                    Spacer(),
+            ),
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  if (currentQuestionIndex > 0)
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          currentQuestionIndex--;
+                        });
+                      },
+                      iconSize: 30,
+                      icon: Icon(Icons.arrow_back_ios_rounded),
+                    ),
+                  Spacer(),
 
-                    currentQuestionIndex == widget.questionSet.questions.length - 1 ?
-                    TextButton(
-                      onPressed: userAnswers[currentQuestionIndex].isNotEmpty ? () {
-                        if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
-                          setState(() {
-                            currentQuestionIndex++;
-                          });
-                        }
-                        else {
-                          _finishPostQuiz();
-                        }
-                      }
-                          : null,
-                      child: Text(
-                        'Submit'.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: theme.textTheme.bodyLarge?.fontSize,
+                  currentQuestionIndex ==
+                          widget.questionSet.questions.length - 1
+                      ? TextButton(
+                        onPressed:
+                            userAnswers[currentQuestionIndex].isNotEmpty
+                                ? () {
+                                  if (currentQuestionIndex <
+                                      widget.questionSet.questions.length - 1) {
+                                    setState(() {
+                                      currentQuestionIndex++;
+                                    });
+                                  } else {
+                                    _finishPostQuiz();
+                                  }
+                                }
+                                : null,
+                        child: Text(
+                          'Submit'.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: theme.textTheme.bodyLarge?.fontSize,
+                          ),
+                        ),
+                      )
+                      : IconButton(
+                        onPressed:
+                            userAnswers[currentQuestionIndex].isNotEmpty
+                                ? () {
+                                  if (currentQuestionIndex <
+                                      widget.questionSet.questions.length - 1) {
+                                    setState(() {
+                                      currentQuestionIndex++;
+                                    });
+                                  } else {
+                                    _finishPostQuiz();
+                                  }
+                                }
+                                : null,
+                        iconSize: 30,
+                        icon: Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color:
+                              userAnswers[currentQuestionIndex].isEmpty
+                                  ? theme.colorScheme.onSurfaceVariant
+                                  : theme.colorScheme.primary,
                         ),
                       ),
-                    )
-                        : IconButton(
-                      onPressed: userAnswers[currentQuestionIndex].isNotEmpty
-                          ? () {
-                        if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
-                          setState(() {
-                            currentQuestionIndex++;
-                          });
-                        } else {
-                          _finishPostQuiz();
-                        }
-                      }
-                          : null,
-                      iconSize: 30,
-                      icon: Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        color: userAnswers[currentQuestionIndex].isEmpty ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
+                ],
               ),
+            ),
 
-              SizedBox(height: 10),
-            ],
-          ),
-        )
+            SizedBox(height: 10),
+          ],
+        ),
+      ),
     );
   }
 }

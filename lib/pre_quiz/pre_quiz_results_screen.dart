@@ -113,11 +113,11 @@ class PreQuizResultScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context); // Pop to PreQuizScreen
+                  print('Returning to lesson from results screen');
                   Navigator.pop(
                     context,
                     true,
-                  ); // Pop back to SocialMediaNormsPage with completion status
+                  ); // Return true to indicate completion
                 },
                 child: Text(
                   'return to lesson'.toUpperCase(),

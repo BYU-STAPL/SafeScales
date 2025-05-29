@@ -7,7 +7,8 @@ import 'package:safe_scales/shop/shop_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/settings_drawer.dart';
 import 'package:safe_scales/themes/app_theme.dart';
-import 'package:safe_scales/activities/social_media_norms_page.dart';
+import 'package:safe_scales/activities/activity_page.dart';
+import 'package:safe_scales/services/quiz_service.dart';
 
 class HomePage extends StatefulWidget {
   final int initialIndex;
@@ -127,75 +128,99 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final QuizService _quizService = QuizService();
+
+  List<String> _topics = [];
+  Map<String, List<Map<String, dynamic>>> _quizzesByTopic = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQuizzes();
+  }
+
+  Future<void> _loadQuizzes() async {
+    try {
+      final allQuizzes = await _quizService.getAllQuizzes();
+
+      // Group quizzes by topic
+      final Map<String, List<Map<String, dynamic>>> grouped = {};
+      for (var quiz in allQuizzes) {
+        final topic = quiz['topic'] ?? 'Unknown Topic';
+        if (!grouped.containsKey(topic)) {
+          grouped[topic] = [];
+        }
+        grouped[topic]!.add(quiz);
+      }
+
+      setState(() {
+        _quizzesByTopic = grouped;
+        _topics = grouped.keys.toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading quizzes: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Get icon based on topic from database
+  IconData _getIconForTopic(String topic) {
+    // Default to school icon if no specific icon is found
+    return Icons.school;
+  }
+
+  // Get color based on topic from database
+  Color _getColorForTopic(String topic) {
+    // Default to grey if no specific color is found
+    return Colors.grey;
+  }
 
   @override
   Widget build(BuildContext context) {
     final Color primary = Theme.of(context).colorScheme.primary;
-    final Color secondary = Theme.of(context).colorScheme.secondary;
     final Color cardBg = Theme.of(context).colorScheme.surface;
-    final Color greyBg = Theme.of(context).colorScheme.surfaceDim;
-    final Color settingsBg = Theme.of(context).colorScheme.surfaceContainer;
     final Color textColor = Theme.of(context).colorScheme.onSurface;
     final double borderRadius = 24.0;
 
     return Scaffold(
       key: _scaffoldKey,
       endDrawer: SettingsDrawer(
-        fontSize: widget.fontSize,
-        onFontSizeChanged: widget.onFontSizeChanged,
         isDarkMode: widget.isDarkMode,
         onDarkModeChanged: widget.onDarkModeChanged,
-        username: 'username',
-        email: 'your-email@email.com',
+        fontSize: widget.fontSize,
+        onFontSizeChanged: widget.onFontSizeChanged,
+        username: 'User',
+        email: 'user@example.com',
         onTutorial: () {},
         onHelp: () {},
         onLogout: () {},
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20.0,
-              vertical: 8.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Custom Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Safe Scales',
-                      style: GoogleFonts.poppins(
-                        fontSize: 28 * AppTheme.fontSizeScale,
-                        fontWeight: FontWeight.w500,
-                        color: textColor,
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.menu,
-                        color: primary,
-                        size: 32 * AppTheme.fontSizeScale,
-                      ),
-                      onPressed: () {
-                        _scaffoldKey.currentState?.openEndDrawer();
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // Next Activity Card
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Continue Learning Card
+              if (_topics.isNotEmpty)
                 GestureDetector(
                   onTap: () {
                     // Navigate to the current/next activity
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SocialMediaNormsPage(),
-                      ),
-                    );
+                    final currentTopic = _topics[0];
+                    final quizzes = _quizzesByTopic[currentTopic] ?? [];
+                    if (quizzes.isNotEmpty) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => ActivityPage(topic: currentTopic),
+                        ),
+                      );
+                    }
                   },
                   child: Container(
                     width: double.infinity,
@@ -231,7 +256,7 @@ class _HomeTabState extends State<HomeTab> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'SOCIAL MEDIA NORMS',
+                              _topics[0].toUpperCase(),
                               style: GoogleFonts.poppins(
                                 fontSize: 14 * AppTheme.fontSizeScale,
                                 color: Colors.white.withOpacity(0.9),
@@ -269,119 +294,103 @@ class _HomeTabState extends State<HomeTab> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 28),
-                // Activities Section - Updated with unlock order
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Activities',
-                      style: GoogleFonts.poppins(
-                        fontSize: 20 * AppTheme.fontSizeScale,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+              const SizedBox(height: 28),
+              // Activities Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Activities',
+                    style: GoogleFonts.poppins(
+                      fontSize: 20 * AppTheme.fontSizeScale,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
-                    Text(
-                      '1/6 Completed',
+                  ),
+                  Text(
+                    '${_topics.isEmpty ? 0 : 1}/${_topics.length} Completed',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14 * AppTheme.fontSizeScale,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Show loading or activities
+              if (_isLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (_topics.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Text(
+                      'No activities available',
                       style: GoogleFonts.poppins(
-                        fontSize: 14 * AppTheme.fontSizeScale,
+                        fontSize: 16 * AppTheme.fontSizeScale,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // Social Media Norms Activity
-                _buildActivityCard(
-                  context: context,
-                  title: 'SOCIAL MEDIA NORMS',
-                  isUnlocked: true,
-                  progress: 0.3,
-                  icon: Icons.share,
-                  iconColor: Colors.blue[700]!,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SocialMediaNormsPage(),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                // Internet Safety Activity
-                _buildActivityCard(
-                  context: context,
-                  title: 'INTERNET SAFETY',
-                  isUnlocked: false,
-                  progress: 0.0,
-                  icon: Icons.security,
-                  iconColor: Colors.green[700]!,
-                  unlockRequirement: 'Complete Social Media Norms',
-                  onTap: () {
-                    // TODO: Navigate to Internet Safety activity
-                  },
-                ),
-                const SizedBox(height: 16),
-                // Digital Footprint Activity
-                _buildActivityCard(
-                  context: context,
-                  title: 'DIGITAL FOOTPRINT',
-                  isUnlocked: false,
-                  progress: 0.0,
-                  icon: Icons.fingerprint,
-                  iconColor: Colors.purple[700]!,
-                  unlockRequirement: 'Complete Internet Safety',
-                  onTap: () {
-                    // TODO: Navigate to Digital Footprint activity
-                  },
-                ),
-                const SizedBox(height: 16),
-                // Privacy & Passwords Activity
-                _buildActivityCard(
-                  context: context,
-                  title: 'PRIVACY & PASSWORDS',
-                  isUnlocked: false,
-                  progress: 0.0,
-                  icon: Icons.lock_outline,
-                  iconColor: Colors.red[700]!,
-                  unlockRequirement: 'Complete Digital Footprint',
-                  onTap: () {
-                    // TODO: Navigate to Privacy & Passwords activity
-                  },
-                ),
-                const SizedBox(height: 16),
-                // Cyberbullying Activity
-                _buildActivityCard(
-                  context: context,
-                  title: 'CYBERBULLYING',
-                  isUnlocked: false,
-                  progress: 0.0,
-                  icon: Icons.shield_outlined,
-                  iconColor: Colors.teal[700]!,
-                  unlockRequirement: 'Complete Privacy & Passwords',
-                  onTap: () {
-                    // TODO: Navigate to Cyberbullying activity
-                  },
-                ),
-                const SizedBox(height: 16),
-                // Settings Activity - Unlocks last
-                _buildActivityCard(
-                  context: context,
-                  title: 'SETTINGS',
-                  isUnlocked: false,
-                  progress: 0.0,
-                  icon: Icons.settings,
-                  iconColor: Colors.orange[700]!,
-                  unlockRequirement: 'Complete all activities',
-                  onTap: () {
-                    _scaffoldKey.currentState?.openEndDrawer();
-                  },
-                ),
-                const SizedBox(height: 24),
-              ],
-            ),
+                  ),
+                )
+              else
+                // Dynamic activities list
+                ..._topics.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final topic = entry.value;
+                  final quizzes = _quizzesByTopic[topic] ?? [];
+                  final isUnlocked = index == 0; // Only first topic is unlocked
+                  final progress = index == 0 ? 0.3 : 0.0; // Mock progress
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildActivityCard(
+                      context: context,
+                      title: topic,
+                      isUnlocked: isUnlocked,
+                      progress: progress,
+                      icon: _getIconForTopic(topic),
+                      iconColor: _getColorForTopic(topic),
+                      unlockRequirement:
+                          index > 0 ? 'Complete ${_topics[index - 1]}' : null,
+                      onTap: () {
+                        if (isUnlocked && quizzes.isNotEmpty) {
+                          // Navigate to the activity page
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ActivityPage(topic: topic),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  );
+                }).toList(),
+
+              const SizedBox(height: 24),
+
+              // Settings Activity - Always shown at the end
+              _buildActivityCard(
+                context: context,
+                title: 'SETTINGS',
+                isUnlocked: false,
+                progress: 0.0,
+                icon: Icons.settings,
+                iconColor: Colors.grey[700]!,
+                unlockRequirement: 'Complete all activities',
+                onTap: () {
+                  _scaffoldKey.currentState?.openEndDrawer();
+                },
+              ),
+              const SizedBox(height: 24),
+            ],
           ),
         ),
       ),
@@ -406,6 +415,14 @@ class _HomeTabState extends State<HomeTab> {
     final Color textColor = Theme.of(context).colorScheme.onSurface;
     final Color mutedTextColor = Theme.of(context).colorScheme.onSurfaceVariant;
     final double borderRadius = 24.0;
+
+    // Get quiz info for this topic
+    final quizzes = _quizzesByTopic[title] ?? [];
+    final hasPreQuiz = quizzes.isNotEmpty && quizzes[0]['has_pre_quiz'] == true;
+    final hasPostQuiz =
+        quizzes.isNotEmpty && quizzes[0]['has_post_quiz'] == true;
+    final description =
+        quizzes.isNotEmpty ? quizzes[0]['description'] : 'Learn about $title';
 
     return GestureDetector(
       onTap: isUnlocked ? onTap : null,
@@ -453,6 +470,74 @@ class _HomeTabState extends State<HomeTab> {
                   color: mutedTextColor.withOpacity(0.7),
                   fontStyle: FontStyle.italic,
                 ),
+              ),
+            ],
+            if (isUnlocked) ...[
+              const SizedBox(height: 8),
+              Text(
+                description,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 14 * AppTheme.fontSizeScale,
+                  color: mutedTextColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (hasPreQuiz)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.quiz, size: 16, color: primary),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Pre-Quiz',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12 * AppTheme.fontSizeScale,
+                              color: primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (hasPreQuiz && hasPostQuiz) const SizedBox(width: 8),
+                  if (hasPostQuiz)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: secondary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.assignment, size: 16, color: secondary),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Post-Quiz',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12 * AppTheme.fontSizeScale,
+                              color: secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               ),
             ],
             const SizedBox(height: 16),

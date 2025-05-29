@@ -52,6 +52,18 @@ class _MyAppState extends State<MyApp> {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
+
+          // Check if user is already logged in
+          final currentUser = SupabaseConfig.client.auth.currentUser;
+          if (currentUser != null) {
+            return MainNavigation(
+              onThemeChanged: _updateTheme,
+              onFontSizeChanged: _updateFontSize,
+              isDarkMode: _isDarkMode,
+              fontSize: _fontSize,
+            );
+          }
+
           return AuthScreen(
             onThemeChanged: _updateTheme,
             onFontSizeChanged: _updateFontSize,
