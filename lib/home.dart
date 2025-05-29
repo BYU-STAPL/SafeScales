@@ -16,7 +16,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   int _selectedIndex = 0;
@@ -55,12 +54,9 @@ class _HomePageState extends State<HomePage> {
       _selectedIndex = widget.initialIndex;
     });
   }
-class HomeTab extends StatelessWidget {
-  const HomeTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-
     ThemeData theme = Theme.of(context);
 
     return Scaffold(
@@ -78,31 +74,38 @@ class HomeTab extends StatelessWidget {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        // iconSize: 20, // Reduce the icon size
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        selectedItemColor: theme.colorScheme.primary,     // Active color
-        unselectedItemColor: theme.colorScheme.secondary,   // Inactive color
+        selectedItemColor: theme.colorScheme.primary,
+        unselectedItemColor: theme.colorScheme.secondary,
         items: const [
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.graduationCap,),
+            icon: FaIcon(FontAwesomeIcons.graduationCap),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.dragon,),
+            icon: FaIcon(FontAwesomeIcons.dragon),
             label: 'Dragons',
           ),
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.boxesStacked,), //TODO: MAYBE this would be a fun icon FaIcon(FontAwesomeIcons.parachuteBox,),
+            icon: FaIcon(FontAwesomeIcons.boxesStacked),
             label: 'Items',
           ),
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.shop,),
+            icon: FaIcon(FontAwesomeIcons.shop),
             label: 'Shop',
           ),
         ],
       ),
     );
+  }
+}
+
+class HomeTab extends StatelessWidget {
+  const HomeTab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
     final Color primary = Theme.of(context).colorScheme.primary;
     final Color secondary = Theme.of(context).colorScheme.secondary;
     final Color cardBg = Colors.white;

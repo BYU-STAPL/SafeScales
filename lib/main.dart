@@ -4,6 +4,7 @@ import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'home.dart';
 import 'my_dragons.dart';
+import 'package:safe_scales/accessories/toy_box_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -88,7 +89,7 @@ class _MainNavigationState extends State<MainNavigation> {
   static final List<Widget> _pages = <Widget>[
     HomeTab(),
     MyDragonsPage(),
-    Center(child: Text('Items', style: TextStyle(fontSize: 24))),
+    ToyBoxPage(),
     Center(child: Text('Shop', style: TextStyle(fontSize: 24))),
   ];
 

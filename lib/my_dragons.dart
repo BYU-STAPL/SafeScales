@@ -124,16 +124,28 @@ class MyDragonsPage extends StatelessWidget {
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    Text(
-                                      'Fitzwilliam',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black87,
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              'Fitzwilliam',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.black87,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          Icon(
+                                            Icons.edit,
+                                            size: 16,
+                                            color: primary,
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    const SizedBox(width: 4),
-                                    Icon(Icons.edit, size: 16, color: primary),
                                   ],
                                 ),
                                 Row(
@@ -147,11 +159,14 @@ class MyDragonsPage extends StatelessWidget {
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    Text(
-                                      'Bokaris',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        color: Colors.black87,
+                                    Expanded(
+                                      child: Text(
+                                        'Bokaris',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 16,
+                                          color: Colors.black87,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
@@ -251,11 +266,14 @@ class MyDragonsPage extends StatelessWidget {
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    Text(
-                                      '__________________',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        color: Colors.black26,
+                                    Expanded(
+                                      child: Text(
+                                        '__________________',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 16,
+                                          color: Colors.black26,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
@@ -271,11 +289,14 @@ class MyDragonsPage extends StatelessWidget {
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    Text(
-                                      '__________________',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        color: Colors.black26,
+                                    Expanded(
+                                      child: Text(
+                                        '__________________',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 16,
+                                          color: Colors.black26,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
@@ -338,12 +359,17 @@ class _DragonInfoRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$label:',
-            style: GoogleFonts.poppins(fontSize: 15, color: Colors.black54),
+          Flexible(
+            flex: 2,
+            child: Text(
+              '$label:',
+              style: GoogleFonts.poppins(fontSize: 15, color: Colors.black54),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           const SizedBox(width: 8),
           Flexible(
+            flex: 3,
             child: Text(
               value,
               style: GoogleFonts.poppins(
