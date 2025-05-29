@@ -6,6 +6,7 @@ Color royalBlue = const Color(0xff2E83E8);
 
 Color lightRoyalBlue = const Color(0xff70C0EE);
 
+Color darkGrey = const Color(0xff888888);
 Color grey = const Color(0xffAAAAAA);
 Color lightGrey = const Color(0xffE1E1E1);
 Color offWhite = const Color(0xffF4F4F4);
@@ -14,24 +15,35 @@ Color green = const Color(0xff74A159);
 Color red = const Color(0xffB72512);
 
 ColorScheme appColorScheme = ColorScheme(
-    brightness: Brightness.light,
-    primary: royalBlue,
-    onPrimary: offWhite,
-    secondary: lightRoyalBlue,
-    onSecondary: Colors.black,
-    error: red,
-    onError: offWhite,
-    surface: offWhite,
-    onSurface: Colors.black,
+  brightness: Brightness.light,
+  primary: royalBlue,
+  onPrimary: offWhite,
+  secondary: lightRoyalBlue,
+  onSecondary: Colors.black,
+  tertiary: grey,
+  onTertiary: Colors.black,
+  error: red,
+  onError: offWhite,
+  surface: offWhite,
+  onSurface: Colors.black,
+  surfaceDim: lightGrey,
+  surfaceContainer: lightGrey, // Add this
+  onSurfaceVariant: grey, // Use for disabled text
+  outline: darkGrey,
+  outlineVariant: lightGrey, // Add this
+  shadow: Colors.black,
+  scrim: Colors.black.withValues(alpha: 0.5), // Add this
 );
 
 
 var appTextTheme = TextTheme(
   headlineLarge: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 32, fontWeight: FontWeight.bold,),
   headlineMedium: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 28, fontWeight: FontWeight.normal),
-  bodyLarge: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.normal),
-  bodyMedium: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 15, fontWeight: FontWeight.normal),
-  labelMedium: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 15, fontWeight: FontWeight.normal),
+  bodyLarge: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 22, fontWeight: FontWeight.normal),
+  bodyMedium: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.normal),
+  bodySmall: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 15, fontWeight: FontWeight.normal),
+
+  labelMedium: GoogleFonts.openSans(color: appColorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.normal),
 );
 
 ThemeData buildLightAppTheme() {
@@ -49,9 +61,14 @@ ThemeData buildLightAppTheme() {
       centerTitle: false,
       titleTextStyle: TextStyle(
         color: appColorScheme.onSurface,
-        fontSize: 25,
-        fontWeight: FontWeight.normal,
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
       ),
+      iconTheme: IconThemeData(
+        color: appColorScheme.primary,
+        size: 25,
+      ),
+      // actionsPadding: EdgeInsets.symmetric(horizontal: 100),
     ),
 
     // Button themes
@@ -64,7 +81,23 @@ ThemeData buildLightAppTheme() {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
+        shadowColor: appColorScheme.shadow,
       ),
+    ),
+
+
+    //Icon Button
+    iconButtonTheme: IconButtonThemeData(
+      style: ButtonStyle(
+        iconColor: WidgetStateProperty.all(appColorScheme.primary),
+        shadowColor: WidgetStateProperty.all(appColorScheme.shadow),
+      )
+    ),
+
+    // Info Card Theme
+    cardTheme: CardThemeData(
+      color: appColorScheme.surfaceDim,
+      shadowColor: appColorScheme.shadow,
     ),
 
     // Input decoration theme
