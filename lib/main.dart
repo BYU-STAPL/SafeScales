@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:safe_scales/home.dart';
+import 'package:safe_scales/auth/auth_screen.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 
 void main() {
@@ -16,9 +16,7 @@ class MyApp extends StatelessWidget {
       title: 'Safe Scales',
       theme: buildLightAppTheme(),
       darkTheme: buildDarkAppTheme(),
-      home: const HomePage(title: "Safe Scales"),
+      home: const AuthScreen(),
     );
   }
 }
-
-
