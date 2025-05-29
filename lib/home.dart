@@ -1,17 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
+class HomeTab extends StatelessWidget {
+  const HomeTab({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +13,9 @@ class _HomePageState extends State<HomePage> {
     final Color settingsBg = const Color(0xFFE1E1E1);
     final double borderRadius = 24.0;
 
-    return Scaffold(
-      backgroundColor: greyBg,
-      body: SafeArea(
+    return Container(
+      color: greyBg,
+      child: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -188,52 +179,6 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-        ),
-      ),
-      // Modern Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: primary,
-          unselectedItemColor: Colors.blue[100],
-          showUnselectedLabels: true,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Learn'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.videogame_asset),
-              label: 'Play',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.extension),
-              label: 'Items',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.storefront),
-              label: 'Shop',
-            ),
-          ],
         ),
       ),
     );

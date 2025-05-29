@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:safe_scales/auth/auth_screen.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
+import 'home.dart';
+import 'my_dragons.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,13 +63,85 @@ class MyApp extends StatelessWidget {
           }
 
           if (snapshot.connectionState == ConnectionState.done) {
-            return const AuthScreen();
+            return const MainNavigation();
           }
 
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         },
+      ),
+    );
+  }
+}
+
+class MainNavigation extends StatefulWidget {
+  const MainNavigation({super.key});
+
+  @override
+  State<MainNavigation> createState() => _MainNavigationState();
+}
+
+class _MainNavigationState extends State<MainNavigation> {
+  int _selectedIndex = 0;
+
+  static final List<Widget> _pages = <Widget>[
+    HomeTab(),
+    MyDragonsPage(),
+    Center(child: Text('Items', style: TextStyle(fontSize: 24))),
+    Center(child: Text('Shop', style: TextStyle(fontSize: 24))),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final Color primary = Theme.of(context).colorScheme.primary;
+    final Color cardBg = Colors.white;
+    return Scaffold(
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: primary,
+          unselectedItemColor: Colors.blue[100],
+          showUnselectedLabels: true,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Learn'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.videogame_asset),
+              label: 'Play',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.extension),
+              label: 'Items',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.storefront),
+              label: 'Shop',
+            ),
+          ],
+        ),
       ),
     );
   }

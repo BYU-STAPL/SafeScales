@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/home.dart';
 import 'package:safe_scales/services/auth_service.dart';
+import '../main.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -49,9 +50,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const HomePage(title: "Safe Scales"),
-            ),
+            MaterialPageRoute(builder: (context) => const MainNavigation()),
           );
         }
       } catch (e) {
