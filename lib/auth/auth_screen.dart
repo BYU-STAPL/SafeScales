@@ -5,6 +5,8 @@ import 'package:safe_scales/services/auth_service.dart';
 import '../main.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 
+import '../main_navigation.dart';
+
 class AuthScreen extends StatefulWidget {
   final Function(bool) onThemeChanged;
   final Function(double) onFontSizeChanged;
@@ -69,6 +71,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     onFontSizeChanged: widget.onFontSizeChanged,
                     isDarkMode: widget.isDarkMode,
                     fontSize: widget.fontSize,
+                    initialIndex: 0, // Index 0 is the home tab
                   ),
             ),
           );

@@ -66,54 +66,13 @@ class _ShopPageState extends State<ShopPage> {
       children: [
         Scaffold(
           key: _scaffoldKey,
-          endDrawer: SettingsDrawer(
-            fontSize: widget.fontSize,
-            onFontSizeChanged: widget.onFontSizeChanged,
-            isDarkMode: widget.isDarkMode,
-            onDarkModeChanged: widget.onDarkModeChanged,
-            username: 'username',
-            email: 'your-email@email.com',
-            onTutorial: () {},
-            onHelp: () {},
-            onLogout: () {},
-          ),
-          backgroundColor: Theme.of(context).colorScheme.background,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           body: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Shop',
-                        style: GoogleFonts.poppins(
-                          fontSize: 28 * AppTheme.fontSizeScale,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: primary.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.menu,
-                            color: primary,
-                            size: 28 * AppTheme.fontSizeScale,
-                          ),
-                          onPressed: () {
-                            _scaffoldKey.currentState?.openEndDrawer();
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 8),
                   // Subtitle
                   Text(

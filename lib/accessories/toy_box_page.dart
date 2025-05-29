@@ -35,50 +35,13 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      endDrawer: SettingsDrawer(
-        fontSize: widget.fontSize,
-        onFontSizeChanged: widget.onFontSizeChanged,
-        isDarkMode: widget.isDarkMode,
-        onDarkModeChanged: widget.onDarkModeChanged,
-        username: 'username',
-        email: 'your-email@email.com',
-        onTutorial: () {},
-        onHelp: () {},
-        onLogout: () {},
-      ),
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Toy Box',
-                    style: GoogleFonts.poppins(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: primary.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: IconButton(
-                      icon: Icon(Icons.menu, color: primary, size: 28),
-                      onPressed: () {
-                        _scaffoldKey.currentState?.openEndDrawer();
-                      },
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 8),
               // Subtitle
               Text(
