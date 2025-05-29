@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/home.dart';
+import 'package:safe_scales/services/auth_service.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -11,10 +12,12 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   bool isLogin = true;
+  bool isLoading = false;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
+  final _authService = AuthService();
 
   @override
   void dispose() {
@@ -24,14 +27,46 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implement actual authentication
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const HomePage(title: "Safe Scales"),
-        ),
-      );
+      setState(() {
+        isLoading = true;
+      });
+
+      try {
+        if (isLogin) {
+          await _authService.signIn(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+        } else {
+          await _authService.signUp(
+            username: _nameController.text.trim(),
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+        }
+
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const HomePage(title: "Safe Scales"),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
     }
   }
 
@@ -137,16 +172,19 @@ class _AuthScreenState extends State<AuthScreen> {
                           width: double.infinity,
                           height: 50,
                           child: ElevatedButton(
-                            onPressed: _submitForm,
+                            onPressed: isLoading ? null : _submitForm,
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: Text(
-                              isLogin ? 'Login' : 'Sign Up',
-                              style: const TextStyle(fontSize: 16),
-                            ),
+                            child:
+                                isLoading
+                                    ? const CircularProgressIndicator()
+                                    : Text(
+                                      isLogin ? 'Login' : 'Sign Up',
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
                           ),
                         ),
                         const SizedBox(height: 16),
