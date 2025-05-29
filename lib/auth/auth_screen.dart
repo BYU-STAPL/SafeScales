@@ -3,9 +3,21 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/home.dart';
 import 'package:safe_scales/services/auth_service.dart';
 import '../main.dart';
+import 'package:safe_scales/themes/app_theme.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  final Function(bool) onThemeChanged;
+  final Function(double) onFontSizeChanged;
+  final bool isDarkMode;
+  final double fontSize;
+
+  const AuthScreen({
+    super.key,
+    required this.onThemeChanged,
+    required this.onFontSizeChanged,
+    required this.isDarkMode,
+    required this.fontSize,
+  });
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -50,7 +62,15 @@ class _AuthScreenState extends State<AuthScreen> {
 
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const MainNavigation()),
+            MaterialPageRoute(
+              builder:
+                  (context) => MainNavigation(
+                    onThemeChanged: widget.onThemeChanged,
+                    onFontSizeChanged: widget.onFontSizeChanged,
+                    isDarkMode: widget.isDarkMode,
+                    fontSize: widget.fontSize,
+                  ),
+            ),
           );
         }
       } catch (e) {
@@ -102,7 +122,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         Text(
                           isLogin ? 'Welcome Back!' : 'Create Account',
                           style: GoogleFonts.poppins(
-                            fontSize: 24,
+                            fontSize: 24 * AppTheme.fontSizeScale,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -112,7 +132,10 @@ class _AuthScreenState extends State<AuthScreen> {
                             controller: _nameController,
                             decoration: InputDecoration(
                               labelText: 'Full Name',
-                              prefixIcon: const Icon(Icons.person),
+                              prefixIcon: Icon(
+                                Icons.person,
+                                size: 24 * AppTheme.fontSizeScale,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -130,7 +153,10 @@ class _AuthScreenState extends State<AuthScreen> {
                           controller: _emailController,
                           decoration: InputDecoration(
                             labelText: 'Email',
-                            prefixIcon: const Icon(Icons.email),
+                            prefixIcon: Icon(
+                              Icons.email,
+                              size: 24 * AppTheme.fontSizeScale,
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -151,7 +177,10 @@ class _AuthScreenState extends State<AuthScreen> {
                           obscureText: true,
                           decoration: InputDecoration(
                             labelText: 'Password',
-                            prefixIcon: const Icon(Icons.lock),
+                            prefixIcon: Icon(
+                              Icons.lock,
+                              size: 24 * AppTheme.fontSizeScale,
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -182,7 +211,9 @@ class _AuthScreenState extends State<AuthScreen> {
                                     ? const CircularProgressIndicator()
                                     : Text(
                                       isLogin ? 'Login' : 'Sign Up',
-                                      style: const TextStyle(fontSize: 16),
+                                      style: TextStyle(
+                                        fontSize: 16 * AppTheme.fontSizeScale,
+                                      ),
                                     ),
                           ),
                         ),
@@ -197,6 +228,9 @@ class _AuthScreenState extends State<AuthScreen> {
                             isLogin
                                 ? 'Don\'t have an account? Sign Up'
                                 : 'Already have an account? Login',
+                            style: TextStyle(
+                              fontSize: 14 * AppTheme.fontSizeScale,
+                            ),
                           ),
                         ),
                       ],

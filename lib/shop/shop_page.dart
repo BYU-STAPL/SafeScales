@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:safe_scales/themes/app_theme.dart';
 
 class ShopPage extends StatefulWidget {
   const ShopPage({super.key});
@@ -65,9 +66,9 @@ class _ShopPageState extends State<ShopPage> {
                       Text(
                         'Shop',
                         style: GoogleFonts.poppins(
-                          fontSize: 28,
+                          fontSize: 28 * AppTheme.fontSizeScale,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       Container(
@@ -76,7 +77,11 @@ class _ShopPageState extends State<ShopPage> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: IconButton(
-                          icon: Icon(Icons.menu, color: primary, size: 28),
+                          icon: Icon(
+                            Icons.menu,
+                            color: primary,
+                            size: 28 * AppTheme.fontSizeScale,
+                          ),
                           onPressed: () {},
                         ),
                       ),
@@ -87,8 +92,8 @@ class _ShopPageState extends State<ShopPage> {
                   Text(
                     'Buy new accessories and environments for your dragons! Earn coins by playing and reviewing.',
                     style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      color: Colors.black54,
+                      fontSize: 16 * AppTheme.fontSizeScale,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       height: 1.4,
                     ),
                   ),
@@ -114,7 +119,7 @@ class _ShopPageState extends State<ShopPage> {
                               child: Text(
                                 'ACCESSORIES',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 15,
+                                  fontSize: 15 * AppTheme.fontSizeScale,
                                   fontWeight: FontWeight.w600,
                                   color:
                                       selectedTab == 0
@@ -146,7 +151,7 @@ class _ShopPageState extends State<ShopPage> {
                               child: Text(
                                 'ENVIRONMENTS',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 15,
+                                  fontSize: 15 * AppTheme.fontSizeScale,
                                   fontWeight: FontWeight.w600,
                                   color:
                                       selectedTab == 1
@@ -208,7 +213,7 @@ class _ShopPageState extends State<ShopPage> {
                               vertical: 14,
                             ),
                             textStyle: GoogleFonts.poppins(
-                              fontSize: 16,
+                              fontSize: 16 * AppTheme.fontSizeScale,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -249,7 +254,7 @@ class _ShopPageState extends State<ShopPage> {
                         Text(
                           'Select a completed lesson',
                           style: GoogleFonts.poppins(
-                            fontSize: 18,
+                            fontSize: 18 * AppTheme.fontSizeScale,
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
                           ),
@@ -285,7 +290,7 @@ class _ShopPageState extends State<ShopPage> {
                               child: Text(
                                 completedLessons[idx],
                                 style: GoogleFonts.poppins(
-                                  fontSize: 15,
+                                  fontSize: 15 * AppTheme.fontSizeScale,
                                   color: Colors.black87,
                                 ),
                               ),
@@ -300,7 +305,12 @@ class _ShopPageState extends State<ShopPage> {
                               onPressed:
                                   () =>
                                       setState(() => showLessonDialog = false),
-                              child: const Text('CANCEL'),
+                              child: Text(
+                                'CANCEL',
+                                style: TextStyle(
+                                  fontSize: 14 * AppTheme.fontSizeScale,
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 8),
                             ElevatedButton(
@@ -335,7 +345,7 @@ class _ShopPageState extends State<ShopPage> {
                                   vertical: 10,
                                 ),
                                 textStyle: GoogleFonts.poppins(
-                                  fontSize: 14,
+                                  fontSize: 14 * AppTheme.fontSizeScale,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -399,17 +409,17 @@ class _ShopItemCard extends StatelessWidget {
                     image != null
                         ? Image.network(
                           image!,
-                          width: 60,
-                          height: 60,
+                          width: 60 * AppTheme.fontSizeScale,
+                          height: 60 * AppTheme.fontSizeScale,
                           fit: BoxFit.cover,
                         )
                         : Container(
-                          width: 60,
-                          height: 60,
+                          width: 60 * AppTheme.fontSizeScale,
+                          height: 60 * AppTheme.fontSizeScale,
                           color: Colors.grey[300],
                           child: Icon(
                             Icons.shopping_bag,
-                            size: 32,
+                            size: 32 * AppTheme.fontSizeScale,
                             color: Colors.grey[600],
                           ),
                         ),
@@ -418,7 +428,7 @@ class _ShopItemCard extends StatelessWidget {
               Text(
                 name,
                 style: GoogleFonts.poppins(
-                  fontSize: 15,
+                  fontSize: 15 * AppTheme.fontSizeScale,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
                 ),

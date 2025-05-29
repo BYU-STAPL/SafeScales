@@ -21,7 +21,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
     final Color unselectedText = primary;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -37,7 +37,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                     style: GoogleFonts.poppins(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   Container(
@@ -58,7 +58,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                 'This is your current collection of\nitems and environments',
                 style: GoogleFonts.poppins(
                   fontSize: 16,
-                  color: Colors.black54,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 1.4,
                 ),
               ),
@@ -162,12 +162,15 @@ class _ToyBoxItemCard extends StatelessWidget {
         onTap: () {},
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black12, width: 1.2),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+              width: 1.2,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Theme.of(context).colorScheme.shadow.withOpacity(0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -190,11 +193,12 @@ class _ToyBoxItemCard extends StatelessWidget {
                         : Container(
                           width: 70,
                           height: 70,
-                          color: Colors.grey[300],
+                          color: Theme.of(context).colorScheme.surfaceVariant,
                           child: Icon(
                             Icons.image,
                             size: 40,
-                            color: Colors.grey[600],
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
               ),
@@ -204,7 +208,7 @@ class _ToyBoxItemCard extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black87,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,

@@ -79,23 +79,33 @@ class PreQuizResultScreen extends StatelessWidget {
             ),
 
             TextButton.icon(
-                onPressed: (){
-                  // Go to Dragon Page
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => HomePage(initialIndex: 1), // Index of desired tab
-                    ),
-                        (route) => false, // Remove all previous routes
-                  );
-                },
-                icon: FaIcon(FontAwesomeIcons.dragon),
-                label: Text(
-                  'Dragon',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.primary,
+              onPressed: () {
+                // Go to Dragon Page
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => HomePage(
+                          initialIndex: 1,
+                          isDarkMode:
+                              Theme.of(context).brightness == Brightness.dark,
+                          onDarkModeChanged:
+                              (value) {}, // This will be handled by the parent
+                          fontSize: 1.0, // Default font size
+                          onFontSizeChanged:
+                              (value) {}, // This will be handled by the parent
+                        ),
                   ),
+                  (route) => false,
+                );
+              },
+              icon: FaIcon(FontAwesomeIcons.dragon),
+              label: Text(
+                'Dragon',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.primary,
                 ),
+              ),
             ),
 
             Spacer(),

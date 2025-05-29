@@ -9,67 +9,54 @@ import 'package:safe_scales/shop/shop_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isDarkMode = false;
+  double _fontSize = 1.0;
+
+  void _updateTheme(bool isDarkMode) {
+    setState(() {
+      _isDarkMode = isDarkMode;
+    });
+  }
+
+  void _updateFontSize(double fontSize) {
+    setState(() {
+      _fontSize = fontSize;
+      AppTheme.setFontSizeScale(fontSize);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Safe Scales',
-      theme: buildLightAppTheme(),
-      darkTheme: buildDarkAppTheme(),
+      theme: AppTheme.buildLightAppTheme(),
+      darkTheme: AppTheme.buildDarkAppTheme(),
+      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
       home: FutureBuilder(
         future: SupabaseConfig.initialize(),
         builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
           if (snapshot.hasError) {
-            return Scaffold(
-              body: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        color: Colors.red,
-                        size: 60,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Error Initializing App',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Please make sure you have set up your .env file correctly with Supabase credentials.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Error: ${snapshot.error}',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(color: Colors.red),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
-
-          if (snapshot.connectionState == ConnectionState.done) {
-            return const MainNavigation();
-          }
-
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return AuthScreen(
+            onThemeChanged: _updateTheme,
+            onFontSizeChanged: _updateFontSize,
+            isDarkMode: _isDarkMode,
+            fontSize: _fontSize,
           );
         },
       ),
@@ -78,7 +65,18 @@ class MyApp extends StatelessWidget {
 }
 
 class MainNavigation extends StatefulWidget {
-  const MainNavigation({super.key});
+  final Function(bool) onThemeChanged;
+  final Function(double) onFontSizeChanged;
+  final bool isDarkMode;
+  final double fontSize;
+
+  const MainNavigation({
+    super.key,
+    required this.onThemeChanged,
+    required this.onFontSizeChanged,
+    required this.isDarkMode,
+    required this.fontSize,
+  });
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
@@ -87,17 +85,29 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
-  static final List<Widget> _pages = <Widget>[
-    HomeTab(),
-    MyDragonsPage(),
-    ToyBoxPage(),
-    ShopPage(),
-  ];
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = <Widget>[
+      HomePage(
+        initialIndex: 0,
+        isDarkMode: widget.isDarkMode,
+        onDarkModeChanged: widget.onThemeChanged,
+        fontSize: widget.fontSize,
+        onFontSizeChanged: widget.onFontSizeChanged,
+      ),
+      MyDragonsPage(),
+      ToyBoxPage(),
+      ShopPage(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     final Color primary = Theme.of(context).colorScheme.primary;
-    final Color cardBg = Colors.white;
+    final Color cardBg = Theme.of(context).colorScheme.surface;
     return Scaffold(
       body: _pages[_selectedIndex],
       bottomNavigationBar: Container(

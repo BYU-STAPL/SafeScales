@@ -7,14 +7,16 @@ class MyDragonsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color primary = Theme.of(context).colorScheme.primary;
-    final Color cardBg = Colors.white;
-    final Color cardShadow = Colors.black.withOpacity(0.07);
-    final Color lockedBg = const Color(0xFFF4F4F4);
+    final Color cardBg = Theme.of(context).colorScheme.surface;
+    final Color cardShadow = Theme.of(
+      context,
+    ).colorScheme.shadow.withOpacity(0.07);
+    final Color lockedBg = Theme.of(context).colorScheme.surfaceDim;
     final double borderRadius = 28.0;
     final double cardPadding = 24.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFB),
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -120,7 +122,10 @@ class MyDragonsPage extends StatelessWidget {
                                       'Name',
                                       style: GoogleFonts.poppins(
                                         fontSize: 14,
-                                        color: Colors.black45,
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -133,7 +138,10 @@ class MyDragonsPage extends StatelessWidget {
                                               style: GoogleFonts.poppins(
                                                 fontSize: 20,
                                                 fontWeight: FontWeight.w600,
-                                                color: Colors.black87,
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).colorScheme.onSurface,
                                               ),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -154,7 +162,10 @@ class MyDragonsPage extends StatelessWidget {
                                       'Species',
                                       style: GoogleFonts.poppins(
                                         fontSize: 14,
-                                        color: Colors.black45,
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
                                         decoration: TextDecoration.underline,
                                       ),
                                     ),
@@ -164,7 +175,10 @@ class MyDragonsPage extends StatelessWidget {
                                         'Bokaris',
                                         style: GoogleFonts.poppins(
                                           fontSize: 16,
-                                          color: Colors.black87,
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface,
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -177,7 +191,11 @@ class MyDragonsPage extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 18),
-                      Divider(color: Colors.grey[200], thickness: 1, height: 1),
+                      Divider(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                        thickness: 1,
+                        height: 1,
+                      ),
                       const SizedBox(height: 18),
                       _DragonInfoRow(label: 'Length', value: '2 feet'),
                       _DragonInfoRow(label: 'Weight', value: '25 pounds'),
@@ -262,7 +280,10 @@ class MyDragonsPage extends StatelessWidget {
                                       'Name',
                                       style: GoogleFonts.poppins(
                                         fontSize: 14,
-                                        color: Colors.black38,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant
+                                            .withOpacity(0.7),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -271,7 +292,10 @@ class MyDragonsPage extends StatelessWidget {
                                         '__________________',
                                         style: GoogleFonts.poppins(
                                           fontSize: 16,
-                                          color: Colors.black26,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant
+                                              .withOpacity(0.5),
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -284,7 +308,10 @@ class MyDragonsPage extends StatelessWidget {
                                       'Species',
                                       style: GoogleFonts.poppins(
                                         fontSize: 14,
-                                        color: Colors.black38,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant
+                                            .withOpacity(0.7),
                                         decoration: TextDecoration.underline,
                                       ),
                                     ),
@@ -294,7 +321,10 @@ class MyDragonsPage extends StatelessWidget {
                                         '__________________',
                                         style: GoogleFonts.poppins(
                                           fontSize: 16,
-                                          color: Colors.black26,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant
+                                              .withOpacity(0.5),
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -307,7 +337,11 @@ class MyDragonsPage extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 18),
-                      Divider(color: Colors.grey[300], thickness: 1, height: 1),
+                      Divider(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                        thickness: 1,
+                        height: 1,
+                      ),
                       const SizedBox(height: 18),
                       _DragonInfoRow(
                         label: 'Length',
@@ -363,7 +397,10 @@ class _DragonInfoRow extends StatelessWidget {
             flex: 2,
             child: Text(
               '$label:',
-              style: GoogleFonts.poppins(fontSize: 15, color: Colors.black54),
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -374,7 +411,7 @@ class _DragonInfoRow extends StatelessWidget {
               value,
               style: GoogleFonts.poppins(
                 fontSize: 15,
-                color: valueColor ?? Colors.black87,
+                color: valueColor ?? Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w500,
               ),
               maxLines: 2,
