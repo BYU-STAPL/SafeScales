@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/themes/app_theme.dart';
+import 'package:safe_scales/settings_drawer.dart';
 
 class ShopPage extends StatefulWidget {
-  const ShopPage({super.key});
+  final bool isDarkMode;
+  final ValueChanged<bool> onDarkModeChanged;
+  final double fontSize;
+  final ValueChanged<double> onFontSizeChanged;
+
+  const ShopPage({
+    super.key,
+    required this.isDarkMode,
+    required this.onDarkModeChanged,
+    required this.fontSize,
+    required this.onFontSizeChanged,
+  });
 
   @override
   State<ShopPage> createState() => _ShopPageState();
 }
 
 class _ShopPageState extends State<ShopPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int selectedTab = 0; // 0 = Accessories, 1 = Environments
   int? selectedIndex; // Track selected item index
   int? selectedLessonIndex; // Track selected lesson in popup
@@ -52,7 +65,19 @@ class _ShopPageState extends State<ShopPage> {
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: Colors.white,
+          key: _scaffoldKey,
+          endDrawer: SettingsDrawer(
+            fontSize: widget.fontSize,
+            onFontSizeChanged: widget.onFontSizeChanged,
+            isDarkMode: widget.isDarkMode,
+            onDarkModeChanged: widget.onDarkModeChanged,
+            username: 'username',
+            email: 'your-email@email.com',
+            onTutorial: () {},
+            onHelp: () {},
+            onLogout: () {},
+          ),
+          backgroundColor: Theme.of(context).colorScheme.background,
           body: SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -82,7 +107,9 @@ class _ShopPageState extends State<ShopPage> {
                             color: primary,
                             size: 28 * AppTheme.fontSizeScale,
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            _scaffoldKey.currentState?.openEndDrawer();
+                          },
                         ),
                       ),
                     ],

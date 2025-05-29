@@ -1,14 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:safe_scales/settings_drawer.dart';
 
 class ToyBoxPage extends StatefulWidget {
-  const ToyBoxPage({super.key});
+  final bool isDarkMode;
+  final ValueChanged<bool> onDarkModeChanged;
+  final double fontSize;
+  final ValueChanged<double> onFontSizeChanged;
+
+  const ToyBoxPage({
+    super.key,
+    required this.isDarkMode,
+    required this.onDarkModeChanged,
+    required this.fontSize,
+    required this.onFontSizeChanged,
+  });
 
   @override
   State<ToyBoxPage> createState() => _ToyBoxPageState();
 }
 
 class _ToyBoxPageState extends State<ToyBoxPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int selectedTab = 1; // 0 = Accessories, 1 = Environments
 
   @override
@@ -21,6 +34,18 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
     final Color unselectedText = primary;
 
     return Scaffold(
+      key: _scaffoldKey,
+      endDrawer: SettingsDrawer(
+        fontSize: widget.fontSize,
+        onFontSizeChanged: widget.onFontSizeChanged,
+        isDarkMode: widget.isDarkMode,
+        onDarkModeChanged: widget.onDarkModeChanged,
+        username: 'username',
+        email: 'your-email@email.com',
+        onTutorial: () {},
+        onHelp: () {},
+        onLogout: () {},
+      ),
       backgroundColor: Theme.of(context).colorScheme.background,
       body: SafeArea(
         child: Padding(
@@ -47,7 +72,9 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                     ),
                     child: IconButton(
                       icon: Icon(Icons.menu, color: primary, size: 28),
-                      onPressed: () {},
+                      onPressed: () {
+                        _scaffoldKey.currentState?.openEndDrawer();
+                      },
                     ),
                   ),
                 ],

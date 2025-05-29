@@ -42,9 +42,26 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
   }
 
   @override
+  void didUpdateWidget(SettingsDrawer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isDarkMode != widget.isDarkMode) {
+      setState(() {
+        _isDarkMode = widget.isDarkMode;
+      });
+    }
+    if (oldWidget.fontSize != widget.fontSize) {
+      setState(() {
+        _fontSize = widget.fontSize;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Drawer(
       elevation: 16,
+      backgroundColor: colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topRight: Radius.circular(24),
@@ -58,28 +75,41 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Name',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                   letterSpacing: 1.1,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 widget.username,
-                style: const TextStyle(color: Colors.grey, fontSize: 16),
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 16,
+                ),
               ),
               Text(
                 widget.email,
-                style: const TextStyle(color: Colors.grey, fontSize: 16),
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 16,
+                ),
               ),
-              const Divider(height: 32),
+              Divider(height: 32, color: colorScheme.outlineVariant),
               // Font size control
               Row(
                 children: [
-                  const Text('A', style: TextStyle(fontSize: 16)),
+                  Text(
+                    'A',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
                   Expanded(
                     child: Slider(
                       value: _fontSize,
@@ -93,10 +123,16 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
                         AppTheme.setFontSizeScale(value);
                         widget.onFontSizeChanged(value);
                       },
-                      activeColor: Colors.blue,
+                      activeColor: colorScheme.primary,
                     ),
                   ),
-                  const Text('A', style: TextStyle(fontSize: 28)),
+                  Text(
+                    'A',
+                    style: TextStyle(
+                      fontSize: 28,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -107,7 +143,7 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
                   horizontal: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  color: colorScheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -123,7 +159,7 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const Spacer(),
@@ -147,32 +183,41 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
               // Tutorial
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(
+                leading: Icon(
                   FontAwesomeIcons.graduationCap,
-                  color: Colors.lightBlue,
+                  color: colorScheme.primary,
                 ),
-                title: const Text('Tutorial', style: TextStyle(fontSize: 18)),
+                title: Text(
+                  'Tutorial',
+                  style: TextStyle(fontSize: 18, color: colorScheme.onSurface),
+                ),
                 onTap: widget.onTutorial,
               ),
               // Help
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(
+                leading: Icon(
                   FontAwesomeIcons.circleQuestion,
-                  color: Colors.lightBlue,
+                  color: colorScheme.primary,
                 ),
-                title: const Text('Help', style: TextStyle(fontSize: 18)),
+                title: Text(
+                  'Help',
+                  style: TextStyle(fontSize: 18, color: colorScheme.onSurface),
+                ),
                 onTap: widget.onHelp,
               ),
               const Spacer(),
               // Logout
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(
+                leading: Icon(
                   FontAwesomeIcons.rightFromBracket,
-                  color: Colors.red,
+                  color: colorScheme.error,
                 ),
-                title: const Text('Logout', style: TextStyle(fontSize: 18)),
+                title: Text(
+                  'Logout',
+                  style: TextStyle(fontSize: 18, color: colorScheme.error),
+                ),
                 onTap: widget.onLogout,
               ),
             ],

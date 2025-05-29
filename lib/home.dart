@@ -49,8 +49,22 @@ class _HomePageState extends State<HomePage> {
         onFontSizeChanged: widget.onFontSizeChanged,
       ),
       Center(child: DragonPage()),
-      Center(child: ToyBoxPage()),
-      Center(child: ShopPage()),
+      Center(
+        child: ToyBoxPage(
+          isDarkMode: widget.isDarkMode,
+          onDarkModeChanged: widget.onDarkModeChanged,
+          fontSize: widget.fontSize,
+          onFontSizeChanged: widget.onFontSizeChanged,
+        ),
+      ),
+      Center(
+        child: ShopPage(
+          isDarkMode: widget.isDarkMode,
+          onDarkModeChanged: widget.onDarkModeChanged,
+          fontSize: widget.fontSize,
+          onFontSizeChanged: widget.onFontSizeChanged,
+        ),
+      ),
     ];
   }
 

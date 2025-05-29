@@ -98,9 +98,24 @@ class _MainNavigationState extends State<MainNavigation> {
         fontSize: widget.fontSize,
         onFontSizeChanged: widget.onFontSizeChanged,
       ),
-      MyDragonsPage(),
-      ToyBoxPage(),
-      ShopPage(),
+      MyDragonsPage(
+        isDarkMode: widget.isDarkMode,
+        onDarkModeChanged: widget.onThemeChanged,
+        fontSize: widget.fontSize,
+        onFontSizeChanged: widget.onFontSizeChanged,
+      ),
+      ToyBoxPage(
+        isDarkMode: widget.isDarkMode,
+        onDarkModeChanged: widget.onThemeChanged,
+        fontSize: widget.fontSize,
+        onFontSizeChanged: widget.onFontSizeChanged,
+      ),
+      ShopPage(
+        isDarkMode: widget.isDarkMode,
+        onDarkModeChanged: widget.onThemeChanged,
+        fontSize: widget.fontSize,
+        onFontSizeChanged: widget.onFontSizeChanged,
+      ),
     ];
   }
 
