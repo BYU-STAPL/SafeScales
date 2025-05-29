@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:safe_scales/home.dart';
 import 'package:safe_scales/question/question.dart';
 
 class PreQuizResultScreen extends StatelessWidget {
@@ -71,18 +73,25 @@ class PreQuizResultScreen extends StatelessWidget {
 
             SizedBox(height: 25),
             Text(
-              'You can give your new dragon a name on the Play screen.',
+              'You can give your new dragon a name on the Dragon screen.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium,
             ),
 
             TextButton.icon(
                 onPressed: (){
-                  // TODO: Link to play screen, once that's built
+                  // Go to Dragon Page
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => HomePage(initialIndex: 1), // Index of desired tab
+                    ),
+                        (route) => false, // Remove all previous routes
+                  );
                 },
-                icon: Icon(Icons.gamepad_outlined),
+                icon: FaIcon(FontAwesomeIcons.dragon),
                 label: Text(
-                  'Play',
+                  'Dragon',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.primary,
                   ),

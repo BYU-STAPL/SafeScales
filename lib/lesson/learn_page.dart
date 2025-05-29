@@ -56,6 +56,10 @@ class _LearnPageState extends State<LearnPage> {
       body: Center(
         child: Column(
           children: [
+            Text("All Lessons will be added here"),
+
+            SizedBox(height: 50),
+
             ElevatedButton(onPressed: (){
               Navigator.push(
                 context,

@@ -6,7 +6,9 @@ import 'package:safe_scales/lesson/learn_page.dart';
 import 'package:safe_scales/shop/shop_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, required this.initialIndex});
+
+  final int initialIndex;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -44,6 +46,13 @@ class _HomePageState extends State<HomePage> {
       default:
         return "Safe Scales";
     }
+  }
+
+  @override
+  void initState() {
+    setState(() {
+      _selectedIndex = widget.initialIndex;
+    });
   }
 
   @override
