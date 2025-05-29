@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:safe_scales/config/supabase_config.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 
 class AuthService {
   final supabase = SupabaseConfig.client;
@@ -23,8 +25,7 @@ class AuthService {
           'id': authResponse.user!.id,
           'Username': username,
           'Email': email,
-          'password':
-              password, // Note: In a production app, you should never store plain passwords
+          'password': hashPassword(password),
         });
       }
 
@@ -40,7 +41,7 @@ class AuthService {
             .from('Users')
             .select()
             .eq('Email', email)
-            .eq('password', password) // In production, hash and compare!
+            .eq('password', hashPassword(password)) // Compare hashed password
             .single();
 
     return response != null;
@@ -51,4 +52,10 @@ class AuthService {
   }
 
   User? get currentUser => supabase.auth.currentUser;
+
+  String hashPassword(String password) {
+    final bytes = utf8.encode(password);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
 }
