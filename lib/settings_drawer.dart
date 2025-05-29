@@ -59,6 +59,7 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+
     return Drawer(
       elevation: 16,
       backgroundColor: colorScheme.surface,

@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:safe_scales/accessories/toy_box_page.dart';
-import 'package:safe_scales/dragons/dragon_page.dart';
-import 'package:safe_scales/lesson/learn_page.dart';
-import 'package:safe_scales/shop/shop_page.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:safe_scales/settings_drawer.dart';
 import 'package:safe_scales/themes/app_theme.dart';
-import 'package:safe_scales/activities/activity_page.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 
+import 'lesson/lesson_page.dart';
+
 class HomePage extends StatefulWidget {
-  final int initialIndex;
   final bool isDarkMode;
   final ValueChanged<bool> onDarkModeChanged;
   final double fontSize;
@@ -19,7 +13,6 @@ class HomePage extends StatefulWidget {
 
   const HomePage({
     super.key,
-    required this.initialIndex,
     required this.isDarkMode,
     required this.onDarkModeChanged,
     required this.fontSize,
@@ -31,102 +24,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  late int _selectedIndex;
-
-  late final List<Widget> _pages;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedIndex = widget.initialIndex;
-    _pages = [
-      HomeTab(
-        isDarkMode: widget.isDarkMode,
-        onDarkModeChanged: widget.onDarkModeChanged,
-        fontSize: widget.fontSize,
-        onFontSizeChanged: widget.onFontSizeChanged,
-      ),
-      Center(child: DragonPage()),
-      Center(
-        child: ToyBoxPage(
-          isDarkMode: widget.isDarkMode,
-          onDarkModeChanged: widget.onDarkModeChanged,
-          fontSize: widget.fontSize,
-          onFontSizeChanged: widget.onFontSizeChanged,
-        ),
-      ),
-      Center(
-        child: ShopPage(
-          isDarkMode: widget.isDarkMode,
-          onDarkModeChanged: widget.onDarkModeChanged,
-          fontSize: widget.fontSize,
-          onFontSizeChanged: widget.onFontSizeChanged,
-        ),
-      ),
-    ];
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  String _getAppBarTitle(int index) {
-    switch (index) {
-      case 0:
-        return 'Learn';
-      case 1:
-        return 'Play';
-      case 2:
-        return 'Items';
-      case 3:
-        return 'Shop';
-      default:
-        return '';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    ThemeData theme = Theme.of(context);
-
-    return Scaffold(
-      key: _scaffoldKey,
-      appBar: AppBar(
-        title: Text(
-          _getAppBarTitle(_selectedIndex),
-          style: theme.appBarTheme.titleTextStyle?.copyWith(
-            fontSize: 25 * AppTheme.fontSizeScale,
-            fontWeight: FontWeight.normal,
-          ),
-        ),
-      ),
-      body: _pages[_selectedIndex],
-    );
-  }
-}
-
-class HomeTab extends StatefulWidget {
-  final bool isDarkMode;
-  final ValueChanged<bool> onDarkModeChanged;
-  final double fontSize;
-  final ValueChanged<double> onFontSizeChanged;
-
-  const HomeTab({
-    super.key,
-    required this.isDarkMode,
-    required this.onDarkModeChanged,
-    required this.fontSize,
-    required this.onFontSizeChanged,
-  });
-
-  @override
-  State<HomeTab> createState() => _HomeTabState();
-}
-
-class _HomeTabState extends State<HomeTab> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final QuizService _quizService = QuizService();
 
@@ -188,20 +85,9 @@ class _HomeTabState extends State<HomeTab> {
 
     return Scaffold(
       key: _scaffoldKey,
-      endDrawer: SettingsDrawer(
-        isDarkMode: widget.isDarkMode,
-        onDarkModeChanged: widget.onDarkModeChanged,
-        fontSize: widget.fontSize,
-        onFontSizeChanged: widget.onFontSizeChanged,
-        username: 'User',
-        email: 'user@example.com',
-        onTutorial: () {},
-        onHelp: () {},
-        onLogout: () {},
-      ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -217,7 +103,7 @@ class _HomeTabState extends State<HomeTab> {
                         context,
                         MaterialPageRoute(
                           builder:
-                              (context) => ActivityPage(topic: currentTopic),
+                              (context) => LessonPage(topic: currentTopic),
                         ),
                       );
                     }
@@ -365,7 +251,7 @@ class _HomeTabState extends State<HomeTab> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ActivityPage(topic: topic),
+                              builder: (context) => LessonPage(topic: topic),
                             ),
                           );
                         }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:safe_scales/home.dart';
 import 'package:safe_scales/question/question.dart';
+
+import '../main_navigation.dart';
 
 class PreQuizResultScreen extends StatelessWidget {
   final QuestionSet questionSet;
@@ -85,15 +86,15 @@ class PreQuizResultScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder:
-                        (context) => HomePage(
-                          initialIndex: 1,
+                        (context) => MainNavigation(
                           isDarkMode:
                               Theme.of(context).brightness == Brightness.dark,
-                          onDarkModeChanged:
+                          onThemeChanged:
                               (value) {}, // This will be handled by the parent
                           fontSize: 1.0, // Default font size
                           onFontSizeChanged:
                               (value) {}, // This will be handled by the parent
+                          initialIndex: 1, // index 1 is the dragon page
                         ),
                   ),
                   (route) => false,
