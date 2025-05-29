@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:safe_scales/pre_quiz/pre_quiz_screen.dart';
-import 'package:safe_scales/question/question.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:safe_scales/accessories/toy_box_page.dart';
+import 'package:safe_scales/dragons/dragon_page.dart';
+import 'package:safe_scales/lesson/learn_page.dart';
+import 'package:safe_scales/shop/shop_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, required this.title});
-
-  final String title;
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -13,71 +14,82 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  int _selectedIndex = 0;
+
+  final List<Widget> _pages = [
+    Center(child: LearnPage()),
+    Center(child: DragonPage()),
+    Center(child: ToyBoxPage()),
+    Center(child: ShopPage()),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  String _getAppBarTitle(int index) {
+    switch (index) {
+      case 0:
+        return "Safe Scales";
+      case 1:
+        return "My Dragons";
+      case 2:
+        return "Toy Box";
+      case 3:
+        return "Shop";
+      default:
+        return "Safe Scales";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
 
     ThemeData theme = Theme.of(context);
 
-    //TODO: Remove later after testing
-    Question singleQ = Question.singleAnswer(
-      id: 'q1',
-      questionText: 'What color is the sky?',
-      options: ['Red', 'Blue', 'Green', 'Yellow'],
-      correctAnswerIndex: 1,
-      explanation: 'The Sky is blue', // Blue is at index 1
-    );
-
-    Question singleQ2 = Question.singleAnswer(
-      id: 'q2',
-      questionText: 'What season are oranges ripe?',
-      options: ['Spring', 'Summer', 'Fall', 'Winter'],
-      correctAnswerIndex: 3,
-      explanation: 'Oranges taste best during the winter',
-    );
-
-    Question multipleQ = Question.multipleAnswer(
-      id: 'q3',
-      text: "At your school, there is a security guard named Quinn. You have never met or talked to Quinn, but some of your school mates have.",
-      questionText: 'What social tag(s) apply to Quinn?',
-      options: ['Acquaintance', 'Community Helper', 'Stranger', 'Work Peer', ],
-      correctAnswerIndices: [1, 2,],
-      explanation: 'Quinn serves the community, but don\'t know him', // Apple, Banana, Orange
-    );
-
-    QuestionSet questionSet = QuestionSet(
-      id: "qset0",
-      title: "Test Question Set",
-      description: "This is a test",
-      activityType: ActivityType.preQuiz,
-      subject: "test subject",
-      questions: [singleQ, multipleQ],
-    );
-
-
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text(
-            widget.title,
+          _getAppBarTitle(_selectedIndex),
           style: theme.appBarTheme.titleTextStyle?.copyWith(
             fontSize: 25,
             fontWeight: FontWeight.normal,
           ),
         ),
       ),
-      body: Center(
-        child: Column(
-          children: [
-            ElevatedButton(onPressed: (){
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => PreQuizScreen(questionSet: questionSet)
-                ),
-              );
-            }, child: Text("Testing Pre-quiz")),
-          ],
-        ),
-      ),// This trailing comma makes auto-formatting nicer for build methods.
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        // iconSize: 20, // Reduce the icon size
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: theme.colorScheme.primary,     // Active color
+        unselectedItemColor: theme.colorScheme.secondary,   // Inactive color
+        items: const [
+          BottomNavigationBarItem(
+            icon: FaIcon(FontAwesomeIcons.graduationCap,),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: FaIcon(FontAwesomeIcons.dragon,),
+            label: 'Dragons',
+          ),
+          BottomNavigationBarItem(
+            icon: FaIcon(FontAwesomeIcons.boxesStacked,), //TODO: MAYBE this would be a fun icon FaIcon(FontAwesomeIcons.parachuteBox,),
+            label: 'Items',
+          ),
+          BottomNavigationBarItem(
+            icon: FaIcon(FontAwesomeIcons.shop,),
+            label: 'Shop',
+          ),
+        ],
+      ),
     );
   }
 }

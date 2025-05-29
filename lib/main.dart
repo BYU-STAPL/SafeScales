@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
       title: 'Safe Scales',
       theme: buildLightAppTheme(),
       darkTheme: buildDarkAppTheme(),
-      home: const HomePage(title: "Safe Scales"),
+      home: const HomePage(),
     );
   }
 }
