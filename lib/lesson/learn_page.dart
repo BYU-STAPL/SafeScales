@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/pre_quiz/pre_quiz_screen.dart';
 import 'package:safe_scales/question/question.dart';
+import 'package:safe_scales/quiz/post_quiz_screen.dart';
 
 class LearnPage extends StatefulWidget {
   const LearnPage({super.key});
@@ -51,6 +52,15 @@ class _LearnPageState extends State<LearnPage> {
       questions: [singleQ, multipleQ],
     );
 
+    QuestionSet questionSet2 = QuestionSet(
+      id: "qset1",
+      title: "Test Post Quiz",
+      description: "This is a post-test",
+      activityType: ActivityType.postQuiz,
+      subject: "test subject",
+      questions: [singleQ],
+    );
+
 
     return Scaffold(
       body: Center(
@@ -60,14 +70,31 @@ class _LearnPageState extends State<LearnPage> {
 
             SizedBox(height: 50),
 
-            ElevatedButton(onPressed: (){
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => PreQuizScreen(questionSet: questionSet)
-                ),
-              );
-            }, child: Text("Testing Pre-quiz")),
+            ElevatedButton(
+              onPressed: (){
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => PreQuizScreen(questionSet: questionSet)
+                    ),
+                  );
+                },
+              child: Text("Testing Pre-quiz"),
+            ),
+
+            SizedBox(height: 50),
+
+            ElevatedButton(
+              onPressed: (){
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => PostQuizScreen(questionSet: questionSet2)
+                  ),
+                );
+              },
+              child: Text("Testing Post-quiz"),
+            ),
           ],
         ),
       ),// This trailing comma makes auto-formatting nicer for build methods.
