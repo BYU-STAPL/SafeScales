@@ -5,6 +5,7 @@ import 'package:safe_scales/config/supabase_config.dart';
 import 'home.dart';
 import 'my_dragons.dart';
 import 'package:safe_scales/accessories/toy_box_page.dart';
+import 'package:safe_scales/shop/shop_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -90,7 +91,7 @@ class _MainNavigationState extends State<MainNavigation> {
     HomeTab(),
     MyDragonsPage(),
     ToyBoxPage(),
-    Center(child: Text('Shop', style: TextStyle(fontSize: 24))),
+    ShopPage(),
   ];
 
   @override
