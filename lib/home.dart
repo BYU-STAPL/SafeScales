@@ -31,7 +31,6 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _loadQuizzes();
-    _loadUsername();
   }
 
   @override
@@ -39,20 +38,6 @@ class _HomePageState extends State<HomePage> {
     super.didChangeDependencies();
     // Reload data when returning to this page
     _loadQuizzes();
-  }
-
-  Future<void> _loadUsername() async {
-    try {
-      final username = await _userState.getUserName();
-      print('Loaded username in home page: $username'); // Debug log
-      if (mounted) {
-        setState(() {
-          _username = username;
-        });
-      }
-    } catch (e) {
-      print('Error loading username in home page: $e');
-    }
   }
 
   Future<void> _loadQuizzes() async {
@@ -135,20 +120,23 @@ class _HomePageState extends State<HomePage> {
             // Calculate progress
             double progress = 0;
             if (hasPreQuiz && hasPostQuiz) {
-              progress = (preQuizScore + postQuizScore) / 2;
-              print('Both quizzes completed. Progress: $progress');
+              // Each quiz contributes up to 50% to the total progress
+              progress = (preQuizScore / 2) + (postQuizScore / 2);
+              print(
+                'Both quizzes completed. Pre-quiz: ${preQuizScore / 2}%, Post-quiz: ${postQuizScore / 2}%, Total: $progress%',
+              );
             } else if (hasPreQuiz) {
-              progress = preQuizScore;
-              print('Only pre-quiz completed. Progress: $progress');
+              progress = preQuizScore / 2; // Pre-quiz contributes up to 50%
+              print('Only pre-quiz completed. Progress: $progress%');
             } else if (hasPostQuiz) {
-              progress = postQuizScore;
-              print('Only post-quiz completed. Progress: $progress');
+              progress = postQuizScore / 2; // Post-quiz contributes up to 50%
+              print('Only post-quiz completed. Progress: $progress%');
             } else {
               print('No quizzes completed for this topic');
             }
 
             _topicProgress[topic] = progress;
-            print('Final progress for $topic: $progress');
+            print('Final progress for $topic: $progress%');
           } else {
             print('No quiz data found in user record');
             _topicProgress[topic] = 0;
@@ -206,66 +194,29 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Welcome Section
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [primary.withOpacity(0.9), primary],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(borderRadius),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primary.withOpacity(0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome, ${_username ?? 'User'}!',
-                        style: GoogleFonts.poppins(
-                          fontSize: 24 * AppTheme.fontSizeScale,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Ready to learn something new today?',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16 * AppTheme.fontSizeScale,
-                          color: Colors.white.withOpacity(0.9),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
                 // Continue Learning Card
                 if (_topics.isNotEmpty)
                   GestureDetector(
                     onTap: () {
-                      // Navigate to the current/next activity
-                      final currentTopic = _topics[0];
-                      final quizzes = _quizzesByTopic[currentTopic] ?? [];
-                      if (quizzes.isNotEmpty) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => LessonPage(
-                                    topic: currentTopic,
-                                ),
-                          ),
-                        );
+                      // Find the latest incomplete activity
+                      String? targetTopic;
+                      for (var topic in _topics) {
+                        final progress = _topicProgress[topic] ?? 0.0;
+                        if (progress < 100) {
+                          targetTopic = topic;
+                          break;
+                        }
                       }
+
+                      // If all activities are complete, go to the last topic
+                      targetTopic ??= _topics.last;
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LessonPage(topic: targetTopic!),
+                        ),
+                      );
                     },
                     child: Container(
                       width: double.infinity,
@@ -300,33 +251,71 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text(
-                                _topics[0].toUpperCase(),
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14 * AppTheme.fontSizeScale,
-                                  color: Colors.white.withOpacity(0.9),
-                                  letterSpacing: 1.2,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              Builder(
+                                builder: (context) {
+                                  // Find the target topic
+                                  String? targetTopic;
+                                  for (var topic in _topics) {
+                                    final progress =
+                                        _topicProgress[topic] ?? 0.0;
+                                    if (progress < 100) {
+                                      targetTopic = topic;
+                                      break;
+                                    }
+                                  }
+                                  targetTopic ??= _topics.last;
+
+                                  return Text(
+                                    targetTopic.toUpperCase(),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14 * AppTheme.fontSizeScale,
+                                      color: Colors.white.withOpacity(0.9),
+                                      letterSpacing: 1.2,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  );
+                                },
                               ),
                               const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  '30% Complete',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12 * AppTheme.fontSizeScale,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+                              Builder(
+                                builder: (context) {
+                                  // Find the target topic and its progress
+                                  String? targetTopic;
+                                  double progress = 0;
+                                  for (var topic in _topics) {
+                                    final topicProgress =
+                                        _topicProgress[topic] ?? 0.0;
+                                    if (topicProgress < 100) {
+                                      targetTopic = topic;
+                                      progress = topicProgress;
+                                      break;
+                                    }
+                                  }
+                                  if (targetTopic == null) {
+                                    targetTopic = _topics.last;
+                                    progress =
+                                        _topicProgress[targetTopic] ?? 0.0;
+                                  }
+
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${progress.toStringAsFixed(0)}% Complete',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12 * AppTheme.fontSizeScale,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),
