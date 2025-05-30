@@ -8,17 +8,17 @@ import 'package:safe_scales/themes/app_theme.dart';
 import '../main_navigation.dart';
 
 class AuthScreen extends StatefulWidget {
-  final Function(bool) onThemeChanged;
-  final Function(double) onFontSizeChanged;
-  final bool isDarkMode;
-  final double fontSize;
+  // final Function(bool) onDarkModeChanged;
+  // final Function(double) onFontSizeChanged;
+  // final bool isDarkMode;
+  // final double fontSize;
 
   const AuthScreen({
     super.key,
-    required this.onThemeChanged,
-    required this.onFontSizeChanged,
-    required this.isDarkMode,
-    required this.fontSize,
+    // required this.onDarkModeChanged,
+    // required this.onFontSizeChanged,
+    // required this.isDarkMode,
+    // required this.fontSize,
   });
 
   @override
@@ -82,10 +82,10 @@ class _AuthScreenState extends State<AuthScreen> {
             MaterialPageRoute(
               builder:
                   (context) => MainNavigation(
-                    onThemeChanged: widget.onThemeChanged,
-                    onFontSizeChanged: widget.onFontSizeChanged,
-                    isDarkMode: widget.isDarkMode,
-                    fontSize: widget.fontSize,
+                    // onDarkModeChanged: widget.onDarkModeChanged,
+                    // onFontSizeChanged: widget.onFontSizeChanged,
+                    // isDarkMode: widget.isDarkMode,
+                    // fontSize: widget.fontSize,
                     initialIndex: 0,
                   ),
             ),

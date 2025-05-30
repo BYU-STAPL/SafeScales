@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:safe_scales/settings_drawer.dart';
 import 'package:safe_scales/shop/shop_page.dart';
 import 'package:safe_scales/services/user_state_service.dart';
+import 'package:safe_scales/themes/theme_provider.dart';
 
 import 'accessories/toy_box_page.dart';
 import 'dev_testing_page.dart';
@@ -10,19 +11,19 @@ import 'dragons/my_dragons.dart';
 import 'home.dart';
 
 class MainNavigation extends StatefulWidget {
-  final Function(bool) onThemeChanged;
-  final Function(double) onFontSizeChanged;
-  final bool isDarkMode;
-  final double fontSize;
+  // final Function(bool) onDarkModeChanged;
+  // final Function(double) onFontSizeChanged;
+  // final bool isDarkMode;
+  // final double fontSize;
 
   final int initialIndex;
 
   const MainNavigation({
     super.key,
-    required this.onThemeChanged,
-    required this.onFontSizeChanged,
-    required this.isDarkMode,
-    required this.fontSize,
+    // required this.onDarkModeChanged,
+    // required this.onFontSizeChanged,
+    // required this.isDarkMode,
+    // required this.fontSize,
     required this.initialIndex,
   });
 
@@ -46,34 +47,34 @@ class _MainNavigationState extends State<MainNavigation> {
 
     _pages = <Widget>[
       HomePage(
-        isDarkMode: widget.isDarkMode,
-        onDarkModeChanged: widget.onThemeChanged,
-        fontSize: widget.fontSize,
-        onFontSizeChanged: widget.onFontSizeChanged,
+        // isDarkMode: widget.isDarkMode,
+        // onDarkModeChanged: widget.onDarkModeChanged,
+        // fontSize: widget.fontSize,
+        // onFontSizeChanged: widget.onFontSizeChanged,
       ),
       MyDragonsPage(
-        isDarkMode: widget.isDarkMode,
-        onDarkModeChanged: widget.onThemeChanged,
-        fontSize: widget.fontSize,
-        onFontSizeChanged: widget.onFontSizeChanged,
+        // isDarkMode: widget.isDarkMode,
+        // onDarkModeChanged: widget.onDarkModeChanged,
+        // fontSize: widget.fontSize,
+        // onFontSizeChanged: widget.onFontSizeChanged,
       ),
       ToyBoxPage(
-        isDarkMode: widget.isDarkMode,
-        onDarkModeChanged: widget.onThemeChanged,
-        fontSize: widget.fontSize,
-        onFontSizeChanged: widget.onFontSizeChanged,
+        // isDarkMode: widget.isDarkMode,
+        // onDarkModeChanged: widget.onDarkModeChanged,
+        // fontSize: widget.fontSize,
+        // onFontSizeChanged: widget.onFontSizeChanged,
       ),
       ShopPage(
-        isDarkMode: widget.isDarkMode,
-        onDarkModeChanged: widget.onThemeChanged,
-        fontSize: widget.fontSize,
-        onFontSizeChanged: widget.onFontSizeChanged,
+        // isDarkMode: widget.isDarkMode,
+        // onDarkModeChanged: widget.onDarkModeChanged,
+        // fontSize: widget.fontSize,
+        // onFontSizeChanged: widget.onFontSizeChanged,
       ),
       DevTestingPage(
-        isDarkMode: widget.isDarkMode,
-        onDarkModeChanged: widget.onThemeChanged,
-        fontSize: widget.fontSize,
-        onFontSizeChanged: widget.onFontSizeChanged,
+        // isDarkMode: widget.isDarkMode,
+        // onDarkModeChanged: widget.onDarkModeChanged,
+        // fontSize: widget.fontSize,
+        // onFontSizeChanged: widget.onFontSizeChanged,
       ),
     ];
   }
@@ -97,6 +98,8 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    final themeNotifier = ThemeProvider.of(context);
+
     ThemeData theme = Theme.of(context);
 
     final Color primary = theme.colorScheme.primary;
@@ -119,10 +122,10 @@ class _MainNavigationState extends State<MainNavigation> {
         ],
       ),
       endDrawer: SettingsDrawer(
-        fontSize: widget.fontSize,
-        onFontSizeChanged: widget.onFontSizeChanged,
-        isDarkMode: widget.isDarkMode,
-        onDarkModeChanged: widget.onThemeChanged,
+        // fontSize: widget.fontSize,
+        // onFontSizeChanged: widget.onFontSizeChanged,
+        // isDarkMode: widget.isDarkMode,
+        // onDarkModeChanged: widget.onDarkModeChanged,
         username: _userState.userProfile?['Username'] ?? 'User',
         email: _userState.currentUser?.email ?? '',
         onTutorial: () {},

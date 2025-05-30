@@ -7,17 +7,17 @@ import 'package:safe_scales/services/user_state_service.dart';
 import 'lesson/lesson_page.dart';
 
 class HomePage extends StatefulWidget {
-  final bool isDarkMode;
-  final ValueChanged<bool> onDarkModeChanged;
-  final double fontSize;
-  final ValueChanged<double> onFontSizeChanged;
+  // final bool isDarkMode;
+  // final ValueChanged<bool> onDarkModeChanged;
+  // final double fontSize;
+  // final ValueChanged<double> onFontSizeChanged;
 
   const HomePage({
     super.key,
-    required this.isDarkMode,
-    required this.onDarkModeChanged,
-    required this.fontSize,
-    required this.onFontSizeChanged,
+    // required this.isDarkMode,
+    // required this.onDarkModeChanged,
+    // required this.fontSize,
+    // required this.onFontSizeChanged,
   });
 
   @override
@@ -268,7 +268,13 @@ class _HomePageState extends State<HomePage> {
                           context,
                           MaterialPageRoute(
                             builder:
-                                (context) => LessonPage(topic: currentTopic),
+                                (context) => LessonPage(
+                                    // fontSize: widget.fontSize,
+                                    // onFontSizeChanged: widget.onFontSizeChanged,
+                                    // isDarkMode: widget.isDarkMode,
+                                    // onDarkModeChanged: widget.onDarkModeChanged,
+                                    topic: currentTopic,
+                                ),
                           ),
                         );
                       }
@@ -418,7 +424,13 @@ class _HomePageState extends State<HomePage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => LessonPage(topic: topic),
+                                builder: (context) => LessonPage(
+                                  // fontSize: widget.fontSize,
+                                  // onFontSizeChanged: widget.onFontSizeChanged,
+                                  // isDarkMode: widget.isDarkMode,
+                                  // onDarkModeChanged: widget.onDarkModeChanged,
+                                  topic: topic,
+                                ),
                               ),
                             ).then((_) {
                               // Reload quizzes when returning from the lesson page
