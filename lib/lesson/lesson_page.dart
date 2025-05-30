@@ -113,43 +113,73 @@ class _LessonPageState extends State<LessonPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       appBar: AppBar(title: Text(widget.topic), centerTitle: true),
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (_preQuiz != null) ...[
-                      _buildQuizCard(
-                        title: 'Pre-Quiz',
-                        description: 'Test your knowledge before starting',
-                        onTap: () => _startQuiz(_preQuiz!),
-                        icon: Icons.quiz,
-                        color: Theme.of(context).colorScheme.primary,
-                        isCompleted: preQuizCompleted,
-                        score: preQuizScore,
+              : Column(
+                children: [
+                  // Dragon image container
+                  Container(
+                    width: screenSize.width,
+                    height: screenSize.height * 0.3, // 30% of screen height
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      border: Border(
+                        bottom: BorderSide(color: Colors.grey[300]!, width: 1),
                       ),
-                      const SizedBox(height: 16),
-                    ],
-                    _buildReadingCard(),
-                    if (_postQuiz != null) ...[
-                      const SizedBox(height: 16),
-                      _buildQuizCard(
-                        title: 'Post-Quiz',
-                        description: 'Test what you\'ve learned',
-                        onTap: () => _startQuiz(_postQuiz!),
-                        icon: Icons.assignment,
-                        color: Theme.of(context).colorScheme.secondary,
-                        isCompleted: postQuizCompleted,
-                        score: postQuizScore,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '🐉', // Placeholder dragon emoji
+                        style: TextStyle(
+                          fontSize:
+                              screenSize.width * 0.5, // 50% of screen width
+                        ),
                       ),
-                    ],
-                  ],
-                ),
+                    ),
+                  ),
+                  // Existing content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_preQuiz != null) ...[
+                            _buildQuizCard(
+                              title: 'Pre-Quiz',
+                              description:
+                                  'Test your knowledge before starting',
+                              onTap: () => _startQuiz(_preQuiz!),
+                              icon: Icons.quiz,
+                              color: Theme.of(context).colorScheme.primary,
+                              isCompleted: preQuizCompleted,
+                              score: preQuizScore,
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                          _buildReadingCard(),
+                          if (_postQuiz != null) ...[
+                            const SizedBox(height: 16),
+                            _buildQuizCard(
+                              title: 'Post-Quiz',
+                              description: 'Test what you\'ve learned',
+                              onTap: () => _startQuiz(_postQuiz!),
+                              icon: Icons.assignment,
+                              color: Theme.of(context).colorScheme.secondary,
+                              isCompleted: postQuizCompleted,
+                              score: postQuizScore,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
     );
   }
