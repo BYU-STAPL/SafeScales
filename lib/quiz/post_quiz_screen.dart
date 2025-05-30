@@ -8,6 +8,7 @@ import 'package:safe_scales/question/question.dart';
 import 'package:safe_scales/quiz/post_quiz_results_screen.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
+import 'package:safe_scales/services/user_state_service.dart';
 
 import '../question/question_widget.dart';
 
@@ -24,6 +25,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   int currentQuestionIndex = 0;
   List<List<int>> userAnswers = [];
   bool isStarted = false;
+  final _userState = UserStateService();
 
   @override
   void initState() {
@@ -38,54 +40,65 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   }
 
   void _finishPostQuiz() async {
+    print('=== Starting Post-Quiz Completion ===');
     int correctAnswers = 0;
     for (int i = 0; i < widget.questionSet.questions.length; i++) {
       if (_isAnswerCorrect(i)) correctAnswers++;
     }
 
-    int scorePercentage =
-        ((correctAnswers / widget.questionSet.questions.length) * 100).round();
+    int totalQuestions = widget.questionSet.questions.length;
+    int scorePercentage = ((correctAnswers / totalQuestions) * 100).round();
 
-    print('Quiz completed:');
+    print('Post-quiz completed:');
     print('Quiz ID: ${widget.questionSet.id}');
-    print('Total questions: ${widget.questionSet.questions.length}');
+    print('Total questions: $totalQuestions');
     print('Correct answers: $correctAnswers');
     print('Score percentage: $scorePercentage');
     print('User answers: $userAnswers');
 
     // Save quiz progress
     try {
-      final supabase = SupabaseConfig.client;
-      final user = supabase.auth.currentUser;
+      final user = _userState.currentUser;
       if (user != null) {
-        print('Saving quiz progress for user: ${user.id}');
+        print('Saving post-quiz progress for user: ${user.id}');
         await QuizService().saveQuizProgress(
           userId: user.id,
           quizId: widget.questionSet.id,
           answers: userAnswers,
+          correctAnswers: correctAnswers,
+          totalQuestions: totalQuestions,
         );
+        print('Successfully saved quiz progress');
       } else {
-        print('No user logged in, skipping quiz progress save');
+        print('No user logged in, skipping post-quiz progress save');
       }
     } catch (e) {
-      print('Error saving quiz progress: $e');
+      print('Error saving post-quiz progress: $e');
       // Continue to show results even if saving fails
     }
 
-    Navigator.pushReplacement(
+    if (!mounted) return;
+
+    // Show results screen and then return to previous screen
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder:
             (context) => PostQuizResultScreen(
               questionSet: widget.questionSet,
-              passingScore: widget.questionSet.passingScore,
               score: scorePercentage,
               correctAnswers: correctAnswers,
-              totalQuestions: widget.questionSet.questions.length,
+              totalQuestions: totalQuestions,
               userAnswers: userAnswers,
+              passingScore: widget.questionSet.passingScore,
             ),
       ),
     );
+
+    if (!mounted) return;
+
+    // Return to previous screen with completion status
+    Navigator.pop(context, true);
   }
 
   bool _isAnswerCorrect(int questionIndex) {

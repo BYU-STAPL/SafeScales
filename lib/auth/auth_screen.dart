@@ -50,10 +50,25 @@ class _AuthScreenState extends State<AuthScreen> {
 
       try {
         if (isLogin) {
-          await _authService.signIn(
+          final success = await _authService.signIn(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
+
+          if (!success) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Invalid email or password'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              setState(() {
+                isLoading = false;
+              });
+            }
+            return;
+          }
         } else {
           await _authService.signUp(
             username: _nameController.text.trim(),
@@ -71,7 +86,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     onFontSizeChanged: widget.onFontSizeChanged,
                     isDarkMode: widget.isDarkMode,
                     fontSize: widget.fontSize,
-                    initialIndex: 0, // Index 0 is the home tab
+                    initialIndex: 0,
                   ),
             ),
           );

@@ -7,6 +7,7 @@ import 'package:safe_scales/pre_quiz/pre_quiz_results_screen.dart';
 import 'package:safe_scales/question/question.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
+import 'package:safe_scales/services/user_state_service.dart';
 
 import '../question/question_widget.dart';
 
@@ -23,6 +24,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   int currentQuestionIndex = 0;
   List<List<int>> userAnswers = [];
   bool isStarted = false;
+  final _userState = UserStateService();
 
   @override
   void initState() {
@@ -43,26 +45,27 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
       if (_isAnswerCorrect(i)) correctAnswers++;
     }
 
-    int scorePercentage =
-        ((correctAnswers / widget.questionSet.questions.length) * 100).round();
+    int totalQuestions = widget.questionSet.questions.length;
+    int scorePercentage = ((correctAnswers / totalQuestions) * 100).round();
 
     print('Pre-quiz completed:');
     print('Quiz ID: ${widget.questionSet.id}');
-    print('Total questions: ${widget.questionSet.questions.length}');
+    print('Total questions: $totalQuestions');
     print('Correct answers: $correctAnswers');
     print('Score percentage: $scorePercentage');
     print('User answers: $userAnswers');
 
     // Save quiz progress
     try {
-      final supabase = SupabaseConfig.client;
-      final user = supabase.auth.currentUser;
+      final user = _userState.currentUser;
       if (user != null) {
         print('Saving pre-quiz progress for user: ${user.id}');
         await QuizService().saveQuizProgress(
           userId: user.id,
           quizId: widget.questionSet.id,
           answers: userAnswers,
+          correctAnswers: correctAnswers,
+          totalQuestions: totalQuestions,
         );
         print('Successfully saved quiz progress');
       } else {
@@ -73,8 +76,10 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
       // Continue to show results even if saving fails
     }
 
-    // Navigate to results screen and return completion status
-    final result = await Navigator.pushReplacement(
+    if (!mounted) return;
+
+    // Show results screen and then return to previous screen
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder:
@@ -82,14 +87,16 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
               questionSet: widget.questionSet,
               score: scorePercentage,
               correctAnswers: correctAnswers,
-              totalQuestions: widget.questionSet.questions.length,
+              totalQuestions: totalQuestions,
               userAnswers: userAnswers,
             ),
       ),
     );
 
-    print('Returning from results screen with status: $result');
-    Navigator.pop(context, true); // Return true to indicate completion
+    if (!mounted) return;
+
+    // Return to previous screen with completion status
+    Navigator.pop(context, true);
   }
 
   bool _isAnswerCorrect(int questionIndex) {

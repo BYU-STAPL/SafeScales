@@ -235,40 +235,42 @@ class QuizService {
     required String userId,
     required String quizId,
     required List<List<int>> answers,
+    required int correctAnswers,
+    required int totalQuestions,
   }) async {
     try {
-      print('Saving quiz progress for user: $userId, quiz: $quizId');
-      print('Answers to save: $answers');
+      // Calculate score percentage
+      final score = ((correctAnswers / totalQuestions) * 100).round();
 
-      // First get the current quizzes data
+      // Get current user data
       final response =
           await supabase
-              .from('users')
+              .from('Users')
               .select('quizzes')
               .eq('id', userId)
               .single();
 
-      print('Current quizzes data from DB: ${response['quizzes']}');
-
-      // Parse existing quizzes data or initialize empty map
-      Map<String, dynamic> quizzesData = {};
+      Map<String, dynamic> quizzes = {};
       if (response['quizzes'] != null) {
-        quizzesData = Map<String, dynamic>.from(response['quizzes']);
+        quizzes = Map<String, dynamic>.from(response['quizzes']);
       }
 
-      // Update or add the new quiz data
-      quizzesData[quizId] = answers;
+      // Update quiz data
+      quizzes[quizId] = {
+        'score': score,
+        'answers': answers,
+        'completed_at': DateTime.now().toIso8601String(),
+        'correct_answers': correctAnswers,
+        'total_questions': totalQuestions,
+      };
 
-      print('Updated quizzes data to save: $quizzesData');
-
-      // Update the user's quizzes column
-      final updateResponse = await supabase
-          .from('users')
-          .update({'quizzes': quizzesData})
+      // Save updated quizzes data
+      await supabase
+          .from('Users')
+          .update({'quizzes': quizzes})
           .eq('id', userId);
 
-      print('Update response: $updateResponse');
-      print('Successfully saved quiz progress');
+      print('Successfully saved quiz progress for quiz $quizId');
     } catch (e) {
       print('Error saving quiz progress: $e');
       throw Exception('Failed to save quiz progress: $e');

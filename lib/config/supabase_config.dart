@@ -3,7 +3,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 
 class SupabaseConfig {
+  static bool _isInitialized = false;
+
   static Future<void> initialize() async {
+    if (_isInitialized) {
+      debugPrint('Supabase already initialized, skipping...');
+      return;
+    }
+
     try {
       // Try to load .env file
       debugPrint('Attempting to load .env file...');
@@ -26,6 +33,7 @@ class SupabaseConfig {
 
       debugPrint('Initializing Supabase...');
       await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+      _isInitialized = true;
       debugPrint('Supabase initialized successfully');
     } catch (e) {
       debugPrint('Error initializing Supabase: $e');

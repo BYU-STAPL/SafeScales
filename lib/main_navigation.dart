@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:safe_scales/settings_drawer.dart';
 import 'package:safe_scales/shop/shop_page.dart';
+import 'package:safe_scales/services/user_state_service.dart';
 
 import 'accessories/toy_box_page.dart';
 import 'dev_testing_page.dart';
@@ -30,8 +31,8 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final _userState = UserStateService();
 
   int _selectedIndex = 0;
 
@@ -96,12 +97,10 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
-
     ThemeData theme = Theme.of(context);
 
     final Color primary = theme.colorScheme.primary;
     final Color cardBg = theme.colorScheme.surface;
-
 
     return Scaffold(
       key: _scaffoldKey,
@@ -124,8 +123,8 @@ class _MainNavigationState extends State<MainNavigation> {
         onFontSizeChanged: widget.onFontSizeChanged,
         isDarkMode: widget.isDarkMode,
         onDarkModeChanged: widget.onThemeChanged,
-        username: 'username',
-        email: 'your-email@email.com',
+        username: _userState.userProfile?['Username'] ?? 'User',
+        email: _userState.currentUser?.email ?? '',
         onTutorial: () {},
         onHelp: () {},
         onLogout: () {},
@@ -161,8 +160,8 @@ class _MainNavigationState extends State<MainNavigation> {
           showUnselectedLabels: true,
           items: [
             const BottomNavigationBarItem(
-                icon: FaIcon(FontAwesomeIcons.graduationCap),
-                label: 'Home'
+              icon: FaIcon(FontAwesomeIcons.graduationCap),
+              label: 'Home',
             ),
             const BottomNavigationBarItem(
               icon: FaIcon(FontAwesomeIcons.dragon),

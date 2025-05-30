@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/services/quiz_service.dart';
+import 'package:safe_scales/services/user_state_service.dart';
 
 import 'lesson/lesson_page.dart';
 
@@ -26,6 +27,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final QuizService _quizService = QuizService();
+  final _userState = UserStateService();
+  String? _username;
 
   List<String> _topics = [];
   Map<String, List<Map<String, dynamic>>> _quizzesByTopic = {};
@@ -35,6 +38,21 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _loadQuizzes();
+    _loadUsername();
+  }
+
+  Future<void> _loadUsername() async {
+    try {
+      final username = await _userState.getUserName();
+      print('Loaded username in home page: $username'); // Debug log
+      if (mounted) {
+        setState(() {
+          _username = username;
+        });
+      }
+    } catch (e) {
+      print('Error loading username in home page: $e');
+    }
   }
 
   Future<void> _loadQuizzes() async {
@@ -78,205 +96,253 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final Color primary = Theme.of(context).colorScheme.primary;
-    final Color cardBg = Theme.of(context).colorScheme.surface;
-    final Color textColor = Theme.of(context).colorScheme.onSurface;
-    final double borderRadius = 24.0;
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final cardBg = theme.colorScheme.surface;
+    final textColor = theme.colorScheme.onSurface;
+    final mutedTextColor = theme.colorScheme.onSurfaceVariant;
+    final lockedBg = theme.colorScheme.surfaceVariant;
+    const borderRadius = 16.0;
 
     return Scaffold(
       key: _scaffoldKey,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Continue Learning Card
-              if (_topics.isNotEmpty)
-                GestureDetector(
-                  onTap: () {
-                    // Navigate to the current/next activity
-                    final currentTopic = _topics[0];
-                    final quizzes = _quizzesByTopic[currentTopic] ?? [];
-                    if (quizzes.isNotEmpty) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => LessonPage(topic: currentTopic),
-                        ),
-                      );
-                    }
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [primary.withOpacity(0.9), primary],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(borderRadius),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primary.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Welcome Section
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [primary.withOpacity(0.9), primary],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Continue Learning',
-                              style: GoogleFonts.poppins(
-                                fontSize: 22 * AppTheme.fontSizeScale,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _topics[0].toUpperCase(),
-                              style: GoogleFonts.poppins(
-                                fontSize: 14 * AppTheme.fontSizeScale,
-                                color: Colors.white.withOpacity(0.9),
-                                letterSpacing: 1.2,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                '30% Complete',
+                    borderRadius: BorderRadius.circular(borderRadius),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primary.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Welcome, ${_username ?? 'User'}!',
+                        style: GoogleFonts.poppins(
+                          fontSize: 24 * AppTheme.fontSizeScale,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Ready to learn something new today?',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16 * AppTheme.fontSizeScale,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Continue Learning Card
+                if (_topics.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      // Navigate to the current/next activity
+                      final currentTopic = _topics[0];
+                      final quizzes = _quizzesByTopic[currentTopic] ?? [];
+                      if (quizzes.isNotEmpty) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => LessonPage(topic: currentTopic),
+                          ),
+                        );
+                      }
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [primary.withOpacity(0.9), primary],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(borderRadius),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primary.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Continue Learning',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 12 * AppTheme.fontSizeScale,
+                                  fontSize: 22 * AppTheme.fontSizeScale,
+                                  fontWeight: FontWeight.w600,
                                   color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _topics[0].toUpperCase(),
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14 * AppTheme.fontSizeScale,
+                                  color: Colors.white.withOpacity(0.9),
+                                  letterSpacing: 1.2,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          color: Colors.white,
-                          size: 24 * AppTheme.fontSizeScale,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 28),
-              // Activities Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Activities',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20 * AppTheme.fontSizeScale,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  Text(
-                    '${_topics.isEmpty ? 0 : 1}/${_topics.length} Completed',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14 * AppTheme.fontSizeScale,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Show loading or activities
-              if (_isLoading)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              else if (_topics.isEmpty)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32.0),
-                    child: Text(
-                      'No activities available',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16 * AppTheme.fontSizeScale,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '30% Complete',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12 * AppTheme.fontSizeScale,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            color: Colors.white,
+                            size: 24 * AppTheme.fontSizeScale,
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                )
-              else
-                // Dynamic activities list
-                ..._topics.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final topic = entry.value;
-                  final quizzes = _quizzesByTopic[topic] ?? [];
-                  final isUnlocked = index == 0; // Only first topic is unlocked
-                  final progress = index == 0 ? 0.3 : 0.0; // Mock progress
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _buildActivityCard(
-                      context: context,
-                      title: topic,
-                      isUnlocked: isUnlocked,
-                      progress: progress,
-                      icon: _getIconForTopic(topic),
-                      iconColor: _getColorForTopic(topic),
-                      unlockRequirement:
-                          index > 0 ? 'Complete ${_topics[index - 1]}' : null,
-                      onTap: () {
-                        if (isUnlocked && quizzes.isNotEmpty) {
-                          // Navigate to the activity page
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => LessonPage(topic: topic),
-                            ),
-                          );
-                        }
-                      },
+                const SizedBox(height: 28),
+                // Activities Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Activities',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20 * AppTheme.fontSizeScale,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
-                  );
-                }).toList(),
+                    Text(
+                      '${_topics.isEmpty ? 0 : 1}/${_topics.length} Completed',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14 * AppTheme.fontSizeScale,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 24),
+                // Show loading or activities
+                if (_isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else if (_topics.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Text(
+                        'No activities available',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16 * AppTheme.fontSizeScale,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  // Dynamic activities list
+                  ..._topics.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final topic = entry.value;
+                    final quizzes = _quizzesByTopic[topic] ?? [];
+                    final isUnlocked =
+                        index == 0; // Only first topic is unlocked
+                    final progress = index == 0 ? 0.3 : 0.0; // Mock progress
 
-              // Settings Activity - Always shown at the end
-              _buildActivityCard(
-                context: context,
-                title: 'SETTINGS',
-                isUnlocked: false,
-                progress: 0.0,
-                icon: Icons.settings,
-                iconColor: Colors.grey[700]!,
-                unlockRequirement: 'Complete all activities',
-                onTap: () {
-                  _scaffoldKey.currentState?.openEndDrawer();
-                },
-              ),
-              const SizedBox(height: 24),
-            ],
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _buildActivityCard(
+                        context: context,
+                        title: topic,
+                        isUnlocked: isUnlocked,
+                        progress: progress,
+                        icon: _getIconForTopic(topic),
+                        iconColor: _getColorForTopic(topic),
+                        unlockRequirement:
+                            index > 0 ? 'Complete ${_topics[index - 1]}' : null,
+                        onTap: () {
+                          if (isUnlocked && quizzes.isNotEmpty) {
+                            // Navigate to the activity page
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => LessonPage(topic: topic),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    );
+                  }).toList(),
+
+                const SizedBox(height: 24),
+
+                // Settings Activity - Always shown at the end
+                _buildActivityCard(
+                  context: context,
+                  title: 'SETTINGS',
+                  isUnlocked: false,
+                  progress: 0.0,
+                  icon: Icons.settings,
+                  iconColor: Colors.grey[700]!,
+                  unlockRequirement: 'Complete all activities',
+                  onTap: () {
+                    _scaffoldKey.currentState?.openEndDrawer();
+                  },
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
