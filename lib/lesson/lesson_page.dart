@@ -37,21 +37,26 @@ class _LessonPageState extends State<LessonPage> {
 
   Future<void> _loadQuizzes() async {
     try {
+      print('Loading quizzes for topic: ${widget.topic}');
+
       // Get pre-quiz for the specified topic
       final preQuiz = await _quizService.getQuizByTopicAndActivityType(
         topic: widget.topic,
         activityType: 'preQuiz',
       );
+      print('Pre-quiz loaded: ${preQuiz?.id}');
 
       // Get post-quiz for the specified topic
       final postQuiz = await _quizService.getQuizByTopicAndActivityType(
         topic: widget.topic,
         activityType: 'postQuiz',
       );
+      print('Post-quiz loaded: ${postQuiz?.id}');
 
       // Get user's quiz progress
       final user = _userState.currentUser;
       if (user != null) {
+        print('Loading quiz progress for user: ${user.id}');
         final response =
             await _quizService.supabase
                 .from('Users')
@@ -59,23 +64,38 @@ class _LessonPageState extends State<LessonPage> {
                 .eq('id', user.id)
                 .single();
 
+        print('Raw quiz data from database: ${response['quizzes']}');
+
         if (response['quizzes'] != null) {
           final quizzesData = Map<String, dynamic>.from(response['quizzes']);
+          print('Parsed quizzes data: $quizzesData');
+
           if (preQuiz != null && quizzesData.containsKey(preQuiz.id)) {
             final preQuizData = quizzesData[preQuiz.id];
+            print('Pre-quiz data found: $preQuizData');
             setState(() {
               preQuizCompleted = true;
-              preQuizScore = preQuizData['score'];
+              preQuizScore = preQuizData['score'].toDouble();
             });
+          } else {
+            print('No pre-quiz data found for quiz ID: ${preQuiz?.id}');
           }
+
           if (postQuiz != null && quizzesData.containsKey(postQuiz.id)) {
             final postQuizData = quizzesData[postQuiz.id];
+            print('Post-quiz data found: $postQuizData');
             setState(() {
               postQuizCompleted = true;
-              postQuizScore = postQuizData['score'];
+              postQuizScore = postQuizData['score'].toDouble();
             });
+          } else {
+            print('No post-quiz data found for quiz ID: ${postQuiz?.id}');
           }
+        } else {
+          print('No quiz data found in user record');
         }
+      } else {
+        print('No user logged in');
       }
 
       setState(() {

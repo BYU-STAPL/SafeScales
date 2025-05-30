@@ -32,6 +32,7 @@ class _HomePageState extends State<HomePage> {
 
   List<String> _topics = [];
   Map<String, List<Map<String, dynamic>>> _quizzesByTopic = {};
+  Map<String, double> _topicProgress = {};
   bool _isLoading = true;
 
   @override
@@ -39,6 +40,13 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _loadQuizzes();
     _loadUsername();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reload data when returning to this page
+    _loadQuizzes();
   }
 
   Future<void> _loadUsername() async {
@@ -58,6 +66,9 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadQuizzes() async {
     try {
       final allQuizzes = await _quizService.getAllQuizzes();
+      final user = _userState.currentUser;
+
+      print('Loading quizzes for user: ${user?.id}'); // Debug log
 
       // Group quizzes by topic
       final Map<String, List<Map<String, dynamic>>> grouped = {};
@@ -67,18 +78,108 @@ class _HomePageState extends State<HomePage> {
           grouped[topic] = [];
         }
         grouped[topic]!.add(quiz);
+        print(
+          'Added quiz to topic $topic: ${quiz['id']} - ${quiz['activity_type']}',
+        ); // Debug log
       }
 
-      setState(() {
-        _quizzesByTopic = grouped;
-        _topics = grouped.keys.toList();
-        _isLoading = false;
-      });
+      // Calculate progress for each topic
+      if (user != null) {
+        // First, get all quizzes for each topic
+        for (var topic in grouped.keys) {
+          print('\nProcessing topic: $topic');
+
+          // Get all quizzes for this topic
+          final topicQuizzes = await _quizService.supabase
+              .from('quizzes')
+              .select()
+              .eq('topic', topic)
+              .order('created_at', ascending: true);
+
+          print('Found ${topicQuizzes.length} quizzes for topic $topic');
+
+          // Get user's quiz progress
+          final response =
+              await _quizService.supabase
+                  .from('Users')
+                  .select('quizzes')
+                  .eq('id', user.id)
+                  .single();
+
+          if (response['quizzes'] != null) {
+            final quizzesData = Map<String, dynamic>.from(response['quizzes']);
+            print('User quiz data: $quizzesData');
+
+            double preQuizScore = 0;
+            double postQuizScore = 0;
+            bool hasPreQuiz = false;
+            bool hasPostQuiz = false;
+
+            // Find pre and post quiz scores
+            for (var quiz in topicQuizzes) {
+              final quizId = quiz['id'].toString();
+              final activityType =
+                  quiz['activity_type'].toString().toLowerCase();
+              print('Checking quiz ID: $quizId, activity type: $activityType');
+
+              if (quizzesData.containsKey(quizId)) {
+                final quizData = quizzesData[quizId];
+                print('Found quiz data: $quizData');
+
+                if (activityType == 'prequiz') {
+                  preQuizScore = quizData['score'].toDouble();
+                  hasPreQuiz = true;
+                  print('Pre-quiz score: $preQuizScore');
+                } else if (activityType == 'postquiz') {
+                  postQuizScore = quizData['score'].toDouble();
+                  hasPostQuiz = true;
+                  print('Post-quiz score: $postQuizScore');
+                }
+              } else {
+                print('No quiz data found for ID: $quizId');
+              }
+            }
+
+            // Calculate progress
+            double progress = 0;
+            if (hasPreQuiz && hasPostQuiz) {
+              progress = (preQuizScore + postQuizScore) / 2;
+              print('Both quizzes completed. Progress: $progress');
+            } else if (hasPreQuiz) {
+              progress = preQuizScore;
+              print('Only pre-quiz completed. Progress: $progress');
+            } else if (hasPostQuiz) {
+              progress = postQuizScore;
+              print('Only post-quiz completed. Progress: $progress');
+            } else {
+              print('No quizzes completed for this topic');
+            }
+
+            _topicProgress[topic] = progress;
+            print('Final progress for $topic: $progress');
+          } else {
+            print('No quiz data found in user record');
+            _topicProgress[topic] = 0;
+          }
+        }
+      } else {
+        print('No user logged in');
+      }
+
+      if (mounted) {
+        setState(() {
+          _quizzesByTopic = grouped;
+          _topics = grouped.keys.toList();
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       print('Error loading quizzes: $e');
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -296,8 +397,9 @@ class _HomePageState extends State<HomePage> {
                     final topic = entry.value;
                     final quizzes = _quizzesByTopic[topic] ?? [];
                     final isUnlocked =
-                        index == 0; // Only first topic is unlocked
-                    final progress = index == 0 ? 0.3 : 0.0; // Mock progress
+                        index == 0 ||
+                        (_topicProgress[_topics[index - 1]] ?? 0) >= 100;
+                    final progress = _topicProgress[topic] ?? 0.0;
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16),
@@ -311,14 +413,17 @@ class _HomePageState extends State<HomePage> {
                         unlockRequirement:
                             index > 0 ? 'Complete ${_topics[index - 1]}' : null,
                         onTap: () {
-                          if (isUnlocked && quizzes.isNotEmpty) {
-                            // Navigate to the activity page
+                          if (isUnlocked) {
+                            print('Navigating to topic: $topic'); // Debug log
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => LessonPage(topic: topic),
                               ),
-                            );
+                            ).then((_) {
+                              // Reload quizzes when returning from the lesson page
+                              _loadQuizzes();
+                            });
                           }
                         },
                       ),
@@ -359,6 +464,28 @@ class _HomePageState extends State<HomePage> {
     required VoidCallback onTap,
     String? unlockRequirement,
   }) {
+    // Get actual progress for this topic
+    final actualProgress = _topicProgress[title] ?? 0.0;
+
+    // Check if this activity should be unlocked
+    final int currentIndex = _topics.indexOf(title);
+    bool shouldBeUnlocked = false;
+    String? newUnlockRequirement;
+
+    if (currentIndex == 0) {
+      // First activity is always unlocked
+      shouldBeUnlocked = true;
+    } else if (currentIndex > 0) {
+      // Check if previous activity is completed
+      final previousTopic = _topics[currentIndex - 1];
+      final previousProgress = _topicProgress[previousTopic] ?? 0.0;
+      shouldBeUnlocked = previousProgress >= 100;
+      if (!shouldBeUnlocked) {
+        newUnlockRequirement =
+            'Complete ${previousTopic} (${previousProgress.toStringAsFixed(0)}%)';
+      }
+    }
+
     final Color primary = Theme.of(context).colorScheme.primary;
     final Color secondary = Theme.of(context).colorScheme.secondary;
     final Color cardBg = Theme.of(context).colorScheme.surface;
@@ -377,22 +504,22 @@ class _HomePageState extends State<HomePage> {
         quizzes.isNotEmpty ? quizzes[0]['description'] : 'Learn about $title';
 
     return GestureDetector(
-      onTap: isUnlocked ? onTap : null,
+      onTap: shouldBeUnlocked ? onTap : null,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
         decoration: BoxDecoration(
-          color: isUnlocked ? cardBg : lockedBg,
+          color: shouldBeUnlocked ? cardBg : lockedBg,
           borderRadius: BorderRadius.circular(borderRadius),
           border:
-              isUnlocked
+              shouldBeUnlocked
                   ? null
                   : Border.all(
                     color: Theme.of(context).colorScheme.outlineVariant,
                     width: 1,
                   ),
           boxShadow:
-              isUnlocked
+              shouldBeUnlocked
                   ? [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.08),
@@ -409,14 +536,16 @@ class _HomePageState extends State<HomePage> {
               style: GoogleFonts.poppins(
                 fontSize: 20 * AppTheme.fontSizeScale,
                 fontWeight: FontWeight.bold,
-                color: isUnlocked ? textColor : mutedTextColor,
+                color: shouldBeUnlocked ? textColor : mutedTextColor,
                 letterSpacing: 0.8,
               ),
             ),
-            if (!isUnlocked && unlockRequirement != null) ...[
+            if (!shouldBeUnlocked &&
+                (newUnlockRequirement != null ||
+                    unlockRequirement != null)) ...[
               const SizedBox(height: 4),
               Text(
-                unlockRequirement,
+                newUnlockRequirement ?? unlockRequirement ?? '',
                 style: GoogleFonts.poppins(
                   fontSize: 12 * AppTheme.fontSizeScale,
                   color: mutedTextColor.withOpacity(0.7),
@@ -424,7 +553,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ],
-            if (isUnlocked) ...[
+            if (shouldBeUnlocked) ...[
               const SizedBox(height: 8),
               Text(
                 description,
@@ -501,12 +630,14 @@ class _HomePageState extends State<HomePage> {
                 alignment: Alignment.center,
                 children: [
                   // Semi-circular progress
-                  if (isUnlocked)
+                  if (shouldBeUnlocked)
                     CustomPaint(
                       size: const Size(160, 80),
                       painter: _SemiCircleProgressPainter(
                         color: secondary,
-                        progress: progress,
+                        progress:
+                            actualProgress /
+                            100, // Convert percentage to decimal
                       ),
                     ),
                   // Icon in circle
@@ -515,9 +646,9 @@ class _HomePageState extends State<HomePage> {
                     child: CircleAvatar(
                       radius: 28,
                       backgroundColor:
-                          isUnlocked ? iconColor : Colors.grey[400],
+                          shouldBeUnlocked ? iconColor : Colors.grey[400],
                       child: Icon(
-                        isUnlocked ? icon : Icons.lock,
+                        shouldBeUnlocked ? icon : Icons.lock,
                         size: 32,
                         color: Colors.white,
                       ),
@@ -526,9 +657,9 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            if (isUnlocked) ...[
+            if (shouldBeUnlocked) ...[
               Text(
-                '${(progress * 100).round()}% Complete',
+                '${actualProgress.toStringAsFixed(0)}% Complete',
                 style: GoogleFonts.poppins(
                   fontSize: 13 * AppTheme.fontSizeScale,
                   color: primary,

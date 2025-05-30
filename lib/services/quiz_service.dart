@@ -222,7 +222,8 @@ class QuizService {
         questions: questions,
       );
 
-      print('Created QuestionSet: $questionSet');
+      print('Created QuestionSet with ID: ${questionSet.id}');
+      print('Database quiz ID: ${response['id']}');
       return questionSet;
     } catch (e) {
       print('Error fetching quiz by topic and activity type: $e');
