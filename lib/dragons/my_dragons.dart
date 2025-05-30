@@ -3,17 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/settings_drawer.dart';
 
 class MyDragonsPage extends StatelessWidget {
-  final bool isDarkMode;
-  final ValueChanged<bool> onDarkModeChanged;
-  final double fontSize;
-  final ValueChanged<double> onFontSizeChanged;
-
   const MyDragonsPage({
     super.key,
-    required this.isDarkMode,
-    required this.onDarkModeChanged,
-    required this.fontSize,
-    required this.onFontSizeChanged,
   });
 
   @override
@@ -31,17 +22,6 @@ class MyDragonsPage extends StatelessWidget {
 
     return Scaffold(
       key: _scaffoldKey,
-      // endDrawer: SettingsDrawer(
-      //   fontSize: fontSize,
-      //   onFontSizeChanged: onFontSizeChanged,
-      //   isDarkMode: isDarkMode,
-      //   onDarkModeChanged: onDarkModeChanged,
-      //   username: 'username',
-      //   email: 'your-email@email.com',
-      //   onTutorial: () {},
-      //   onHelp: () {},
-      //   onLogout: () {},
-      // ),
       backgroundColor: cardBg,
       body: SafeArea(
         child: SingleChildScrollView(

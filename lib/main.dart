@@ -3,6 +3,8 @@ import 'package:safe_scales/auth/auth_screen.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/services/user_state_service.dart';
+import 'package:safe_scales/themes/theme_notifier.dart';
+import 'package:safe_scales/themes/theme_provider.dart';
 
 import 'main_navigation.dart';
 
@@ -23,53 +25,51 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool _isDarkMode = false;
-  double _fontSize = 1.0;
   final _userState = UserStateService();
+  late ThemeNotifier _themeNotifier;
 
-  void _updateTheme(bool isDarkMode) {
-    setState(() {
-      _isDarkMode = isDarkMode;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _themeNotifier = ThemeNotifier();
+    _themeNotifier.loadSettings(); // Load saved settings
   }
 
-  void _updateFontSize(double fontSize) {
-    setState(() {
-      _fontSize = fontSize;
-      AppTheme.setFontSizeScale(fontSize);
-    });
+  @override
+  void dispose() {
+    _themeNotifier.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Safe Scales',
-      theme: AppTheme.buildLightAppTheme(),
-      darkTheme: AppTheme.buildDarkAppTheme(),
-      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      home: Builder(
-        builder: (context) {
-          // Check if user is already logged in
-          final currentUser = SupabaseConfig.client.auth.currentUser;
-          if (currentUser != null) {
-            // Initialize user state
-            _userState.setUser(currentUser);
-            _userState.loadUserProfile();
+    return ThemeProvider(
+      themeNotifier: _themeNotifier, // Use the same instance
+      child: AnimatedBuilder(
+        animation: _themeNotifier, // Listen to changes
+        builder: (context, child) {
+          return MaterialApp(
+            title: 'Safe Scales',
+            theme: AppTheme.buildLightAppTheme(),
+            darkTheme: AppTheme.buildDarkAppTheme(),
+            themeMode: _themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            home: Builder(
+              builder: (context) {
+                // Check if user is already logged in
+                final currentUser = SupabaseConfig.client.auth.currentUser;
+                if (currentUser != null) {
+                  // Initialize user state
+                  _userState.setUser(currentUser);
+                  _userState.loadUserProfile();
 
-            return MainNavigation(
-              onThemeChanged: _updateTheme,
-              onFontSizeChanged: _updateFontSize,
-              isDarkMode: _isDarkMode,
-              fontSize: _fontSize,
-              initialIndex: 0,
-            );
-          }
+                  return MainNavigation(
+                    initialIndex: 0,
+                  );
+                }
 
-          return AuthScreen(
-            onThemeChanged: _updateTheme,
-            onFontSizeChanged: _updateFontSize,
-            isDarkMode: _isDarkMode,
-            fontSize: _fontSize,
+                return AuthScreen();
+              },
+            ),
           );
         },
       ),

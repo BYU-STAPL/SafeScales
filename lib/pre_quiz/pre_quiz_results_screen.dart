@@ -87,13 +87,13 @@ class PreQuizResultScreen extends StatelessWidget {
                   MaterialPageRoute(
                     builder:
                         (context) => MainNavigation(
-                          isDarkMode:
-                              Theme.of(context).brightness == Brightness.dark,
-                          onThemeChanged:
-                              (value) {}, // This will be handled by the parent
-                          fontSize: 1.0, // Default font size
-                          onFontSizeChanged:
-                              (value) {}, // This will be handled by the parent
+                          // isDarkMode:
+                          //     Theme.of(context).brightness == Brightness.dark,
+                          // onThemeChanged:
+                          //     (value) {}, // This will be handled by the parent
+                          // fontSize: 1.0, // Default font size
+                          // onFontSizeChanged:
+                          //     (value) {}, // This will be handled by the parent
                           initialIndex: 1, // index 1 is the dragon page
                         ),
                   ),

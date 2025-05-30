@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:safe_scales/themes/app_theme.dart';
+import 'package:safe_scales/themes/theme_provider.dart'; // Add this import
 
-class SettingsDrawer extends StatefulWidget {
-  final double fontSize;
-  final ValueChanged<double> onFontSizeChanged;
-  final bool isDarkMode;
-  final ValueChanged<bool> onDarkModeChanged;
+class SettingsDrawer extends StatelessWidget {
   final String username;
   final String email;
   final VoidCallback onTutorial;
@@ -15,10 +12,6 @@ class SettingsDrawer extends StatefulWidget {
 
   const SettingsDrawer({
     super.key,
-    required this.fontSize,
-    required this.onFontSizeChanged,
-    required this.isDarkMode,
-    required this.onDarkModeChanged,
     required this.username,
     required this.email,
     required this.onTutorial,
@@ -27,38 +20,10 @@ class SettingsDrawer extends StatefulWidget {
   });
 
   @override
-  State<SettingsDrawer> createState() => _SettingsDrawerState();
-}
-
-class _SettingsDrawerState extends State<SettingsDrawer> {
-  late double _fontSize;
-  late bool _isDarkMode;
-
-  @override
-  void initState() {
-    super.initState();
-    _fontSize = widget.fontSize;
-    _isDarkMode = widget.isDarkMode;
-  }
-
-  @override
-  void didUpdateWidget(SettingsDrawer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.isDarkMode != widget.isDarkMode) {
-      setState(() {
-        _isDarkMode = widget.isDarkMode;
-      });
-    }
-    if (oldWidget.fontSize != widget.fontSize) {
-      setState(() {
-        _fontSize = widget.fontSize;
-      });
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+
+    final themeNotifier = ThemeProvider.of(context);
 
     return Drawer(
       elevation: 16,
@@ -87,14 +52,14 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
               ),
               const SizedBox(height: 4),
               Text(
-                widget.username,
+                username,
                 style: TextStyle(
                   color: colorScheme.onSurfaceVariant,
                   fontSize: 16,
                 ),
               ),
               Text(
-                widget.email,
+                email,
                 style: TextStyle(
                   color: colorScheme.onSurfaceVariant,
                   fontSize: 16,
@@ -113,16 +78,13 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
                   ),
                   Expanded(
                     child: Slider(
-                      value: _fontSize,
+                      value: themeNotifier.fontSize,
                       min: 0.8,
                       max: 1.4,
                       divisions: 6,
                       onChanged: (value) {
-                        setState(() {
-                          _fontSize = value;
-                        });
                         AppTheme.setFontSizeScale(value);
-                        widget.onFontSizeChanged(value);
+                        themeNotifier.updateFontSize(value);
                       },
                       activeColor: colorScheme.primary,
                     ),
@@ -150,13 +112,13 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
                 child: Row(
                   children: [
                     Icon(
-                      _isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                      color: _isDarkMode ? Colors.amber : Colors.orange,
+                      themeNotifier.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                      color: themeNotifier.isDarkMode ? Colors.amber : Colors.orange,
                       size: 24,
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      _isDarkMode ? 'Dark Mode' : 'Light Mode',
+                      themeNotifier.isDarkMode ? 'Dark Mode' : 'Light Mode',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
@@ -165,12 +127,9 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
                     ),
                     const Spacer(),
                     Switch(
-                      value: _isDarkMode,
+                      value: themeNotifier.isDarkMode,
                       onChanged: (value) {
-                        setState(() {
-                          _isDarkMode = value;
-                        });
-                        widget.onDarkModeChanged(value);
+                        themeNotifier.updateTheme(value);
                       },
                       activeColor: Colors.amber,
                       activeTrackColor: Colors.amber.withOpacity(0.5),
@@ -192,7 +151,7 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
                   'Tutorial',
                   style: TextStyle(fontSize: 18, color: colorScheme.onSurface),
                 ),
-                onTap: widget.onTutorial,
+                onTap: onTutorial,
               ),
               // Help
               ListTile(
@@ -205,7 +164,7 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
                   'Help',
                   style: TextStyle(fontSize: 18, color: colorScheme.onSurface),
                 ),
-                onTap: widget.onHelp,
+                onTap: onHelp,
               ),
               const Spacer(),
               // Logout
@@ -219,7 +178,7 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
                   'Logout',
                   style: TextStyle(fontSize: 18, color: colorScheme.error),
                 ),
-                onTap: widget.onLogout,
+                onTap: onLogout,
               ),
             ],
           ),
