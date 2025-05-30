@@ -3,21 +3,39 @@ import 'package:safe_scales/pre_quiz/pre_quiz_screen.dart';
 import 'package:safe_scales/question/question.dart';
 import 'package:safe_scales/quiz/post_quiz_screen.dart';
 
-class LearnPage extends StatefulWidget {
-  const LearnPage({super.key});
+// ##################################################
+/*
+This page for develop purposes only to test different screens and other widgets
+This will be removed after development
+ */
+// ##################################################
+
+
+class DevTestingPage extends StatefulWidget {
+  final bool isDarkMode;
+  final ValueChanged<bool> onDarkModeChanged;
+  final double fontSize;
+  final ValueChanged<double> onFontSizeChanged;
+
+  const DevTestingPage({
+    super.key,
+    required this.isDarkMode,
+    required this.onDarkModeChanged,
+    required this.fontSize,
+    required this.onFontSizeChanged,
+  });
 
   @override
-  State<LearnPage> createState() => _LearnPageState();
+  State<DevTestingPage> createState() => _DevTestingPageState();
 }
 
-class _LearnPageState extends State<LearnPage> {
+class _DevTestingPageState extends State<DevTestingPage> {
 
   @override
   Widget build(BuildContext context) {
 
     ThemeData theme = Theme.of(context);
 
-    //TODO: Remove later after testing
     Question singleQ = Question.singleAnswer(
       id: 'q1',
       questionText: 'What color is the sky?',
@@ -66,8 +84,6 @@ class _LearnPageState extends State<LearnPage> {
       body: Center(
         child: Column(
           children: [
-            Text("All Lessons will be added here"),
-
             SizedBox(height: 50),
 
             ElevatedButton(

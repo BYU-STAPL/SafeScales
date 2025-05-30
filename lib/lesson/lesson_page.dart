@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/question/question.dart';
 import 'package:safe_scales/pre_quiz/pre_quiz_screen.dart';
 import 'package:safe_scales/quiz/post_quiz_screen.dart';
 import 'package:safe_scales/services/quiz_service.dart';
-import 'package:safe_scales/quiz/quiz_screen.dart';
 
-class ActivityPage extends StatefulWidget {
+class LessonPage extends StatefulWidget {
   final String topic;
 
-  const ActivityPage({super.key, required this.topic});
+  const LessonPage({super.key, required this.topic});
 
   @override
-  State<ActivityPage> createState() => _ActivityPageState();
+  State<LessonPage> createState() => _LessonPageState();
 }
 
-class _ActivityPageState extends State<ActivityPage> {
+class _LessonPageState extends State<LessonPage> {
   bool preQuizCompleted = false;
   bool readingCompleted = false;
   bool postQuizCompleted = false;

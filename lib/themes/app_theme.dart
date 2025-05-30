@@ -62,9 +62,9 @@ ColorScheme darkColorScheme = ColorScheme(
   outline: darkDarkGrey,
   outlineVariant: darkGrey2,
   shadow: Colors.black,
-  scrim: Colors.black.withOpacity(0.5),
-  background: darkOffWhite,
-  onBackground: Colors.white,
+  scrim: Colors.black.withValues(alpha: 0.5),
+  // background: darkOffWhite,
+  // onBackground: Colors.white,
 );
 
 class AppTheme {
@@ -78,32 +78,32 @@ class AppTheme {
 
   static TextTheme getTextTheme(ColorScheme colorScheme) {
     return TextTheme(
-      headlineLarge: GoogleFonts.openSans(
+      headlineLarge: GoogleFonts.poppins(
         color: colorScheme.onSurface,
         fontSize: 32 * _fontSizeScale,
         fontWeight: FontWeight.bold,
       ),
-      headlineMedium: GoogleFonts.openSans(
+      headlineMedium: GoogleFonts.poppins(
         color: colorScheme.onSurface,
         fontSize: 28 * _fontSizeScale,
         fontWeight: FontWeight.normal,
       ),
-      bodyLarge: GoogleFonts.openSans(
+      bodyLarge: GoogleFonts.poppins(
         color: colorScheme.onSurface,
         fontSize: 22 * _fontSizeScale,
         fontWeight: FontWeight.normal,
       ),
-      bodyMedium: GoogleFonts.openSans(
+      bodyMedium: GoogleFonts.poppins(
         color: colorScheme.onSurface,
         fontSize: 18 * _fontSizeScale,
         fontWeight: FontWeight.normal,
       ),
-      bodySmall: GoogleFonts.openSans(
+      bodySmall: GoogleFonts.poppins(
         color: colorScheme.onSurface,
         fontSize: 15 * _fontSizeScale,
         fontWeight: FontWeight.normal,
       ),
-      labelMedium: GoogleFonts.openSans(
+      labelMedium: GoogleFonts.poppins(
         color: colorScheme.onSurface,
         fontSize: 18 * _fontSizeScale,
         fontWeight: FontWeight.normal,
@@ -115,7 +115,7 @@ class AppTheme {
     return ThemeData(
       // Color scheme
       colorScheme: lightColorScheme,
-      scaffoldBackgroundColor: lightColorScheme.background,
+      scaffoldBackgroundColor: lightColorScheme.surface,
 
       // Typography
       textTheme: getTextTheme(lightColorScheme),
@@ -125,15 +125,21 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
+        titleSpacing: 25,
         titleTextStyle: TextStyle(
-          color: lightColorScheme.onSurface,
-          fontSize: 22 * _fontSizeScale,
+          color: lightColorScheme.primary,
+          fontSize: 30 * _fontSizeScale,
           fontWeight: FontWeight.bold,
         ),
         iconTheme: IconThemeData(
           color: lightColorScheme.primary,
-          size: 25 * _fontSizeScale,
+          size: 30 * _fontSizeScale,
         ),
+        actionsIconTheme: IconThemeData(
+          color: lightColorScheme.primary,
+          size: 40 * _fontSizeScale,
+        ),
+        actionsPadding: EdgeInsets.only(right: 20),
       ),
 
       // Button themes
@@ -203,7 +209,7 @@ class AppTheme {
     return ThemeData(
       // Color scheme
       colorScheme: darkColorScheme,
-      scaffoldBackgroundColor: darkColorScheme.background,
+      scaffoldBackgroundColor: darkColorScheme.surface,
 
       // Typography
       textTheme: getTextTheme(darkColorScheme),
@@ -213,15 +219,21 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
+        titleSpacing: 25,
         titleTextStyle: TextStyle(
           color: darkColorScheme.onSurface,
-          fontSize: 22 * _fontSizeScale,
+          fontSize: 30 * _fontSizeScale,
           fontWeight: FontWeight.bold,
         ),
         iconTheme: IconThemeData(
-          color: darkColorScheme.primary,
-          size: 25 * _fontSizeScale,
+          color: darkColorScheme.onSurface,
+          size: 30 * _fontSizeScale,
         ),
+        actionsIconTheme: IconThemeData(
+          color: darkColorScheme.onSurface,
+          size: 40 * _fontSizeScale,
+        ),
+        actionsPadding: EdgeInsets.only(right: 20),
       ),
 
       // Button themes
@@ -241,8 +253,8 @@ class AppTheme {
       // Icon Button
       iconButtonTheme: IconButtonThemeData(
         style: ButtonStyle(
-          iconColor: MaterialStateProperty.all(darkColorScheme.primary),
-          shadowColor: MaterialStateProperty.all(darkColorScheme.shadow),
+          iconColor: WidgetStateProperty.all(darkColorScheme.primary),
+          shadowColor: WidgetStateProperty.all(darkColorScheme.shadow),
         ),
       ),
 

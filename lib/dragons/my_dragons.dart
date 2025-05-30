@@ -22,7 +22,7 @@ class MyDragonsPage extends StatelessWidget {
     final Color cardBg = Theme.of(context).colorScheme.surface;
     final Color cardShadow = Theme.of(
       context,
-    ).colorScheme.shadow.withOpacity(0.07);
+    ).colorScheme.shadow.withValues(alpha: 0.07);
     final Color lockedBg = Theme.of(context).colorScheme.surfaceDim;
     final double borderRadius = 28.0;
     final double cardPadding = 24.0;
@@ -31,18 +31,18 @@ class MyDragonsPage extends StatelessWidget {
 
     return Scaffold(
       key: _scaffoldKey,
-      endDrawer: SettingsDrawer(
-        fontSize: fontSize,
-        onFontSizeChanged: onFontSizeChanged,
-        isDarkMode: isDarkMode,
-        onDarkModeChanged: onDarkModeChanged,
-        username: 'username',
-        email: 'your-email@email.com',
-        onTutorial: () {},
-        onHelp: () {},
-        onLogout: () {},
-      ),
-      backgroundColor: Theme.of(context).colorScheme.background,
+      // endDrawer: SettingsDrawer(
+      //   fontSize: fontSize,
+      //   onFontSizeChanged: onFontSizeChanged,
+      //   isDarkMode: isDarkMode,
+      //   onDarkModeChanged: onDarkModeChanged,
+      //   username: 'username',
+      //   email: 'your-email@email.com',
+      //   onTutorial: () {},
+      //   onHelp: () {},
+      //   onLogout: () {},
+      // ),
+      backgroundColor: cardBg,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -53,36 +53,6 @@ class MyDragonsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0, bottom: 18.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'My Dragons',
-                        style: GoogleFonts.poppins(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: primary,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: primary.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: IconButton(
-                          icon: Icon(Icons.menu, color: primary, size: 28),
-                          onPressed: () {
-                            _scaffoldKey.currentState?.openEndDrawer();
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
                 // Dragon Card (Unlocked)
                 Container(
                   width: double.infinity,
@@ -835,7 +805,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
           ),
         ],
       ),
-      backgroundColor: colorScheme.background,
+      backgroundColor: colorScheme.surface,
     );
   }
 }
