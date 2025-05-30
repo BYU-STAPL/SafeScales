@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:safe_scales/main_navigation.dart';
 import 'package:safe_scales/question/question.dart';
+import 'package:safe_scales/quiz/post_quiz_actions_screen.dart';
+import 'package:safe_scales/quiz/post_quiz_summary.dart';
+import 'package:safe_scales/themes/theme_notifier.dart';
+import 'package:safe_scales/themes/theme_provider.dart';
 
 class PostQuizResultScreen extends StatefulWidget {
   const PostQuizResultScreen({
@@ -26,8 +30,6 @@ class PostQuizResultScreen extends StatefulWidget {
 }
 
 class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
-  bool _isExpanded = false;
-
   @override
   Widget build(BuildContext context) {
     final QuestionSet questionSet = widget.questionSet;
@@ -51,31 +53,30 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
             : Colors.red;
 
     ThemeData theme = Theme.of(context);
+    ThemeNotifier themeNotifier = ThemeProvider.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Results'),
         // backgroundColor: Colors.orange,
       ),
-      body: Column(
-        children: [
-          SingleChildScrollView(
+      body: SingleChildScrollView(
             child: Container(
               width: double.infinity,
               padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
               child: Column(
                 children: [
-                  SizedBox(height: 20),
+                  SizedBox(height: 15),
 
                   Text(
-                    'Good job completing the ${questionSet.title}!',
+                    'Good job completing this quiz!', // ${questionSet.title}!',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyLarge,
                   ),
 
-                  SizedBox(height: 20),
+                  SizedBox(height: 15),
 
-                  Card(
+                  Container(
                     child: Padding(
                       padding: EdgeInsets.all(16),
                       child: Column(
@@ -102,99 +103,72 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                     ),
                   ),
 
-                  SizedBox(height: 20),
+                  SizedBox(height: 30),
 
-                  Text("Missed Questions"),
+                  PostQuizSummary(questionSet: widget.questionSet, userAnswers: widget.userAnswers),
+
+                  SizedBox(height: 50),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+
+                        // Navigate to actions screen and wait for result
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PostQuizActionsScreen(
+                              score: score,
+                              passingScore: widget.questionSet.passingScore,
+                            ),
+                          ),
+                        );
+
+                        // If user chose to return to lesson, handle the navigation here
+                        if (result == true) {
+                          // Pop PostQuizScreen and return to lesson with completion status
+                          Navigator.pop(context, true);
+                        }
+                        // TODO: when you later pop from actions you go to home instead of the lesson
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(
+                        //     builder: (context) => PostQuizActionsScreen(
+                        //       score: score,
+                        //       passingScore: widget.questionSet.passingScore,
+                        //     ),
+                        //   ),
+                        // ).then((shouldReturnToLesson) {
+                        //   if (shouldReturnToLesson == true) {
+                        //     // Pop back through the entire quiz flow
+                        //     Navigator.pop(context); // Pop to PostQuizScreen
+                        //     Navigator.pop(context, true); // Pop back to lesson with completion status
+                        //   }
+                        // });
 
 
-                  SizedBox(height: 20),
-
-                  ExpansionTile(
-                    title: Text("Correct Questions"),
-                    trailing: Icon(
-                      _isExpanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      size: 40,
-                      color: theme.colorScheme.primary,
-                    ),
-                    onExpansionChanged: (bool expanded) {
-                      setState(() {
-                        _isExpanded = expanded;
-                      });
-                    },
-                    children: [Text("Filler"), Text("Filler")],
-                  ),
-
-                  Text(
-                    'Your dragon is fully grown!',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                  SizedBox(height: 25),
-
-                  // TODO: Replace later with dragon
-                  Image.asset("assets/images/other/QuestionMark.png"),
-                  //
-                  SizedBox(height: 25),
-                  Text(
-                    'Now you can play with your dragon by going to the dragon screen',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-
-                  TextButton.icon(
-                    onPressed: (){
-                      // Go to Dragon Page
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MainNavigation(initialIndex: 1), // Index of desired tab
+                        // Navigator.pop(context); // Pop to PostQuizScreen
+                        // Navigator.pop(
+                        //   context,
+                        //   true,
+                        // ); // Pop back to SocialMediaNormsPage with completion status
+                      },
+                      child: Text(
+                        'next'.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: theme.textTheme.bodyMedium?.fontSize,
                         ),
-                            (route) => false, // Remove all previous routes
-                      );
-                    },
-                    icon: FaIcon(FontAwesomeIcons.dragon),
-                    label: Text(
-                      'Dragon',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.primary,
                       ),
                     ),
                   ),
 
                   SizedBox(height: 30),
+
                 ],
               ),
             ),
           ),
-
-          Spacer(),
-
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // Pop to PostQuizScreen
-                Navigator.pop(
-                  context,
-                  true,
-                ); // Pop back to SocialMediaNormsPage with completion status
-              },
-              child: Text(
-                'return to lesson'.toUpperCase(),
-                style: TextStyle(
-                  fontSize: theme.textTheme.bodyMedium?.fontSize,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-
-
-
-
-    );
+      );
   }
 }

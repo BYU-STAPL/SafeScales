@@ -88,6 +88,11 @@ class AppTheme {
         fontSize: 28 * _fontSizeScale,
         fontWeight: FontWeight.normal,
       ),
+      headlineSmall: GoogleFonts.poppins(
+        color: colorScheme.onSurface,
+        fontSize: 25 * _fontSizeScale,
+        fontWeight: FontWeight.normal,
+      ),
       bodyLarge: GoogleFonts.poppins(
         color: colorScheme.onSurface,
         fontSize: 22 * _fontSizeScale,
