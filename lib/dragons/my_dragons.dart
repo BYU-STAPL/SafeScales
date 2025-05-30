@@ -22,17 +22,6 @@ class MyDragonsPage extends StatelessWidget {
 
     return Scaffold(
       key: _scaffoldKey,
-      // endDrawer: SettingsDrawer(
-      //   fontSize: fontSize,
-      //   onFontSizeChanged: onFontSizeChanged,
-      //   isDarkMode: isDarkMode,
-      //   onDarkModeChanged: onDarkModeChanged,
-      //   username: 'username',
-      //   email: 'your-email@email.com',
-      //   onTutorial: () {},
-      //   onHelp: () {},
-      //   onLogout: () {},
-      // ),
       backgroundColor: cardBg,
       body: SafeArea(
         child: SingleChildScrollView(

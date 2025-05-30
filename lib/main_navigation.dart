@@ -11,19 +11,10 @@ import 'dragons/my_dragons.dart';
 import 'home.dart';
 
 class MainNavigation extends StatefulWidget {
-  // final Function(bool) onDarkModeChanged;
-  // final Function(double) onFontSizeChanged;
-  // final bool isDarkMode;
-  // final double fontSize;
-
   final int initialIndex;
 
   const MainNavigation({
     super.key,
-    // required this.onDarkModeChanged,
-    // required this.onFontSizeChanged,
-    // required this.isDarkMode,
-    // required this.fontSize,
     required this.initialIndex,
   });
 
@@ -46,36 +37,11 @@ class _MainNavigationState extends State<MainNavigation> {
     _selectedIndex = widget.initialIndex;
 
     _pages = <Widget>[
-      HomePage(
-        // isDarkMode: widget.isDarkMode,
-        // onDarkModeChanged: widget.onDarkModeChanged,
-        // fontSize: widget.fontSize,
-        // onFontSizeChanged: widget.onFontSizeChanged,
-      ),
-      MyDragonsPage(
-        // isDarkMode: widget.isDarkMode,
-        // onDarkModeChanged: widget.onDarkModeChanged,
-        // fontSize: widget.fontSize,
-        // onFontSizeChanged: widget.onFontSizeChanged,
-      ),
-      ToyBoxPage(
-        // isDarkMode: widget.isDarkMode,
-        // onDarkModeChanged: widget.onDarkModeChanged,
-        // fontSize: widget.fontSize,
-        // onFontSizeChanged: widget.onFontSizeChanged,
-      ),
-      ShopPage(
-        // isDarkMode: widget.isDarkMode,
-        // onDarkModeChanged: widget.onDarkModeChanged,
-        // fontSize: widget.fontSize,
-        // onFontSizeChanged: widget.onFontSizeChanged,
-      ),
-      DevTestingPage(
-        // isDarkMode: widget.isDarkMode,
-        // onDarkModeChanged: widget.onDarkModeChanged,
-        // fontSize: widget.fontSize,
-        // onFontSizeChanged: widget.onFontSizeChanged,
-      ),
+      HomePage(),
+      MyDragonsPage(),
+      ToyBoxPage(),
+      ShopPage(),
+      DevTestingPage(),
     ];
   }
 
@@ -122,10 +88,6 @@ class _MainNavigationState extends State<MainNavigation> {
         ],
       ),
       endDrawer: SettingsDrawer(
-        // fontSize: widget.fontSize,
-        // onFontSizeChanged: widget.onFontSizeChanged,
-        // isDarkMode: widget.isDarkMode,
-        // onDarkModeChanged: widget.onDarkModeChanged,
         username: _userState.userProfile?['Username'] ?? 'User',
         email: _userState.currentUser?.email ?? '',
         onTutorial: () {},
