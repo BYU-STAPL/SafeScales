@@ -7,10 +7,7 @@ import 'package:safe_scales/services/user_state_service.dart';
 import 'lesson/lesson_page.dart';
 
 class HomePage extends StatefulWidget {
-
-  const HomePage({
-    super.key,
-  });
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -409,7 +406,7 @@ class _HomePageState extends State<HomePage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => LessonPage(topic: topic,),
+                                builder: (context) => LessonPage(topic: topic),
                               ),
                             ).then((_) {
                               // Reload quizzes when returning from the lesson page
