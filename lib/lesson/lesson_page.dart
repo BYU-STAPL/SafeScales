@@ -115,6 +115,18 @@ class _LessonPageState extends State<LessonPage> {
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
 
+    double topicProgress = 0.0;
+    if (preQuizCompleted &&
+        postQuizCompleted &&
+        preQuizScore != null &&
+        postQuizScore != null) {
+      topicProgress = (preQuizScore! / 2) + (postQuizScore! / 2);
+    } else if (preQuizCompleted && preQuizScore != null) {
+      topicProgress = preQuizScore! / 2;
+    } else if (postQuizCompleted && postQuizScore != null) {
+      topicProgress = postQuizScore! / 2;
+    }
+
     return Scaffold(
       appBar: AppBar(title: Text(widget.topic), centerTitle: true),
       body:
@@ -132,15 +144,7 @@ class _LessonPageState extends State<LessonPage> {
                         bottom: BorderSide(color: Colors.grey[300]!, width: 1),
                       ),
                     ),
-                    child: Center(
-                      child: Text(
-                        '🐉', // Placeholder dragon emoji
-                        style: TextStyle(
-                          fontSize:
-                              screenSize.width * 0.5, // 50% of screen width
-                        ),
-                      ),
-                    ),
+                    child: Center(child: _getDragonPhaseIcon(topicProgress)),
                   ),
                   // Existing content
                   Expanded(
@@ -385,9 +389,10 @@ class _LessonPageState extends State<LessonPage> {
                   ),
                   const SizedBox(width: 16),
                   if (!preQuizCompleted)
-                    Icon(
-                      Icons.lock,
-                      size: 16,
+                    Image.asset(
+                      'assets/images/other/lock.png',
+                      width: 56,
+                      height: 56,
                       color: textColor.withOpacity(0.5),
                     )
                   else if (!readingCompleted)
@@ -442,5 +447,17 @@ class _LessonPageState extends State<LessonPage> {
         _loadQuizzes(); // Reload quizzes to update scores
       }
     });
+  }
+
+  Widget _getDragonPhaseIcon(double progress) {
+    String asset = 'assets/images/other/egg.png';
+    if (progress >= 80) {
+      asset = 'assets/images/other/adult.png';
+    } else if (progress >= 50) {
+      asset = 'assets/images/other/teen.png';
+    } else if (progress >= 30) {
+      asset = 'assets/images/other/young.png';
+    }
+    return Image.asset(asset, width: 240, height: 240);
   }
 }

@@ -285,11 +285,14 @@ class _SocialMediaNormsPageState extends State<SocialMediaNormsPage> {
                 color: iconColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(
-                isLocked ? Icons.lock : icon,
-                color: iconColor,
-                size: 24,
-              ),
+              child:
+                  isLocked
+                      ? Image.asset(
+                        'assets/images/other/lock.png',
+                        width: 64,
+                        height: 64,
+                      )
+                      : Icon(icon, color: iconColor, size: 24),
             ),
             const SizedBox(width: 12),
             Expanded(

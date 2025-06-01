@@ -170,10 +170,18 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Get icon based on topic from database
-  IconData _getIconForTopic(String topic) {
-    // Default to school icon if no specific icon is found
-    return Icons.school;
+  // Get icon based on topic progress
+  Widget _getDragonPhaseIcon(String topic) {
+    final progress = _topicProgress[topic] ?? 0.0;
+    String asset = 'assets/images/other/egg.png';
+    if (progress >= 80) {
+      asset = 'assets/images/other/adult.png';
+    } else if (progress >= 50) {
+      asset = 'assets/images/other/teen.png';
+    } else if (progress >= 30) {
+      asset = 'assets/images/other/young.png';
+    }
+    return Image.asset(asset, width: 64, height: 64);
   }
 
   // Get color based on topic from database
@@ -398,7 +406,7 @@ class _HomePageState extends State<HomePage> {
                         title: topic,
                         isUnlocked: isUnlocked,
                         progress: progress,
-                        icon: _getIconForTopic(topic),
+                        dragonIcon: _getDragonPhaseIcon(topic),
                         iconColor: _getColorForTopic(topic),
                         unlockRequirement:
                             index > 0 ? 'Complete ${_topics[index - 1]}' : null,
@@ -428,7 +436,7 @@ class _HomePageState extends State<HomePage> {
                   title: 'SETTINGS',
                   isUnlocked: false,
                   progress: 0.0,
-                  icon: Icons.settings,
+                  dragonIcon: _getDragonPhaseIcon('SETTINGS'),
                   iconColor: Colors.grey[700]!,
                   unlockRequirement: 'Complete all activities',
                   onTap: () {
@@ -449,7 +457,7 @@ class _HomePageState extends State<HomePage> {
     required String title,
     required bool isUnlocked,
     required double progress,
-    required IconData icon,
+    required Widget dragonIcon,
     required Color iconColor,
     required VoidCallback onTap,
     String? unlockRequirement,
@@ -631,19 +639,16 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   // Icon in circle
-                  Positioned(
-                    top: 35,
-                    child: CircleAvatar(
-                      radius: 28,
-                      backgroundColor:
-                          shouldBeUnlocked ? iconColor : Colors.grey[400],
-                      child: Icon(
-                        shouldBeUnlocked ? icon : Icons.lock,
-                        size: 32,
-                        color: Colors.white,
+                  shouldBeUnlocked
+                      ? Positioned(top: 35, child: dragonIcon)
+                      : Positioned(
+                        top: 10,
+                        child: Image.asset(
+                          'assets/images/other/lock.png',
+                          width: 96,
+                          height: 96,
+                        ),
                       ),
-                    ),
-                  ),
                 ],
               ),
             ),
