@@ -1,0 +1,36 @@
+"/Users/mac/.pub-cache/hosted/pub.dev/webview_flutter_wkwebview-3.22.0/darwin/webview_flutter_wkwebview/Sources/webview_flutter_wkwebview/GetTrustResultResponseProxyAPIDelegate.swift":
+  dependencies: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/GetTrustResultResponseProxyAPIDelegate.d"
+  const-values: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/GetTrustResultResponseProxyAPIDelegate.swiftconstvalues"
+  object: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/GetTrustResultResponseProxyAPIDelegate.o"
+  swift-dependencies: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/GetTrustResultResponseProxyAPIDelegate.swiftdeps"
+  diagnostics: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/GetTrustResultResponseProxyAPIDelegate.dia"
+"/Users/mac/.pub-cache/hosted/pub.dev/webview_flutter_wkwebview-3.22.0/darwin/webview_flutter_wkwebview/Sources/webview_flutter_wkwebview/HTTPCookieProxyAPIDelegate.swift":
+  swift-dependencies: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPCookieProxyAPIDelegate.swiftdeps"
+  diagnostics: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPCookieProxyAPIDelegate.dia"
+  const-values: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPCookieProxyAPIDelegate.swiftconstvalues"
+  object: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPCookieProxyAPIDelegate.o"
+  dependencies: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPCookieProxyAPIDelegate.d"
+"/Users/mac/.pub-cache/hosted/pub.dev/webview_flutter_wkwebview-3.22.0/darwin/webview_flutter_wkwebview/Sources/webview_flutter_wkwebview/HTTPCookieStoreProxyAPIDelegate.swift":
+  const-values: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPCookieStoreProxyAPIDelegate.swiftconstvalues"
+  diagnostics: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPCookieStoreProxyAPIDelegate.dia"
+  dependencies: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPCookieStoreProxyAPIDelegate.d"
+  swift-dependencies: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPCookieStoreProxyAPIDelegate.swiftdeps"
+  object: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPCookieStoreProxyAPIDelegate.o"
+"/Users/mac/.pub-cache/hosted/pub.dev/webview_flutter_wkwebview-3.22.0/darwin/webview_flutter_wkwebview/Sources/webview_flutter_wkwebview/NavigationActionProxyAPIDelegate.swift":
+  swift-dependencies: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/NavigationActionProxyAPIDelegate.swiftdeps"
+  diagnostics: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/NavigationActionProxyAPIDelegate.dia"
+  object: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/NavigationActionProxyAPIDelegate.o"
+  dependencies: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/NavigationActionProxyAPIDelegate.d"
+  const-values: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/NavigationActionProxyAPIDelegate.swiftconstvalues"
+"/Users/mac/.pub-cache/hosted/pub.dev/webview_flutter_wkwebview-3.22.0/darwin/webview_flutter_wkwebview/Sources/webview_flutter_wkwebview/HTTPURLResponseProxyAPIDelegate.swift":
+  object: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPURLResponseProxyAPIDelegate.o"
+  swift-dependencies: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPURLResponseProxyAPIDelegate.swiftdeps"
+  dependencies: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPURLResponseProxyAPIDelegate.d"
+  const-values: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPURLResponseProxyAPIDelegate.swiftconstvalues"
+  diagnostics: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/HTTPURLResponseProxyAPIDelegate.dia"
+"/Users/mac/.pub-cache/hosted/pub.dev/webview_flutter_wkwebview-3.22.0/darwin/webview_flutter_wkwebview/Sources/webview_flutter_wkwebview/GetTrustResultResponse.swift":
+  diagnostics: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/GetTrustResultResponse.dia"
+  dependencies: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/GetTrustResultResponse.d"
+  object: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/GetTrustResultResponse.o"
+  swift-dependencies: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/GetTrustResultResponse.swiftdeps"
+  const-values: "/Users/mac/STPL/SafeScales/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/webview_flutter_wkwebview.build/Objects-normal/x86_64/GetTrustResultResponse.swiftconstvalues"

@@ -311,8 +311,8 @@ typedef unsigned int swift_uint4  __attribute__((__ext_vector_type__(4)));
 @class NSUserActivity;
 @class NSURL;
 @class FlutterError;
-SWIFT_CLASS("_TtC9app_links17AppLinksIosPlugin")
-@interface AppLinksIosPlugin : NSObject <FlutterPlugin, FlutterStreamHandler>
+SWIFT_CLASS("_TtC9app_links19SwiftAppLinksPlugin")
+@interface SwiftAppLinksPlugin : NSObject <FlutterPlugin, FlutterStreamHandler>
 + (void)registerWithRegistrar:(id <FlutterPluginRegistrar> _Nonnull)registrar;
 - (void)handleMethodCall:(FlutterMethodCall * _Nonnull)call result:(FlutterResult _Nonnull)result;
 - (BOOL)application:(UIApplication * _Nonnull)application continueUserActivity:(NSUserActivity * _Nonnull)userActivity restorationHandler:(void (^ _Nonnull)(NSArray * _Nonnull))restorationHandler SWIFT_WARN_UNUSED_RESULT;

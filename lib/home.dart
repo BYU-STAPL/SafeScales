@@ -346,12 +346,26 @@ class _HomePageState extends State<HomePage> {
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
-                    Text(
-                      '${_topics.isEmpty ? 0 : 1}/${_topics.length} Completed',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14 * AppTheme.fontSizeScale,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    Builder(
+                      builder: (context) {
+                        // Count completed activities (100% progress)
+                        final completedCount =
+                            _topics
+                                .where(
+                                  (topic) =>
+                                      (_topicProgress[topic] ?? 0.0) >= 100,
+                                )
+                                .length;
+
+                        return Text(
+                          '${completedCount}/${_topics.length} Completed',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14 * AppTheme.fontSizeScale,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
