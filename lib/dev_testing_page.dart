@@ -12,17 +12,8 @@ This will be removed after development
 
 
 class DevTestingPage extends StatefulWidget {
-  final bool isDarkMode;
-  final ValueChanged<bool> onDarkModeChanged;
-  final double fontSize;
-  final ValueChanged<double> onFontSizeChanged;
-
   const DevTestingPage({
     super.key,
-    required this.isDarkMode,
-    required this.onDarkModeChanged,
-    required this.fontSize,
-    required this.onFontSizeChanged,
   });
 
   @override
@@ -76,7 +67,7 @@ class _DevTestingPageState extends State<DevTestingPage> {
       description: "This is a post-test",
       activityType: ActivityType.postQuiz,
       subject: "test subject",
-      questions: [singleQ],
+      questions: [singleQ,],
     );
 
 

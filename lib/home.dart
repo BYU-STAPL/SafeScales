@@ -7,17 +7,9 @@ import 'package:safe_scales/services/user_state_service.dart';
 import 'lesson/lesson_page.dart';
 
 class HomePage extends StatefulWidget {
-  final bool isDarkMode;
-  final ValueChanged<bool> onDarkModeChanged;
-  final double fontSize;
-  final ValueChanged<double> onFontSizeChanged;
 
   const HomePage({
     super.key,
-    required this.isDarkMode,
-    required this.onDarkModeChanged,
-    required this.fontSize,
-    required this.onFontSizeChanged,
   });
 
   @override
@@ -28,6 +20,7 @@ class _HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final QuizService _quizService = QuizService();
   final _userState = UserStateService();
+  String? _username;
 
   List<String> _topics = [];
   Map<String, List<Map<String, dynamic>>> _quizzesByTopic = {};
@@ -416,7 +409,7 @@ class _HomePageState extends State<HomePage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => LessonPage(topic: topic),
+                                builder: (context) => LessonPage(topic: topic,),
                               ),
                             ).then((_) {
                               // Reload quizzes when returning from the lesson page
