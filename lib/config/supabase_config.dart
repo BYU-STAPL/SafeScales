@@ -1,6 +1,12 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+// Platform-specific imports
+import 'web_config.dart'
+    if (dart.library.io) 'mobile_config.dart'
+    as platform_config;
 
 class SupabaseConfig {
   static bool _isInitialized = false;
@@ -12,32 +18,36 @@ class SupabaseConfig {
     }
 
     try {
-      // Try to load .env file
-      debugPrint('Attempting to load .env file...');
-      await dotenv.load(fileName: ".env");
-      debugPrint('.env file loaded successfully');
+      String? supabaseUrl;
+      String? supabaseAnonKey;
 
-      final supabaseUrl = dotenv.env['SUPABASE_URL'];
-      final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
-
-      debugPrint(
-        'Supabase URL: ${supabaseUrl != null ? 'Found' : 'Not found'}',
-      );
-      debugPrint(
-        'Supabase Anon Key: ${supabaseAnonKey != null ? 'Found' : 'Not found'}',
-      );
-
-      if (supabaseUrl == null || supabaseAnonKey == null) {
-        throw Exception('Missing Supabase credentials in .env file');
+      if (kIsWeb) {
+        debugPrint('Web environment detected, loading web configuration...');
+        final config = await platform_config.getWebConfig();
+        supabaseUrl = config['SUPABASE_URL'];
+        supabaseAnonKey = config['SUPABASE_ANON_KEY'];
+      } else {
+        // In non-web environment, load from .env file
+        debugPrint('Non-web environment detected, loading .env file...');
+        await dotenv.load(fileName: ".env");
+        supabaseUrl = dotenv.env['SUPABASE_URL'];
+        supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
       }
 
-      debugPrint('Initializing Supabase...');
-      await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+      if (supabaseUrl == null || supabaseAnonKey == null) {
+        throw Exception('Failed to get Supabase credentials');
+      }
+
+      debugPrint('Initializing Supabase with URL: $supabaseUrl');
+      await Supabase.initialize(
+        url: supabaseUrl,
+        anonKey: supabaseAnonKey,
+        debug: true, // Enable debug mode for more detailed logs
+      );
       _isInitialized = true;
       debugPrint('Supabase initialized successfully');
     } catch (e) {
       debugPrint('Error initializing Supabase: $e');
-      // You might want to show a user-friendly error message here
       rethrow;
     }
   }

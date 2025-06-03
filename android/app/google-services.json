@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "638757528794",
+    "project_id": "kahootclone-b842c",
+    "storage_bucket": "kahootclone-b842c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:638757528794:android:a720b551c5d7c06bfe31e3",
+        "android_client_info": {
+          "package_name": "edu.byu.safe_scales"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcoXilLZ_JIZ0nBw5O3EnM57VtwUM581w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
