@@ -45,8 +45,6 @@ class _HomePageState extends State<HomePage> {
       final allQuizzes = await _quizService.getAllQuizzes();
       final user = _userState.currentUser;
 
-      print('Loading quizzes for user: ${user?.id}'); // Debug log
-
       // Group quizzes by topic
       final Map<String, List<Map<String, dynamic>>> grouped = {};
       for (var quiz in allQuizzes) {
@@ -55,25 +53,17 @@ class _HomePageState extends State<HomePage> {
           grouped[topic] = [];
         }
         grouped[topic]!.add(quiz);
-        print(
-          'Added quiz to topic $topic: ${quiz['id']} - ${quiz['activity_type']}',
-        ); // Debug log
       }
 
       // Calculate progress for each topic
       if (user != null) {
-        // First, get all quizzes for each topic
         for (var topic in grouped.keys) {
-          print('\nProcessing topic: $topic');
-
           // Get all quizzes for this topic
           final topicQuizzes = await _quizService.supabase
               .from('quizzes')
               .select()
               .eq('topic', topic)
               .order('created_at', ascending: true);
-
-          print('Found ${topicQuizzes.length} quizzes for topic $topic');
 
           // Get user's quiz progress
           final response =
@@ -85,7 +75,6 @@ class _HomePageState extends State<HomePage> {
 
           if (response['quizzes'] != null) {
             final quizzesData = Map<String, dynamic>.from(response['quizzes']);
-            print('User quiz data: $quizzesData');
 
             double preQuizScore = 0;
             double postQuizScore = 0;
@@ -97,53 +86,35 @@ class _HomePageState extends State<HomePage> {
               final quizId = quiz['id'].toString();
               final activityType =
                   quiz['activity_type'].toString().toLowerCase();
-              print('Checking quiz ID: $quizId, activity type: $activityType');
 
               if (quizzesData.containsKey(quizId)) {
                 final quizData = quizzesData[quizId];
-                print('Found quiz data: $quizData');
 
                 if (activityType == 'prequiz') {
                   preQuizScore = quizData['score'].toDouble();
                   hasPreQuiz = true;
-                  print('Pre-quiz score: $preQuizScore');
                 } else if (activityType == 'postquiz') {
                   postQuizScore = quizData['score'].toDouble();
                   hasPostQuiz = true;
-                  print('Post-quiz score: $postQuizScore');
                 }
-              } else {
-                print('No quiz data found for ID: $quizId');
               }
             }
 
             // Calculate progress
             double progress = 0;
             if (hasPreQuiz && hasPostQuiz) {
-              // Each quiz contributes up to 50% to the total progress
               progress = (preQuizScore / 2) + (postQuizScore / 2);
-              print(
-                'Both quizzes completed. Pre-quiz: ${preQuizScore / 2}%, Post-quiz: ${postQuizScore / 2}%, Total: $progress%',
-              );
             } else if (hasPreQuiz) {
-              progress = preQuizScore / 2; // Pre-quiz contributes up to 50%
-              print('Only pre-quiz completed. Progress: $progress%');
+              progress = preQuizScore / 2;
             } else if (hasPostQuiz) {
-              progress = postQuizScore / 2; // Post-quiz contributes up to 50%
-              print('Only post-quiz completed. Progress: $progress%');
-            } else {
-              print('No quizzes completed for this topic');
+              progress = postQuizScore / 2;
             }
 
             _topicProgress[topic] = progress;
-            print('Final progress for $topic: $progress%');
           } else {
-            print('No quiz data found in user record');
             _topicProgress[topic] = 0;
           }
         }
-      } else {
-        print('No user logged in');
       }
 
       if (mounted) {
@@ -153,11 +124,10 @@ class _HomePageState extends State<HomePage> {
           _isLoading = false;
         });
 
-        // Load dragons after topics are set
         await _loadDragonImages();
       }
     } catch (e) {
-      print('Error loading quizzes: $e');
+      print('✗ Error loading quizzes: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -168,23 +138,18 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadDragonImages() async {
     try {
-      print('Starting to load dragons...');
-      // Initialize the dragon service
       await _dragonService.initialize();
 
-      print('Loading dragons for ${_topics.length} topics:');
       for (var i = 0; i < _topics.length; i++) {
-        print('Loading dragon for topic ${i + 1}: ${_topics[i]}');
         final dragonData = await _dragonService.getDragonImagesForModule(i);
         if (mounted) {
           setState(() {
             _moduleDragons[_topics[i]] = dragonData;
-            print('Assigned dragon to ${_topics[i]}: ${dragonData['id']}');
           });
         }
       }
     } catch (e) {
-      print('Error loading dragon images: $e');
+      print('✗ Error loading dragon images: $e');
     }
   }
 
@@ -194,11 +159,36 @@ class _HomePageState extends State<HomePage> {
     final dragonData = _moduleDragons[topic];
 
     if (dragonData == null) {
-      print('No dragon data found for topic: $topic');
+      print('✗ No dragon data found for topic: $topic');
     }
 
     String imageUrl = dragonData?['egg'] ?? 'assets/images/other/egg.png';
+    List<String> phases = ['egg']; // Always start with egg
 
+    // Add phases based on progress, ensuring all previous phases are included
+    if (progress >= 30) {
+      phases.add('stage1'); // Add baby phase
+    }
+    if (progress >= 50) {
+      phases.add('stage2'); // Add teen phase
+    }
+    if (progress >= 80) {
+      phases.add('final'); // Add adult phase
+    }
+
+    // Save dragon phases if we have a valid dragon ID
+    if (dragonData != null && dragonData['id'] != null) {
+      final user = _userState.currentUser;
+      if (user != null) {
+        _dragonService
+            .saveDragonPhases(user.id, dragonData['id'].toString(), phases)
+            .catchError((e) {
+              print('✗ Error saving dragon phases: $e');
+            });
+      }
+    }
+
+    // Set the image URL based on the highest achieved phase
     if (progress >= 80) {
       imageUrl = dragonData?['final'] ?? 'assets/images/other/adult.png';
     } else if (progress >= 50) {
@@ -207,8 +197,6 @@ class _HomePageState extends State<HomePage> {
       imageUrl = dragonData?['stage1'] ?? 'assets/images/other/young.png';
     }
 
-    print('Using image for topic $topic: $imageUrl');
-
     // Check if the image URL is a network URL or a local asset
     if (imageUrl.startsWith('http')) {
       return Image.network(
@@ -216,7 +204,7 @@ class _HomePageState extends State<HomePage> {
         width: 64,
         height: 64,
         errorBuilder: (context, error, stackTrace) {
-          print('Error loading dragon image for topic $topic: $error');
+          print('✗ Error loading dragon image for topic $topic: $error');
           return Image.asset(
             'assets/images/other/egg.png',
             width: 64,

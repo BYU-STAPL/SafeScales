@@ -1,11 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/settings_drawer.dart';
+import 'package:safe_scales/services/user_state_service.dart';
+import 'package:safe_scales/services/dragon_service.dart';
+import 'package:safe_scales/services/quiz_service.dart';
 
-class MyDragonsPage extends StatelessWidget {
-  const MyDragonsPage({
-    super.key,
-  });
+class MyDragonsPage extends StatefulWidget {
+  const MyDragonsPage({super.key});
+
+  @override
+  State<MyDragonsPage> createState() => _MyDragonsPageState();
+}
+
+class _MyDragonsPageState extends State<MyDragonsPage> {
+  final _userState = UserStateService();
+  late final DragonService _dragonService;
+  Map<String, List<String>> _userDragons = {};
+  Map<String, Map<String, dynamic>> _dragonDetails = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _dragonService = DragonService(QuizService().supabase);
+    _loadUserDragons();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,404 +32,427 @@ class MyDragonsPage extends StatelessWidget {
     final Color cardBg = Theme.of(context).colorScheme.surface;
     final Color cardShadow = Theme.of(
       context,
-    ).colorScheme.shadow.withValues(alpha: 0.07);
+    ).colorScheme.shadow.withOpacity(0.07);
     final Color lockedBg = Theme.of(context).colorScheme.surfaceDim;
     final double borderRadius = 28.0;
     final double cardPadding = 24.0;
 
-    final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
     return Scaffold(
-      key: _scaffoldKey,
       backgroundColor: cardBg,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 8.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Dragon Card (Unlocked)
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 28),
-                  padding: EdgeInsets.all(cardPadding),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(borderRadius),
-                    boxShadow: [
-                      BoxShadow(
-                        color: cardShadow,
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Egg image placeholder with gradient border
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  primary.withOpacity(0.25),
-                                  Colors.green.withOpacity(0.18),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+        child:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Page title
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.auto_awesome,
+                                color: primary,
+                                size: 28,
                               ),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: primary.withOpacity(0.3),
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: primary.withOpacity(0.08),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
+                              const SizedBox(width: 12),
+                              Text(
+                                'My Dragons',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: primary,
                                 ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Icon(
-                                Icons.egg,
-                                size: 48,
-                                color: Colors.green[700],
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_userDragons.isEmpty)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32.0),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.egg_outlined,
+                                    size: 64,
+                                    color: primary.withOpacity(0.5),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No dragons yet.\nComplete topics to unlock dragons!',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 22),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      'Name',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        color:
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              'Fitzwilliam',
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    Theme.of(
-                                                      context,
-                                                    ).colorScheme.onSurface,
+                          )
+                        else
+                          ..._userDragons.entries.map((entry) {
+                            final dragonId = entry.key;
+                            final phases = entry.value;
+                            final dragonData = _dragonDetails[dragonId];
+
+                            if (dragonData == null)
+                              return const SizedBox.shrink();
+
+                            // Get the highest phase achieved
+                            String currentPhase = 'egg';
+                            String imageUrl = dragonData['egg_image'];
+
+                            if (phases.contains('final')) {
+                              currentPhase = 'final';
+                              imageUrl = dragonData['final_stage_image'];
+                            } else if (phases.contains('stage2')) {
+                              currentPhase = 'stage2';
+                              imageUrl = dragonData['stage2_image'];
+                            } else if (phases.contains('stage1')) {
+                              currentPhase = 'stage1';
+                              imageUrl = dragonData['stage1_image'];
+                            }
+
+                            return Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 28),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surface,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: primary.withOpacity(0.08),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  // Dragon image section
+                                  Stack(
+                                    children: [
+                                      // Main image container
+                                      Container(
+                                        height: 200,
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              const BorderRadius.vertical(
+                                                top: Radius.circular(20),
                                               ),
-                                              overflow: TextOverflow.ellipsis,
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              primary.withOpacity(0.1),
+                                              primary.withOpacity(0.05),
+                                            ],
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child:
+                                              imageUrl.startsWith('http')
+                                                  ? Image.network(
+                                                    imageUrl,
+                                                    height: 180,
+                                                    fit: BoxFit.contain,
+                                                    errorBuilder:
+                                                        (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) => Icon(
+                                                          Icons.pets,
+                                                          size: 80,
+                                                          color: primary,
+                                                        ),
+                                                  )
+                                                  : Image.asset(
+                                                    imageUrl,
+                                                    height: 180,
+                                                    fit: BoxFit.contain,
+                                                    errorBuilder:
+                                                        (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) => Icon(
+                                                          Icons.pets,
+                                                          size: 80,
+                                                          color: primary,
+                                                        ),
+                                                  ),
+                                        ),
+                                      ),
+                                      // Phase badge
+                                      Positioned(
+                                        top: 12,
+                                        right: 12,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: primary,
+                                            borderRadius: BorderRadius.circular(
+                                              20,
                                             ),
                                           ),
-                                          Icon(
-                                            Icons.edit,
-                                            size: 16,
-                                            color: primary,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                _getPhaseIcon(currentPhase),
+                                                size: 16,
+                                                color: Colors.white,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                currentPhase.toUpperCase(),
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'Species',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        color:
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.onSurfaceVariant,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Bokaris',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 16,
-                                          color:
-                                              Theme.of(
-                                                context,
-                                              ).colorScheme.onSurface,
                                         ),
-                                        overflow: TextOverflow.ellipsis,
                                       ),
+                                    ],
+                                  ),
+                                  // Content section
+                                  Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Stats in a single row
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: _buildStatItem(
+                                                context,
+                                                'Length',
+                                                '${dragonData['length']} ft',
+                                                Icons.straighten,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: _buildStatItem(
+                                                context,
+                                                'Weight',
+                                                '${dragonData['weight']} lbs',
+                                                Icons.monitor_weight,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: _buildStatItem(
+                                                context,
+                                                'Environment',
+                                                dragonData['preferred_environment'] ??
+                                                    'Unknown',
+                                                Icons.landscape,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 16),
+                                        // Play button
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (context) =>
+                                                        DragonDressUpPage(
+                                                          dragonId: dragonId,
+                                                          dragonData:
+                                                              dragonData,
+                                                          phases: phases,
+                                                        ),
+                                              ),
+                                            );
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: primary,
+                                            foregroundColor: Colors.white,
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                            ),
+                                            textStyle: GoogleFonts.poppins(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.play_arrow_rounded,
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Text('PLAY WITH DRAGON'),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      Divider(
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                        thickness: 1,
-                        height: 1,
-                      ),
-                      const SizedBox(height: 18),
-                      _DragonInfoRow(label: 'Length', value: '2 feet'),
-                      _DragonInfoRow(label: 'Weight', value: '25 pounds'),
-                      _DragonInfoRow(
-                        label: 'Preferred Environment',
-                        value: 'Waterfalls',
-                      ),
-                      _DragonInfoRow(
-                        label: 'Favorite Item',
-                        value: 'Ice Cream',
-                      ),
-                      const SizedBox(height: 22),
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => DragonDressUpPage(),
+                                  ),
+                                ],
                               ),
                             );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primary,
-                            foregroundColor: Colors.white,
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 48,
-                              vertical: 16,
-                            ),
-                            textStyle: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          child: const Text('PLAY'),
-                        ),
-                      ),
-                    ],
+                          }).toList(),
+                      ],
+                    ),
                   ),
                 ),
-                // Dragon Card (Locked)
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 28),
-                  padding: EdgeInsets.all(cardPadding),
-                  decoration: BoxDecoration(
-                    color: lockedBg,
-                    borderRadius: BorderRadius.circular(borderRadius),
-                    border: Border.all(color: Colors.grey[300]!, width: 1.2),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Lock image placeholder
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: Colors.grey[400]!,
-                                width: 2,
-                              ),
-                            ),
-                            child: Center(
-                              child: Icon(
-                                Icons.lock,
-                                size: 48,
-                                color: Colors.blueGrey[300],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 22),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      'Name',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant
-                                            .withOpacity(0.7),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        '__________________',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 16,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant
-                                              .withOpacity(0.5),
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'Species',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant
-                                            .withOpacity(0.7),
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        '__________________',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 16,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant
-                                              .withOpacity(0.5),
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      Divider(
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                        thickness: 1,
-                        height: 1,
-                      ),
-                      const SizedBox(height: 18),
-                      _DragonInfoRow(
-                        label: 'Length',
-                        value: '______',
-                        valueColor: Colors.black26,
-                      ),
-                      _DragonInfoRow(
-                        label: 'Weight',
-                        value: '______',
-                        valueColor: Colors.black26,
-                      ),
-                      _DragonInfoRow(
-                        label: 'Preferred Environment',
-                        value: '______________',
-                        valueColor: Colors.black26,
-                      ),
-                      _DragonInfoRow(
-                        label: 'Favorite Item',
-                        value: '____________________',
-                        valueColor: Colors.black26,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
-}
 
-class _DragonInfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? valueColor;
-  const _DragonInfoRow({
-    required this.label,
-    required this.value,
-    this.valueColor,
-  });
+  IconData _getPhaseIcon(String phase) {
+    switch (phase) {
+      case 'egg':
+        return Icons.egg;
+      case 'stage1':
+        return Icons.pets;
+      case 'stage2':
+        return Icons.auto_awesome;
+      case 'final':
+        return Icons.star;
+      default:
+        return Icons.pets;
+    }
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3.5),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildStatItem(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Flexible(
-            flex: 2,
-            child: Text(
-              '$label:',
-              style: GoogleFonts.poppins(
-                fontSize: 15,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              overflow: TextOverflow.ellipsis,
+          Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(width: 8),
-          Flexible(
-            flex: 3,
-            child: Text(
-              value,
-              style: GoogleFonts.poppins(
-                fontSize: 15,
-                color: valueColor ?? Theme.of(context).colorScheme.onSurface,
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
+
+  Future<void> _loadUserDragons() async {
+    try {
+      setState(() => _isLoading = true);
+
+      // Initialize dragon service
+      await _dragonService.initialize();
+
+      // Get user's dragons
+      final user = _userState.currentUser;
+      if (user != null) {
+        final response =
+            await _dragonService.supabase
+                .from('Users')
+                .select('dragons')
+                .eq('id', user.id)
+                .single();
+
+        if (response['dragons'] != null) {
+          // Convert the dragons map to the correct types
+          final dragonsMap = Map<String, dynamic>.from(response['dragons']);
+          _userDragons = dragonsMap.map((key, value) {
+            // Convert the phases list from List<dynamic> to List<String>
+            final phases =
+                (value as List<dynamic>)
+                    .map((phase) => phase.toString())
+                    .toList();
+            return MapEntry(key, phases);
+          });
+
+          // Load details for each dragon
+          for (var dragonId in _userDragons.keys) {
+            final dragonData =
+                await _dragonService.supabase
+                    .from('dragons')
+                    .select()
+                    .eq('id', dragonId)
+                    .single();
+
+            _dragonDetails[dragonId] = dragonData;
+          }
+        }
+      }
+
+      setState(() => _isLoading = false);
+    } catch (e) {
+      print('✗ Error loading user dragons: $e');
+      setState(() => _isLoading = false);
+    }
+  }
 }
 
 // --- Dragon Dress Up Page ---
 class DragonDressUpPage extends StatefulWidget {
+  final String dragonId;
+  final Map<String, dynamic> dragonData;
+  final List<String> phases;
+
+  const DragonDressUpPage({
+    Key? key,
+    required this.dragonId,
+    required this.dragonData,
+    required this.phases,
+  }) : super(key: key);
+
   @override
   _DragonDressUpPageState createState() => _DragonDressUpPageState();
 }
@@ -440,8 +482,49 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     Colors.green, // Ball
   ];
 
-  final List<String> dragonPhases = ['Egg', 'Baby', 'Adult'];
   final List<String> environments = ['Forest', 'Mountain', 'Beach'];
+
+  // Get available phases based on the dragon data
+  List<String> get availablePhases {
+    List<String> phases = ['egg'];
+    if (widget.phases.contains('stage1')) phases.add('stage1');
+    if (widget.phases.contains('stage2')) phases.add('stage2');
+    if (widget.phases.contains('final')) phases.add('final');
+    return phases;
+  }
+
+  // Get phase display names
+  String getPhaseDisplayName(String phase) {
+    switch (phase) {
+      case 'egg':
+        return 'Egg';
+      case 'stage1':
+        return 'Baby';
+      case 'stage2':
+        return 'Teen';
+      case 'final':
+        return 'Adult';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  // Get image URL for current phase
+  String getCurrentPhaseImage() {
+    final currentPhase = availablePhases[selectedPhase];
+    switch (currentPhase) {
+      case 'egg':
+        return widget.dragonData['egg_image'];
+      case 'stage1':
+        return widget.dragonData['stage1_image'];
+      case 'stage2':
+        return widget.dragonData['stage2_image'];
+      case 'final':
+        return widget.dragonData['final_stage_image'];
+      default:
+        return widget.dragonData['egg_image'];
+    }
+  }
 
   void _showPhaseDialog() async {
     int? choice = await showDialog<int>(
@@ -450,10 +533,10 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
           (context) => SimpleDialog(
             title: const Text('Select Dragon Phase'),
             children: List.generate(
-              dragonPhases.length,
+              availablePhases.length,
               (i) => SimpleDialogOption(
                 onPressed: () => Navigator.pop(context, i),
-                child: Text(dragonPhases[i]),
+                child: Text(getPhaseDisplayName(availablePhases[i])),
               ),
             ),
           ),
@@ -539,7 +622,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
             child: Column(
               children: [
                 Text(
-                  'Phase: ${dragonPhases[selectedPhase]}',
+                  'Phase: ${getPhaseDisplayName(availablePhases[selectedPhase])}',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -591,7 +674,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                               // Dragon image
                               Positioned.fill(
                                 child: Image.network(
-                                  'https://raw.githubusercontent.com/itsnporg/pixel-art-dragons/main/green-dragon.png',
+                                  getCurrentPhaseImage(),
                                   fit: BoxFit.contain,
                                   errorBuilder:
                                       (context, error, stackTrace) => Icon(
