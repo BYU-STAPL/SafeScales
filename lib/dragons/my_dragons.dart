@@ -123,6 +123,7 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
                                     false;
                               }
                               return false;
+                            }
 
                             if (hasPhase('final')) {
                               currentPhase = 'final';
@@ -559,8 +560,10 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   @override
   void initState() {
     super.initState();
+    print('🚀 Initializing DragonDressUpPage...');
     _loadUserEnvironments();
     _loadUserAccessories();
+    _loadCurrentPhase();
   }
 
   Future<void> _loadUserEnvironments() async {
@@ -679,13 +682,13 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
   Future<void> _loadUserAccessories() async {
     try {
+      setState(() => _isLoadingAccessories = true);
+
       final userState = UserStateService();
       final user = userState.currentUser;
 
       if (user != null) {
         final dragonService = DragonService(QuizService().supabase);
-
-        // Get user's acquired accessories
         final userResponse =
             await dragonService.supabase
                 .from('Users')
@@ -694,51 +697,35 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                 .single();
 
         if (userResponse['acquired_accessories'] != null) {
-          final acquiredAccessories = userResponse['acquired_accessories'];
-          List<String> accessoryIds = [];
+          final List<dynamic> acquiredAccessories =
+              userResponse['acquired_accessories'];
+          print('📦 Acquired accessories IDs: $acquiredAccessories');
 
-          // Handle both List and Map cases
-          if (acquiredAccessories is List) {
-            accessoryIds =
-                acquiredAccessories.map((e) => e.toString()).toList();
-          } else if (acquiredAccessories is Map) {
-            accessoryIds =
-                acquiredAccessories.keys.map((e) => e.toString()).toList();
-          }
+          // Get all accessories
+          final accessoriesResponse = await dragonService.supabase
+              .from('accessories')
+              .select()
+              .inFilter('id', acquiredAccessories);
 
-          if (accessoryIds.isNotEmpty) {
-            // Fetch the accessory details using those IDs
-            final accessoriesResponse = await dragonService.supabase
-                .from('accessories')
-                .select()
-                .inFilter('id', accessoryIds);
-
-            if (accessoriesResponse != null && accessoriesResponse is List) {
-              if (mounted) {
-                setState(() {
-                  userAccessories = List<Map<String, dynamic>>.from(
-                    accessoriesResponse,
-                  );
-                  _isLoadingAccessories = false;
-                });
-              }
-            }
-          }
+          setState(() {
+            userAccessories = List<Map<String, dynamic>>.from(
+              accessoriesResponse,
+            );
+            _isLoadingAccessories = false;
+          });
+          print('✅ Loaded ${userAccessories.length} accessories');
+          _onAccessoriesLoaded();
+        } else {
+          print('⚠️ No acquired accessories found');
+          setState(() => _isLoadingAccessories = false);
         }
-      }
-
-      if (mounted) {
-        setState(() {
-          _isLoadingAccessories = false;
-        });
+      } else {
+        print('⚠️ No user found');
+        setState(() => _isLoadingAccessories = false);
       }
     } catch (e) {
-      print('Error loading user accessories: $e');
-      if (mounted) {
-        setState(() {
-          _isLoadingAccessories = false;
-        });
-      }
+      print('❌ Error loading accessories: $e');
+      setState(() => _isLoadingAccessories = false);
     }
   }
 
@@ -811,7 +798,55 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
             ),
           ),
     );
-    if (choice != null) setState(() => selectedPhase = choice);
+    if (choice != null) {
+      setState(() => selectedPhase = choice);
+      _saveCurrentPhase(availablePhases[choice]);
+    }
+  }
+
+  Future<void> _saveCurrentPhase(String phase) async {
+    try {
+      final userState = UserStateService();
+      final user = userState.currentUser;
+
+      if (user != null) {
+        final dragonService = DragonService(QuizService().supabase);
+
+        // Get current dragons data
+        final userResponse =
+            await dragonService.supabase
+                .from('Users')
+                .select('dragons')
+                .eq('id', user.id)
+                .single();
+
+        if (userResponse['dragons'] != null) {
+          final dragonsData = Map<String, dynamic>.from(
+            userResponse['dragons'],
+          );
+
+          // Update the dragon's data
+          if (dragonsData[widget.dragonId] is Map) {
+            dragonsData[widget.dragonId]['current_phase'] = phase;
+          } else {
+            dragonsData[widget.dragonId] = {
+              'phases': widget.phases,
+              'current_phase': phase,
+            };
+          }
+
+          // Save the updated dragons data
+          await dragonService.supabase
+              .from('Users')
+              .update({'dragons': dragonsData})
+              .eq('id', user.id);
+
+          print('✅ Current phase saved: $phase');
+        }
+      }
+    } catch (e) {
+      print('❌ Error saving current phase: $e');
+    }
   }
 
   void _showEnvironmentDialog() async {
@@ -966,10 +1001,12 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
               .from('Users')
               .update({'dragons': dragonsData})
               .eq('id', user.id);
+
+          print('✅ Stickers saved: ${stickersData.length} stickers');
         }
       }
     } catch (e) {
-      print('Error saving stickers: $e');
+      print('❌ Error saving stickers: $e');
     }
   }
 
@@ -1002,36 +1039,76 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
             setState(() {
               placedStickers =
-                  stickersData
-                      .map(
-                        (sticker) => StickerItem(
-                          id: sticker['id'],
-                          imageUrl:
-                              userAccessories.firstWhere(
-                                (acc) => acc['name'] == sticker['accessory_id'],
-                                orElse: () => {'image': ''},
-                              )['image'],
-                          name: sticker['accessory_id'],
-                          position: Offset(
-                            sticker['position']['x'].toDouble(),
-                            sticker['position']['y'].toDouble(),
-                          ),
-                          size: sticker['size'].toDouble(),
-                        ),
-                      )
-                      .toList();
+                  stickersData.map((sticker) {
+                    final accessory = userAccessories.firstWhere(
+                      (acc) => acc['name'] == sticker['accessory_id'],
+                      orElse: () => {'image': ''},
+                    );
+
+                    return StickerItem(
+                      id: sticker['id'],
+                      imageUrl: accessory['image'],
+                      name: sticker['accessory_id'],
+                      position: Offset(
+                        sticker['position']['x'].toDouble(),
+                        sticker['position']['y'].toDouble(),
+                      ),
+                      size: sticker['size'].toDouble(),
+                    );
+                  }).toList();
             });
+            print('✅ Loaded ${placedStickers.length} stickers');
           }
         }
       }
     } catch (e) {
-      print('Error loading stickers: $e');
+      print('❌ Error loading stickers: $e');
     }
   }
 
   // Add a method to load stickers after accessories are loaded
   void _onAccessoriesLoaded() {
     _loadStickers();
+  }
+
+  Future<void> _loadCurrentPhase() async {
+    try {
+      final userState = UserStateService();
+      final user = userState.currentUser;
+
+      if (user != null) {
+        final dragonService = DragonService(QuizService().supabase);
+
+        // Get current dragons data
+        final userResponse =
+            await dragonService.supabase
+                .from('Users')
+                .select('dragons')
+                .eq('id', user.id)
+                .single();
+
+        if (userResponse['dragons'] != null) {
+          final dragonsData = Map<String, dynamic>.from(
+            userResponse['dragons'],
+          );
+          final dragonData = dragonsData[widget.dragonId];
+
+          if (dragonData is Map && dragonData['current_phase'] != null) {
+            final savedPhase = dragonData['current_phase'] as String;
+            final phaseIndex = availablePhases.indexOf(savedPhase);
+
+            if (phaseIndex != -1 && mounted) {
+              setState(() {
+                selectedPhase = phaseIndex;
+              });
+              print('✅ Loaded saved phase: $savedPhase');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('❌ Error loading current phase: $e');
+    }
   }
 
   @override
@@ -1304,17 +1381,15 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                           relativeY.clamp(0.0, dragonSize - 48).toDouble();
 
                       setState(() {
-                        placedStickers.add(
-                          StickerItem(
-                            id:
-                                DateTime.now().millisecondsSinceEpoch
-                                    .toString(),
-                            imageUrl: data['image'],
-                            name: data['name'],
-                            position: Offset(clampedX, clampedY),
-                          ),
+                        final newSticker = StickerItem(
+                          id: DateTime.now().millisecondsSinceEpoch.toString(),
+                          imageUrl: data['image'],
+                          name: data['name'],
+                          position: Offset(clampedX, clampedY),
                         );
+                        placedStickers.add(newSticker);
                       });
+                      _saveStickers(); // Save after adding
                     },
                   ),
                 ],
