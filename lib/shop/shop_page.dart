@@ -4,6 +4,7 @@ import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/settings_drawer.dart';
 import 'package:safe_scales/services/shop_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
+import 'package:safe_scales/config/supabase_config.dart';
 
 class ShopPage extends StatefulWidget {
   const ShopPage({super.key});
@@ -25,6 +26,7 @@ class _ShopPageState extends State<ShopPage> {
   bool isLoading = true;
   List<int> acquiredAccessories = [];
   List<String> acquiredEnvironments = [];
+  Map<String, Map<String, dynamic>> quizDetails = {};
 
   // Placeholder completed lessons
   final List<String> completedLessons = [
@@ -38,6 +40,39 @@ class _ShopPageState extends State<ShopPage> {
   void initState() {
     super.initState();
     _loadItems();
+    _reloadUserProfile();
+  }
+
+  Future<void> _reloadUserProfile() async {
+    print('Reloading user profile in shop page');
+    await _userState.loadUserProfile();
+    print(
+      'User profile reloaded. Quizzes data: ${_userState.currentUser?.quizzes}',
+    );
+    await _loadQuizDetails();
+  }
+
+  Future<void> _loadQuizDetails() async {
+    try {
+      final completedQuizzes = _getCompletedQuizzes();
+      if (completedQuizzes.isEmpty) return;
+
+      final quizIds = completedQuizzes.map((q) => int.parse(q['id'])).toList();
+      print('Loading details for quiz IDs: $quizIds');
+
+      final response = await SupabaseConfig.client
+          .from('quizzes')
+          .select()
+          .inFilter('id', quizIds);
+
+      print('Loaded quiz details: $response');
+
+      setState(() {
+        quizDetails = {for (var quiz in response) quiz['id'].toString(): quiz};
+      });
+    } catch (e) {
+      print('Error loading quiz details: $e');
+    }
   }
 
   Future<void> _loadItems() async {
@@ -73,6 +108,44 @@ class _ShopPageState extends State<ShopPage> {
     }
   }
 
+  List<Map<String, dynamic>> _getCompletedQuizzes() {
+    final user = _userState.currentUser;
+    print('Getting completed quizzes for user: ${user?.id}');
+    print('User quizzes data: ${user?.quizzes}');
+
+    if (user == null || user.quizzes == null) {
+      print('No user or quizzes data available');
+      return [];
+    }
+
+    final Map<String, dynamic> quizzes = user.quizzes!;
+    print('Processing quizzes: $quizzes');
+
+    final completedQuizzes =
+        quizzes.entries
+            .where((entry) {
+              print(
+                'Checking quiz ${entry.key}: score = ${entry.value['score']}, spent = ${entry.value['spent']}',
+              );
+              // Only include quizzes with 100% score and not spent
+              return entry.value['score'] == 100 &&
+                  entry.value['spent'] != true;
+            })
+            .map(
+              (entry) => {
+                'id': entry.key,
+                'score': entry.value['score'],
+                'completed_at': entry.value['completed_at'],
+              },
+            )
+            .toList();
+
+    print(
+      'Found ${completedQuizzes.length} available completed quizzes: $completedQuizzes',
+    );
+    return completedQuizzes;
+  }
+
   Future<void> _handlePurchase() async {
     if (selectedIndex == null) return;
 
@@ -84,61 +157,82 @@ class _ShopPageState extends State<ShopPage> {
       return;
     }
 
-    if (selectedTab == 0) {
-      // Handle accessory purchase
-      final accessoryId = accessories[selectedIndex!]['id'] as int;
+    print('Showing completed modules popup');
+    print('Current user: ${_userState.currentUser?.id}');
+    print('User quizzes: ${_userState.currentUser?.quizzes}');
 
-      // Check if user already owns this accessory
-      if (acquiredAccessories.contains(accessoryId)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You already own this item')),
-        );
-        return;
+    // Show completed modules popup first
+    setState(() {
+      showLessonDialog = true;
+      selectedLessonIndex = null;
+    });
+  }
+
+  Future<void> _completePurchase() async {
+    if (selectedIndex == null || selectedLessonIndex == null) return;
+
+    final userId = _userState.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      // Get current user's quizzes data
+      final response =
+          await SupabaseConfig.client
+              .from('Users')
+              .select('quizzes')
+              .eq('id', userId)
+              .single();
+
+      final Map<String, dynamic> quizzes = response['quizzes'] ?? {};
+
+      // Update the spent flag for the selected quiz
+      if (quizzes[selectedLessonIndex.toString()] != null) {
+        quizzes[selectedLessonIndex.toString()]['spent'] = true;
+
+        // Update the quizzes data in the database
+        await SupabaseConfig.client
+            .from('Users')
+            .update({'quizzes': quizzes})
+            .eq('id', userId);
+
+        // Update local user state
+        await _userState.loadUserProfile();
+
+        // Proceed with the purchase
+        bool purchaseSuccess;
+        if (selectedTab == 0) {
+          purchaseSuccess = await _shopService.purchaseAccessory(
+            userId,
+            accessories[selectedIndex!]['id'],
+          );
+        } else {
+          purchaseSuccess = await _shopService.purchaseEnvironment(
+            userId,
+            environments[selectedIndex!]['id'],
+          );
+        }
+
+        if (purchaseSuccess) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Purchase successful!')));
+          await _loadItems(); // Reload items to update owned status
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to complete purchase')),
+          );
+        }
       }
 
-      final success = await _shopService.purchaseAccessory(userId, accessoryId);
-
-      if (success) {
-        setState(() {
-          acquiredAccessories.add(accessoryId);
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Item purchased successfully!')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to purchase item')),
-        );
-      }
-    } else {
-      // Handle environment purchase
-      final environmentId = environments[selectedIndex!]['id'] as String;
-
-      // Check if user already owns this environment
-      if (acquiredEnvironments.contains(environmentId)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You already own this environment')),
-        );
-        return;
-      }
-
-      final success = await _shopService.purchaseEnvironment(
-        userId,
-        environmentId,
-      );
-
-      if (success) {
-        setState(() {
-          acquiredEnvironments.add(environmentId);
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Environment purchased successfully!')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to purchase environment')),
-        );
-      }
+      setState(() {
+        showLessonDialog = false;
+        selectedLessonIndex = null;
+      });
+    } catch (e) {
+      print('Error during purchase: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
     }
   }
 
@@ -338,7 +432,7 @@ class _ShopPageState extends State<ShopPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Select a completed lesson',
+                          'Select a completed module',
                           style: GoogleFonts.poppins(
                             fontSize: 18 * AppTheme.fontSizeScale,
                             fontWeight: FontWeight.bold,
@@ -346,43 +440,85 @@ class _ShopPageState extends State<ShopPage> {
                           ),
                         ),
                         const SizedBox(height: 18),
-                        ...List.generate(completedLessons.length, (idx) {
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedLessonIndex = idx;
-                              });
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                                horizontal: 14,
-                              ),
-                              decoration: BoxDecoration(
-                                color:
-                                    selectedLessonIndex == idx
-                                        ? primary.withOpacity(0.12)
-                                        : Colors.grey[100],
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color:
-                                      selectedLessonIndex == idx
-                                          ? primary
-                                          : Colors.transparent,
-                                  width: 2,
-                                ),
-                              ),
-                              child: Text(
-                                completedLessons[idx],
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15 * AppTheme.fontSizeScale,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height * 0.5,
+                          ),
+                          child: ListView(
+                            shrinkWrap: true,
+                            children:
+                                _getCompletedQuizzes().map((quiz) {
+                                  final quizDetail = quizDetails[quiz['id']];
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        selectedLessonIndex = int.parse(
+                                          quiz['id'],
+                                        );
+                                      });
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.only(bottom: 10),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                        horizontal: 14,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            selectedLessonIndex ==
+                                                    int.parse(quiz['id'])
+                                                ? primary.withOpacity(0.12)
+                                                : Colors.grey[100],
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color:
+                                              selectedLessonIndex ==
+                                                      int.parse(quiz['id'])
+                                                  ? primary
+                                                  : Colors.transparent,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            quizDetail?['topic'] ??
+                                                'Unknown Topic',
+                                            style: GoogleFonts.poppins(
+                                              fontSize:
+                                                  15 * AppTheme.fontSizeScale,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Activity: ${quizDetail?['activity_type'] ?? 'Unknown'}',
+                                            style: GoogleFonts.poppins(
+                                              fontSize:
+                                                  13 * AppTheme.fontSizeScale,
+                                              color: Colors.black54,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Score: ${quiz['score']}%',
+                                            style: GoogleFonts.poppins(
+                                              fontSize:
+                                                  13 * AppTheme.fontSizeScale,
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                          ),
+                        ),
                         const SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
@@ -403,19 +539,7 @@ class _ShopPageState extends State<ShopPage> {
                               onPressed:
                                   selectedLessonIndex != null
                                       ? () {
-                                        // TODO: Handle lesson selection logic
-                                        setState(
-                                          () => showLessonDialog = false,
-                                        );
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Selected: ${completedLessons[selectedLessonIndex!]}',
-                                            ),
-                                          ),
-                                        );
+                                        _completePurchase();
                                       }
                                       : null,
                               style: ElevatedButton.styleFrom(

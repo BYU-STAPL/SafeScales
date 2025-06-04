@@ -8,9 +8,7 @@ import 'package:safe_scales/themes/app_theme.dart';
 import '../main_navigation.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({
-    super.key,
-  });
+  const AuthScreen({super.key});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -19,6 +17,7 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   bool isLogin = true;
   bool isLoading = false;
+  bool _obscurePassword = true;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -71,10 +70,7 @@ class _AuthScreenState extends State<AuthScreen> {
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder:
-                  (context) => MainNavigation(
-                    initialIndex: 0,
-                  ),
+              builder: (context) => MainNavigation(initialIndex: 0),
             ),
           );
         }
@@ -179,12 +175,25 @@ class _AuthScreenState extends State<AuthScreen> {
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _passwordController,
-                          obscureText: true,
+                          obscureText: _obscurePassword,
                           decoration: InputDecoration(
                             labelText: 'Password',
                             prefixIcon: Icon(
                               Icons.lock,
                               size: 24 * AppTheme.fontSizeScale,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                size: 24 * AppTheme.fontSizeScale,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),

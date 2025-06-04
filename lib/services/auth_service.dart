@@ -1,21 +1,21 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'package:safe_scales/services/user_state_service.dart';
 
 class AuthService {
-  final supabase = SupabaseConfig.client;
+  final supabaseClient = SupabaseConfig.client;
   final _userState = UserStateService();
 
-  Future<AuthResponse> signUp({
+  Future<supabase.AuthResponse> signUp({
     required String username,
     required String email,
     required String password,
   }) async {
     try {
       // First create the auth user
-      final authResponse = await supabase.auth.signUp(
+      final authResponse = await supabaseClient.auth.signUp(
         email: email,
         password: password,
         emailRedirectTo: null,
@@ -23,7 +23,7 @@ class AuthService {
 
       if (authResponse.user != null) {
         // Then add the user to our custom Users table
-        await supabase.from('Users').insert({
+        await supabaseClient.from('Users').insert({
           'id': authResponse.user!.id,
           'Username': username,
           'Email': email,
@@ -51,7 +51,7 @@ class AuthService {
 
       // First check if user exists with matching email
       final userCheck =
-          await supabase
+          await supabaseClient
               .from('Users')
               .select()
               .eq('Email', email)
@@ -69,7 +69,7 @@ class AuthService {
           print('Password verified successfully');
 
           // Create a minimal user object for UserStateService
-          final user = User(
+          final user = supabase.User(
             id: userCheck['id'],
             email: userCheck['Email'],
             createdAt: userCheck['created_at'],
@@ -104,12 +104,12 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     _userState.setUser(null);
     _userState.setUserProfile(null);
   }
 
-  User? get currentUser => _userState.currentUser;
+  supabase.User? get currentUser => _userState.supabaseUser;
 
   String hashPassword(String password) {
     final bytes = utf8.encode(password);
