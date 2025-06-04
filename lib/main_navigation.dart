@@ -13,10 +13,7 @@ import 'home.dart';
 class MainNavigation extends StatefulWidget {
   final int initialIndex;
 
-  const MainNavigation({
-    super.key,
-    required this.initialIndex,
-  });
+  const MainNavigation({super.key, required this.initialIndex});
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
@@ -36,13 +33,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
     _selectedIndex = widget.initialIndex;
 
-    _pages = <Widget>[
-      HomePage(),
-      MyDragonsPage(),
-      ToyBoxPage(),
-      ShopPage(),
-      DevTestingPage(),
-    ];
+    _pages = <Widget>[HomePage(), MyDragonsPage(), ToyBoxPage(), ShopPage()];
   }
 
   String _getAppBarTitle(int index) {
@@ -55,8 +46,6 @@ class _MainNavigationState extends State<MainNavigation> {
         return 'Items';
       case 3:
         return 'Shop';
-      case 4:
-        return 'Dev Testing Page';
       default:
         return '';
     }
@@ -139,10 +128,6 @@ class _MainNavigationState extends State<MainNavigation> {
             const BottomNavigationBarItem(
               icon: Icon(Icons.storefront),
               label: 'Shop',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.construction_rounded),
-              label: 'Dev Testing Page',
             ),
           ],
         ),
