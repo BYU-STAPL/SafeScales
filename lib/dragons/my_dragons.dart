@@ -114,13 +114,23 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
                             String currentPhase = 'egg';
                             String imageUrl = dragonData['egg_image'];
 
-                            if (phases.contains('final')) {
+                            // Handle both List and Map formats for phases
+                            bool hasPhase(String phase) {
+                              if (phases is List) {
+                                return phases.contains(phase);
+                              } else if (phases is Map) {
+                                return phases['phases']?.contains(phase) ??
+                                    false;
+                              }
+                              return false;
+
+                            if (hasPhase('final')) {
                               currentPhase = 'final';
                               imageUrl = dragonData['final_stage_image'];
-                            } else if (phases.contains('stage2')) {
+                            } else if (hasPhase('stage2')) {
                               currentPhase = 'stage2';
                               imageUrl = dragonData['stage2_image'];
-                            } else if (phases.contains('stage1')) {
+                            } else if (hasPhase('stage1')) {
                               currentPhase = 'stage1';
                               imageUrl = dragonData['stage1_image'];
                             }
@@ -517,7 +527,7 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
 class DragonDressUpPage extends StatefulWidget {
   final String dragonId;
   final Map<String, dynamic> dragonData;
-  final List<String> phases;
+  final dynamic phases;
   final _MyDragonsPageState? parentState;
 
   const DragonDressUpPage({
@@ -539,32 +549,18 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   List<String> userEnvironmentIds = [];
   List<String> userEnvironmentImages = [];
   bool _isLoadingEnvironments = true;
+  bool _isLoadingAccessories = true;
+  List<Map<String, dynamic>> userAccessories = [];
 
   // List to store placed stickers with their positions
   List<StickerItem> placedStickers = [];
-
-  final List<IconData> accessories = [
-    Icons.emoji_emotions, // Hat
-    Icons.visibility, // Glasses
-    Icons.icecream, // Ice Cream
-    Icons.star, // Star
-    Icons.cake, // Cake
-    Icons.sports_soccer, // Ball
-  ];
-
-  final List<Color> accessoryColors = [
-    Colors.amber, // Hat
-    Colors.blueAccent, // Glasses
-    Colors.pinkAccent, // Ice Cream
-    Colors.deepPurple, // Star
-    Colors.brown, // Cake
-    Colors.green, // Ball
-  ];
+  String? selectedStickerId;
 
   @override
   void initState() {
     super.initState();
     _loadUserEnvironments();
+    _loadUserAccessories();
   }
 
   Future<void> _loadUserEnvironments() async {
@@ -681,12 +677,89 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     }
   }
 
+  Future<void> _loadUserAccessories() async {
+    try {
+      final userState = UserStateService();
+      final user = userState.currentUser;
+
+      if (user != null) {
+        final dragonService = DragonService(QuizService().supabase);
+
+        // Get user's acquired accessories
+        final userResponse =
+            await dragonService.supabase
+                .from('Users')
+                .select('acquired_accessories')
+                .eq('id', user.id)
+                .single();
+
+        if (userResponse['acquired_accessories'] != null) {
+          final acquiredAccessories = userResponse['acquired_accessories'];
+          List<String> accessoryIds = [];
+
+          // Handle both List and Map cases
+          if (acquiredAccessories is List) {
+            accessoryIds =
+                acquiredAccessories.map((e) => e.toString()).toList();
+          } else if (acquiredAccessories is Map) {
+            accessoryIds =
+                acquiredAccessories.keys.map((e) => e.toString()).toList();
+          }
+
+          if (accessoryIds.isNotEmpty) {
+            // Fetch the accessory details using those IDs
+            final accessoriesResponse = await dragonService.supabase
+                .from('accessories')
+                .select()
+                .inFilter('id', accessoryIds);
+
+            if (accessoriesResponse != null && accessoriesResponse is List) {
+              if (mounted) {
+                setState(() {
+                  userAccessories = List<Map<String, dynamic>>.from(
+                    accessoriesResponse,
+                  );
+                  _isLoadingAccessories = false;
+                });
+              }
+            }
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _isLoadingAccessories = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading user accessories: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingAccessories = false;
+        });
+      }
+    }
+  }
+
   // Get available phases based on the dragon data
   List<String> get availablePhases {
     List<String> phases = ['egg'];
-    if (widget.phases.contains('stage1')) phases.add('stage1');
-    if (widget.phases.contains('stage2')) phases.add('stage2');
-    if (widget.phases.contains('final')) phases.add('final');
+
+    // Handle both List and Map formats for phases
+    bool hasPhase(String phase) {
+      if (widget.phases is List) {
+        return (widget.phases as List).contains(phase);
+      } else if (widget.phases is Map) {
+        return (widget.phases['phases'] as List?)?.contains(phase) ?? false;
+      }
+      return false;
+    }
+
+    if (hasPhase('stage1')) phases.add('stage1');
+    if (hasPhase('stage2')) phases.add('stage2');
+    if (hasPhase('final')) phases.add('final');
+
     return phases;
   }
 
@@ -803,10 +876,162 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     }
   }
 
+  void _updateStickerPosition(String id, Offset newPosition) {
+    setState(() {
+      final sticker = placedStickers.firstWhere((s) => s.id == id);
+      final dragonSize = MediaQuery.of(context).size.width * 0.8;
+
+      // Ensure sticker stays within dragon bounds
+      final clampedX =
+          newPosition.dx.clamp(0.0, dragonSize - sticker.size).toDouble();
+      final clampedY =
+          newPosition.dy.clamp(0.0, dragonSize - sticker.size).toDouble();
+
+      sticker.position = Offset(clampedX, clampedY);
+    });
+    _saveStickers(); // Save after moving
+  }
+
+  void _updateStickerSize(String id, double newSize) {
+    setState(() {
+      final sticker = placedStickers.firstWhere((s) => s.id == id);
+      sticker.size = newSize.clamp(
+        24.0,
+        120.0,
+      ); // Limit size between 24 and 120
+    });
+    _saveStickers(); // Save after resizing
+  }
+
   void _removeSticker(String id) {
     setState(() {
       placedStickers.removeWhere((sticker) => sticker.id == id);
+      if (selectedStickerId == id) {
+        selectedStickerId = null;
+      }
     });
+    _saveStickers(); // Save after removing
+  }
+
+  Future<void> _saveStickers() async {
+    try {
+      final userState = UserStateService();
+      final user = userState.currentUser;
+
+      if (user != null) {
+        final dragonService = DragonService(QuizService().supabase);
+
+        // Get current dragons data
+        final userResponse =
+            await dragonService.supabase
+                .from('Users')
+                .select('dragons')
+                .eq('id', user.id)
+                .single();
+
+        if (userResponse['dragons'] != null) {
+          final dragonsData = Map<String, dynamic>.from(
+            userResponse['dragons'],
+          );
+
+          // Convert stickers to the format we want to save
+          final stickersData =
+              placedStickers
+                  .map(
+                    (sticker) => {
+                      'id': sticker.id,
+                      'size': sticker.size,
+                      'position': {
+                        'x': sticker.position.dx,
+                        'y': sticker.position.dy,
+                      },
+                      'accessory_id': sticker.name,
+                    },
+                  )
+                  .toList();
+
+          // Update the dragon's data
+          if (dragonsData[widget.dragonId] is Map) {
+            dragonsData[widget.dragonId]['stickers'] = stickersData;
+          } else {
+            dragonsData[widget.dragonId] = {
+              'phases': widget.phases,
+              'stickers': stickersData,
+              'current_dragon_env': userEnvironmentIds[selectedEnvironment],
+            };
+          }
+
+          // Save the updated dragons data
+          await dragonService.supabase
+              .from('Users')
+              .update({'dragons': dragonsData})
+              .eq('id', user.id);
+        }
+      }
+    } catch (e) {
+      print('Error saving stickers: $e');
+    }
+  }
+
+  Future<void> _loadStickers() async {
+    try {
+      final userState = UserStateService();
+      final user = userState.currentUser;
+
+      if (user != null) {
+        final dragonService = DragonService(QuizService().supabase);
+
+        // Get current dragons data
+        final userResponse =
+            await dragonService.supabase
+                .from('Users')
+                .select('dragons')
+                .eq('id', user.id)
+                .single();
+
+        if (userResponse['dragons'] != null) {
+          final dragonsData = Map<String, dynamic>.from(
+            userResponse['dragons'],
+          );
+          final dragonData = dragonsData[widget.dragonId];
+
+          if (dragonData is Map && dragonData['stickers'] != null) {
+            final stickersData = List<Map<String, dynamic>>.from(
+              dragonData['stickers'],
+            );
+
+            setState(() {
+              placedStickers =
+                  stickersData
+                      .map(
+                        (sticker) => StickerItem(
+                          id: sticker['id'],
+                          imageUrl:
+                              userAccessories.firstWhere(
+                                (acc) => acc['name'] == sticker['accessory_id'],
+                                orElse: () => {'image': ''},
+                              )['image'],
+                          name: sticker['accessory_id'],
+                          position: Offset(
+                            sticker['position']['x'].toDouble(),
+                            sticker['position']['y'].toDouble(),
+                          ),
+                          size: sticker['size'].toDouble(),
+                        ),
+                      )
+                      .toList();
+            });
+          }
+        }
+      }
+    } catch (e) {
+      print('Error loading stickers: $e');
+    }
+  }
+
+  // Add a method to load stickers after accessories are loaded
+  void _onAccessoriesLoaded() {
+    _loadStickers();
   }
 
   @override
@@ -944,32 +1169,98 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                               ),
                               // Placed stickers
                               ...placedStickers.map((sticker) {
+                                final isSelected =
+                                    selectedStickerId == sticker.id;
                                 return Positioned(
                                   left: sticker.position.dx,
                                   top: sticker.position.dy,
                                   child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        selectedStickerId =
+                                            isSelected ? null : sticker.id;
+                                      });
+                                    },
                                     onLongPress:
                                         () => _removeSticker(sticker.id),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: Colors.white.withOpacity(0.5),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Icon(
-                                        sticker.icon,
-                                        size: 48,
-                                        color: sticker.color,
-                                        shadows: [
-                                          Shadow(
-                                            blurRadius: 8,
-                                            color: Colors.black26,
-                                            offset: Offset(2, 2),
+                                    child: Stack(
+                                      children: [
+                                        GestureDetector(
+                                          onPanUpdate: (details) {
+                                            if (isSelected) {
+                                              final newPosition = Offset(
+                                                sticker.position.dx +
+                                                    details.delta.dx,
+                                                sticker.position.dy +
+                                                    details.delta.dy,
+                                              );
+                                              _updateStickerPosition(
+                                                sticker.id,
+                                                newPosition,
+                                              );
+                                            }
+                                          },
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color:
+                                                    isSelected
+                                                        ? Theme.of(
+                                                          context,
+                                                        ).colorScheme.primary
+                                                        : Colors.white
+                                                            .withOpacity(0.5),
+                                                width: isSelected ? 2 : 1,
+                                              ),
+                                            ),
+                                            child: Image.network(
+                                              sticker.imageUrl,
+                                              width: sticker.size,
+                                              height: sticker.size,
+                                              fit: BoxFit.contain,
+                                            ),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                        if (isSelected)
+                                          Positioned(
+                                            right: -8,
+                                            bottom: -8,
+                                            child: GestureDetector(
+                                              onPanUpdate: (details) {
+                                                // Calculate new size based on drag distance
+                                                final newSize =
+                                                    sticker.size +
+                                                    details.delta.dx;
+                                                _updateStickerSize(
+                                                  sticker.id,
+                                                  newSize,
+                                                );
+                                              },
+                                              child: Container(
+                                                width: 24,
+                                                height: 24,
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      Theme.of(
+                                                        context,
+                                                      ).colorScheme.primary,
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color: Colors.white,
+                                                    width: 2,
+                                                  ),
+                                                ),
+                                                child: Icon(
+                                                  Icons.open_with,
+                                                  size: 16,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                   ),
                                 );
@@ -1018,8 +1309,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                             id:
                                 DateTime.now().millisecondsSinceEpoch
                                     .toString(),
-                            icon: data['icon'],
-                            color: data['color'],
+                            imageUrl: data['image'],
+                            name: data['name'],
                             position: Offset(clampedX, clampedY),
                           ),
                         );
@@ -1059,60 +1350,85 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(accessories.length, (index) {
-                    return Draggable<Map<String, dynamic>>(
-                      data: {
-                        'icon': accessories[index],
-                        'color': accessoryColors[index],
-                      },
-                      feedback: Material(
-                        color: Colors.transparent,
-                        child: Icon(
-                          accessories[index],
-                          size: 48,
-                          color: accessoryColors[index].withOpacity(0.8),
-                          shadows: [
-                            Shadow(
-                              blurRadius: 12,
-                              color: Colors.black38,
-                              offset: Offset(3, 3),
-                            ),
-                          ],
-                        ),
-                      ),
-                      childWhenDragging: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Icon(
-                          accessories[index],
-                          size: 36,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: accessoryColors[index].withOpacity(0.3),
-                            width: 2,
+                _isLoadingAccessories
+                    ? const Center(child: CircularProgressIndicator())
+                    : userAccessories.isEmpty
+                    ? Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.shopping_bag_outlined,
+                            size: 48,
+                            color: colorScheme.primary.withOpacity(0.5),
                           ),
-                        ),
-                        child: Icon(
-                          accessories[index],
-                          size: 36,
-                          color: accessoryColors[index],
-                        ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No accessories yet.\nVisit the shop to buy some!',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
-                    );
-                  }),
-                ),
+                    )
+                    : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children:
+                            userAccessories.map((accessory) {
+                              return Draggable<Map<String, dynamic>>(
+                                data: {
+                                  'image': accessory['image'],
+                                  'name': accessory['name'],
+                                },
+                                feedback: Material(
+                                  color: Colors.transparent,
+                                  child: Image.network(
+                                    accessory['image'],
+                                    width: 48,
+                                    height: 48,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                                childWhenDragging: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Image.network(
+                                    accessory['image'],
+                                    width: 36,
+                                    height: 36,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: colorScheme.primary.withOpacity(
+                                        0.3,
+                                      ),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Image.network(
+                                    accessory['image'],
+                                    width: 36,
+                                    height: 36,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                      ),
+                    ),
                 const SizedBox(height: 18),
                 Text(
                   'Long press a sticker to remove it',
@@ -1134,14 +1450,16 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 // Model class for placed stickers
 class StickerItem {
   final String id;
-  final IconData icon;
-  final Color color;
-  final Offset position;
+  final String imageUrl;
+  final String name;
+  Offset position;
+  double size;
 
   StickerItem({
     required this.id,
-    required this.icon,
-    required this.color,
+    required this.imageUrl,
+    required this.name,
     required this.position,
+    this.size = 48.0,
   });
 }
