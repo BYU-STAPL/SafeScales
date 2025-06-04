@@ -15,7 +15,7 @@ class MyDragonsPage extends StatefulWidget {
 class _MyDragonsPageState extends State<MyDragonsPage> {
   final _userState = UserStateService();
   late final DragonService _dragonService;
-  Map<String, List<String>> _userDragons = {};
+  Map<String, dynamic> _userDragons = {};
   Map<String, Map<String, dynamic>> _dragonDetails = {};
   bool _isLoading = true;
 
@@ -287,6 +287,7 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
                                                           dragonData:
                                                               dragonData,
                                                           phases: phases,
+                                                          parentState: this,
                                                         ),
                                               ),
                                             );
@@ -409,25 +410,33 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
         if (response['dragons'] != null) {
           // Convert the dragons map to the correct types
           final dragonsMap = Map<String, dynamic>.from(response['dragons']);
+
+          // Convert each dragon's phases from List<dynamic> to List<String>
           _userDragons = dragonsMap.map((key, value) {
-            // Convert the phases list from List<dynamic> to List<String>
-            final phases =
-                (value as List<dynamic>)
-                    .map((phase) => phase.toString())
-                    .toList();
-            return MapEntry(key, phases);
+            if (key == 'current_dragon_env') {
+              return MapEntry(key, value);
+            }
+            if (value is List) {
+              return MapEntry(
+                key,
+                value.map((phase) => phase.toString()).toList(),
+              );
+            }
+            return MapEntry(key, value);
           });
 
           // Load details for each dragon
           for (var dragonId in _userDragons.keys) {
-            final dragonData =
-                await _dragonService.supabase
-                    .from('dragons')
-                    .select()
-                    .eq('id', dragonId)
-                    .single();
+            if (dragonId != 'current_dragon_env') {
+              final dragonData =
+                  await _dragonService.supabase
+                      .from('dragons')
+                      .select()
+                      .eq('id', dragonId)
+                      .single();
 
-            _dragonDetails[dragonId] = dragonData;
+              _dragonDetails[dragonId] = dragonData;
+            }
           }
         }
       }
@@ -438,6 +447,70 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
       setState(() => _isLoading = false);
     }
   }
+
+  // Helper method to get phases for a dragon
+  List<String> getDragonPhases(String dragonId) {
+    final phases = _userDragons[dragonId];
+    if (phases is List) {
+      return phases.map((phase) => phase.toString()).toList();
+    }
+    return [];
+  }
+
+  // Helper method to get current environment
+  String? getCurrentEnvironment() {
+    return _userDragons['current_dragon_env'] as String?;
+  }
+
+  // Helper method to save environment selection
+  Future<void> saveEnvironmentSelection(
+    String dragonId,
+    String environmentId,
+  ) async {
+    try {
+      final user = _userState.currentUser;
+      if (user != null) {
+        print('🔄 Starting environment selection save...');
+        print('📦 Current dragons data: $_userDragons');
+
+        // Create a new map with the updated environment
+        final updatedDragons = Map<String, dynamic>.from(_userDragons);
+        print('📦 Created updatedDragons map: $updatedDragons');
+
+        // Add the current_dragon_env field
+        updatedDragons['current_dragon_env'] = environmentId;
+        print('📦 Added current_dragon_env: $environmentId');
+
+        // Ensure we keep the existing dragon phases
+        if (!updatedDragons.containsKey(dragonId)) {
+          final phases = getDragonPhases(dragonId);
+          updatedDragons[dragonId] = phases;
+          print('📦 Added missing dragon phases for $dragonId: $phases');
+        }
+
+        print('📦 Final updatedDragons to save: $updatedDragons');
+
+        // Update the database
+        final response = await _dragonService.supabase
+            .from('Users')
+            .update({'dragons': updatedDragons})
+            .eq('id', user.id);
+
+        print('✅ Database update response: $response');
+
+        // Update local state
+        setState(() {
+          _userDragons = updatedDragons;
+        });
+        print('✅ Local state updated with new dragons data');
+      } else {
+        print('❌ No user found when trying to save environment selection');
+      }
+    } catch (e) {
+      print('❌ Error saving environment selection: $e');
+      print('❌ Error details: ${e.toString()}');
+    }
+  }
 }
 
 // --- Dragon Dress Up Page ---
@@ -445,12 +518,14 @@ class DragonDressUpPage extends StatefulWidget {
   final String dragonId;
   final Map<String, dynamic> dragonData;
   final List<String> phases;
+  final _MyDragonsPageState? parentState;
 
   const DragonDressUpPage({
     Key? key,
     required this.dragonId,
     required this.dragonData,
     required this.phases,
+    this.parentState,
   }) : super(key: key);
 
   @override
@@ -460,6 +535,10 @@ class DragonDressUpPage extends StatefulWidget {
 class _DragonDressUpPageState extends State<DragonDressUpPage> {
   int selectedPhase = 0;
   int selectedEnvironment = 0;
+  List<String> userEnvironments = [];
+  List<String> userEnvironmentIds = [];
+  List<String> userEnvironmentImages = [];
+  bool _isLoadingEnvironments = true;
 
   // List to store placed stickers with their positions
   List<StickerItem> placedStickers = [];
@@ -482,7 +561,125 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     Colors.green, // Ball
   ];
 
-  final List<String> environments = ['Forest', 'Mountain', 'Beach'];
+  @override
+  void initState() {
+    super.initState();
+    _loadUserEnvironments();
+  }
+
+  Future<void> _loadUserEnvironments() async {
+    try {
+      final userState = UserStateService();
+      final user = userState.currentUser;
+
+      if (user != null) {
+        final dragonService = DragonService(QuizService().supabase);
+
+        // First, get the user's acquired environment IDs
+        final userResponse =
+            await dragonService.supabase
+                .from('Users')
+                .select('acquired_environments, dragons')
+                .eq('id', user.id)
+                .single();
+
+        if (userResponse['acquired_environments'] != null) {
+          final acquiredEnvs = userResponse['acquired_environments'];
+          List<String> environmentIds = [];
+
+          // Handle both List and Map cases
+          if (acquiredEnvs is List) {
+            environmentIds = acquiredEnvs.map((e) => e.toString()).toList();
+          } else if (acquiredEnvs is Map) {
+            environmentIds =
+                acquiredEnvs.keys.map((e) => e.toString()).toList();
+          }
+
+          if (environmentIds.isNotEmpty) {
+            // Now fetch the environment details using those IDs
+            final environmentsResponse = await dragonService.supabase
+                .from('environments')
+                .select('id, name, image_url')
+                .inFilter('id', environmentIds);
+
+            if (environmentsResponse != null && environmentsResponse is List) {
+              if (mounted) {
+                setState(() {
+                  userEnvironmentIds = environmentIds;
+                  userEnvironments =
+                      environmentsResponse
+                          .map((env) => env['name'] as String)
+                          .toList();
+                  userEnvironmentImages =
+                      environmentsResponse
+                          .map((env) => env['image_url'] as String)
+                          .toList();
+                  _isLoadingEnvironments = false;
+                });
+
+                // Check for current environment in dragons column
+                if (userResponse['dragons'] != null) {
+                  final dragonsData =
+                      userResponse['dragons'] as Map<String, dynamic>;
+                  final currentEnvId =
+                      dragonsData['current_dragon_env'] as String?;
+
+                  if (currentEnvId != null) {
+                    final envIndex = userEnvironmentIds.indexOf(currentEnvId);
+                    if (envIndex != -1) {
+                      setState(() {
+                        selectedEnvironment = envIndex;
+                      });
+                      print(
+                        '✅ Set initial environment to: ${userEnvironments[envIndex]}',
+                      );
+                    }
+                  }
+                }
+              }
+            } else {
+              if (mounted) {
+                setState(() {
+                  userEnvironments = ['Default'];
+                  userEnvironmentIds = [];
+                  userEnvironmentImages = [];
+                  _isLoadingEnvironments = false;
+                });
+              }
+            }
+          } else {
+            if (mounted) {
+              setState(() {
+                userEnvironments = ['Default'];
+                userEnvironmentIds = [];
+                userEnvironmentImages = [];
+                _isLoadingEnvironments = false;
+              });
+            }
+          }
+        } else {
+          if (mounted) {
+            setState(() {
+              userEnvironments = ['Default'];
+              userEnvironmentIds = [];
+              userEnvironmentImages = [];
+              _isLoadingEnvironments = false;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      print('Error loading user environments: $e');
+      if (mounted) {
+        setState(() {
+          userEnvironments = ['Default'];
+          userEnvironmentIds = [];
+          userEnvironmentImages = [];
+          _isLoadingEnvironments = false;
+        });
+      }
+    }
+  }
 
   // Get available phases based on the dragon data
   List<String> get availablePhases {
@@ -545,21 +742,65 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   }
 
   void _showEnvironmentDialog() async {
+    print('🔄 Opening environment selection dialog...');
+
+    if (_isLoadingEnvironments) {
+      print('⏳ Environments still loading...');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Loading environments...')));
+      return;
+    }
+
+    if (userEnvironments.isEmpty) {
+      print('❌ No environments available');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No environments available')));
+      return;
+    }
+
+    print('📦 Available environments: $userEnvironments');
+    print('📦 Environment IDs: $userEnvironmentIds');
+
     int? choice = await showDialog<int>(
       context: context,
       builder:
           (context) => SimpleDialog(
             title: const Text('Select Environment'),
             children: List.generate(
-              environments.length,
+              userEnvironments.length,
               (i) => SimpleDialogOption(
-                onPressed: () => Navigator.pop(context, i),
-                child: Text(environments[i]),
+                onPressed: () {
+                  print('✅ User selected environment: ${userEnvironments[i]}');
+                  Navigator.pop(context, i);
+                },
+                child: Text(userEnvironments[i]),
               ),
             ),
           ),
     );
-    if (choice != null) setState(() => selectedEnvironment = choice);
+
+    if (choice != null && choice < userEnvironments.length) {
+      print('🔄 Processing environment selection...');
+      print('📦 Selected environment: ${userEnvironments[choice]}');
+      print('📦 Selected environment ID: ${userEnvironmentIds[choice]}');
+
+      setState(() => selectedEnvironment = choice);
+
+      // Use the parent state if available
+      if (widget.parentState != null) {
+        print('🔄 Saving environment selection...');
+        await widget.parentState!.saveEnvironmentSelection(
+          widget.dragonId,
+          userEnvironmentIds[choice],
+        );
+      } else {
+        print('⚠️ No parent state available to save environment selection');
+      }
+    } else {
+      print('❌ Invalid environment selection or dialog cancelled');
+    }
   }
 
   void _removeSticker(String id) {
@@ -630,7 +871,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                   ),
                 ),
                 Text(
-                  'Environment: ${environments[selectedEnvironment]}',
+                  'Environment: ${_isLoadingEnvironments ? 'Loading...' : (userEnvironments.isNotEmpty && selectedEnvironment < userEnvironments.length ? userEnvironments[selectedEnvironment] : 'None')}',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -647,6 +888,23 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
+                  // Environment background
+                  if (userEnvironmentImages.isNotEmpty &&
+                      selectedEnvironment < userEnvironmentImages.length)
+                    Container(
+                      width: dragonSize,
+                      height: dragonSize,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        image: DecorationImage(
+                          image: NetworkImage(
+                            userEnvironmentImages[selectedEnvironment],
+                          ),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+
                   // Drop zone for dragon
                   DragTarget<Map<String, dynamic>>(
                     builder: (context, candidateData, rejectedData) {
@@ -657,7 +915,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                           color:
                               candidateData.isNotEmpty
                                   ? colorScheme.primary.withOpacity(0.1)
-                                  : colorScheme.surfaceVariant,
+                                  : Colors.transparent,
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
                             color:
