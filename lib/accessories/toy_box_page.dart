@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/settings_drawer.dart';
+import 'package:safe_scales/services/shop_service.dart';
+import 'package:safe_scales/services/user_state_service.dart';
 
 class ToyBoxPage extends StatefulWidget {
-  const ToyBoxPage({
-    super.key,
-  });
+  const ToyBoxPage({super.key});
 
   @override
   State<ToyBoxPage> createState() => _ToyBoxPageState();
@@ -13,7 +13,62 @@ class ToyBoxPage extends StatefulWidget {
 
 class _ToyBoxPageState extends State<ToyBoxPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  int selectedTab = 1; // 0 = Accessories, 1 = Environments
+  final ShopService _shopService = ShopService();
+  final UserStateService _userState = UserStateService();
+  int selectedTab = 0; // 0 = Accessories, 1 = Environments
+  List<Map<String, dynamic>> userAccessories = [];
+  List<Map<String, dynamic>> userEnvironments = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserItems();
+  }
+
+  Future<void> _loadUserItems() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final userId = _userState.currentUser?.id;
+      if (userId != null) {
+        // Get user's acquired items
+        final acquiredAccessories = await _shopService
+            .getUserAcquiredAccessories(userId);
+        final acquiredEnvironments = await _shopService
+            .getUserAcquiredEnvironments(userId);
+
+        // Get details for each acquired item
+        final accessories = await _shopService.getAccessories();
+        final environments = await _shopService.getEnvironments();
+
+        userAccessories =
+            accessories
+                .where(
+                  (accessory) => acquiredAccessories.contains(accessory['id']),
+                )
+                .toList();
+        userEnvironments =
+            environments
+                .where(
+                  (environment) =>
+                      acquiredEnvironments.contains(environment['id']),
+                )
+                .toList();
+      }
+
+      setState(() {
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading user items: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,19 +162,90 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
               const SizedBox(height: 24),
               // Items Grid
               Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 24,
-                  crossAxisSpacing: 24,
-                  childAspectRatio: 1,
-                  children: [
-                    // Example item card (replace with dynamic list)
-                    _ToyBoxItemCard(
-                      image: null,
-                      label: selectedTab == 0 ? 'Red Barn' : 'Farm Environment',
-                    ),
-                  ],
-                ),
+                child:
+                    isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : selectedTab == 0
+                        ? userAccessories.isEmpty
+                            ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.shopping_bag_outlined,
+                                    size: 64,
+                                    color: primary.withOpacity(0.5),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No accessories yet.\nVisit the shop to buy some!',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            )
+                            : GridView.count(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 24,
+                              crossAxisSpacing: 24,
+                              childAspectRatio: 0.95,
+                              children: [
+                                for (var accessory in userAccessories)
+                                  _ToyBoxItemCard(
+                                    image:
+                                        accessory['image_url'] ??
+                                        accessory['image'],
+                                    name: accessory['name'],
+                                  ),
+                              ],
+                            )
+                        : userEnvironments.isEmpty
+                        ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.landscape_outlined,
+                                size: 64,
+                                color: primary.withOpacity(0.5),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No environments yet.\nVisit the shop to buy some!',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        )
+                        : GridView.count(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 24,
+                          crossAxisSpacing: 24,
+                          childAspectRatio: 0.95,
+                          children: [
+                            for (var environment in userEnvironments)
+                              _ToyBoxItemCard(
+                                image:
+                                    environment['image_url'] ??
+                                    environment['image'],
+                                name: environment['name'],
+                              ),
+                          ],
+                        ),
               ),
             ],
           ),
@@ -131,73 +257,75 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
 
 class _ToyBoxItemCard extends StatelessWidget {
   final String? image;
-  final String label;
-  const _ToyBoxItemCard({this.image, required this.label});
+  final String name;
+
+  const _ToyBoxItemCard({this.image, required this.name});
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        onTap: () {},
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outlineVariant,
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Theme.of(context).colorScheme.shadow.withOpacity(0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
+        border: Border.all(color: Colors.black12, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child:
-                    image != null
-                        ? Image.network(
-                          image!,
-                          width: 70,
-                          height: 70,
-                          fit: BoxFit.cover,
-                        )
-                        : Container(
-                          width: 70,
-                          height: 70,
-                          color: Theme.of(context).colorScheme.surfaceVariant,
+        ],
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child:
+                image != null
+                    ? Image.network(
+                      image!,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 60,
+                          height: 60,
+                          color: Colors.grey[300],
                           child: Icon(
-                            Icons.image,
-                            size: 40,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            Icons.shopping_bag,
+                            size: 32,
+                            color: Colors.grey[600],
                           ),
-                        ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                label,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+                        );
+                      },
+                    )
+                    : Container(
+                      width: 60,
+                      height: 60,
+                      color: Colors.grey[300],
+                      child: Icon(
+                        Icons.shopping_bag,
+                        size: 32,
+                        color: Colors.grey[600],
+                      ),
+                    ),
           ),
-        ),
+          const SizedBox(height: 10),
+          Text(
+            name,
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }

@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/settings_drawer.dart';
+import 'package:safe_scales/services/shop_service.dart';
+import 'package:safe_scales/services/user_state_service.dart';
 
 class ShopPage extends StatefulWidget {
-
-  const ShopPage({
-    super.key,
-  });
+  const ShopPage({super.key});
 
   @override
   State<ShopPage> createState() => _ShopPageState();
@@ -15,25 +14,17 @@ class ShopPage extends StatefulWidget {
 
 class _ShopPageState extends State<ShopPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final ShopService _shopService = ShopService();
+  final UserStateService _userState = UserStateService();
   int selectedTab = 0; // 0 = Accessories, 1 = Environments
   int? selectedIndex; // Track selected item index
   int? selectedLessonIndex; // Track selected lesson in popup
   bool showLessonDialog = false;
-
-  // Example shop items (replace with your data)
-  final List<Map<String, dynamic>> accessories = [
-    {'image': null, 'name': 'Ice Cream'},
-    {'image': null, 'name': 'Cowboy Hat'},
-    {'image': null, 'name': 'Toy Car'},
-    {'image': null, 'name': 'Beach Ball'},
-    {'image': null, 'name': 'Bicycle'},
-  ];
-
-  final List<Map<String, dynamic>> environments = [
-    {'image': null, 'name': 'Farm'},
-    {'image': null, 'name': 'Mountain'},
-    {'image': null, 'name': 'Lake'},
-  ];
+  List<Map<String, dynamic>> accessories = [];
+  List<Map<String, dynamic>> environments = [];
+  bool isLoading = true;
+  List<int> acquiredAccessories = [];
+  List<String> acquiredEnvironments = [];
 
   // Placeholder completed lessons
   final List<String> completedLessons = [
@@ -42,6 +33,114 @@ class _ShopPageState extends State<ShopPage> {
     'Lesson 3: Passwords',
     'Lesson 4: Digital Footprint',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadItems();
+  }
+
+  Future<void> _loadItems() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final accessoriesData = await _shopService.getAccessories();
+      final environmentsData = await _shopService.getEnvironments();
+
+      // Load user's acquired items
+      final userId = _userState.currentUser?.id;
+      if (userId != null) {
+        acquiredAccessories = await _shopService.getUserAcquiredAccessories(
+          userId,
+        );
+        acquiredEnvironments = await _shopService.getUserAcquiredEnvironments(
+          userId,
+        );
+      }
+
+      setState(() {
+        accessories = accessoriesData;
+        environments = environmentsData;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading shop items: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _handlePurchase() async {
+    if (selectedIndex == null) return;
+
+    final userId = _userState.currentUser?.id;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to purchase items')),
+      );
+      return;
+    }
+
+    if (selectedTab == 0) {
+      // Handle accessory purchase
+      final accessoryId = accessories[selectedIndex!]['id'] as int;
+
+      // Check if user already owns this accessory
+      if (acquiredAccessories.contains(accessoryId)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You already own this item')),
+        );
+        return;
+      }
+
+      final success = await _shopService.purchaseAccessory(userId, accessoryId);
+
+      if (success) {
+        setState(() {
+          acquiredAccessories.add(accessoryId);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Item purchased successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to purchase item')),
+        );
+      }
+    } else {
+      // Handle environment purchase
+      final environmentId = environments[selectedIndex!]['id'] as String;
+
+      // Check if user already owns this environment
+      if (acquiredEnvironments.contains(environmentId)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You already own this environment')),
+        );
+        return;
+      }
+
+      final success = await _shopService.purchaseEnvironment(
+        userId,
+        environmentId,
+      );
+
+      if (success) {
+        setState(() {
+          acquiredEnvironments.add(environmentId);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Environment purchased successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to purchase environment')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -147,38 +246,47 @@ class _ShopPageState extends State<ShopPage> {
                   const SizedBox(height: 24),
                   // Shop Items Grid
                   Expanded(
-                    child: GridView.count(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 24,
-                      crossAxisSpacing: 24,
-                      childAspectRatio: 0.95,
-                      children: [
-                        for (int i = 0; i < items.length; i++)
-                          _ShopItemCard(
-                            image: items[i]['image'],
-                            name: items[i]['name'],
-                            isSelected: selectedIndex == i,
-                            highlight: highlight,
-                            onTap: () {
-                              setState(() {
-                                selectedIndex = i;
-                              });
-                            },
-                          ),
-                      ],
-                    ),
+                    child:
+                        isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : GridView.count(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 24,
+                              crossAxisSpacing: 24,
+                              childAspectRatio: 0.95,
+                              children: [
+                                for (int i = 0; i < items.length; i++)
+                                  _ShopItemCard(
+                                    image:
+                                        items[i]['image_url'] ??
+                                        items[i]['image'],
+                                    name: items[i]['name'],
+                                    cost: items[i]['cost']?.toString() ?? '0',
+                                    isSelected: selectedIndex == i,
+                                    isOwned:
+                                        selectedTab == 0
+                                            ? acquiredAccessories.contains(
+                                              items[i]['id'],
+                                            )
+                                            : acquiredEnvironments.contains(
+                                              items[i]['id'],
+                                            ),
+                                    highlight: highlight,
+                                    onTap: () {
+                                      setState(() {
+                                        selectedIndex = i;
+                                      });
+                                    },
+                                  ),
+                              ],
+                            ),
                   ),
                   if (selectedIndex != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
                       child: Center(
                         child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              showLessonDialog = true;
-                              selectedLessonIndex = null;
-                            });
-                          },
+                          onPressed: _handlePurchase,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primary,
                             foregroundColor: Colors.white,
@@ -195,7 +303,7 @@ class _ShopPageState extends State<ShopPage> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          child: const Text('START REVIEW'),
+                          child: const Text('PURCHASE'),
                         ),
                       ),
                     ),
@@ -304,8 +412,7 @@ class _ShopPageState extends State<ShopPage> {
                                         ).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                              'Selected: ' +
-                                                  completedLessons[selectedLessonIndex!],
+                                              'Selected: ${completedLessons[selectedLessonIndex!]}',
                                             ),
                                           ),
                                         );
@@ -346,13 +453,18 @@ class _ShopPageState extends State<ShopPage> {
 class _ShopItemCard extends StatelessWidget {
   final String? image;
   final String name;
+  final String cost;
   final bool isSelected;
+  final bool isOwned;
   final Color highlight;
   final VoidCallback onTap;
+
   const _ShopItemCard({
     this.image,
     required this.name,
+    required this.cost,
     required this.isSelected,
+    required this.isOwned,
     required this.highlight,
     required this.onTap,
   });
@@ -368,7 +480,10 @@ class _ShopItemCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected ? highlight : Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black12, width: 1.2),
+            border: Border.all(
+              color: isOwned ? Colors.green : Colors.black12,
+              width: isOwned ? 2 : 1.2,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.04),
@@ -381,26 +496,59 @@ class _ShopItemCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child:
-                    image != null
-                        ? Image.network(
-                          image!,
-                          width: 60 * AppTheme.fontSizeScale,
-                          height: 60 * AppTheme.fontSizeScale,
-                          fit: BoxFit.cover,
-                        )
-                        : Container(
-                          width: 60 * AppTheme.fontSizeScale,
-                          height: 60 * AppTheme.fontSizeScale,
-                          color: Colors.grey[300],
-                          child: Icon(
-                            Icons.shopping_bag,
-                            size: 32 * AppTheme.fontSizeScale,
-                            color: Colors.grey[600],
-                          ),
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child:
+                        image != null
+                            ? Image.network(
+                              image!,
+                              width: 60 * AppTheme.fontSizeScale,
+                              height: 60 * AppTheme.fontSizeScale,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 60 * AppTheme.fontSizeScale,
+                                  height: 60 * AppTheme.fontSizeScale,
+                                  color: Colors.grey[300],
+                                  child: Icon(
+                                    Icons.shopping_bag,
+                                    size: 32 * AppTheme.fontSizeScale,
+                                    color: Colors.grey[600],
+                                  ),
+                                );
+                              },
+                            )
+                            : Container(
+                              width: 60 * AppTheme.fontSizeScale,
+                              height: 60 * AppTheme.fontSizeScale,
+                              color: Colors.grey[300],
+                              child: Icon(
+                                Icons.shopping_bag,
+                                size: 32 * AppTheme.fontSizeScale,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                  ),
+                  if (isOwned)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(8),
                         ),
+                        child: Icon(
+                          Icons.check,
+                          size: 16 * AppTheme.fontSizeScale,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 10),
               Text(
@@ -413,6 +561,15 @@ class _ShopItemCard extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                isOwned ? 'OWNED' : '$cost coins',
+                style: GoogleFonts.poppins(
+                  fontSize: 13 * AppTheme.fontSizeScale,
+                  color: isOwned ? Colors.green : Colors.grey[600],
+                  fontWeight: isOwned ? FontWeight.bold : FontWeight.normal,
+                ),
               ),
             ],
           ),
