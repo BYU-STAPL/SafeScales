@@ -5,6 +5,7 @@ import 'package:safe_scales/pre_quiz/pre_quiz_screen.dart';
 import 'package:safe_scales/quiz/post_quiz_screen.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
+import 'package:safe_scales/services/dragon_service.dart';
 import 'package:safe_scales/reading/reading_activity_screen.dart';
 
 class LessonPage extends StatefulWidget {
@@ -25,14 +26,46 @@ class _LessonPageState extends State<LessonPage> {
 
   final QuizService _quizService = QuizService();
   final UserStateService _userState = UserStateService();
+  final DragonService _dragonService = DragonService(QuizService().supabase);
   QuestionSet? _preQuiz;
   QuestionSet? _postQuiz;
   bool _isLoading = true;
+  Map<String, dynamic>? _dragonData;
 
   @override
   void initState() {
     super.initState();
     _loadQuizzes();
+    _loadDragonImages();
+  }
+
+  Future<void> _loadDragonImages() async {
+    try {
+      print('Loading dragon for topic: ${widget.topic}');
+      await _dragonService.initialize();
+
+      // Get the index of the current topic
+      final allQuizzes = await _quizService.getAllQuizzes();
+      final topics =
+          allQuizzes.map((q) => q['topic'] as String).toSet().toList();
+      final topicIndex = topics.indexOf(widget.topic);
+
+      if (topicIndex != -1) {
+        final dragonData = await _dragonService.getDragonImagesForModule(
+          topicIndex,
+        );
+        if (mounted) {
+          setState(() {
+            _dragonData = dragonData;
+            print(
+              'Loaded dragon data for ${widget.topic}: ${dragonData['id']}',
+            );
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading dragon images: $e');
+    }
   }
 
   Future<void> _loadQuizzes() async {
@@ -450,14 +483,35 @@ class _LessonPageState extends State<LessonPage> {
   }
 
   Widget _getDragonPhaseIcon(double progress) {
-    String asset = 'assets/images/other/egg.png';
+    String imageUrl = _dragonData?['egg'] ?? 'assets/images/other/egg.png';
+
     if (progress >= 80) {
-      asset = 'assets/images/other/adult.png';
+      imageUrl = _dragonData?['final'] ?? 'assets/images/other/adult.png';
     } else if (progress >= 50) {
-      asset = 'assets/images/other/teen.png';
+      imageUrl = _dragonData?['stage2'] ?? 'assets/images/other/teen.png';
     } else if (progress >= 30) {
-      asset = 'assets/images/other/young.png';
+      imageUrl = _dragonData?['stage1'] ?? 'assets/images/other/young.png';
     }
-    return Image.asset(asset, width: 240, height: 240);
+
+    print('Using dragon image for topic ${widget.topic}: $imageUrl');
+
+    // Check if the image URL is a network URL or a local asset
+    if (imageUrl.startsWith('http')) {
+      return Image.network(
+        imageUrl,
+        width: 240,
+        height: 240,
+        errorBuilder: (context, error, stackTrace) {
+          print('Error loading dragon image for topic ${widget.topic}: $error');
+          return Image.asset(
+            'assets/images/other/egg.png',
+            width: 240,
+            height: 240,
+          );
+        },
+      );
+    } else {
+      return Image.asset(imageUrl, width: 240, height: 240);
+    }
   }
 }

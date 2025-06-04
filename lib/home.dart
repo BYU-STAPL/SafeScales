@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
+import 'package:safe_scales/services/dragon_service.dart';
 
 import 'lesson/lesson_page.dart';
 
@@ -17,11 +18,13 @@ class _HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final QuizService _quizService = QuizService();
   final _userState = UserStateService();
+  final _dragonService = DragonService(QuizService().supabase);
   String? _username;
 
   List<String> _topics = [];
   Map<String, List<Map<String, dynamic>>> _quizzesByTopic = {};
   Map<String, double> _topicProgress = {};
+  Map<String, Map<String, dynamic>> _moduleDragons = {};
   bool _isLoading = true;
 
   @override
@@ -149,6 +152,9 @@ class _HomePageState extends State<HomePage> {
           _topics = grouped.keys.toList();
           _isLoading = false;
         });
+
+        // Load dragons after topics are set
+        await _loadDragonImages();
       }
     } catch (e) {
       print('Error loading quizzes: $e');
@@ -160,18 +166,67 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _loadDragonImages() async {
+    try {
+      print('Starting to load dragons...');
+      // Initialize the dragon service
+      await _dragonService.initialize();
+
+      print('Loading dragons for ${_topics.length} topics:');
+      for (var i = 0; i < _topics.length; i++) {
+        print('Loading dragon for topic ${i + 1}: ${_topics[i]}');
+        final dragonData = await _dragonService.getDragonImagesForModule(i);
+        if (mounted) {
+          setState(() {
+            _moduleDragons[_topics[i]] = dragonData;
+            print('Assigned dragon to ${_topics[i]}: ${dragonData['id']}');
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading dragon images: $e');
+    }
+  }
+
   // Get icon based on topic progress
   Widget _getDragonPhaseIcon(String topic) {
     final progress = _topicProgress[topic] ?? 0.0;
-    String asset = 'assets/images/other/egg.png';
-    if (progress >= 80) {
-      asset = 'assets/images/other/adult.png';
-    } else if (progress >= 50) {
-      asset = 'assets/images/other/teen.png';
-    } else if (progress >= 30) {
-      asset = 'assets/images/other/young.png';
+    final dragonData = _moduleDragons[topic];
+
+    if (dragonData == null) {
+      print('No dragon data found for topic: $topic');
     }
-    return Image.asset(asset, width: 64, height: 64);
+
+    String imageUrl = dragonData?['egg'] ?? 'assets/images/other/egg.png';
+
+    if (progress >= 80) {
+      imageUrl = dragonData?['final'] ?? 'assets/images/other/adult.png';
+    } else if (progress >= 50) {
+      imageUrl = dragonData?['stage2'] ?? 'assets/images/other/teen.png';
+    } else if (progress >= 30) {
+      imageUrl = dragonData?['stage1'] ?? 'assets/images/other/young.png';
+    }
+
+    print('Using image for topic $topic: $imageUrl');
+
+    // Check if the image URL is a network URL or a local asset
+    if (imageUrl.startsWith('http')) {
+      return Image.network(
+        imageUrl,
+        width: 64,
+        height: 64,
+        errorBuilder: (context, error, stackTrace) {
+          print('Error loading dragon image for topic $topic: $error');
+          return Image.asset(
+            'assets/images/other/egg.png',
+            width: 64,
+            height: 64,
+          );
+        },
+      );
+    } else {
+      return Image.asset(imageUrl, width: 64, height: 64);
+    }
   }
 
   // Get color based on topic from database
