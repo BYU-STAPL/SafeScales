@@ -3,7 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 // Light theme colors
 Color royalBlue = const Color(0xff2E83E8);
+//color.withValues(alpha: 0.75, blue: 0.8) maybe change light royal blue???
 Color lightRoyalBlue = const Color(0xff70C0EE);
+Color almostBlack = const Color(0xff1A1A1A);
 Color darkGrey = const Color(0xff888888);
 Color grey = const Color(0xffAAAAAA);
 Color lightGrey = const Color(0xffE1E1E1);
@@ -31,12 +33,14 @@ ColorScheme lightColorScheme = ColorScheme(
   onTertiary: Colors.black,
   error: red,
   onError: offWhite,
+  surfaceBright: Colors.white,
   surface: offWhite,
-  onSurface: Colors.black,
   surfaceDim: lightGrey,
+  onSurface: Colors.black,
   surfaceContainer: lightGrey,
-  onSurfaceVariant: grey,
-  outline: darkGrey,
+  surfaceContainerHighest: grey,
+  onSurfaceVariant: darkGrey,
+  outline: almostBlack,
   outlineVariant: lightGrey,
   shadow: Colors.black,
   scrim: Colors.black.withOpacity(0.5),

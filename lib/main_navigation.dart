@@ -58,11 +58,12 @@ class _MainNavigationState extends State<MainNavigation> {
     ThemeData theme = Theme.of(context);
 
     final Color primary = theme.colorScheme.primary;
-    final Color cardBg = theme.colorScheme.surface;
+    final Color barColor = theme.colorScheme.surfaceBright;
 
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
+        backgroundColor: theme.colorScheme.surfaceBright,
         title: Text(
           _getAppBarTitle(_selectedIndex),
           style: theme.appBarTheme.titleTextStyle,
@@ -86,7 +87,7 @@ class _MainNavigationState extends State<MainNavigation> {
       body: _pages[_selectedIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: cardBg,
+          color: barColor,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(24),
             topRight: Radius.circular(24),

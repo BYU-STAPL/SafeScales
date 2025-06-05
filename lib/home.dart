@@ -278,7 +278,7 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.circular(borderRadius),
                         boxShadow: [
                           BoxShadow(
-                            color: primary.withOpacity(0.3),
+                            color: primary.withValues(alpha: 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -531,13 +531,14 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
-    final Color primary = Theme.of(context).colorScheme.primary;
-    final Color secondary = Theme.of(context).colorScheme.secondary;
-    final Color cardBg = Theme.of(context).colorScheme.surface;
-    final Color lockedBg =
-        Theme.of(context).colorScheme.surfaceContainerHighest;
-    final Color textColor = Theme.of(context).colorScheme.onSurface;
-    final Color mutedTextColor = Theme.of(context).colorScheme.onSurfaceVariant;
+    ThemeData theme = Theme.of(context);
+
+    final Color primary = theme.colorScheme.primary;
+    final Color secondary = theme.colorScheme.secondary;
+    final Color cardBg = theme.colorScheme.surfaceContainer;
+    final Color lockedBg = theme.colorScheme.surfaceContainerHighest;
+    final Color textColor = theme.colorScheme.onSurface;
+    final Color mutedTextColor = theme.colorScheme.outline;
     final double borderRadius = 24.0;
 
     // Get quiz info for this topic
@@ -567,7 +568,7 @@ class _HomePageState extends State<HomePage> {
               shouldBeUnlocked
                   ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: theme.colorScheme.shadow.withValues(alpha: 0.2), //withValues(alpha: 0.08),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -679,7 +680,7 @@ class _HomePageState extends State<HomePage> {
                     CustomPaint(
                       size: const Size(160, 80),
                       painter: _SemiCircleProgressPainter(
-                        color: secondary,
+                        color: primary,
                         progress:
                             actualProgress /
                             100, // Convert percentage to decimal
@@ -749,7 +750,7 @@ class _SemiCircleProgressPainter extends CustomPainter {
     // Background arc
     final Paint backgroundPaint =
         Paint()
-          ..color = color.withOpacity(0.2)
+          ..color = color.withValues(alpha: 0.2, blue: 0.8)
           ..strokeWidth = 12
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round;
@@ -757,7 +758,7 @@ class _SemiCircleProgressPainter extends CustomPainter {
     // Progress arc
     final Paint progressPaint =
         Paint()
-          ..color = color
+          ..color = color.withValues(alpha: 0.75, blue: 0.8)
           ..strokeWidth = 12
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round;
