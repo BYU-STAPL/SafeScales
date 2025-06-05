@@ -242,11 +242,11 @@ class _LessonPageState extends State<LessonPage> {
       decoration: BoxDecoration(
         color:
             isCompleted
-                ? green.withValues(alpha: 0.1)//secondary.withValues(alpha: 0.1)
+                ? theme.colorScheme.green.withValues(alpha: 0.1)//secondary.withValues(alpha: 0.1)
                 : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isCompleted ? green : color.withValues(alpha: 0.5),
+          color: isCompleted ? theme.colorScheme.green : color.withValues(alpha: 0.5),
           width: 2,
         ),
         boxShadow: [
@@ -290,7 +290,7 @@ class _LessonPageState extends State<LessonPage> {
                             const SizedBox(width: 8),
                             Icon(
                               Icons.check_circle,
-                              color: green,
+                              color: theme.colorScheme.green,
                               size: 16,
                             ),
                             if (score != null) ...[
@@ -300,7 +300,7 @@ class _LessonPageState extends State<LessonPage> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: green,
+                                  color: theme.colorScheme.green,
                                 ),
                               ),
                             ],
@@ -341,10 +341,10 @@ class _LessonPageState extends State<LessonPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: readingCompleted ? green.withValues(alpha: 0.1) : cardBg,
+        color: readingCompleted ? theme.colorScheme.green.withValues(alpha: 0.1) : cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: readingCompleted ? green : primary.withValues(alpha: 0.5),
+          color: readingCompleted ? theme.colorScheme.green : primary.withValues(alpha: 0.5),
           width: 2,
         ),
         boxShadow: [
@@ -455,8 +455,12 @@ class _LessonPageState extends State<LessonPage> {
     // Check if post-quiz is being attempted before reading is completed
     if (quiz.activityType == ActivityType.postQuiz && !readingCompleted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please complete the reading activity first'),
+        SnackBar(
+          content: Text(
+              'Please complete the reading activity first',
+            style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
         ),
       );
       return;

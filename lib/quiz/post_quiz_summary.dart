@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/question/question.dart';
+import 'package:safe_scales/themes/app_theme.dart';
 
 class PostQuizSummary extends StatefulWidget {
   const PostQuizSummary({
@@ -86,7 +87,7 @@ class _PostQuizSummaryState extends State<PostQuizSummary>{
               Text(
                 "Question ${questionIndex + 1}",
                 style: theme.textTheme.titleSmall?.copyWith(
-                  color: isMissed ? Colors.red : Colors.green,
+                  color: isMissed ? theme.colorScheme.red : theme.colorScheme.green,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -99,14 +100,14 @@ class _PostQuizSummaryState extends State<PostQuizSummary>{
               if (isMissed) ...[
                 Text(
                   "Your Answer: ${getUserAnswerText()}",
-                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.red),
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.red),
                 ),
                 SizedBox(height: 5),
               ],
               Text(
                 "Correct Answer: ${getCorrectAnswerText()}",
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.green,
+                  color: theme.colorScheme.green,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -159,7 +160,7 @@ class _PostQuizSummaryState extends State<PostQuizSummary>{
             "Missed Questions",// (${getMissedQuestions().length})",
             style: theme.textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.red,
+              color: theme.colorScheme.red,
             ),
           ),
         ),
@@ -171,12 +172,12 @@ class _PostQuizSummaryState extends State<PostQuizSummary>{
               padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle, color: Colors.green, size: 24),
+                  Icon(Icons.check_circle, color: theme.colorScheme.green, size: 24),
                   SizedBox(width: 12),
                   Text(
                     "Nice work! No missed questions.",
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.green,
+                      color: theme.colorScheme.green,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
