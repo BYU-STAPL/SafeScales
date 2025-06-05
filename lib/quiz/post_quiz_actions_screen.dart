@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:safe_scales/themes/app_theme.dart';
 
 import '../main_navigation.dart';
 
@@ -83,7 +84,7 @@ class PostQuizActionsScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 40,
                     fontWeight: FontWeight.bold,
-                    color: Colors.orange,
+                    color: theme.colorScheme.orange,
                   ),
                 ),
               ],

@@ -103,7 +103,7 @@ class _AuthScreenState extends State<AuthScreen> {
             end: Alignment.bottomRight,
             colors: [
               Theme.of(context).colorScheme.primary,
-              lightBlue,
+              theme.colorScheme.lightBlue,
               //Theme.of(context).colorScheme.secondary,
             ],
           ),
