@@ -1,0 +1,64 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "kahootclone-b842c",
+          "appId": "1:638757528794:android:a720b551c5d7c06bfe31e3",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "kahootclone-b842c",
+          "appId": "1:638757528794:ios:1266c4897c324a75fe31e3",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "kahootclone-b842c",
+          "appId": "1:638757528794:ios:1266c4897c324a75fe31e3",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "kahootclone-b842c",
+          "configurations": {
+            "android": "1:638757528794:android:a720b551c5d7c06bfe31e3",
+            "ios": "1:638757528794:ios:1266c4897c324a75fe31e3",
+            "macos": "1:638757528794:ios:1266c4897c324a75fe31e3"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "env.js",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      }
+    ]
+  }
+}
