@@ -1,60 +1,136 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// Light theme colors
+/* Color Library */
+
+// For AuthScreen Gradiant and other
+Color lightBlue = const Color(0xff93C5FD);
+
+// Light Mode = Main Colors
 Color blue = const Color(0xff2E83E8);
 Color green = const Color(0xff0DB563);
 Color orange = const Color(0xffF59E0B);
 Color red = const Color(0xffD22626);
 
+// Dark Mode = Main Colors
+Color dmBlue = const Color(0xff60A5FA);
+Color dmGreen = const Color(0xff4ADE80);
+Color dmOrange = const Color(0xffFBBF24);
+Color dmRed = const Color(0xffF87171);
+
+// Light Mode = Container
+// Dark Mode = On Primary Container & On Primary Fixed
 Color paleBlue = const Color(0xffDBEAFE);
 Color paleGreen = const Color(0xffDCFCE7);
 Color paleOrange = const Color(0xffFEF3C7);
 Color paleRed = const Color(0xffFEE2E2);
 
+// Dark Mode = Primary Container & Primary Fixed
+Color dmDarkBlue = const Color(0xff1E3A8A);
+Color dmDarkGreen = const Color(0xff14532D);
+Color dmDarkOrange = const Color(0xff78350F);
+Color dmDarkRed = const Color(0xff7F1D1D);
+
+// Light Mode = On Primary Container & On Primary Fixed
+// Dark Mode = On Primary & Primary Fixed Dim
 Color darkBlue = const Color(0xff1E40AF);
 Color darkGreen = const Color(0xff166534);
 Color darkOrange = const Color(0xff92400E);
 Color darkRed = const Color(0xff991B1B);
 
+// Light Mode = Primary Fixed Dim
+// Dark Mode = On Primary Fixed Variant
 Color dimBlue = const Color(0xffBFDBFE);
 Color dimGreen = const Color(0xffBBF7D0);
 Color dimOrange = const Color(0xffFDE68A);
 
+// Light Mode = On Primary Fixed Variant
 Color thickBlue = const Color(0xff3B82F6);
 Color thickGreen = const Color(0xff059669);
 Color thickOrange = const Color(0xffD97706);
 
-Color white = const Color(0xffFFFFFF);
+// Color white = const Color(0xffFFFFFF);
 Color offWhite = const Color(0xffF5F5F5);
-Color dimWhite = const Color(0xffF1F5F9);
+// Color dimWhite = const Color(0xffF1F5F9);
+//
+// Color grey = const Color(0xffAAAAAA);
+// Color dimGrey = const Color(0xffCCD1D8);
+// Color paleGrey = const Color(0xffE1E1E1);
+//
+// Color almostBlack = const Color(0xff1A1A1A);
+// Color thickGreyBlue = const Color(0xff64748B);
+// Color greyBlue = const Color(0xff94A3B8);
+// Color paleGreyBlue = const Color(0xffCBD5E1);
+//
+//
+// // Light Mode = On Surface
+// // Dark Mode = Surface & Surface Container low
+// Color darkGreyBlue = const Color(0xff1E293B);
+//
+// // Light Mode = Inverse Surface
+// // Dark Mode = Surface Bright & Surface Container
+// Color thickGreyBlue2 = const Color(0xff334155);
 
-Color grey = const Color(0xffAAAAAA);
-Color dimGrey = const Color(0xffCCD1D8);
-Color paleGrey = const Color(0xffE1E1E1);
 
-// Color paleGrey = const Color(0xffF1F5F9);
+// Light Mode Surface Colors
+Color lmSurfaceDim = const Color(0xffF1F5F9);
+Color lmSurface = const Color(0xffF5F5F5);
+Color lmSurfaceBright = const Color(0xffFFFFFF);
+Color lmInverseSurface = const Color(0xff334155);
 
-Color almostBlack = const Color(0xff1A1A1A);
-Color darkGreyBlue = const Color(0xff1E293B);
-Color thickGreyBlue2 = const Color(0xff334155);
-Color thickGreyBlue = const Color(0xff64748B);
-Color greyBlue = const Color(0xff94A3B8);
-Color paleGreyBlue = const Color(0xffCBD5E1);
+Color lmSurfaceContainerLowest = const Color(0xffFFFFFF);
+Color lmSurfaceContainerLow = const Color(0xffF5F5F5);
+Color lmSurfaceContainer = const Color(0xffE1E1E1);
+Color lmSurfaceContainerHigh = const Color(0xffCCD1D8);
+Color lmSurfaceContainerHighest = const Color(0xffAAAAAA);
 
-Color lightBlue = const Color(0xff93C5FD);
+Color lmInverseOnSurface = const Color(0xffF5F5F5);
+Color lmInversePrimary = const Color(0xff93C5FD);
 
-// lor darkGrey = const Color(0xff888888);
+Color lmOnSurface = const Color(0xff1E293B);
+Color lmOnSurfaceVariant = const Color(0xff64748B);
+Color lmOutline = const Color(0xff94A3B8);
+Color lmOutlineVariant = const Color(0xffCBD5E1);
+
+Color lmScrim = const Color(0xff1A1A1A).withValues(alpha: 0.5);
+Color lmShadow = const Color(0xff1A1A1A);
+
+
+
+
+// Dark Mode Surface Colors
+Color dmSurfaceDim = const Color(0xff0F172A);
+Color dmSurface = const Color(0xff1E293B);
+Color dmSurfaceBright = const Color(0xff334155);
+Color dmInverseSurface = const Color(0xffF1F5F9);
+
+Color dmSurfaceContainerLowest = const Color(0xff0C1220);
+Color dmSurfaceContainerLow = const Color(0xff1E293B);
+Color dmSurfaceContainer = const Color(0xff334155);
+Color dmSurfaceContainerHigh = const Color(0xff475569);
+Color dmSurfaceContainerHighest = const Color(0xff64748B);
+
+Color dmInverseOnSurface = const Color(0xffF1F5F9);
+Color dmInversePrimary = const Color(0xff1E3A8A);
+
+Color dmOnSurface = const Color(0xffF1F5F9);
+Color dmOnSurfaceVariant = const Color(0xffCBD5E1);
+Color dmOutline = const Color(0xff64748B);
+Color dmOutlineVariant = const Color(0xff475569);
+
+Color dmScrim = const Color(0xff000000);
+Color dmShadow = const Color(0xff000000);
+
+
 
 // Dark theme colors
-// Color darkRoyalBlue = const Color(0xff1E63B8);
-Color darkLightRoyalBlue = const Color(0xff4A90E2);
-Color darkDarkGrey = const Color(0xff666666);
-Color darkGrey2 = const Color(0xff444444);
-Color darkLightGrey = const Color(0xff2A2A2A);
-Color darkOffWhite = const Color(0xff1A1A1A);
-// Color darkGreen = const Color(0xff4A7A39);
-// Color darkRed = const Color(0xff8A1A0A);
+// Color darkLightRoyalBlue = const Color(0xff4A90E2);
+// Color darkDarkGrey = const Color(0xff666666);
+// Color darkGrey2 = const Color(0xff444444);
+// Color darkLightGrey = const Color(0xff2A2A2A);
+// Color darkOffWhite = const Color(0xff1A1A1A);
+// // Color darkGreen = const Color(0xff4A7A39);
+// // Color darkRed = const Color(0xff8A1A0A);
 
 ColorScheme lightColorScheme = ColorScheme(
   brightness: Brightness.light,
@@ -92,49 +168,85 @@ ColorScheme lightColorScheme = ColorScheme(
   onTertiaryFixed: darkOrange,
   onTertiaryFixedVariant: thickOrange,
 
-  surfaceDim: dimWhite,
-  surface: offWhite,
-  surfaceBright: white,
-  inverseSurface: thickGreyBlue2,
+  surfaceDim: lmSurfaceDim,
+  surface: lmSurface,
+  surfaceBright: lmSurfaceBright,
+  inverseSurface: lmInverseSurface,
 
-  onSurface: darkGreyBlue,
-  onSurfaceVariant: thickGreyBlue,
-  onInverseSurface: offWhite,
+  onSurface: lmOnSurface,
+  onSurfaceVariant: lmOnSurfaceVariant,
+  onInverseSurface: lmInverseOnSurface,
 
-  outline: greyBlue,
-  outlineVariant: paleGreyBlue,
+  outline: lmOutline,
+  outlineVariant: lmOutlineVariant,
 
-  surfaceContainerLowest: white,
-  surfaceContainerLow: offWhite,
-  surfaceContainer: paleGrey,
-  surfaceContainerHigh: dimGrey,
-  surfaceContainerHighest: grey,
+  surfaceContainerLowest: lmSurfaceContainerLowest,
+  surfaceContainerLow: lmSurfaceContainerLow,
+  surfaceContainer: lmSurfaceContainer,
+  surfaceContainerHigh: lmSurfaceContainerHigh,
+  surfaceContainerHighest: lmSurfaceContainerHighest,
 
-  scrim: almostBlack.withValues(alpha: 0.5),
-  shadow: almostBlack,
+  scrim: lmScrim,
+  shadow: lmShadow,
 );
 
+/* Dark Mode Color Scheme */
 ColorScheme darkColorScheme = ColorScheme(
   brightness: Brightness.dark,
-  primary: darkBlue,
-  onPrimary: darkOffWhite,
-  secondary: darkLightRoyalBlue,
-  onSecondary: Colors.white,
-  tertiary: darkGrey2,
-  onTertiary: Colors.white,
-  error: darkRed,
-  onError: darkOffWhite,
-  surface: darkOffWhite,
-  onSurface: Colors.white,
-  surfaceDim: darkLightGrey,
-  surfaceContainer: darkLightGrey,
-  onSurfaceVariant: darkGrey2,
-  outline: darkDarkGrey,
-  outlineVariant: darkGrey2,
-  shadow: Colors.black,
-  scrim: Colors.black.withValues(alpha: 0.5),
-  // background: darkOffWhite,
-  // onBackground: Colors.white,
+  primary: dmBlue,
+  secondary: dmGreen,
+  tertiary: dmOrange,
+  error: dmRed,
+
+  onPrimary: darkBlue,
+  onSecondary: darkGreen,
+  onTertiary: darkOrange,
+  onError: darkRed,
+
+  primaryContainer: dmDarkBlue,
+  secondaryContainer: dmDarkGreen,
+  tertiaryContainer: dmDarkOrange,
+  errorContainer: dmDarkGreen,
+
+  onPrimaryContainer: paleBlue,
+  onSecondaryContainer: paleGreen,
+  onTertiaryContainer: paleOrange,
+  onErrorContainer: paleRed,
+
+  primaryFixed: dmDarkBlue,
+  primaryFixedDim: darkBlue,
+  secondaryFixed: dmDarkGreen,
+  secondaryFixedDim: darkGreen,
+  tertiaryFixed: dmDarkOrange,
+  tertiaryFixedDim: darkOrange,
+
+  onPrimaryFixed: paleBlue,
+  onPrimaryFixedVariant: dimBlue,
+  onSecondaryFixed: paleGreen,
+  onSecondaryFixedVariant: dimBlue,
+  onTertiaryFixed: paleOrange,
+  onTertiaryFixedVariant: dimBlue,
+
+  surfaceDim: dmSurfaceDim,
+  surface: dmSurface,
+  surfaceBright: dmSurfaceBright,
+  inverseSurface: dmInverseSurface,
+
+  onSurface: dmOnSurface,
+  onSurfaceVariant: dmOnSurfaceVariant,
+  onInverseSurface: dmInverseOnSurface,
+
+  outline: dmOutline,
+  outlineVariant: dmOutlineVariant,
+
+  surfaceContainerLowest: dmSurfaceContainerLowest,
+  surfaceContainerLow: dmSurfaceContainerLow,
+  surfaceContainer: dmSurfaceContainer,
+  surfaceContainerHigh: dmSurfaceContainerHigh,
+  surfaceContainerHighest: dmSurfaceContainerHighest,
+
+  scrim: dmScrim,
+  shadow: dmShadow,
 );
 
 class AppTheme {

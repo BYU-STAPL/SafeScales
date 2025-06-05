@@ -202,7 +202,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
               value:
                   (currentQuestionIndex + 1) /
                   widget.questionSet.questions.length,
-              backgroundColor: theme.colorScheme.tertiary,
+              backgroundColor: theme.colorScheme.primaryContainer,
               valueColor: AlwaysStoppedAnimation<Color>(
                 theme.colorScheme.primary,
               ),
