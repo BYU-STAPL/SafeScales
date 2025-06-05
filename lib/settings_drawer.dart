@@ -42,7 +42,7 @@ class SettingsDrawer extends StatelessWidget {
             children: [
               const SizedBox(height: 8),
               Text(
-                'Name',
+                username,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
@@ -52,13 +52,6 @@ class SettingsDrawer extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                username,
-                style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                  fontSize: 16,
-                ),
-              ),
-              Text(
                 email,
                 style: TextStyle(
                   color: colorScheme.onSurfaceVariant,
@@ -66,83 +59,115 @@ class SettingsDrawer extends StatelessWidget {
                 ),
               ),
               Divider(height: 32, color: colorScheme.outlineVariant),
+
+
               // Font size control
-              Row(
-                children: [
-                  Text(
-                    'A',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  Expanded(
-                    child: Slider(
-                      value: themeNotifier.fontSize,
-                      min: 0.8,
-                      max: 1.4,
-                      divisions: 6,
-                      onChanged: (value) {
-                        AppTheme.setFontSizeScale(value);
-                        themeNotifier.updateFontSize(value);
-                      },
-                      activeColor: colorScheme.primary,
-                    ),
-                  ),
-                  Text(
-                    'A',
-                    style: TextStyle(
-                      fontSize: 28,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Color mode toggle
               Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 8,
-                  horizontal: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceVariant,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
+                padding: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                child: Column(
                   children: [
-                    Icon(
-                      themeNotifier.isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                      color: themeNotifier.isDarkMode ? Colors.amber : Colors.orange,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
                     Text(
-                      themeNotifier.isDarkMode ? 'Dark Mode' : 'Light Mode',
+                      'Font Size',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
                       ),
                     ),
-                    const Spacer(),
-                    Switch(
-                      value: themeNotifier.isDarkMode,
-                      onChanged: (value) {
-                        themeNotifier.updateTheme(value);
-                      },
-                      activeColor: Colors.amber,
-                      activeTrackColor: Colors.amber.withOpacity(0.5),
-                      inactiveThumbColor: Colors.grey[300],
-                      inactiveTrackColor: Colors.grey[400],
+
+                    Row(
+                      children: [
+                        Text(
+                          'A',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: themeNotifier.fontSize,
+                            min: 0.8,
+                            max: 1.4,
+                            divisions: 6,
+                            onChanged: (value) {
+                              AppTheme.setFontSizeScale(value);
+                              themeNotifier.updateFontSize(value);
+                            },
+                            activeColor: colorScheme.primary,
+                          ),
+                        ),
+                        Text(
+                          'A',
+                          style: TextStyle(
+                            fontSize: 28,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+
+              // Color mode toggle
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        themeNotifier.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                        color: colorScheme.primary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Appearance',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            themeNotifier.isDarkMode ? 'Dark theme enabled' : 'Light theme enabled',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: themeNotifier.isDarkMode,
+                      onChanged: (value) => themeNotifier.updateTheme(value),
+                      activeColor: colorScheme.primary,
+                      activeTrackColor: colorScheme.primaryContainer,
+                      inactiveThumbColor: colorScheme.outline,
+                      inactiveTrackColor: colorScheme.surfaceVariant,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
               // Tutorial
               ListTile(
-                contentPadding: EdgeInsets.zero,
+                contentPadding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                 leading: Icon(
                   FontAwesomeIcons.graduationCap,
                   color: colorScheme.primary,
@@ -155,7 +180,7 @@ class SettingsDrawer extends StatelessWidget {
               ),
               // Help
               ListTile(
-                contentPadding: EdgeInsets.zero,
+                contentPadding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                 leading: Icon(
                   FontAwesomeIcons.circleQuestion,
                   color: colorScheme.primary,
@@ -167,9 +192,11 @@ class SettingsDrawer extends StatelessWidget {
                 onTap: onHelp,
               ),
               const Spacer(),
+
+
               // Logout
               ListTile(
-                contentPadding: EdgeInsets.zero,
+                contentPadding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                 leading: Icon(
                   FontAwesomeIcons.rightFromBracket,
                   color: colorScheme.error,
