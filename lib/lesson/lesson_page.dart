@@ -8,6 +8,8 @@ import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/services/dragon_service.dart';
 import 'package:safe_scales/reading/reading_activity_screen.dart';
 
+import '../themes/app_theme.dart';
+
 class LessonPage extends StatefulWidget {
   final String topic;
 
@@ -146,6 +148,9 @@ class _LessonPageState extends State<LessonPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    ThemeData theme = Theme.of(context);
+
     final screenSize = MediaQuery.of(context).size;
 
     double topicProgress = 0.0;
@@ -193,7 +198,7 @@ class _LessonPageState extends State<LessonPage> {
                                   'Test your knowledge before starting',
                               onTap: () => _startQuiz(_preQuiz!),
                               icon: Icons.quiz,
-                              color: Theme.of(context).colorScheme.primary,
+                              color: theme.colorScheme.primary,
                               isCompleted: preQuizCompleted,
                               score: preQuizScore,
                             ),
@@ -207,7 +212,7 @@ class _LessonPageState extends State<LessonPage> {
                               description: 'Test what you\'ve learned',
                               onTap: () => _startQuiz(_postQuiz!),
                               icon: Icons.assignment,
-                              color: Theme.of(context).colorScheme.secondary,
+                              color: theme.colorScheme.primary,
                               isCompleted: postQuizCompleted,
                               score: postQuizScore,
                             ),
@@ -230,20 +235,23 @@ class _LessonPageState extends State<LessonPage> {
     required bool isCompleted,
     double? score,
   }) {
+
+    ThemeData theme = Theme.of(context);
+
     return Container(
       decoration: BoxDecoration(
         color:
             isCompleted
-                ? Colors.green.withOpacity(0.1)
-                : Theme.of(context).colorScheme.surface,
+                ? green.withValues(alpha: 0.1)//secondary.withValues(alpha: 0.1)
+                : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isCompleted ? Colors.green : color.withOpacity(0.5),
+          color: isCompleted ? green : color.withValues(alpha: 0.5),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -260,7 +268,7 @@ class _LessonPageState extends State<LessonPage> {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: color.withOpacity(0.1),
+                  backgroundColor: color.withValues(alpha: 0.1),
                   child: Icon(icon, size: 24, color: color),
                 ),
                 const SizedBox(width: 16),
@@ -275,14 +283,14 @@ class _LessonPageState extends State<LessonPage> {
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.onSurface,
+                              color: theme.colorScheme.onSurface,
                             ),
                           ),
                           if (isCompleted) ...[
                             const SizedBox(width: 8),
                             Icon(
                               Icons.check_circle,
-                              color: Colors.green,
+                              color: green,
                               size: 16,
                             ),
                             if (score != null) ...[
@@ -292,7 +300,7 @@ class _LessonPageState extends State<LessonPage> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: Colors.green,
+                                  color: green,
                                 ),
                               ),
                             ],
@@ -304,9 +312,7 @@ class _LessonPageState extends State<LessonPage> {
                         description,
                         style: GoogleFonts.poppins(
                           fontSize: 13,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -316,9 +322,7 @@ class _LessonPageState extends State<LessonPage> {
                 Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.5),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ],
             ),
@@ -329,22 +333,23 @@ class _LessonPageState extends State<LessonPage> {
   }
 
   Widget _buildReadingCard() {
-    final Color cardBg = Theme.of(context).colorScheme.surface;
-    final Color textColor = Theme.of(context).colorScheme.onSurface;
-    final Color primary = Theme.of(context).colorScheme.primary;
+    ThemeData theme = Theme.of(context);
+    final Color cardBg = theme.colorScheme.surface;
+    final Color textColor = theme.colorScheme.onSurface;
+    final Color primary = theme.colorScheme.primary;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: readingCompleted ? Colors.green.withOpacity(0.1) : cardBg,
+        color: readingCompleted ? green.withValues(alpha: 0.1) : cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: readingCompleted ? Colors.green : primary.withOpacity(0.5),
+          color: readingCompleted ? green : primary.withValues(alpha: 0.5),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

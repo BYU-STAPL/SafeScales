@@ -211,7 +211,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
               value:
                   (currentQuestionIndex + 1) /
                   widget.questionSet.questions.length,
-              backgroundColor: theme.colorScheme.tertiary,
+              backgroundColor: theme.colorScheme.primaryContainer,
               valueColor: AlwaysStoppedAnimation<Color>(
                 theme.colorScheme.primary,
               ),

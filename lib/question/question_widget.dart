@@ -110,13 +110,9 @@ class QuestionWidget extends StatelessWidget {
               margin: EdgeInsets.symmetric(vertical: 10),
               padding: EdgeInsets.all(15),
               decoration: BoxDecoration(
-                // border: Border.all(
-                //   color: isSelected ? theme.colorScheme.secondary : Colors.transparent,
-                //   width: 0,//isSelected ? 2 : 0,
-                // ),
                 borderRadius: BorderRadius.circular(8),
                 color: isSelected
-                    ? theme.colorScheme.secondary.withValues(alpha: 0.2)
+                    ? theme.colorScheme.primaryContainer
                     : isDisabled
                     ? theme.colorScheme.surfaceDim
                     : null,

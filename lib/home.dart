@@ -376,7 +376,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 30),
                 // Activities Section
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -412,7 +412,8 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+
+                const SizedBox(height: 30),
 
                 // Show loading or activities
                 if (_isLoading)
@@ -447,7 +448,7 @@ class _HomePageState extends State<HomePage> {
                     final progress = _topicProgress[topic] ?? 0.0;
 
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.only(bottom: 30),
                       child: _buildActivityCard(
                         context: context,
                         title: topic,
@@ -490,7 +491,7 @@ class _HomePageState extends State<HomePage> {
                     _scaffoldKey.currentState?.openEndDrawer();
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -535,10 +536,11 @@ class _HomePageState extends State<HomePage> {
 
     final Color primary = theme.colorScheme.primary;
     final Color secondary = theme.colorScheme.secondary;
-    final Color cardBg = theme.colorScheme.surfaceContainer;
-    final Color lockedBg = theme.colorScheme.surfaceContainerHighest;
+    final Color tertiary = theme.colorScheme.tertiary;
+    final Color cardBg = theme.colorScheme.surfaceContainerLowest;
+    final Color lockedBg = theme.colorScheme.surfaceContainerHigh;
     final Color textColor = theme.colorScheme.onSurface;
-    final Color mutedTextColor = theme.colorScheme.outline;
+    final Color mutedTextColor = theme.colorScheme.onSurfaceVariant;
     final double borderRadius = 24.0;
 
     // Get quiz info for this topic
@@ -620,7 +622,7 @@ class _HomePageState extends State<HomePage> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: primary.withOpacity(0.1),
+                        color: primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -646,19 +648,19 @@ class _HomePageState extends State<HomePage> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: secondary.withOpacity(0.1),
+                        color: primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.assignment, size: 16, color: secondary),
+                          Icon(Icons.assignment, size: 16, color: primary),
                           const SizedBox(width: 4),
                           Text(
                             'Post-Quiz',
                             style: GoogleFonts.poppins(
                               fontSize: 12 * AppTheme.fontSizeScale,
-                              color: secondary,
+                              color: primary,
                             ),
                           ),
                         ],
@@ -680,7 +682,7 @@ class _HomePageState extends State<HomePage> {
                     CustomPaint(
                       size: const Size(160, 80),
                       painter: _SemiCircleProgressPainter(
-                        color: primary,
+                        color: secondary,
                         progress:
                             actualProgress /
                             100, // Convert percentage to decimal
@@ -705,7 +707,7 @@ class _HomePageState extends State<HomePage> {
                 '${actualProgress.toStringAsFixed(0)}% Complete',
                 style: GoogleFonts.poppins(
                   fontSize: 13 * AppTheme.fontSizeScale,
-                  color: primary,
+                  color: secondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -750,7 +752,7 @@ class _SemiCircleProgressPainter extends CustomPainter {
     // Background arc
     final Paint backgroundPaint =
         Paint()
-          ..color = color.withValues(alpha: 0.2, blue: 0.8)
+          ..color = color.withValues(alpha: 0.2)
           ..strokeWidth = 12
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round;
@@ -758,7 +760,7 @@ class _SemiCircleProgressPainter extends CustomPainter {
     // Progress arc
     final Paint progressPaint =
         Paint()
-          ..color = color.withValues(alpha: 0.75, blue: 0.8)
+          ..color = color.withValues(alpha: 0.75)
           ..strokeWidth = 12
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round;

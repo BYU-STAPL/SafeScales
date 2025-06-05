@@ -103,7 +103,8 @@ class _AuthScreenState extends State<AuthScreen> {
             end: Alignment.bottomRight,
             colors: [
               Theme.of(context).colorScheme.primary,
-              Theme.of(context).colorScheme.secondary,
+              lightBlue,
+              //Theme.of(context).colorScheme.secondary,
             ],
           ),
         ),
@@ -112,7 +113,7 @@ class _AuthScreenState extends State<AuthScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Card(
-                color: theme.colorScheme.surfaceDim,
+                color: theme.colorScheme.surfaceContainer,
                 elevation: 8,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -143,6 +144,9 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: theme.colorScheme.surfaceContainer,
+                                )
                               ),
                             ),
                             validator: (value) {
@@ -163,7 +167,10 @@ class _AuthScreenState extends State<AuthScreen> {
                               size: 24 * AppTheme.fontSizeScale,
                             ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide(
+                                color: theme.colorScheme.surfaceContainer,
+                              )
                             ),
                           ),
                           validator: (value) {
@@ -201,6 +208,9 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: theme.colorScheme.surfaceContainer,
+                              )
                             ),
                           ),
                           validator: (value) {
