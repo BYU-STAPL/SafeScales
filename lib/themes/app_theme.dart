@@ -2,55 +2,121 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 // Light theme colors
-Color royalBlue = const Color(0xff2E83E8);
-//color.withValues(alpha: 0.75, blue: 0.8) maybe change light royal blue???
-Color lightRoyalBlue = const Color(0xff70C0EE);
-Color almostBlack = const Color(0xff1A1A1A);
-Color darkGrey = const Color(0xff888888);
+Color blue = const Color(0xff2E83E8);
+Color green = const Color(0xff0DB563);
+Color orange = const Color(0xffF59E0B);
+Color red = const Color(0xffD22626);
+
+Color paleBlue = const Color(0xffDBEAFE);
+Color paleGreen = const Color(0xffDCFCE7);
+Color paleOrange = const Color(0xffFEF3C7);
+Color paleRed = const Color(0xffFEE2E2);
+
+Color darkBlue = const Color(0xff1E40AF);
+Color darkGreen = const Color(0xff166534);
+Color darkOrange = const Color(0xff92400E);
+Color darkRed = const Color(0xff991B1B);
+
+Color dimBlue = const Color(0xffBFDBFE);
+Color dimGreen = const Color(0xffBBF7D0);
+Color dimOrange = const Color(0xffFDE68A);
+
+Color thickBlue = const Color(0xff3B82F6);
+Color thickGreen = const Color(0xff059669);
+Color thickOrange = const Color(0xffD97706);
+
+Color white = const Color(0xffFFFFFF);
+Color offWhite = const Color(0xffF5F5F5);
+Color dimWhite = const Color(0xffF1F5F9);
+
 Color grey = const Color(0xffAAAAAA);
-Color lightGrey = const Color(0xffE1E1E1);
-Color offWhite = const Color(0xffF4F4F4);
-Color green = const Color(0xff74A159);
-Color red = const Color(0xffB72512);
+Color dimGrey = const Color(0xffCCD1D8);
+Color paleGrey = const Color(0xffE1E1E1);
+
+// Color paleGrey = const Color(0xffF1F5F9);
+
+Color almostBlack = const Color(0xff1A1A1A);
+Color darkGreyBlue = const Color(0xff1E293B);
+Color thickGreyBlue2 = const Color(0xff334155);
+Color thickGreyBlue = const Color(0xff64748B);
+Color greyBlue = const Color(0xff94A3B8);
+Color paleGreyBlue = const Color(0xffCBD5E1);
+
+Color lightBlue = const Color(0xff93C5FD);
+
+// lor darkGrey = const Color(0xff888888);
 
 // Dark theme colors
-Color darkRoyalBlue = const Color(0xff1E63B8);
+// Color darkRoyalBlue = const Color(0xff1E63B8);
 Color darkLightRoyalBlue = const Color(0xff4A90E2);
 Color darkDarkGrey = const Color(0xff666666);
 Color darkGrey2 = const Color(0xff444444);
 Color darkLightGrey = const Color(0xff2A2A2A);
 Color darkOffWhite = const Color(0xff1A1A1A);
-Color darkGreen = const Color(0xff4A7A39);
-Color darkRed = const Color(0xff8A1A0A);
+// Color darkGreen = const Color(0xff4A7A39);
+// Color darkRed = const Color(0xff8A1A0A);
 
 ColorScheme lightColorScheme = ColorScheme(
   brightness: Brightness.light,
-  primary: royalBlue,
-  onPrimary: offWhite,
-  secondary: lightRoyalBlue,
-  onSecondary: Colors.black,
-  tertiary: grey,
-  onTertiary: Colors.black,
+  primary: blue,
+  secondary: green,
+  tertiary: orange,
   error: red,
+
+  onPrimary: offWhite,
+  onSecondary: offWhite,
+  onTertiary: offWhite,
   onError: offWhite,
-  surfaceBright: Colors.white,
+
+  primaryContainer: paleBlue,
+  secondaryContainer: paleGreen,
+  tertiaryContainer: paleOrange,
+  errorContainer: paleRed,
+
+  onPrimaryContainer: darkBlue,
+  onSecondaryContainer: darkGreen,
+  onTertiaryContainer: darkOrange,
+  onErrorContainer: darkRed,
+
+  primaryFixed: paleBlue,
+  primaryFixedDim: dimBlue,
+  secondaryFixed: paleGreen,
+  secondaryFixedDim: dimGreen,
+  tertiaryFixed: paleOrange,
+  tertiaryFixedDim: dimOrange,
+
+  onPrimaryFixed: darkBlue,
+  onPrimaryFixedVariant: thickBlue,
+  onSecondaryFixed: darkGreen,
+  onSecondaryFixedVariant: thickGreen,
+  onTertiaryFixed: darkOrange,
+  onTertiaryFixedVariant: thickOrange,
+
+  surfaceDim: dimWhite,
   surface: offWhite,
-  surfaceDim: lightGrey,
-  onSurface: Colors.black,
-  surfaceContainer: lightGrey,
+  surfaceBright: white,
+  inverseSurface: thickGreyBlue2,
+
+  onSurface: darkGreyBlue,
+  onSurfaceVariant: thickGreyBlue,
+  onInverseSurface: offWhite,
+
+  outline: greyBlue,
+  outlineVariant: paleGreyBlue,
+
+  surfaceContainerLowest: white,
+  surfaceContainerLow: offWhite,
+  surfaceContainer: paleGrey,
+  surfaceContainerHigh: dimGrey,
   surfaceContainerHighest: grey,
-  onSurfaceVariant: darkGrey,
-  outline: almostBlack,
-  outlineVariant: lightGrey,
-  shadow: Colors.black,
-  scrim: Colors.black.withOpacity(0.5),
-  background: offWhite,
-  onBackground: Colors.black,
+
+  scrim: almostBlack.withValues(alpha: 0.5),
+  shadow: almostBlack,
 );
 
 ColorScheme darkColorScheme = ColorScheme(
   brightness: Brightness.dark,
-  primary: darkRoyalBlue,
+  primary: darkBlue,
   onPrimary: darkOffWhite,
   secondary: darkLightRoyalBlue,
   onSecondary: Colors.white,
