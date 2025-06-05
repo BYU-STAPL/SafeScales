@@ -4,6 +4,7 @@ import 'package:safe_scales/main_navigation.dart';
 import 'package:safe_scales/question/question.dart';
 import 'package:safe_scales/quiz/post_quiz_actions_screen.dart';
 import 'package:safe_scales/quiz/post_quiz_summary.dart';
+import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/themes/theme_notifier.dart';
 import 'package:safe_scales/themes/theme_provider.dart';
 
@@ -39,6 +40,8 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
     final int totalQuestions = widget.totalQuestions;
     final List<List<int>> userAnswers = widget.userAnswers;
 
+    ThemeData theme = Theme.of(context);
+
     String readinessLevel =
         score >= passingScore
             ? 'Passed'
@@ -47,18 +50,15 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
             : 'Needs to Re-read';
     Color readinessColor =
         score >= passingScore
-            ? Colors.green
+            ? theme.colorScheme.green
             : score < passingScore
-            ? Colors.orange
-            : Colors.red;
+            ? theme.colorScheme.orange
+            : theme.colorScheme.red;
 
-    ThemeData theme = Theme.of(context);
-    ThemeNotifier themeNotifier = ThemeProvider.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Results'),
-        // backgroundColor: Colors.orange,
       ),
       body: SingleChildScrollView(
             child: Container(

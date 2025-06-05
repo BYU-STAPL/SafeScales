@@ -3,251 +3,226 @@ import 'package:google_fonts/google_fonts.dart';
 
 /* Color Library */
 
-// For AuthScreen Gradiant and other
-Color lightBlue = const Color(0xff93C5FD);
+// Base color definitions organized by category
+class AppColors {
+  // Universal colors (used in both themes)
+  static const Color lightBlue = Color(0xff93C5FD);
+  static const Color offWhite = Color(0xffF5F5F5);
 
-// Light Mode = Main Colors
-Color blue = const Color(0xff2E83E8);
-Color green = const Color(0xff0DB563);
-Color orange = const Color(0xffF59E0B);
-Color red = const Color(0xffD22626);
+  // Pale colors (used in both themes)
+  static const Color paleBlue = Color(0xffDBEAFE);
+  static const Color paleGreen = Color(0xffDCFCE7);
+  static const Color paleOrange = Color(0xffFEF3C7);
+  static const Color paleRed = Color(0xffFEE2E2);
 
-// Dark Mode = Main Colors
-Color dmBlue = const Color(0xff60A5FA);
-Color dmGreen = const Color(0xff4ADE80);
-Color dmOrange = const Color(0xffFBBF24);
-Color dmRed = const Color(0xffF87171);
+  // Light mode main colors
+  static const Color blue = Color(0xff2E83E8);
+  static const Color green = Color(0xff0DB563);
+  static const Color orange = Color(0xffF59E0B);
+  static const Color red = Color(0xffD22626);
 
-// Light Mode = Container
-// Dark Mode = On Primary Container & On Primary Fixed
-Color paleBlue = const Color(0xffDBEAFE);
-Color paleGreen = const Color(0xffDCFCE7);
-Color paleOrange = const Color(0xffFEF3C7);
-Color paleRed = const Color(0xffFEE2E2);
+  // Dark mode main colors
+  static const Color dmBlue = Color(0xff60A5FA);
+  static const Color dmGreen = Color(0xff4ADE80);
+  static const Color dmOrange = Color(0xffFBBF24);
+  static const Color dmRed = Color(0xffF87171);
 
-// Dark Mode = Primary Container & Primary Fixed
-Color dmDarkBlue = const Color(0xff1E3A8A);
-Color dmDarkGreen = const Color(0xff14532D);
-Color dmDarkOrange = const Color(0xff78350F);
-Color dmDarkRed = const Color(0xff7F1D1D);
+  // Dark variants (used in both themes)
+  static const Color darkBlue = Color(0xff1E40AF);
+  static const Color darkGreen = Color(0xff166534);
+  static const Color darkOrange = Color(0xff92400E);
+  static const Color darkRed = Color(0xff991B1B);
 
-// Light Mode = On Primary Container & On Primary Fixed
-// Dark Mode = On Primary & Primary Fixed Dim
-Color darkBlue = const Color(0xff1E40AF);
-Color darkGreen = const Color(0xff166534);
-Color darkOrange = const Color(0xff92400E);
-Color darkRed = const Color(0xff991B1B);
+  // Dark mode container colors
+  static const Color dmDarkBlue = Color(0xff1E3A8A);
+  static const Color dmDarkGreen = Color(0xff14532D);
+  static const Color dmDarkOrange = Color(0xff78350F);
+  static const Color dmDarkRed = Color(0xff7F1D1D);
 
-// Light Mode = Primary Fixed Dim
-// Dark Mode = On Primary Fixed Variant
-Color dimBlue = const Color(0xffBFDBFE);
-Color dimGreen = const Color(0xffBBF7D0);
-Color dimOrange = const Color(0xffFDE68A);
+  // Dim colors
+  static const Color dimBlue = Color(0xffBFDBFE);
+  static const Color dimGreen = Color(0xffBBF7D0);
+  static const Color dimOrange = Color(0xffFDE68A);
 
-// Light Mode = On Primary Fixed Variant
-Color thickBlue = const Color(0xff3B82F6);
-Color thickGreen = const Color(0xff059669);
-Color thickOrange = const Color(0xffD97706);
+  // Thick colors
+  static const Color thickBlue = Color(0xff3B82F6);
+  static const Color thickGreen = Color(0xff059669);
+  static const Color thickOrange = Color(0xffD97706);
 
-// Color white = const Color(0xffFFFFFF);
-Color offWhite = const Color(0xffF5F5F5);
-// Color dimWhite = const Color(0xffF1F5F9);
-//
-// Color grey = const Color(0xffAAAAAA);
-// Color dimGrey = const Color(0xffCCD1D8);
-// Color paleGrey = const Color(0xffE1E1E1);
-//
-// Color almostBlack = const Color(0xff1A1A1A);
-// Color thickGreyBlue = const Color(0xff64748B);
-// Color greyBlue = const Color(0xff94A3B8);
-// Color paleGreyBlue = const Color(0xffCBD5E1);
-//
-//
-// // Light Mode = On Surface
-// // Dark Mode = Surface & Surface Container low
-// Color darkGreyBlue = const Color(0xff1E293B);
-//
-// // Light Mode = Inverse Surface
-// // Dark Mode = Surface Bright & Surface Container
-// Color thickGreyBlue2 = const Color(0xff334155);
+  // Light mode surface colors
+  static const Color lmSurfaceDim = Color(0xffF1F5F9);
+  static const Color lmSurface = Color(0xffF5F5F5);
+  static const Color lmSurfaceBright = Color(0xffFFFFFF);
+  static const Color lmInverseSurface = Color(0xff334155);
+  static const Color lmSurfaceContainerLowest = Color(0xffFFFFFF);
+  static const Color lmSurfaceContainerLow = Color(0xffF5F5F5);
+  static const Color lmSurfaceContainer = Color(0xffE1E1E1);
+  static const Color lmSurfaceContainerHigh = Color(0xffCCD1D8);
+  static const Color lmSurfaceContainerHighest = Color(0xffAAAAAA);
+  static const Color lmInverseOnSurface = Color(0xffF5F5F5);
+  static const Color lmInversePrimary = Color(0xff93C5FD);
+  static const Color lmOnSurface = Color(0xff1E293B);
+  static const Color lmOnSurfaceVariant = Color(0xff64748B);
+  static const Color lmOutline = Color(0xff94A3B8);
+  static const Color lmOutlineVariant = Color(0xffCBD5E1);
+  static final Color lmScrim = const Color(0xff1A1A1A).withValues(alpha: 0.5);
+  static const Color lmShadow = Color(0xff1A1A1A);
 
+  // Dark mode surface colors
+  static const Color dmSurfaceDim = Color(0xff0F172A);
+  static const Color dmSurface = Color(0xff1E293B);
+  static const Color dmSurfaceBright = Color(0xff334155);
+  static const Color dmInverseSurface = Color(0xffF1F5F9);
+  static const Color dmSurfaceContainerLowest = Color(0xff0C1220);
+  static const Color dmSurfaceContainerLow = Color(0xff1E293B);
+  static const Color dmSurfaceContainer = Color(0xff334155);
+  static const Color dmSurfaceContainerHigh = Color(0xff475569);
+  static const Color dmSurfaceContainerHighest = Color(0xff64748B);
+  static const Color dmInverseOnSurface = Color(0xff334155);
+  static const Color dmInversePrimary = Color(0xff1E3A8A);
+  static const Color dmOnSurface = Color(0xffF1F5F9);
+  static const Color dmOnSurfaceVariant = Color(0xffCBD5E1);
+  static const Color dmOutline = Color(0xff64748B);
+  static const Color dmOutlineVariant = Color(0xff475569);
+  static const Color dmScrim = Color(0xff000000);
+  static const Color dmShadow = Color(0xff000000);
+}
 
-// Light Mode Surface Colors
-Color lmSurfaceDim = const Color(0xffF1F5F9);
-Color lmSurface = const Color(0xffF5F5F5);
-Color lmSurfaceBright = const Color(0xffFFFFFF);
-Color lmInverseSurface = const Color(0xff334155);
-
-Color lmSurfaceContainerLowest = const Color(0xffFFFFFF);
-Color lmSurfaceContainerLow = const Color(0xffF5F5F5);
-Color lmSurfaceContainer = const Color(0xffE1E1E1);
-Color lmSurfaceContainerHigh = const Color(0xffCCD1D8);
-Color lmSurfaceContainerHighest = const Color(0xffAAAAAA);
-
-Color lmInverseOnSurface = const Color(0xffF5F5F5);
-Color lmInversePrimary = const Color(0xff93C5FD);
-
-Color lmOnSurface = const Color(0xff1E293B);
-Color lmOnSurfaceVariant = const Color(0xff64748B);
-Color lmOutline = const Color(0xff94A3B8);
-Color lmOutlineVariant = const Color(0xffCBD5E1);
-
-Color lmScrim = const Color(0xff1A1A1A).withValues(alpha: 0.5);
-Color lmShadow = const Color(0xff1A1A1A);
-
-
-
-
-// Dark Mode Surface Colors
-Color dmSurfaceDim = const Color(0xff0F172A);
-Color dmSurface = const Color(0xff1E293B);
-Color dmSurfaceBright = const Color(0xff334155);
-Color dmInverseSurface = const Color(0xffF1F5F9);
-
-Color dmSurfaceContainerLowest = const Color(0xff0C1220);
-Color dmSurfaceContainerLow = const Color(0xff1E293B);
-Color dmSurfaceContainer = const Color(0xff334155);
-Color dmSurfaceContainerHigh = const Color(0xff475569);
-Color dmSurfaceContainerHighest = const Color(0xff64748B);
-
-Color dmInverseOnSurface = const Color(0xffF1F5F9);
-Color dmInversePrimary = const Color(0xff1E3A8A);
-
-Color dmOnSurface = const Color(0xffF1F5F9);
-Color dmOnSurfaceVariant = const Color(0xffCBD5E1);
-Color dmOutline = const Color(0xff64748B);
-Color dmOutlineVariant = const Color(0xff475569);
-
-Color dmScrim = const Color(0xff000000);
-Color dmShadow = const Color(0xff000000);
-
-
-
-// Dark theme colors
-// Color darkLightRoyalBlue = const Color(0xff4A90E2);
-// Color darkDarkGrey = const Color(0xff666666);
-// Color darkGrey2 = const Color(0xff444444);
-// Color darkLightGrey = const Color(0xff2A2A2A);
-// Color darkOffWhite = const Color(0xff1A1A1A);
-// // Color darkGreen = const Color(0xff4A7A39);
-// // Color darkRed = const Color(0xff8A1A0A);
-
-ColorScheme lightColorScheme = ColorScheme(
+// ColorScheme definitions
+final ColorScheme lightColorScheme = ColorScheme(
   brightness: Brightness.light,
-  primary: blue,
-  secondary: green,
-  tertiary: orange,
-  error: red,
+  primary: AppColors.blue,
+  secondary: AppColors.green,
+  tertiary: AppColors.orange,
+  error: AppColors.red,
 
-  onPrimary: offWhite,
-  onSecondary: offWhite,
-  onTertiary: offWhite,
-  onError: offWhite,
+  onPrimary: AppColors.offWhite,
+  onSecondary: AppColors.offWhite,
+  onTertiary: AppColors.offWhite,
+  onError: AppColors.offWhite,
 
-  primaryContainer: paleBlue,
-  secondaryContainer: paleGreen,
-  tertiaryContainer: paleOrange,
-  errorContainer: paleRed,
+  primaryContainer: AppColors.paleBlue,
+  secondaryContainer: AppColors.paleGreen,
+  tertiaryContainer: AppColors.paleOrange,
+  errorContainer: AppColors.paleRed,
 
-  onPrimaryContainer: darkBlue,
-  onSecondaryContainer: darkGreen,
-  onTertiaryContainer: darkOrange,
-  onErrorContainer: darkRed,
+  onPrimaryContainer: AppColors.darkBlue,
+  onSecondaryContainer: AppColors.darkGreen,
+  onTertiaryContainer: AppColors.darkOrange,
+  onErrorContainer: AppColors.darkRed,
 
-  primaryFixed: paleBlue,
-  primaryFixedDim: dimBlue,
-  secondaryFixed: paleGreen,
-  secondaryFixedDim: dimGreen,
-  tertiaryFixed: paleOrange,
-  tertiaryFixedDim: dimOrange,
+  primaryFixed: AppColors.paleBlue,
+  primaryFixedDim: AppColors.dimBlue,
+  secondaryFixed: AppColors.paleGreen,
+  secondaryFixedDim: AppColors.dimGreen,
+  tertiaryFixed: AppColors.paleOrange,
+  tertiaryFixedDim: AppColors.dimOrange,
 
-  onPrimaryFixed: darkBlue,
-  onPrimaryFixedVariant: thickBlue,
-  onSecondaryFixed: darkGreen,
-  onSecondaryFixedVariant: thickGreen,
-  onTertiaryFixed: darkOrange,
-  onTertiaryFixedVariant: thickOrange,
+  onPrimaryFixed: AppColors.darkBlue,
+  onPrimaryFixedVariant: AppColors.thickBlue,
+  onSecondaryFixed: AppColors.darkGreen,
+  onSecondaryFixedVariant: AppColors.thickGreen,
+  onTertiaryFixed: AppColors.darkOrange,
+  onTertiaryFixedVariant: AppColors.thickOrange,
 
-  surfaceDim: lmSurfaceDim,
-  surface: lmSurface,
-  surfaceBright: lmSurfaceBright,
-  inverseSurface: lmInverseSurface,
+  surfaceDim: AppColors.lmSurfaceDim,
+  surface: AppColors.lmSurface,
+  surfaceBright: AppColors.lmSurfaceBright,
+  inverseSurface: AppColors.lmInverseSurface,
 
-  onSurface: lmOnSurface,
-  onSurfaceVariant: lmOnSurfaceVariant,
-  onInverseSurface: lmInverseOnSurface,
+  onSurface: AppColors.lmOnSurface,
+  onSurfaceVariant: AppColors.lmOnSurfaceVariant,
+  onInverseSurface: AppColors.lmInverseOnSurface,
 
-  outline: lmOutline,
-  outlineVariant: lmOutlineVariant,
+  outline: AppColors.lmOutline,
+  outlineVariant: AppColors.lmOutlineVariant,
 
-  surfaceContainerLowest: lmSurfaceContainerLowest,
-  surfaceContainerLow: lmSurfaceContainerLow,
-  surfaceContainer: lmSurfaceContainer,
-  surfaceContainerHigh: lmSurfaceContainerHigh,
-  surfaceContainerHighest: lmSurfaceContainerHighest,
+  surfaceContainerLowest: AppColors.lmSurfaceContainerLowest,
+  surfaceContainerLow: AppColors.lmSurfaceContainerLow,
+  surfaceContainer: AppColors.lmSurfaceContainer,
+  surfaceContainerHigh: AppColors.lmSurfaceContainerHigh,
+  surfaceContainerHighest: AppColors.lmSurfaceContainerHighest,
 
-  scrim: lmScrim,
-  shadow: lmShadow,
+  scrim: AppColors.lmScrim,
+  shadow: AppColors.lmShadow,
+
+  inversePrimary: AppColors.lmInversePrimary,
 );
 
-/* Dark Mode Color Scheme */
-ColorScheme darkColorScheme = ColorScheme(
+final ColorScheme darkColorScheme = ColorScheme(
   brightness: Brightness.dark,
-  primary: dmBlue,
-  secondary: dmGreen,
-  tertiary: dmOrange,
-  error: dmRed,
+  primary: AppColors.dmBlue,
+  secondary: AppColors.dmGreen,
+  tertiary: AppColors.dmOrange,
+  error: AppColors.dmRed,
 
-  onPrimary: darkBlue,
-  onSecondary: darkGreen,
-  onTertiary: darkOrange,
-  onError: darkRed,
+  onPrimary: AppColors.darkBlue,
+  onSecondary: AppColors.darkGreen,
+  onTertiary: AppColors.darkOrange,
+  onError: AppColors.darkRed,
 
-  primaryContainer: dmDarkBlue,
-  secondaryContainer: dmDarkGreen,
-  tertiaryContainer: dmDarkOrange,
-  errorContainer: dmDarkGreen,
+  primaryContainer: AppColors.dmDarkBlue,
+  secondaryContainer: AppColors.dmDarkGreen,
+  tertiaryContainer: AppColors.dmDarkOrange,
+  errorContainer: AppColors.dmDarkRed,
 
-  onPrimaryContainer: paleBlue,
-  onSecondaryContainer: paleGreen,
-  onTertiaryContainer: paleOrange,
-  onErrorContainer: paleRed,
+  onPrimaryContainer: AppColors.paleBlue,
+  onSecondaryContainer: AppColors.paleGreen,
+  onTertiaryContainer: AppColors.paleOrange,
+  onErrorContainer: AppColors.paleRed,
 
-  primaryFixed: dmDarkBlue,
-  primaryFixedDim: darkBlue,
-  secondaryFixed: dmDarkGreen,
-  secondaryFixedDim: darkGreen,
-  tertiaryFixed: dmDarkOrange,
-  tertiaryFixedDim: darkOrange,
+  primaryFixed: AppColors.dmDarkBlue,
+  primaryFixedDim: AppColors.darkBlue,
+  secondaryFixed: AppColors.dmDarkGreen,
+  secondaryFixedDim: AppColors.darkGreen,
+  tertiaryFixed: AppColors.dmDarkOrange,
+  tertiaryFixedDim: AppColors.darkOrange,
 
-  onPrimaryFixed: paleBlue,
-  onPrimaryFixedVariant: dimBlue,
-  onSecondaryFixed: paleGreen,
-  onSecondaryFixedVariant: dimBlue,
-  onTertiaryFixed: paleOrange,
-  onTertiaryFixedVariant: dimBlue,
+  onPrimaryFixed: AppColors.paleBlue,
+  onPrimaryFixedVariant: AppColors.dimBlue,
+  onSecondaryFixed: AppColors.paleGreen,
+  onSecondaryFixedVariant: AppColors.dimGreen,
+  onTertiaryFixed: AppColors.paleOrange,
+  onTertiaryFixedVariant: AppColors.dimOrange,
 
-  surfaceDim: dmSurfaceDim,
-  surface: dmSurface,
-  surfaceBright: dmSurfaceBright,
-  inverseSurface: dmInverseSurface,
+  surfaceDim: AppColors.dmSurfaceDim,
+  surface: AppColors.dmSurface,
+  surfaceBright: AppColors.dmSurfaceBright,
+  inverseSurface: AppColors.dmInverseSurface,
 
-  onSurface: dmOnSurface,
-  onSurfaceVariant: dmOnSurfaceVariant,
-  onInverseSurface: dmInverseOnSurface,
+  onSurface: AppColors.dmOnSurface,
+  onSurfaceVariant: AppColors.dmOnSurfaceVariant,
+  onInverseSurface: AppColors.dmInverseOnSurface,
 
-  outline: dmOutline,
-  outlineVariant: dmOutlineVariant,
+  outline: AppColors.dmOutline,
+  outlineVariant: AppColors.dmOutlineVariant,
 
-  surfaceContainerLowest: dmSurfaceContainerLowest,
-  surfaceContainerLow: dmSurfaceContainerLow,
-  surfaceContainer: dmSurfaceContainer,
-  surfaceContainerHigh: dmSurfaceContainerHigh,
-  surfaceContainerHighest: dmSurfaceContainerHighest,
+  surfaceContainerLowest: AppColors.dmSurfaceContainerLowest,
+  surfaceContainerLow: AppColors.dmSurfaceContainerLow,
+  surfaceContainer: AppColors.dmSurfaceContainer,
+  surfaceContainerHigh: AppColors.dmSurfaceContainerHigh,
+  surfaceContainerHighest: AppColors.dmSurfaceContainerHighest,
 
-  scrim: dmScrim,
-  shadow: dmShadow,
+  scrim: AppColors.dmScrim,
+  shadow: AppColors.dmShadow,
+
+  inversePrimary: AppColors.dmInversePrimary,
 );
+
+// Extension for any additional custom colors you might need
+extension CustomColorScheme on ColorScheme {
+  // Universal colors that don't change with theme
+  Color get lightBlue => AppColors.lightBlue;
+  Color get offWhite => AppColors.offWhite;
+
+  // If you need direct access to specific color variants
+  Color get green => AppColors.green;
+  Color get red => AppColors.red;
+  Color get orange => AppColors.orange;
+}
+
+
+/* Full App Theme */
 
 class AppTheme {
   static double _fontSizeScale = 1.0;
