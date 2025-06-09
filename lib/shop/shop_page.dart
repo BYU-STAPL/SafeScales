@@ -24,7 +24,7 @@ class _ShopPageState extends State<ShopPage> {
   List<Map<String, dynamic>> accessories = [];
   List<Map<String, dynamic>> environments = [];
   bool isLoading = true;
-  List<int> acquiredAccessories = [];
+  List<String> acquiredAccessories = [];
   List<String> acquiredEnvironments = [];
   Map<String, Map<String, dynamic>> quizDetails = {};
 
@@ -203,12 +203,12 @@ class _ShopPageState extends State<ShopPage> {
         if (selectedTab == 0) {
           purchaseSuccess = await _shopService.purchaseAccessory(
             userId,
-            accessories[selectedIndex!]['id'],
+            accessories[selectedIndex!]['id'].toString(),
           );
         } else {
           purchaseSuccess = await _shopService.purchaseEnvironment(
             userId,
-            environments[selectedIndex!]['id'],
+            environments[selectedIndex!]['id'].toString(),
           );
         }
 
@@ -353,17 +353,18 @@ class _ShopPageState extends State<ShopPage> {
                                   _ShopItemCard(
                                     image:
                                         items[i]['image_url'] ??
+                                        items[i]['imageUrl'] ??
                                         items[i]['image'],
                                     name: items[i]['name'],
-                                    cost: items[i]['cost']?.toString() ?? '0',
+                                    cost: items[i]['cost']?.toString() ?? '1',
                                     isSelected: selectedIndex == i,
                                     isOwned:
                                         selectedTab == 0
                                             ? acquiredAccessories.contains(
-                                              items[i]['id'],
+                                              items[i]['id'].toString(),
                                             )
                                             : acquiredEnvironments.contains(
-                                              items[i]['id'],
+                                              items[i]['id'].toString(),
                                             ),
                                     highlight: highlight,
                                     onTap: () {

@@ -7,13 +7,19 @@ import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/services/dragon_service.dart';
 import 'package:safe_scales/reading/reading_activity_screen.dart';
+import 'package:safe_scales/services/class_service.dart';
 
 import '../themes/app_theme.dart';
 
 class LessonPage extends StatefulWidget {
-  final String topic;
+  final String? topic; // Keep for backward compatibility
+  final String? moduleId; // New parameter
 
-  const LessonPage({super.key, required this.topic});
+  const LessonPage({super.key, this.topic, this.moduleId})
+    : assert(
+        topic != null || moduleId != null,
+        'Either topic or moduleId must be provided',
+      );
 
   @override
   State<LessonPage> createState() => _LessonPageState();
@@ -29,27 +35,40 @@ class _LessonPageState extends State<LessonPage> {
   final QuizService _quizService = QuizService();
   final UserStateService _userState = UserStateService();
   final DragonService _dragonService = DragonService(QuizService().supabase);
+  late final ClassService _classService;
+
   QuestionSet? _preQuiz;
   QuestionSet? _postQuiz;
   bool _isLoading = true;
   Map<String, dynamic>? _dragonData;
+  Map<String, dynamic>? _moduleData;
+  String _moduleTitle = '';
 
   @override
   void initState() {
     super.initState();
+    _classService = ClassService(_quizService.supabase);
     _loadQuizzes();
     _loadDragonImages();
   }
 
   Future<void> _loadDragonImages() async {
     try {
+      // If using module-based system
+      if (widget.moduleId != null) {
+        // Try to get dragon from class assets first
+        // This will be implemented when we have access to class assets
+        // For now, use the fallback system
+      }
+
+      // Fallback to old system for backward compatibility
       await _dragonService.initialize();
 
       // Get the index of the current topic
       final allQuizzes = await _quizService.getAllQuizzes();
       final topics =
           allQuizzes.map((q) => q['topic'] as String).toSet().toList();
-      final topicIndex = topics.indexOf(widget.topic);
+      final topicIndex = topics.indexOf(widget.topic ?? _moduleTitle);
 
       if (topicIndex != -1) {
         final dragonData = await _dragonService.getDragonImagesForModule(
@@ -62,23 +81,46 @@ class _LessonPageState extends State<LessonPage> {
         }
       }
     } catch (e) {
-      // Error loading dragon images
+      print('Error loading dragon images: $e');
     }
   }
 
   Future<void> _loadQuizzes() async {
     try {
-      // Get pre-quiz for the specified topic
-      final preQuiz = await _quizService.getQuizByTopicAndActivityType(
-        topic: widget.topic,
-        activityType: 'preQuiz',
-      );
+      QuestionSet? preQuiz;
+      QuestionSet? postQuiz;
 
-      // Get post-quiz for the specified topic
-      final postQuiz = await _quizService.getQuizByTopicAndActivityType(
-        topic: widget.topic,
-        activityType: 'postQuiz',
-      );
+      if (widget.moduleId != null) {
+        // Load module data
+        _moduleData = await _classService.getModuleById(widget.moduleId!);
+        if (_moduleData != null) {
+          _moduleTitle = _moduleData!['title'] ?? 'Module';
+        }
+
+        // Get module-based quizzes
+        preQuiz = await _quizService.getQuizByModuleId(
+          moduleId: widget.moduleId!,
+          activityType: 'preQuiz',
+        );
+
+        postQuiz = await _quizService.getQuizByModuleId(
+          moduleId: widget.moduleId!,
+          activityType: 'postQuiz',
+        );
+      } else if (widget.topic != null) {
+        // Fallback to topic-based system for backward compatibility
+        _moduleTitle = widget.topic!;
+
+        preQuiz = await _quizService.getQuizByTopicAndActivityType(
+          topic: widget.topic!,
+          activityType: 'preQuiz',
+        );
+
+        postQuiz = await _quizService.getQuizByTopicAndActivityType(
+          topic: widget.topic!,
+          activityType: 'postQuiz',
+        );
+      }
 
       // Get user's quiz progress
       final user = _userState.currentUser;
@@ -86,14 +128,71 @@ class _LessonPageState extends State<LessonPage> {
         final response =
             await _quizService.supabase
                 .from('Users')
-                .select('quizzes')
+                .select('quizzes, modules')
                 .eq('id', user.id)
                 .single();
 
+        // Check new modules column first
+        if (response['modules'] != null && widget.moduleId != null) {
+          final modulesData = Map<String, dynamic>.from(response['modules']);
+
+          if (modulesData.containsKey(widget.moduleId!)) {
+            final moduleData = Map<String, dynamic>.from(
+              modulesData[widget.moduleId!],
+            );
+
+            // Check for pre-quiz completion
+            if (moduleData.containsKey('preQuiz')) {
+              final preQuizData = moduleData['preQuiz'];
+              setState(() {
+                preQuizCompleted = true;
+                preQuizScore = preQuizData['score'].toDouble();
+              });
+            }
+
+            // Check for post-quiz completion
+            if (moduleData.containsKey('postQuiz')) {
+              final postQuizData = moduleData['postQuiz'];
+              setState(() {
+                postQuizCompleted = true;
+                postQuizScore = postQuizData['score'].toDouble();
+              });
+            }
+          }
+        }
+
+        // Fallback to old quizzes column if not found in modules
         if (response['quizzes'] != null) {
           final quizzesData = Map<String, dynamic>.from(response['quizzes']);
 
-          if (preQuiz != null && quizzesData.containsKey(preQuiz.id)) {
+          // Check for module-based quiz IDs first (if not already found in modules column)
+          if (widget.moduleId != null &&
+              !preQuizCompleted &&
+              !postQuizCompleted) {
+            final preQuizId = '${widget.moduleId}_preQuiz';
+            final postQuizId = '${widget.moduleId}_postQuiz';
+
+            if (quizzesData.containsKey(preQuizId)) {
+              final preQuizData = quizzesData[preQuizId];
+              setState(() {
+                preQuizCompleted = true;
+                preQuizScore = preQuizData['score'].toDouble();
+              });
+            }
+
+            if (quizzesData.containsKey(postQuizId)) {
+              final postQuizData = quizzesData[postQuizId];
+              setState(() {
+                postQuizCompleted = true;
+                postQuizScore = postQuizData['score'].toDouble();
+              });
+            }
+          }
+
+          // Fallback to old quiz IDs (for backward compatibility)
+          if (preQuiz != null &&
+              quizzesData.containsKey(preQuiz.id) &&
+              !preQuizCompleted) {
             final preQuizData = quizzesData[preQuiz.id];
             setState(() {
               preQuizCompleted = true;
@@ -101,7 +200,9 @@ class _LessonPageState extends State<LessonPage> {
             });
           }
 
-          if (postQuiz != null && quizzesData.containsKey(postQuiz.id)) {
+          if (postQuiz != null &&
+              quizzesData.containsKey(postQuiz.id) &&
+              !postQuizCompleted) {
             final postQuizData = quizzesData[postQuiz.id];
             setState(() {
               postQuizCompleted = true;
@@ -125,7 +226,6 @@ class _LessonPageState extends State<LessonPage> {
 
   @override
   Widget build(BuildContext context) {
-
     ThemeData theme = Theme.of(context);
 
     final screenSize = MediaQuery.of(context).size;
@@ -143,7 +243,10 @@ class _LessonPageState extends State<LessonPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.topic), centerTitle: true),
+      appBar: AppBar(
+        title: Text(widget.topic ?? _moduleTitle),
+        centerTitle: true,
+      ),
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -212,18 +315,22 @@ class _LessonPageState extends State<LessonPage> {
     required bool isCompleted,
     double? score,
   }) {
-
     ThemeData theme = Theme.of(context);
 
     return Container(
       decoration: BoxDecoration(
         color:
             isCompleted
-                ? theme.colorScheme.green.withValues(alpha: 0.1)//secondary.withValues(alpha: 0.1)
+                ? theme.colorScheme.green.withValues(
+                  alpha: 0.1,
+                ) //secondary.withValues(alpha: 0.1)
                 : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isCompleted ? theme.colorScheme.green : color.withValues(alpha: 0.5),
+          color:
+              isCompleted
+                  ? theme.colorScheme.green
+                  : color.withValues(alpha: 0.5),
           width: 2,
         ),
         boxShadow: [
@@ -289,7 +396,9 @@ class _LessonPageState extends State<LessonPage> {
                         description,
                         style: GoogleFonts.poppins(
                           fontSize: 13,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.7,
+                          ),
                         ),
                       ),
                     ],
@@ -318,10 +427,16 @@ class _LessonPageState extends State<LessonPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: readingCompleted ? theme.colorScheme.green.withValues(alpha: 0.1) : cardBg,
+        color:
+            readingCompleted
+                ? theme.colorScheme.green.withValues(alpha: 0.1)
+                : cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: readingCompleted ? theme.colorScheme.green : primary.withValues(alpha: 0.5),
+          color:
+              readingCompleted
+                  ? theme.colorScheme.green
+                  : primary.withValues(alpha: 0.5),
           width: 2,
         ),
         boxShadow: [
@@ -343,8 +458,9 @@ class _LessonPageState extends State<LessonPage> {
                       context,
                       MaterialPageRoute(
                         builder:
-                            (context) =>
-                                ReadingActivityScreen(topic: widget.topic),
+                            (context) => ReadingActivityScreen(
+                              topic: widget.topic ?? _moduleTitle,
+                            ),
                       ),
                     ).then((completed) {
                       if (completed == true) {
@@ -393,7 +509,7 @@ class _LessonPageState extends State<LessonPage> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Learn about ${widget.topic}',
+                          'Learn about ${widget.topic ?? _moduleTitle}',
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             color: textColor.withOpacity(0.7),
@@ -431,8 +547,10 @@ class _LessonPageState extends State<LessonPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'Please complete the reading activity first',
-            style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface),
+            'Please complete the reading activity first',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onInverseSurface,
+            ),
           ),
           backgroundColor: Theme.of(context).colorScheme.inverseSurface,
         ),

@@ -138,11 +138,6 @@ class QuizService {
 
       print('Database response: $response');
 
-      if (response == null) {
-        print('No quiz found for topic: $topic, activityType: $activityType');
-        return null;
-      }
-
       // Parse the questions JSON
       final questionsJson = response['questions'] as List<dynamic>?;
       print('Questions JSON: $questionsJson');
@@ -247,16 +242,17 @@ class QuizService {
       final response =
           await supabase
               .from('Users')
-              .select('quizzes')
+              .select('quizzes, modules')
               .eq('id', userId)
               .single();
 
+      // Update existing quizzes column (for backward compatibility)
       Map<String, dynamic> quizzes = {};
       if (response['quizzes'] != null) {
         quizzes = Map<String, dynamic>.from(response['quizzes']);
       }
 
-      // Update quiz data
+      // Update quiz data in quizzes column
       quizzes[quizId] = {
         'score': score,
         'answers': answers,
@@ -265,13 +261,51 @@ class QuizService {
         'total_questions': totalQuestions,
       };
 
-      // Save updated quizzes data
+      // Update new modules column
+      Map<String, dynamic> modules = {};
+      if (response['modules'] != null) {
+        modules = Map<String, dynamic>.from(response['modules']);
+      }
+
+      // Extract module ID and quiz type from quiz ID
+      // Quiz ID format: "{moduleId}_{quizType}" (e.g., "module1_preQuiz")
+      String moduleId;
+      String quizType;
+
+      if (quizId.contains('_')) {
+        final parts = quizId.split('_');
+        moduleId = parts[0];
+        quizType = parts.length > 1 ? parts[1] : 'quiz';
+      } else {
+        // Fallback for old quiz IDs that don't follow the module format
+        moduleId = 'legacy';
+        quizType = quizId;
+      }
+
+      // Initialize module entry if it doesn't exist
+      if (!modules.containsKey(moduleId)) {
+        modules[moduleId] = {};
+      }
+
+      // Save quiz data in modules format: module_id -> quiz_type -> data
+      modules[moduleId][quizType] = {
+        'answers': answers,
+        'score': score,
+        'completed_at': DateTime.now().toIso8601String(),
+        'correct_answers': correctAnswers,
+        'total_questions': totalQuestions,
+      };
+
+      // Save updated data to both columns
       await supabase
           .from('Users')
-          .update({'quizzes': quizzes})
+          .update({'quizzes': quizzes, 'modules': modules})
           .eq('id', userId);
 
       print('Successfully saved quiz progress for quiz $quizId');
+      print(
+        'Saved to modules[$moduleId][$quizType]: ${modules[moduleId][quizType]}',
+      );
     } catch (e) {
       print('Error saving quiz progress: $e');
       throw Exception('Failed to save quiz progress: $e');
@@ -313,6 +347,204 @@ class QuizService {
     } catch (e) {
       print('Error getting quiz progress: $e');
       throw Exception('Failed to get quiz progress: $e');
+    }
+  }
+
+  // New method to get quiz by module ID
+  Future<QuestionSet?> getQuizByModuleId({
+    required String moduleId,
+    required String activityType,
+  }) async {
+    try {
+      print('Fetching quiz for module: $moduleId, activityType: $activityType');
+
+      // Get module details
+      final moduleResponse =
+          await supabase.from('modules').select().eq('id', moduleId).single();
+
+      if (moduleResponse == null) {
+        print('No module found with ID: $moduleId');
+        return null;
+      }
+
+      print('Module response: $moduleResponse');
+
+      // Get quiz data based on activity type
+      final quizData =
+          activityType == 'preQuiz'
+              ? moduleResponse['pre_quiz']
+              : moduleResponse['post_quiz'];
+
+      if (quizData == null || quizData['questions'] == null) {
+        print('No $activityType found for module: $moduleId');
+        return null;
+      }
+
+      // Convert quiz data to QuestionSet
+      final questionsJson = quizData['questions'] as List<dynamic>;
+      final questions =
+          questionsJson.map((q) {
+            final questionMap = q as Map<String, dynamic>;
+
+            // Get the answer index from the answer field
+            final answerIndex =
+                int.tryParse(questionMap['answer']?.toString() ?? '0') ?? 0;
+
+            // Get choices and filter out empty ones
+            List<String> choices = [];
+            if (questionMap['choices'] != null) {
+              choices =
+                  (questionMap['choices'] as List)
+                      .map((c) => c?.toString() ?? '')
+                      .where((c) => c.isNotEmpty)
+                      .toList();
+            }
+
+            if (choices.isEmpty) {
+              choices = ['Option A', 'Option B', 'Option C', 'Option D'];
+            }
+
+            return Question.singleAnswer(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              questionText: questionMap['question'] ?? 'Question',
+              options: choices,
+              correctAnswerIndex: answerIndex,
+              explanation: '',
+            );
+          }).toList();
+
+      // Convert activity type string to enum
+      final activityTypeEnum =
+          activityType == 'preQuiz'
+              ? ActivityType.preQuiz
+              : ActivityType.postQuiz;
+
+      // Create QuestionSet with module ID as the quiz ID
+      final questionSet = QuestionSet(
+        id: '${moduleId}_${activityType}', // Unique ID for this quiz
+        title: moduleResponse['title'] ?? 'Module Quiz',
+        description: '',
+        activityType: activityTypeEnum,
+        subject: moduleResponse['title'] ?? 'Module',
+        passingScore: 80,
+        showResults: true,
+        showCorrectAnswers: activityType == 'preQuiz' ? false : true,
+        showExplanations: activityType == 'preQuiz' ? false : true,
+        allowRetakes: true,
+        questions: questions,
+      );
+
+      print('Created QuestionSet with ID: ${questionSet.id}');
+      return questionSet;
+    } catch (e) {
+      print('Error fetching quiz by module ID: $e');
+      return null;
+    }
+  }
+
+  // Get module progress for a user
+  Future<Map<String, double>> getModuleProgress({
+    required String userId,
+    required List<String> moduleIds,
+  }) async {
+    try {
+      final Map<String, double> moduleProgress = {};
+
+      // Get user's quiz progress from both old and new columns
+      final response =
+          await supabase
+              .from('Users')
+              .select('quizzes, modules')
+              .eq('id', userId)
+              .single();
+
+      // Check new modules column first (preferred)
+      if (response['modules'] != null) {
+        final modulesData = Map<String, dynamic>.from(response['modules']);
+
+        for (var moduleId in moduleIds) {
+          if (modulesData.containsKey(moduleId)) {
+            final moduleData = Map<String, dynamic>.from(modulesData[moduleId]);
+
+            double preQuizScore = 0;
+            double postQuizScore = 0;
+            bool hasPreQuiz = false;
+            bool hasPostQuiz = false;
+
+            // Check for pre-quiz score
+            if (moduleData.containsKey('preQuiz')) {
+              preQuizScore = (moduleData['preQuiz']['score'] ?? 0).toDouble();
+              hasPreQuiz = true;
+            }
+
+            // Check for post-quiz score
+            if (moduleData.containsKey('postQuiz')) {
+              postQuizScore = (moduleData['postQuiz']['score'] ?? 0).toDouble();
+              hasPostQuiz = true;
+            }
+
+            // Calculate progress
+            double progress = 0;
+            if (hasPreQuiz && hasPostQuiz) {
+              progress = (preQuizScore / 2) + (postQuizScore / 2);
+            } else if (hasPreQuiz) {
+              progress = preQuizScore / 2;
+            } else if (hasPostQuiz) {
+              progress = postQuizScore / 2;
+            }
+
+            moduleProgress[moduleId] = progress;
+          }
+        }
+      }
+
+      // Fallback to old quizzes column for modules not found in new column
+      if (response['quizzes'] != null) {
+        final quizzesData = Map<String, dynamic>.from(response['quizzes']);
+
+        for (var moduleId in moduleIds) {
+          // Skip if already found in modules column
+          if (moduleProgress.containsKey(moduleId)) continue;
+
+          double preQuizScore = 0;
+          double postQuizScore = 0;
+          bool hasPreQuiz = false;
+          bool hasPostQuiz = false;
+
+          // Check for pre-quiz score using old format
+          final preQuizId = '${moduleId}_preQuiz';
+          if (quizzesData.containsKey(preQuizId)) {
+            preQuizScore = (quizzesData[preQuizId]['score'] ?? 0).toDouble();
+            hasPreQuiz = true;
+          }
+
+          // Check for post-quiz score using old format
+          final postQuizId = '${moduleId}_postQuiz';
+          if (quizzesData.containsKey(postQuizId)) {
+            postQuizScore = (quizzesData[postQuizId]['score'] ?? 0).toDouble();
+            hasPostQuiz = true;
+          }
+
+          // Calculate progress
+          double progress = 0;
+          if (hasPreQuiz && hasPostQuiz) {
+            progress = (preQuizScore / 2) + (postQuizScore / 2);
+          } else if (hasPreQuiz) {
+            progress = preQuizScore / 2;
+          } else if (hasPostQuiz) {
+            progress = postQuizScore / 2;
+          }
+
+          if (progress > 0) {
+            moduleProgress[moduleId] = progress;
+          }
+        }
+      }
+
+      return moduleProgress;
+    } catch (e) {
+      print('Error getting module progress: $e');
+      return {};
     }
   }
 }

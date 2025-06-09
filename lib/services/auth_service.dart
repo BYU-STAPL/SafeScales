@@ -18,7 +18,6 @@ class AuthService {
       final authResponse = await supabaseClient.auth.signUp(
         email: email,
         password: password,
-        emailRedirectTo: null,
       );
 
       if (authResponse.user != null) {
@@ -43,57 +42,43 @@ class AuthService {
 
   Future<bool> signIn({required String email, required String password}) async {
     try {
-      print('Attempting to sign in with email: $email');
-
-      // Hash the provided password
-      final hashedPassword = hashPassword(password);
-      print('Hashed password being used: $hashedPassword');
-
-      // First check if user exists with matching email
-      final userCheck =
+      // Get user from Users table
+      final response =
           await supabaseClient
               .from('Users')
               .select()
               .eq('Email', email)
-              .limit(1)
-              .maybeSingle();
+              .single();
 
-      print('User check result: $userCheck');
-      if (userCheck != null) {
-        print('Password in database: ${userCheck['password']}');
+      // Hash the provided password
+      final hashedPassword = hashPassword(password);
+
+      print('Input hashed password: $hashedPassword');
+      print('Stored password: ${response['password']}');
+
+      // Compare passwords
+      if (response['password'] != hashedPassword) {
+        print('Passwords do not match');
+        return false;
       }
 
-      if (userCheck != null) {
-        // Verify the password matches
-        if (userCheck['password'] == hashedPassword) {
-          print('Password verified successfully');
+      print('Passwords match!');
 
-          // Create a minimal user object for UserStateService
-          final user = supabase.User(
-            id: userCheck['id'],
-            email: userCheck['Email'],
-            createdAt: userCheck['created_at'],
-            appMetadata: {},
-            userMetadata: {},
-            aud: 'authenticated',
-            role: 'authenticated',
-          );
+      // Create a simple user object with the necessary data
+      final user = supabase.User(
+        id: response['id'],
+        email: response['Email'],
+        createdAt: response['created_at'],
+        appMetadata: {},
+        userMetadata: {},
+        aud: 'authenticated',
+        role: 'authenticated',
+      );
 
-          // Set the current user in UserStateService
-          _userState.setUser(user);
-          _userState.setUserProfile(userCheck);
-          print('User profile set successfully');
-          return true;
-        } else {
-          print('Password does not match');
-          print('Provided hash: $hashedPassword');
-          print('Database hash: ${userCheck['password']}');
-          return false;
-        }
-      }
-
-      print('Authentication failed - no user found with this email');
-      return false;
+      // Set the current user in UserStateService
+      _userState.setUser(user);
+      _userState.setUserProfile(response);
+      return true;
     } catch (e) {
       print('Error signing in: $e');
       // Clear any existing user state on error
@@ -104,7 +89,6 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    await supabaseClient.auth.signOut();
     _userState.setUser(null);
     _userState.setUserProfile(null);
   }

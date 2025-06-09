@@ -47,14 +47,16 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
         userAccessories =
             accessories
                 .where(
-                  (accessory) => acquiredAccessories.contains(accessory['id']),
+                  (accessory) =>
+                      acquiredAccessories.contains(accessory['id'].toString()),
                 )
                 .toList();
         userEnvironments =
             environments
                 .where(
-                  (environment) =>
-                      acquiredEnvironments.contains(environment['id']),
+                  (environment) => acquiredEnvironments.contains(
+                    environment['id'].toString(),
+                  ),
                 )
                 .toList();
       }
@@ -201,6 +203,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                                   _ToyBoxItemCard(
                                     image:
                                         accessory['image_url'] ??
+                                        accessory['imageUrl'] ??
                                         accessory['image'],
                                     name: accessory['name'],
                                   ),
@@ -241,6 +244,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                               _ToyBoxItemCard(
                                 image:
                                     environment['image_url'] ??
+                                    environment['imageUrl'] ??
                                     environment['image'],
                                 name: environment['name'],
                               ),

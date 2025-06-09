@@ -1,17 +1,53 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:safe_scales/config/supabase_config.dart';
+import 'package:safe_scales/services/user_state_service.dart';
+import 'package:safe_scales/services/class_service.dart';
 
 class ShopService {
   final supabase = SupabaseConfig.client;
+  final _userState = UserStateService();
+  late final ClassService _classService;
+
+  ShopService() {
+    _classService = ClassService(supabase);
+  }
+
+  // Get assets from user's class
+  Future<List<Map<String, dynamic>>> _getClassAssets() async {
+    try {
+      final user = _userState.currentUser;
+      if (user == null) return [];
+
+      // Get user's class
+      final classData = await _classService.getUserClass(user.id);
+      if (classData.isEmpty) return [];
+
+      // Get class assets
+      final assets = await _classService.getClassAssets(classData['id']);
+      if (assets == null) return [];
+
+      return List<Map<String, dynamic>>.from(assets);
+    } catch (e) {
+      print('Error getting class assets: $e');
+      return [];
+    }
+  }
 
   Future<List<Map<String, dynamic>>> getAccessories() async {
     try {
-      final response = await supabase
-          .from('accessories')
-          .select()
-          .order('created_at', ascending: true);
-
-      return List<Map<String, dynamic>>.from(response);
+      final assets = await _getClassAssets();
+      // Filter for accessories and add cost field
+      return assets
+          .where((asset) => asset['type'] == 'accessory')
+          .map(
+            (asset) => {
+              ...asset,
+              'image_url':
+                  asset['imageUrl'], // Map imageUrl to image_url for compatibility
+              'cost': 1, // Default cost
+            },
+          )
+          .toList();
     } catch (e) {
       print('Error fetching accessories: $e');
       return [];
@@ -20,19 +56,26 @@ class ShopService {
 
   Future<List<Map<String, dynamic>>> getEnvironments() async {
     try {
-      final response = await supabase
-          .from('environments')
-          .select()
-          .order('created_at', ascending: true);
-
-      return List<Map<String, dynamic>>.from(response);
+      final assets = await _getClassAssets();
+      // Filter for environments and add cost field
+      return assets
+          .where((asset) => asset['type'] == 'environment')
+          .map(
+            (asset) => {
+              ...asset,
+              'image_url':
+                  asset['imageUrl'], // Map imageUrl to image_url for compatibility
+              'cost': 1, // Default cost
+            },
+          )
+          .toList();
     } catch (e) {
       print('Error fetching environments: $e');
       return [];
     }
   }
 
-  Future<bool> purchaseAccessory(String userId, int accessoryId) async {
+  Future<bool> purchaseAccessory(String userId, String accessoryId) async {
     try {
       // First get the current user's acquired accessories
       final userResponse =
@@ -76,7 +119,7 @@ class ShopService {
     }
   }
 
-  Future<List<int>> getUserAcquiredAccessories(String userId) async {
+  Future<List<String>> getUserAcquiredAccessories(String userId) async {
     try {
       final response =
           await supabase
@@ -97,7 +140,7 @@ class ShopService {
         acquiredAccessories = response['acquired_accessories'] ?? [];
       }
 
-      return acquiredAccessories.map((id) => id as int).toList();
+      return acquiredAccessories.map((id) => id.toString()).toList();
     } catch (e) {
       print('Error getting user acquired accessories: $e');
       return [];

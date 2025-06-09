@@ -4,6 +4,9 @@ import 'package:safe_scales/home.dart';
 import 'package:safe_scales/services/auth_service.dart';
 import '../main.dart';
 import 'package:safe_scales/themes/app_theme.dart';
+import '../screens/class_selection_screen.dart';
+import 'package:safe_scales/config/supabase_config.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import '../main_navigation.dart';
 
@@ -59,20 +62,34 @@ class _AuthScreenState extends State<AuthScreen> {
             }
             return;
           }
+
+          // Navigate to class selection screen after successful login
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const ClassSelectionScreen(),
+              ),
+            );
+          }
         } else {
           await _authService.signUp(
             username: _nameController.text.trim(),
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
-        }
 
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => MainNavigation(initialIndex: 0),
-            ),
-          );
+          if (mounted) {
+            // Switch to login mode after successful signup
+            setState(() {
+              isLogin = true;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Account created successfully! Please log in.'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
         }
       } catch (e) {
         if (mounted) {
@@ -92,10 +109,17 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     ThemeData theme = Theme.of(context);
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -146,7 +170,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(
                                   color: theme.colorScheme.surfaceContainer,
-                                )
+                                ),
                               ),
                             ),
                             validator: (value) {
@@ -170,7 +194,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               borderRadius: BorderRadius.circular(15),
                               borderSide: BorderSide(
                                 color: theme.colorScheme.surfaceContainer,
-                              )
+                              ),
                             ),
                           ),
                           validator: (value) {
@@ -210,7 +234,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
                                 color: theme.colorScheme.surfaceContainer,
-                              )
+                              ),
                             ),
                           ),
                           validator: (value) {
