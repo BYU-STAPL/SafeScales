@@ -42,6 +42,16 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
     return true;
   }
 
+  List<int> getMissedQuestions() {
+    List<int> missedQuestions = [];
+    for (int i = 0; i < widget.questionSet.questions.length; i++) {
+      if (!_isAnswerCorrect(i)) {
+        missedQuestions.add(i);
+      }
+    }
+    return missedQuestions;
+  }
+
   Widget buildQuestionCard(int questionIndex, bool isMissed) {
     final List<List<int>> userAnswers = widget.userAnswers;
     QuestionSet questionSet = widget.questionSet;
@@ -142,30 +152,20 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
         // Always visible missed questions
         if (getMissedQuestions().isEmpty)
           Padding(
-<<<<<<< Updated upstream
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              child: Row(
-                children: [
-                  Icon(Icons.check_circle, color: theme.colorScheme.green, size: 24),
-                  SizedBox(width: 12),
-                  Text(
-                    "Nice work! No missed questions.",
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.green,
-                      fontWeight: FontWeight.w500,
-                    ),
-=======
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 24),
+                Icon(
+                  Icons.check_circle,
+                  color: theme.colorScheme.green,
+                  size: 24,
+                ),
                 SizedBox(width: 12),
                 Text(
                   "Nice work! No missed questions.",
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.green,
+                    color: theme.colorScheme.green,
                     fontWeight: FontWeight.w500,
->>>>>>> Stashed changes
                   ),
                 ),
               ],
