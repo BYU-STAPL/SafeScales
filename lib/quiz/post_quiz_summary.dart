@@ -137,27 +137,48 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          child: Row(
-            children: [
-              Icon(
-                Icons.check_circle,
-                color: theme.colorScheme.primary,
-                size: 24,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Questions Answered: ${widget.questionSet.questions.length}',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
+        SizedBox(height: 12),
+
+        // Always visible missed questions
+        if (getMissedQuestions().isEmpty)
+          Padding(
+<<<<<<< Updated upstream
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, color: theme.colorScheme.green, size: 24),
+                  SizedBox(width: 12),
+                  Text(
+                    "Nice work! No missed questions.",
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.green,
+                      fontWeight: FontWeight.w500,
+                    ),
+=======
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green, size: 24),
+                SizedBox(width: 12),
+                Text(
+                  "Nice work! No missed questions.",
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.green,
+                    fontWeight: FontWeight.w500,
+>>>>>>> Stashed changes
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
+          )
+        else
+          ...getMissedQuestions().map(
+            (index) => buildQuestionCard(index, true),
           ),
-        ),
-        const SizedBox(height: 24),
+
+        SizedBox(height: 24),
+
+        // Expandable correct questions
         ExpansionTile(
           title: Text(
             'View Question Details',
