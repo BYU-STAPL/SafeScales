@@ -59,11 +59,8 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Results'),
-<<<<<<< Updated upstream
-=======
         elevation: 0,
         backgroundColor: Colors.transparent,
->>>>>>> Stashed changes
       ),
       body: SafeArea(
         child: SingleChildScrollView(
