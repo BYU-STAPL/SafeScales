@@ -127,12 +127,7 @@ class _HomePageState extends State<HomePage> {
         await _loadDragonImages();
       }
     } catch (e) {
-      print('✗ Error loading quizzes: $e');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      // Error loading quizzes
     }
   }
 
@@ -149,7 +144,7 @@ class _HomePageState extends State<HomePage> {
         }
       }
     } catch (e) {
-      print('✗ Error loading dragon images: $e');
+      // Error loading dragon images
     }
   }
 
@@ -157,10 +152,6 @@ class _HomePageState extends State<HomePage> {
   Widget _getDragonPhaseIcon(String topic) {
     final progress = _topicProgress[topic] ?? 0.0;
     final dragonData = _moduleDragons[topic];
-
-    if (dragonData == null) {
-      print('✗ No dragon data found for topic: $topic');
-    }
 
     String imageUrl = dragonData?['egg'] ?? 'assets/images/other/egg.png';
     List<String> phases = ['egg']; // Always start with egg
@@ -183,7 +174,7 @@ class _HomePageState extends State<HomePage> {
         _dragonService
             .saveDragonPhases(user.id, dragonData['id'].toString(), phases)
             .catchError((e) {
-              print('✗ Error saving dragon phases: $e');
+              // Error saving dragon phases
             });
       }
     }
@@ -204,7 +195,7 @@ class _HomePageState extends State<HomePage> {
         width: 64,
         height: 64,
         errorBuilder: (context, error, stackTrace) {
-          print('✗ Error loading dragon image for topic $topic: $error');
+          // Error loading dragon image
           return Image.asset(
             'assets/images/other/egg.png',
             width: 64,
@@ -460,7 +451,6 @@ class _HomePageState extends State<HomePage> {
                             index > 0 ? 'Complete ${_topics[index - 1]}' : null,
                         onTap: () {
                           if (isUnlocked) {
-                            print('Navigating to topic: $topic'); // Debug log
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -557,20 +547,22 @@ class _HomePageState extends State<HomePage> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
         decoration: BoxDecoration(
-          color: shouldBeUnlocked ? cardBg : lockedBg,
+          color: cardBg,
           borderRadius: BorderRadius.circular(borderRadius),
           border:
               shouldBeUnlocked
                   ? null
                   : Border.all(
-                    color: Theme.of(context).colorScheme.outlineVariant,
+                    color: theme.colorScheme.outlineVariant.withOpacity(0.5),
                     width: 1,
                   ),
           boxShadow:
               shouldBeUnlocked
                   ? [
                     BoxShadow(
-                      color: theme.colorScheme.shadow.withValues(alpha: 0.2), //withValues(alpha: 0.08),
+                      color: theme.colorScheme.shadow.withValues(
+                        alpha: 0.2,
+                      ), //withValues(alpha: 0.08),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -584,7 +576,7 @@ class _HomePageState extends State<HomePage> {
               style: GoogleFonts.poppins(
                 fontSize: 20 * AppTheme.fontSizeScale,
                 fontWeight: FontWeight.bold,
-                color: shouldBeUnlocked ? textColor : mutedTextColor,
+                color: textColor,
                 letterSpacing: 0.8,
               ),
             ),
@@ -683,9 +675,7 @@ class _HomePageState extends State<HomePage> {
                       size: const Size(160, 80),
                       painter: _SemiCircleProgressPainter(
                         color: secondary,
-                        progress:
-                            actualProgress /
-                            100, // Convert percentage to decimal
+                        progress: actualProgress / 100,
                       ),
                     ),
                   // Icon in circle
@@ -697,6 +687,7 @@ class _HomePageState extends State<HomePage> {
                           'assets/images/other/lock.png',
                           width: 96,
                           height: 96,
+                          color: mutedTextColor.withOpacity(0.5),
                         ),
                       ),
                 ],

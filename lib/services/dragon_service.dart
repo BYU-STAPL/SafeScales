@@ -17,9 +17,7 @@ class DragonService {
 
         _dragons = List<Map<String, dynamic>>.from(response);
         _isInitialized = true;
-        print('✓ Loaded ${_dragons.length} dragons');
       } catch (e) {
-        print('✗ Error loading dragons: $e');
         _dragons = [];
       }
     }
@@ -101,10 +99,7 @@ class DragonService {
           .from('Users')
           .update({'dragons': dragons})
           .eq('id', userId);
-
-      print('✓ Saved dragon phases: $phases');
     } catch (e) {
-      print('✗ Error saving dragon phases: $e');
       throw Exception('Failed to save dragon phases: $e');
     }
   }

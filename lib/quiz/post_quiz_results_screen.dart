@@ -59,116 +59,142 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Results'),
+<<<<<<< Updated upstream
+=======
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+>>>>>>> Stashed changes
       ),
-      body: SingleChildScrollView(
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-              child: Column(
-                children: [
-                  SizedBox(height: 15),
-
-                  Text(
-                    'Good job completing this quiz!', // ${questionSet.title}!',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyLarge,
-                  ),
-
-                  SizedBox(height: 15),
-
-                  Container(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Text('Quiz Score'),
-                          Text(
-                            '$score%',
-                            style: TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.bold,
-                              color: readinessColor,
-                            ),
-                          ),
-                          Text(
-                            readinessLevel,
-                            style: TextStyle(fontSize: 24, color: readinessColor),
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            '$correctAnswers out of $totalQuestions questions correct',
-                          ),
-                        ],
-                      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Score Card
+                Container(
+                  margin: EdgeInsets.only(top: 20),
+                  padding: EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        readinessColor.withOpacity(0.1),
+                        readinessColor.withOpacity(0.05),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: readinessColor.withOpacity(0.2),
+                      width: 1,
                     ),
                   ),
-
-                  SizedBox(height: 30),
-
-                  PostQuizSummary(questionSet: widget.questionSet, userAnswers: widget.userAnswers),
-
-                  SizedBox(height: 50),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-
-                        // Navigate to actions screen and wait for result
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PostQuizActionsScreen(
-                              score: score,
-                              passingScore: widget.questionSet.passingScore,
-                            ),
-                          ),
-                        );
-
-                        // If user chose to return to lesson, handle the navigation here
-                        if (result == true) {
-                          // Pop PostQuizScreen and return to lesson with completion status
-                          Navigator.pop(context, true);
-                        }
-                        // TODO: when you later pop from actions you go to home instead of the lesson
-                        // Navigator.push(
-                        //   context,
-                        //   MaterialPageRoute(
-                        //     builder: (context) => PostQuizActionsScreen(
-                        //       score: score,
-                        //       passingScore: widget.questionSet.passingScore,
-                        //     ),
-                        //   ),
-                        // ).then((shouldReturnToLesson) {
-                        //   if (shouldReturnToLesson == true) {
-                        //     // Pop back through the entire quiz flow
-                        //     Navigator.pop(context); // Pop to PostQuizScreen
-                        //     Navigator.pop(context, true); // Pop back to lesson with completion status
-                        //   }
-                        // });
-
-
-                        // Navigator.pop(context); // Pop to PostQuizScreen
-                        // Navigator.pop(
-                        //   context,
-                        //   true,
-                        // ); // Pop back to SocialMediaNormsPage with completion status
-                      },
-                      child: Text(
-                        'next'.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: theme.textTheme.bodyMedium?.fontSize,
+                  child: Column(
+                    children: [
+                      Text(
+                        'Quiz Score',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
                         ),
                       ),
+                      SizedBox(height: 8),
+                      Text(
+                        '$score%',
+                        style: TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                          color: readinessColor,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: readinessColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          readinessLevel,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: readinessColor,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        '$correctAnswers out of $totalQuestions questions correct',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 32),
+
+                // Next Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => PostQuizActionsScreen(
+                                score: score,
+                                passingScore: widget.questionSet.passingScore,
+                              ),
+                        ),
+                      );
+
+                      if (result == true) {
+                        Navigator.pop(context, true);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Continue',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
+                ),
 
-                  SizedBox(height: 30),
+                SizedBox(height: 32),
 
-                ],
-              ),
+                // Questions Summary
+                Text(
+                  'Question Summary',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 16),
+                PostQuizSummary(
+                  questionSet: widget.questionSet,
+                  userAnswers: widget.userAnswers,
+                ),
+              ],
             ),
           ),
-      );
+        ),
+      ),
+    );
   }
 }
