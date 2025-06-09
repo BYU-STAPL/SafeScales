@@ -16,8 +16,7 @@ class PostQuizSummary extends StatefulWidget {
   State<PostQuizSummary> createState() => _PostQuizSummaryState();
 }
 
-class _PostQuizSummaryState extends State<PostQuizSummary>{
-
+class _PostQuizSummaryState extends State<PostQuizSummary> {
   bool _isExpanded = false;
 
   List<int> getMissedQuestions() {
@@ -55,7 +54,6 @@ class _PostQuizSummaryState extends State<PostQuizSummary>{
     //TODO: Should I be using theme.notifier?
     ThemeData theme = Theme.of(context);
 
-
     // Format user answers for display
     String getUserAnswerText() {
       if (userAnswer.isEmpty) return 'Not answered';
@@ -71,7 +69,9 @@ class _PostQuizSummaryState extends State<PostQuizSummary>{
       if (question.correctAnswerIndices.length == 1) {
         return question.options[question.correctAnswerIndices.first];
       } else {
-        return question.correctAnswerIndices.map((index) => question.options[index]).join(', ');
+        return question.correctAnswerIndices
+            .map((index) => question.options[index])
+            .join(', ');
       }
     }
 
@@ -92,10 +92,7 @@ class _PostQuizSummaryState extends State<PostQuizSummary>{
                 ),
               ),
               SizedBox(height: 8),
-              Text(
-                question.questionText,
-                style: theme.textTheme.bodyMedium,
-              ),
+              Text(question.questionText, style: theme.textTheme.bodyMedium),
               SizedBox(height: 12),
               if (isMissed) ...[
                 Text(
@@ -147,17 +144,17 @@ class _PostQuizSummaryState extends State<PostQuizSummary>{
 
   @override
   Widget build(BuildContext context) {
-
     ThemeData theme = Theme.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16), // 16 to match the expansion tile of correct questions
-          child:
-          Text(
-            "Missed Questions",// (${getMissedQuestions().length})",
+          padding: EdgeInsets.symmetric(
+            horizontal: 16,
+          ), // 16 to match the expansion tile of correct questions
+          child: Text(
+            "Missed Questions", // (${getMissedQuestions().length})",
             style: theme.textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.red,
@@ -181,11 +178,13 @@ class _PostQuizSummaryState extends State<PostQuizSummary>{
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                ],
-              ),
+              ],
+            ),
           )
         else
-          ...getMissedQuestions().map((index) => buildQuestionCard(index, true)),
+          ...getMissedQuestions().map(
+            (index) => buildQuestionCard(index, true),
+          ),
 
         SizedBox(height: 24),
 
@@ -198,9 +197,7 @@ class _PostQuizSummaryState extends State<PostQuizSummary>{
             ),
           ),
           trailing: Icon(
-            _isExpanded
-                ? Icons.keyboard_arrow_up
-                : Icons.keyboard_arrow_down,
+            _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
             size: 40,
             color: theme.colorScheme.primary,
           ),
@@ -212,22 +209,27 @@ class _PostQuizSummaryState extends State<PostQuizSummary>{
           shape: Border(),
           collapsedShape: Border(),
 
-          children: getCorrectQuestions().isEmpty
-              ? [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              child: Text(
-                "No correct answers yet. Keep practicing!",
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
-                ),
-              ),
-            )
-          ]
-              : getCorrectQuestions().map((index) => buildQuestionCard(index, false)).toList(),
+          children:
+              getCorrectQuestions().isEmpty
+                  ? [
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
+                      child: Text(
+                        "No correct answers yet. Keep practicing!",
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                  ]
+                  : getCorrectQuestions()
+                      .map((index) => buildQuestionCard(index, false))
+                      .toList(),
         ),
       ],
     );
   }
-
 }

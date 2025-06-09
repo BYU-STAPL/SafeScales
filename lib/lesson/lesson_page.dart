@@ -43,7 +43,6 @@ class _LessonPageState extends State<LessonPage> {
 
   Future<void> _loadDragonImages() async {
     try {
-      print('Loading dragon for topic: ${widget.topic}');
       await _dragonService.initialize();
 
       // Get the index of the current topic
@@ -59,39 +58,31 @@ class _LessonPageState extends State<LessonPage> {
         if (mounted) {
           setState(() {
             _dragonData = dragonData;
-            print(
-              'Loaded dragon data for ${widget.topic}: ${dragonData['id']}',
-            );
           });
         }
       }
     } catch (e) {
-      print('Error loading dragon images: $e');
+      // Error loading dragon images
     }
   }
 
   Future<void> _loadQuizzes() async {
     try {
-      print('Loading quizzes for topic: ${widget.topic}');
-
       // Get pre-quiz for the specified topic
       final preQuiz = await _quizService.getQuizByTopicAndActivityType(
         topic: widget.topic,
         activityType: 'preQuiz',
       );
-      print('Pre-quiz loaded: ${preQuiz?.id}');
 
       // Get post-quiz for the specified topic
       final postQuiz = await _quizService.getQuizByTopicAndActivityType(
         topic: widget.topic,
         activityType: 'postQuiz',
       );
-      print('Post-quiz loaded: ${postQuiz?.id}');
 
       // Get user's quiz progress
       final user = _userState.currentUser;
       if (user != null) {
-        print('Loading quiz progress for user: ${user.id}');
         final response =
             await _quizService.supabase
                 .from('Users')
@@ -99,38 +90,25 @@ class _LessonPageState extends State<LessonPage> {
                 .eq('id', user.id)
                 .single();
 
-        print('Raw quiz data from database: ${response['quizzes']}');
-
         if (response['quizzes'] != null) {
           final quizzesData = Map<String, dynamic>.from(response['quizzes']);
-          print('Parsed quizzes data: $quizzesData');
 
           if (preQuiz != null && quizzesData.containsKey(preQuiz.id)) {
             final preQuizData = quizzesData[preQuiz.id];
-            print('Pre-quiz data found: $preQuizData');
             setState(() {
               preQuizCompleted = true;
               preQuizScore = preQuizData['score'].toDouble();
             });
-          } else {
-            print('No pre-quiz data found for quiz ID: ${preQuiz?.id}');
           }
 
           if (postQuiz != null && quizzesData.containsKey(postQuiz.id)) {
             final postQuizData = quizzesData[postQuiz.id];
-            print('Post-quiz data found: $postQuizData');
             setState(() {
               postQuizCompleted = true;
               postQuizScore = postQuizData['score'].toDouble();
             });
-          } else {
-            print('No post-quiz data found for quiz ID: ${postQuiz?.id}');
           }
-        } else {
-          print('No quiz data found in user record');
         }
-      } else {
-        print('No user logged in');
       }
 
       setState(() {
@@ -139,7 +117,6 @@ class _LessonPageState extends State<LessonPage> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading quizzes: $e');
       setState(() {
         _isLoading = false;
       });
@@ -449,9 +426,6 @@ class _LessonPageState extends State<LessonPage> {
   }
 
   void _startQuiz(QuestionSet quiz) {
-    print('Starting quiz: ${quiz.id}');
-    print('Quiz type: ${quiz.activityType}');
-
     // Check if post-quiz is being attempted before reading is completed
     if (quiz.activityType == ActivityType.postQuiz && !readingCompleted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -477,7 +451,6 @@ class _LessonPageState extends State<LessonPage> {
       context,
       MaterialPageRoute(builder: (context) => quizScreen),
     ).then((completed) {
-      print('Quiz completed with status: $completed');
       if (completed == true) {
         setState(() {
           if (quiz.activityType == ActivityType.preQuiz) {
@@ -502,8 +475,6 @@ class _LessonPageState extends State<LessonPage> {
       imageUrl = _dragonData?['stage1'] ?? 'assets/images/other/young.png';
     }
 
-    print('Using dragon image for topic ${widget.topic}: $imageUrl');
-
     // Check if the image URL is a network URL or a local asset
     if (imageUrl.startsWith('http')) {
       return Image.network(
@@ -511,7 +482,6 @@ class _LessonPageState extends State<LessonPage> {
         width: 240,
         height: 240,
         errorBuilder: (context, error, stackTrace) {
-          print('Error loading dragon image for topic ${widget.topic}: $error');
           return Image.asset(
             'assets/images/other/egg.png',
             width: 240,
