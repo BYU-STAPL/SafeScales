@@ -508,27 +508,6 @@ class _HomePageState extends State<HomePage> {
                     );
                   }).toList(),
 
-                const SizedBox(height: 24),
-
-                // Settings Activity - Always shown at the end
-                _buildModuleCard(
-                  context: context,
-                  module: {'id': 'settings', 'title': 'SETTINGS'},
-                  moduleId: 'settings',
-                  title: 'SETTINGS',
-                  isUnlocked: false,
-                  progress: 0.0,
-                  dragonIcon: Image.asset(
-                    'assets/images/other/lock.png',
-                    width: 64,
-                    height: 64,
-                  ),
-                  iconColor: Colors.grey[700]!,
-                  unlockRequirement: 'Complete all modules',
-                  onTap: () {
-                    _scaffoldKey.currentState?.openEndDrawer();
-                  },
-                ),
                 const SizedBox(height: 20),
               ],
             ),

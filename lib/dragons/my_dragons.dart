@@ -117,21 +117,34 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
                             // Handle both List and Map formats for phases
                             bool hasPhase(String phase) {
                               if (phases is List) {
-                                return phases.contains(phase);
+                                // Map new phase names to old phase names for checking
+                                String phaseToCheck = phase;
+                                if (phase == 'stage1') phaseToCheck = 'baby';
+                                if (phase == 'stage2') phaseToCheck = 'teen';
+                                if (phase == 'final') phaseToCheck = 'adult';
+
+                                return phases.contains(phase) ||
+                                    phases.contains(phaseToCheck);
                               } else if (phases is Map) {
-                                return phases['phases']?.contains(phase) ??
-                                    false;
+                                String phaseToCheck = phase;
+                                if (phase == 'stage1') phaseToCheck = 'baby';
+                                if (phase == 'stage2') phaseToCheck = 'teen';
+                                if (phase == 'final') phaseToCheck = 'adult';
+
+                                final phasesList = phases['phases'] ?? [];
+                                return phasesList.contains(phase) ||
+                                    phasesList.contains(phaseToCheck);
                               }
                               return false;
                             }
 
-                            if (hasPhase('final')) {
+                            if (hasPhase('final') || hasPhase('adult')) {
                               currentPhase = 'final';
                               imageUrl = dragonData['final_stage_image'];
-                            } else if (hasPhase('stage2')) {
+                            } else if (hasPhase('stage2') || hasPhase('teen')) {
                               currentPhase = 'stage2';
                               imageUrl = dragonData['stage2_image'];
-                            } else if (hasPhase('stage1')) {
+                            } else if (hasPhase('stage1') || hasPhase('baby')) {
                               currentPhase = 'stage1';
                               imageUrl = dragonData['stage1_image'];
                             }
@@ -436,17 +449,41 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
             return MapEntry(key, value);
           });
 
-          // Load details for each dragon
+          // Load details for each dragon from classes.assets
           for (var dragonId in _userDragons.keys) {
             if (dragonId != 'current_dragon_env') {
-              final dragonData =
-                  await _dragonService.supabase
-                      .from('dragons')
-                      .select()
-                      .eq('id', dragonId)
-                      .single();
+              // Get all classes and their assets
+              final classesResponse = await _dragonService.supabase
+                  .from('classes')
+                  .select('assets');
 
-              _dragonDetails[dragonId] = dragonData;
+              for (var classData in classesResponse) {
+                if (classData['assets'] != null) {
+                  final assets = List<dynamic>.from(classData['assets']);
+
+                  // Find the dragon with matching ID
+                  for (var asset in assets) {
+                    if (asset['type'] == 'dragon' && asset['id'] == dragonId) {
+                      // Convert the new structure to match the expected format
+                      final dragonData = {
+                        'id': asset['id'],
+                        'name': asset['name'],
+                        // Map new stage names to old field names for compatibility
+                        'egg_image': asset['stages']['egg'],
+                        'stage1_image': asset['stages']['baby'],
+                        'stage2_image': asset['stages']['teen'],
+                        'final_stage_image': asset['stages']['adult'],
+                        // Add some default values
+                        'length': 15,
+                        'weight': 2000,
+                        'preferred_environment': 'Mountain',
+                      };
+                      _dragonDetails[dragonId] = dragonData;
+                      break;
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -595,44 +632,65 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
           }
 
           if (environmentIds.isNotEmpty) {
-            // Now fetch the environment details using those IDs
-            final environmentsResponse = await dragonService.supabase
-                .from('environments')
-                .select('id, name, image_url')
-                .inFilter('id', environmentIds);
+            // Now fetch the environment details from classes.assets
+            final classesResponse = await dragonService.supabase
+                .from('classes')
+                .select('assets');
 
-            if (environmentsResponse != null && environmentsResponse is List) {
-              if (mounted) {
-                setState(() {
-                  userEnvironmentIds = environmentIds;
-                  userEnvironments =
-                      environmentsResponse
-                          .map((env) => env['name'] as String)
-                          .toList();
-                  userEnvironmentImages =
-                      environmentsResponse
-                          .map((env) => env['image_url'] as String)
-                          .toList();
-                  _isLoadingEnvironments = false;
-                });
+            List<Map<String, dynamic>> foundEnvironments = [];
 
-                // Check for current environment in dragons column
-                if (userResponse['dragons'] != null) {
-                  final dragonsData =
-                      userResponse['dragons'] as Map<String, dynamic>;
-                  final currentEnvId =
-                      dragonsData['current_dragon_env'] as String?;
+            for (var classData in classesResponse) {
+              if (classData['assets'] != null) {
+                final assets = List<dynamic>.from(classData['assets']);
 
-                  if (currentEnvId != null) {
-                    final envIndex = userEnvironmentIds.indexOf(currentEnvId);
-                    if (envIndex != -1) {
-                      setState(() {
-                        selectedEnvironment = envIndex;
-                      });
-                      print(
-                        '✅ Set initial environment to: ${userEnvironments[envIndex]}',
-                      );
-                    }
+                // Find environments with matching IDs
+                for (var asset in assets) {
+                  if (asset['type'] == 'environment' &&
+                      environmentIds.contains(asset['id'])) {
+                    foundEnvironments.add({
+                      'id': asset['id'],
+                      'name': asset['name'],
+                      'image_url':
+                          asset['imageUrl'], // Note: imageUrl not image_url in new structure
+                    });
+                  }
+                }
+              }
+            }
+
+            if (foundEnvironments.isNotEmpty && mounted) {
+              setState(() {
+                userEnvironmentIds =
+                    foundEnvironments
+                        .map((env) => env['id'] as String)
+                        .toList();
+                userEnvironments =
+                    foundEnvironments
+                        .map((env) => env['name'] as String)
+                        .toList();
+                userEnvironmentImages =
+                    foundEnvironments
+                        .map((env) => env['image_url'] as String)
+                        .toList();
+                _isLoadingEnvironments = false;
+              });
+
+              // Check for current environment in dragons column
+              if (userResponse['dragons'] != null) {
+                final dragonsData =
+                    userResponse['dragons'] as Map<String, dynamic>;
+                final currentEnvId =
+                    dragonsData['current_dragon_env'] as String?;
+
+                if (currentEnvId != null) {
+                  final envIndex = userEnvironmentIds.indexOf(currentEnvId);
+                  if (envIndex != -1) {
+                    setState(() {
+                      selectedEnvironment = envIndex;
+                    });
+                    print(
+                      '✅ Set initial environment to: ${userEnvironments[envIndex]}',
+                    );
                   }
                 }
               }
@@ -701,16 +759,34 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
               userResponse['acquired_accessories'];
           print('📦 Acquired accessories IDs: $acquiredAccessories');
 
-          // Get all accessories
-          final accessoriesResponse = await dragonService.supabase
-              .from('accessories')
-              .select()
-              .inFilter('id', acquiredAccessories);
+          // Get accessories from classes.assets
+          final classesResponse = await dragonService.supabase
+              .from('classes')
+              .select('assets');
+
+          List<Map<String, dynamic>> foundAccessories = [];
+
+          for (var classData in classesResponse) {
+            if (classData['assets'] != null) {
+              final assets = List<dynamic>.from(classData['assets']);
+
+              // Find accessories with matching IDs
+              for (var asset in assets) {
+                if (asset['type'] == 'accessory' &&
+                    acquiredAccessories.contains(asset['id'])) {
+                  foundAccessories.add({
+                    'id': asset['id'],
+                    'name': asset['name'],
+                    'image':
+                        asset['imageUrl'], // Note: imageUrl not image in new structure
+                  });
+                }
+              }
+            }
+          }
 
           setState(() {
-            userAccessories = List<Map<String, dynamic>>.from(
-              accessoriesResponse,
-            );
+            userAccessories = foundAccessories;
             _isLoadingAccessories = false;
           });
           print('✅ Loaded ${userAccessories.length} accessories');
@@ -736,9 +812,21 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     // Handle both List and Map formats for phases
     bool hasPhase(String phase) {
       if (widget.phases is List) {
-        return (widget.phases as List).contains(phase);
+        // Check for both old and new phase names
+        List<String> phasesToCheck = [phase];
+        if (phase == 'stage1') phasesToCheck.addAll(['baby', 'stage1']);
+        if (phase == 'stage2') phasesToCheck.addAll(['teen', 'stage2']);
+        if (phase == 'final') phasesToCheck.addAll(['adult', 'final']);
+
+        return phasesToCheck.any((p) => (widget.phases as List).contains(p));
       } else if (widget.phases is Map) {
-        return (widget.phases['phases'] as List?)?.contains(phase) ?? false;
+        List<String> phasesToCheck = [phase];
+        if (phase == 'stage1') phasesToCheck.addAll(['baby', 'stage1']);
+        if (phase == 'stage2') phasesToCheck.addAll(['teen', 'stage2']);
+        if (phase == 'final') phasesToCheck.addAll(['adult', 'final']);
+
+        final phasesList = (widget.phases['phases'] as List?) ?? [];
+        return phasesToCheck.any((p) => phasesList.contains(p));
       }
       return false;
     }
