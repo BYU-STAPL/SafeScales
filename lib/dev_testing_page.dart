@@ -67,7 +67,7 @@ class _DevTestingPageState extends State<DevTestingPage> {
       description: "This is a post-test",
       activityType: ActivityType.postQuiz,
       subject: "test subject",
-      questions: [singleQ,],
+      questions: [singleQ, multipleQ],
     );
 
 

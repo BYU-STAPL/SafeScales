@@ -172,16 +172,8 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                   ),
                 ),
 
-                SizedBox(height: 32),
+                SizedBox(height: 30),
 
-                // Questions Summary
-                Text(
-                  'Question Summary',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 16),
                 PostQuizSummary(
                   questionSet: widget.questionSet,
                   userAnswers: widget.userAnswers,

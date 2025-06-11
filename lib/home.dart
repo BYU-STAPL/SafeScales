@@ -130,9 +130,9 @@ class _HomePageState extends State<HomePage> {
           if (dragon['stages'] != null) {
             _moduleDragons[module['id']] = {
               'egg': dragon['stages']['egg'] ?? 'assets/images/other/egg.png',
-              'stage1':
+              'baby':
                   dragon['stages']['baby'] ?? 'assets/images/other/young.png',
-              'stage2':
+              'teen':
                   dragon['stages']['teen'] ?? 'assets/images/other/teen.png',
               'final':
                   dragon['stages']['adult'] ?? 'assets/images/other/adult.png',
@@ -170,13 +170,13 @@ class _HomePageState extends State<HomePage> {
 
     // Add phases based on progress, ensuring all previous phases are included
     if (progress >= 30) {
-      phases.add('stage1'); // Add baby phase
+      phases.add('baby'); // Add baby phase
     }
     if (progress >= 50) {
-      phases.add('stage2'); // Add teen phase
+      phases.add('teen'); // Add teen phase
     }
     if (progress >= 80) {
-      phases.add('final'); // Add adult phase
+      phases.add('adult'); // Add adult phase
     }
 
     // Save dragon phases if we have a valid dragon ID
@@ -193,11 +193,11 @@ class _HomePageState extends State<HomePage> {
 
     // Set the image URL based on the highest achieved phase
     if (progress >= 80) {
-      imageUrl = dragonData?['final'] ?? 'assets/images/other/adult.png';
+      imageUrl = dragonData?['adult'] ?? 'assets/images/other/adult.png';
     } else if (progress >= 50) {
-      imageUrl = dragonData?['stage2'] ?? 'assets/images/other/teen.png';
+      imageUrl = dragonData?['teen'] ?? 'assets/images/other/teen.png';
     } else if (progress >= 30) {
-      imageUrl = dragonData?['stage1'] ?? 'assets/images/other/young.png';
+      imageUrl = dragonData?['baby'] ?? 'assets/images/other/young.png';
     }
 
     // Check if the image URL is a network URL or a local asset

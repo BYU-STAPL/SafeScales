@@ -117,17 +117,17 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
                               if (phases is List) {
                                 // Map new phase names to old phase names for checking
                                 String phaseToCheck = phase;
-                                if (phase == 'stage1') phaseToCheck = 'baby';
-                                if (phase == 'stage2') phaseToCheck = 'teen';
-                                if (phase == 'final') phaseToCheck = 'adult';
+                                if (phase == 'baby') phaseToCheck = 'baby';
+                                if (phase == 'teen') phaseToCheck = 'teen';
+                                if (phase == 'adult') phaseToCheck = 'adult';
 
                                 return phases.contains(phase) ||
                                     phases.contains(phaseToCheck);
                               } else if (phases is Map) {
                                 String phaseToCheck = phase;
-                                if (phase == 'stage1') phaseToCheck = 'baby';
-                                if (phase == 'stage2') phaseToCheck = 'teen';
-                                if (phase == 'final') phaseToCheck = 'adult';
+                                if (phase == 'baby') phaseToCheck = 'baby';
+                                if (phase == 'teen') phaseToCheck = 'teen';
+                                if (phase == 'adult') phaseToCheck = 'adult';
 
                                 final phasesList = phases['phases'] ?? [];
                                 return phasesList.contains(phase) ||
@@ -136,15 +136,15 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
                               return false;
                             }
 
-                            if (hasPhase('final') || hasPhase('adult')) {
-                              currentPhase = 'final';
+                            if (hasPhase('adult') || hasPhase('adult')) {
+                              currentPhase = 'adult';
                               imageUrl = dragonData['final_stage_image'];
-                            } else if (hasPhase('stage2') || hasPhase('teen')) {
-                              currentPhase = 'stage2';
-                              imageUrl = dragonData['stage2_image'];
-                            } else if (hasPhase('stage1') || hasPhase('baby')) {
-                              currentPhase = 'stage1';
-                              imageUrl = dragonData['stage1_image'];
+                            } else if (hasPhase('teen') || hasPhase('teen')) {
+                              currentPhase = 'teen';
+                              imageUrl = dragonData['teen_image'];
+                            } else if (hasPhase('baby') || hasPhase('baby')) {
+                              currentPhase = 'baby';
+                              imageUrl = dragonData['baby_image'];
                             }
 
                             return Container(
@@ -373,6 +373,9 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
     String value,
     IconData icon,
   ) {
+
+    ThemeData theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
@@ -386,18 +389,15 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: GoogleFonts.poppins(
+            style: theme.textTheme.labelSmall?.copyWith(
               fontSize: 10,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
           ),
           Text(
             value,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontSize: 12
             ),
             textAlign: TextAlign.center,
           ),
@@ -462,9 +462,9 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
                         'name': asset['name'],
                         // Map new stage names to old field names for compatibility
                         'egg_image': asset['stages']['egg'],
-                        'stage1_image': asset['stages']['baby'],
-                        'stage2_image': asset['stages']['teen'],
-                        'final_stage_image': asset['stages']['adult'],
+                        'baby_image': asset['stages']['baby'],
+                        'teen_image': asset['stages']['teen'],
+                        'adult_stage_image': asset['stages']['adult'],
                         // Add some default values
                         'length': 15,
                         'weight': 2000,
@@ -806,9 +806,9 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       if (widget.phases is List) {
         // Check for both old and new phase names
         List<String> phasesToCheck = [phase];
-        if (phase == 'stage1') phasesToCheck.addAll(['baby', 'stage1']);
-        if (phase == 'stage2') phasesToCheck.addAll(['teen', 'stage2']);
-        if (phase == 'final') phasesToCheck.addAll(['adult', 'final']);
+        if (phase == 'baby') phasesToCheck.addAll(['baby', 'baby']);
+        if (phase == 'teen') phasesToCheck.addAll(['teen', 'teen']);
+        if (phase == 'adult') phasesToCheck.addAll(['adult', 'adult']);
 
         return phasesToCheck.any((p) => (widget.phases as List).contains(p));
       } else if (widget.phases is Map) {
@@ -823,9 +823,9 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       return false;
     }
 
-    if (hasPhase('stage1')) phases.add('stage1');
-    if (hasPhase('stage2')) phases.add('stage2');
-    if (hasPhase('final')) phases.add('final');
+    if (hasPhase('baby')) phases.add('baby');
+    if (hasPhase('teen')) phases.add('teen');
+    if (hasPhase('adult')) phases.add('adult');
 
     return phases;
   }
@@ -835,9 +835,9 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     switch (phase) {
       case 'egg':
         return 'Egg';
-      case 'stage1':
+      case 'baby':
         return 'Baby';
-      case 'stage2':
+      case 'teen':
         return 'Teen';
       case 'final':
         return 'Adult';
@@ -852,10 +852,10 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     switch (currentPhase) {
       case 'egg':
         return widget.dragonData['egg_image'];
-      case 'stage1':
-        return widget.dragonData['stage1_image'];
-      case 'stage2':
-        return widget.dragonData['stage2_image'];
+      case 'baby':
+        return widget.dragonData['baby_image'];
+      case 'teen':
+        return widget.dragonData['teen_image'];
       case 'final':
         return widget.dragonData['final_stage_image'];
       default:
