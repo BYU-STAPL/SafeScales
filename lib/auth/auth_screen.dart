@@ -151,17 +151,16 @@ class _AuthScreenState extends State<AuthScreen> {
                       children: [
                         Text(
                           isLogin ? 'Welcome Back!' : 'Create Account',
-                          style: GoogleFonts.poppins(
-                            fontSize: 24 * AppTheme.fontSizeScale,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: theme.textTheme.headlineMedium,
                         ),
                         const SizedBox(height: 24),
                         if (!isLogin)
                           TextFormField(
+                            style: theme.textTheme.labelLarge,
                             controller: _nameController,
                             decoration: InputDecoration(
                               labelText: 'Full Name',
+                              labelStyle: theme.textTheme.labelLarge,
                               prefixIcon: Icon(
                                 Icons.person,
                                 size: 24 * AppTheme.fontSizeScale,
@@ -183,9 +182,11 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                         if (!isLogin) const SizedBox(height: 16),
                         TextFormField(
+                          style: theme.textTheme.labelLarge,
                           controller: _emailController,
                           decoration: InputDecoration(
                             labelText: 'Email',
+                            labelStyle: theme.textTheme.labelLarge,
                             prefixIcon: Icon(
                               Icons.email,
                               size: 24 * AppTheme.fontSizeScale,
@@ -209,10 +210,12 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
+                          style: theme.textTheme.labelLarge,
                           controller: _passwordController,
                           obscureText: _obscurePassword,
                           decoration: InputDecoration(
                             labelText: 'Password',
+                            labelStyle: theme.textTheme.labelLarge,
                             prefixIcon: Icon(
                               Icons.lock,
                               size: 24 * AppTheme.fontSizeScale,

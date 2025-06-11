@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/settings_drawer.dart';
 import 'package:safe_scales/services/user_state_service.dart';
@@ -28,14 +29,17 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final Color primary = Theme.of(context).colorScheme.primary;
-    final Color cardBg = Theme.of(context).colorScheme.surface;
-    final Color cardShadow = Theme.of(
-      context,
-    ).colorScheme.shadow.withOpacity(0.07);
-    final Color lockedBg = Theme.of(context).colorScheme.surfaceDim;
+
+    ThemeData theme = Theme.of(context);
+
+
+    final Color primary = theme.colorScheme.primary;
+    final Color cardBg = theme.colorScheme.surface;
+    final Color cardShadow = theme.colorScheme.shadow.withOpacity(0.07);
+    final Color lockedBg = theme.colorScheme.surfaceDim;
     final double borderRadius = 28.0;
     final double cardPadding = 24.0;
+
 
     return Scaffold(
       backgroundColor: cardBg,
@@ -52,28 +56,28 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Page title
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.auto_awesome,
-                                color: primary,
-                                size: 28,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'My Dragons',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        // // Page title
+                        // Padding(
+                        //   padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        //   child: Row(
+                        //     children: [
+                        //       Icon(
+                        //         Icons.auto_awesome,
+                        //         color: primary,
+                        //         size: 28,
+                        //       ),
+                        //       const SizedBox(width: 12),
+                        //       Text(
+                        //         'My Dragons',
+                        //         style: GoogleFonts.poppins(
+                        //           fontSize: 24,
+                        //           fontWeight: FontWeight.bold,
+                        //           color: primary,
+                        //         ),
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
                         if (_userDragons.isEmpty)
                           Center(
                             child: Padding(
@@ -88,13 +92,7 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
                                   const SizedBox(height: 16),
                                   Text(
                                     'No dragons yet.\nComplete topics to unlock dragons!',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 16,
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                    ),
+                                    style: theme.textTheme.labelLarge,
                                     textAlign: TextAlign.center,
                                   ),
                                 ],
@@ -246,9 +244,7 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
                                               const SizedBox(width: 6),
                                               Text(
                                                 currentPhase.toUpperCase(),
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
+                                                style: theme.textTheme.labelSmall?.copyWith(
                                                   color: Colors.white,
                                                 ),
                                               ),
@@ -327,10 +323,6 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
                                             padding: const EdgeInsets.symmetric(
                                               vertical: 12,
                                             ),
-                                            textStyle: GoogleFonts.poppins(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                            ),
                                           ),
                                           child: Row(
                                             mainAxisAlignment:
@@ -364,11 +356,11 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
     switch (phase) {
       case 'egg':
         return Icons.egg;
-      case 'stage1':
-        return Icons.pets;
-      case 'stage2':
-        return Icons.auto_awesome;
-      case 'final':
+      case 'baby':
+        return FontAwesomeIcons.babyCarriage;
+      case 'teen':
+        return FontAwesomeIcons.dragon;
+      case 'adult':
         return Icons.star;
       default:
         return Icons.pets;

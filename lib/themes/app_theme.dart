@@ -237,19 +237,20 @@ class AppTheme {
     return TextTheme(
       headlineLarge: GoogleFonts.poppins(
         color: colorScheme.onSurface,
-        fontSize: 32 * _fontSizeScale,
+        fontSize: 30 * _fontSizeScale,
         fontWeight: FontWeight.bold,
       ),
       headlineMedium: GoogleFonts.poppins(
         color: colorScheme.onSurface,
-        fontSize: 28 * _fontSizeScale,
-        fontWeight: FontWeight.normal,
+        fontSize: 25 * _fontSizeScale,
+        fontWeight: FontWeight.bold,
       ),
       headlineSmall: GoogleFonts.poppins(
         color: colorScheme.onSurface,
-        fontSize: 25 * _fontSizeScale,
-        fontWeight: FontWeight.normal,
+        fontSize: 22 * _fontSizeScale,
+        fontWeight: FontWeight.bold,
       ),
+
       bodyLarge: GoogleFonts.poppins(
         color: colorScheme.onSurface,
         fontSize: 22 * _fontSizeScale,
@@ -265,9 +266,20 @@ class AppTheme {
         fontSize: 15 * _fontSizeScale,
         fontWeight: FontWeight.normal,
       ),
-      labelMedium: GoogleFonts.poppins(
-        color: colorScheme.onSurface,
+
+      labelLarge: GoogleFonts.poppins(
+        color: colorScheme.onSurfaceVariant,
         fontSize: 18 * _fontSizeScale,
+        fontWeight: FontWeight.normal,
+      ),
+      labelMedium: GoogleFonts.poppins(
+        color: colorScheme.onSurfaceVariant,
+        fontSize: 15 * _fontSizeScale,
+        fontWeight: FontWeight.normal,
+      ),
+      labelSmall: GoogleFonts.poppins(
+        color: colorScheme.onSurfaceVariant,
+        fontSize: 12 * _fontSizeScale,
         fontWeight: FontWeight.normal,
       ),
     );
