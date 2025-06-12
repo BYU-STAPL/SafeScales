@@ -17,7 +17,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  // final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final QuizService _quizService = QuizService();
   final _userState = UserStateService();
   final _dragonService = DragonService(QuizService().supabase);
@@ -231,7 +231,7 @@ class _HomePageState extends State<HomePage> {
     const borderRadius = 16.0;
 
     return Scaffold(
-      key: _scaffoldKey,
+      //key: _scaffoldKey,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
