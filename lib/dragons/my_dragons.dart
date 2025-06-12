@@ -138,7 +138,7 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
 
                             if (hasPhase('adult') || hasPhase('adult')) {
                               currentPhase = 'adult';
-                              imageUrl = dragonData['final_stage_image'];
+                              imageUrl = dragonData['adult_stage_image'];
                             } else if (hasPhase('teen') || hasPhase('teen')) {
                               currentPhase = 'teen';
                               imageUrl = dragonData['teen_image'];

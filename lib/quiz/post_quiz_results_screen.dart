@@ -66,7 +66,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 24),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Score Card
                 Container(
