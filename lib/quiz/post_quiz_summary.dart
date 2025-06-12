@@ -97,7 +97,7 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
               Text(
                 'Question ${questionIndex + 1}',
                 style: theme.textTheme.headlineSmall?.copyWith(
-                  fontSize: 15,
+                  fontSize: 15 * AppTheme.fontSizeScale,
                 )
               ),
               const SizedBox(height: 10),
@@ -139,7 +139,7 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
                       Text(
                         "Explanation:",
                         style: theme.textTheme.headlineSmall?.copyWith(
-                          fontSize: 15,
+                          fontSize: 15 * AppTheme.fontSizeScale,
                         ),
                       ),
                       SizedBox(height: 5),

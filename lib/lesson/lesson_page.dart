@@ -365,7 +365,7 @@ class _LessonPageState extends State<LessonPage> {
                           Text(
                             title,
                             style: theme.textTheme.headlineSmall?.copyWith(
-                              fontSize: 18,
+                              fontSize: 18 * AppTheme.fontSizeScale,
                             )
                           ),
                           if (isCompleted) ...[

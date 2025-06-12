@@ -99,7 +99,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                       Text(
                         '$score%',
                         style: TextStyle(
-                          fontSize: 48,
+                          fontSize: 48 * AppTheme.fontSizeScale,
                           fontWeight: FontWeight.bold,
                           color: readinessColor,
                         ),
@@ -117,7 +117,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                         child: Text(
                           readinessLevel,
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 18 * AppTheme.fontSizeScale,
                             fontWeight: FontWeight.w600,
                             color: readinessColor,
                           ),

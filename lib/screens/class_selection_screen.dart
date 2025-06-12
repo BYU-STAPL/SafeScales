@@ -191,21 +191,16 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
               children: [
                 Text(
                   'Available Classes',
-                  style: GoogleFonts.poppins(
-                    fontSize: 24 * AppTheme.fontSizeScale,
-                    fontWeight: FontWeight.bold,
+                  style: theme.textTheme.headlineMedium?.copyWith(
                     color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Select a class to join',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16 * AppTheme.fontSizeScale,
-                    color: Colors.white70,
-                  ),
+                  style: theme.textTheme.labelMedium,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 25),
                 if (isLoading)
                   const Center(child: CircularProgressIndicator())
                 else if (error != null)
@@ -234,9 +229,8 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
                             contentPadding: const EdgeInsets.all(16),
                             title: Text(
                               classData['name'] ?? 'Unnamed Class',
-                              style: GoogleFonts.poppins(
+                              style: theme.textTheme.headlineSmall?.copyWith(
                                 fontSize: 18 * AppTheme.fontSizeScale,
-                                fontWeight: FontWeight.bold,
                               ),
                             ),
                             subtitle: Text(

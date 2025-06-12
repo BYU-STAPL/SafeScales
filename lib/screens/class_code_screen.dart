@@ -229,19 +229,16 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                       children: [
                         Text(
                           'Join a Class',
-                          style: GoogleFonts.poppins(
-                            fontSize: 24 * AppTheme.fontSizeScale,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: theme.textTheme.headlineMedium,
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 25),
                         TextFormField(
                           controller: _classCodeController,
                           decoration: InputDecoration(
                             labelText: 'Class Code',
                             prefixIcon: Icon(
                               Icons.class_,
-                              size: 24 * AppTheme.fontSizeScale,
+                              size: 25 * AppTheme.fontSizeScale,
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),

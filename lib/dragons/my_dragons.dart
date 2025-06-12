@@ -6,6 +6,8 @@ import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/services/dragon_service.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 
+import '../themes/app_theme.dart';
+
 class MyDragonsPage extends StatefulWidget {
   const MyDragonsPage({super.key});
 
@@ -390,14 +392,14 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
           Text(
             label,
             style: theme.textTheme.labelSmall?.copyWith(
-              fontSize: 10,
+              fontSize: 10 * AppTheme.fontSizeScale,
             ),
             textAlign: TextAlign.center,
           ),
           Text(
             value,
             style: theme.textTheme.headlineSmall?.copyWith(
-              fontSize: 12
+              fontSize: 12 * AppTheme.fontSizeScale,
             ),
             textAlign: TextAlign.center,
           ),
@@ -1193,7 +1195,10 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+
+    ThemeData theme = Theme.of(context);
+
+    final colorScheme = theme.colorScheme;
     final double dragonSize = MediaQuery.of(context).size.width * 0.8;
 
     return Scaffold(
@@ -1246,18 +1251,14 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
               children: [
                 Text(
                   'Phase: ${getPhaseDisplayName(availablePhases[selectedPhase])}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                  style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.primary,
                   ),
                 ),
                 Text(
                   'Environment: ${_isLoadingEnvironments ? 'Loading...' : (userEnvironments.isNotEmpty && selectedEnvironment < userEnvironments.length ? userEnvironments[selectedEnvironment] : 'None')}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: colorScheme.secondary,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.primary,
                   ),
                 ),
               ],
