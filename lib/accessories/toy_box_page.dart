@@ -249,6 +249,9 @@ class _ToyBoxItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    ThemeData theme = Theme.of(context);
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -302,11 +305,7 @@ class _ToyBoxItemCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             name,
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
+            style: theme.textTheme.bodySmall,
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

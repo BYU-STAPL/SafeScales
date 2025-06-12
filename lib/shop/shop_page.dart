@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/settings_drawer.dart';
 import 'package:safe_scales/services/shop_service.dart';
@@ -238,12 +239,15 @@ class _ShopPageState extends State<ShopPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    ThemeData theme = Theme.of(context);
+
     final Color primary = Theme.of(context).colorScheme.primary;
     final Color selected = primary;
-    final Color unselected = Colors.blue[100]!;
+    final Color unselected = theme.colorScheme.lightBlue.withValues(alpha: 0.5); //Colors.blue[100]!;
     final Color selectedText = Colors.white;
     final Color unselectedText = primary;
-    final Color highlight = Colors.green[300]!;
+    final Color highlight = theme.colorScheme.green.withValues(alpha: 0.25);
 
     final items = selectedTab == 0 ? accessories : environments;
 
@@ -288,14 +292,11 @@ class _ShopPageState extends State<ShopPage> {
                             ),
                             child: Center(
                               child: Text(
-                                'ACCESSORIES',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15 * AppTheme.fontSizeScale,
-                                  fontWeight: FontWeight.w600,
-                                  color:
-                                      selectedTab == 0
-                                          ? selectedText
-                                          : unselectedText,
+                                'ACCESSORIES'.toUpperCase(),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: selectedTab == 0
+                                      ? selectedText
+                                      : unselectedText,
                                   letterSpacing: 1.1,
                                 ),
                               ),
@@ -321,13 +322,10 @@ class _ShopPageState extends State<ShopPage> {
                             child: Center(
                               child: Text(
                                 'ENVIRONMENTS',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15 * AppTheme.fontSizeScale,
-                                  fontWeight: FontWeight.w600,
-                                  color:
-                                      selectedTab == 1
-                                          ? selectedText
-                                          : unselectedText,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: selectedTab == 1
+                                      ? selectedText
+                                      : unselectedText,
                                   letterSpacing: 1.1,
                                 ),
                               ),
@@ -382,23 +380,24 @@ class _ShopPageState extends State<ShopPage> {
                       child: Center(
                         child: ElevatedButton(
                           onPressed: _handlePurchase,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primary,
-                            foregroundColor: Colors.white,
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 36,
-                              vertical: 14,
-                            ),
-                            textStyle: GoogleFonts.poppins(
-                              fontSize: 16 * AppTheme.fontSizeScale,
-                              fontWeight: FontWeight.bold,
+                          // style: ElevatedButton.styleFrom(
+                          //   backgroundColor: primary,
+                          //   foregroundColor: Colors.white,
+                          //   elevation: 2,
+                          //   shape: RoundedRectangleBorder(
+                          //     borderRadius: BorderRadius.circular(12),
+                          //   ),
+                          //   padding: const EdgeInsets.symmetric(
+                          //     horizontal: 36,
+                          //     vertical: 14,
+                          //   ),
+                          // ),
+                          child: Text(
+                              'PURCHASE'.toUpperCase(),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white,
                             ),
                           ),
-                          child: const Text('PURCHASE'),
                         ),
                       ),
                     ),
@@ -433,11 +432,9 @@ class _ShopPageState extends State<ShopPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Select a completed module',
-                          style: GoogleFonts.poppins(
+                          'Select a completed module'.toTitleCase(),
+                          style: theme.textTheme.headlineSmall?.copyWith(
                             fontSize: 18 * AppTheme.fontSizeScale,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
                           ),
                         ),
                         const SizedBox(height: 18),
@@ -487,30 +484,20 @@ class _ShopPageState extends State<ShopPage> {
                                           Text(
                                             quizDetail?['topic'] ??
                                                 'Unknown Topic',
-                                            style: GoogleFonts.poppins(
-                                              fontSize:
-                                                  15 * AppTheme.fontSizeScale,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black87,
+                                            style: theme.textTheme.headlineSmall?.copyWith(
+                                              fontSize: 15 * AppTheme.fontSizeScale,
                                             ),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             'Activity: ${quizDetail?['activity_type'] ?? 'Unknown'}',
-                                            style: GoogleFonts.poppins(
-                                              fontSize:
-                                                  13 * AppTheme.fontSizeScale,
-                                              color: Colors.black54,
-                                            ),
+                                            style: theme.textTheme.bodySmall,
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             'Score: ${quiz['score']}%',
-                                            style: GoogleFonts.poppins(
-                                              fontSize:
-                                                  13 * AppTheme.fontSizeScale,
-                                              color: Colors.green,
-                                              fontWeight: FontWeight.w500,
+                                            style: theme.textTheme.bodySmall?.copyWith(
+                                              color: theme.colorScheme.green,
                                             ),
                                           ),
                                         ],
@@ -543,22 +530,18 @@ class _ShopPageState extends State<ShopPage> {
                                         _completePurchase();
                                       }
                                       : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primary,
-                                foregroundColor: Colors.white,
-                                elevation: 1,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 10,
-                                ),
-                                textStyle: GoogleFonts.poppins(
-                                  fontSize: 14 * AppTheme.fontSizeScale,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              // style: ElevatedButton.styleFrom(
+                              //   backgroundColor: primary,
+                              //   foregroundColor: Colors.white,
+                              //   elevation: 1,
+                              //   shape: RoundedRectangleBorder(
+                              //     borderRadius: BorderRadius.circular(8),
+                              //   ),
+                              //   padding: const EdgeInsets.symmetric(
+                              //     horizontal: 18,
+                              //     vertical: 10,
+                              //   ),
+                              // ),
                               child: const Text('SELECT'),
                             ),
                           ],
@@ -596,6 +579,9 @@ class _ShopItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    ThemeData theme = Theme.of(context);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -677,11 +663,9 @@ class _ShopItemCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                name,
-                style: GoogleFonts.poppins(
+                name.toTitleCase(),
+                style: theme.textTheme.headlineSmall?.copyWith(
                   fontSize: 15 * AppTheme.fontSizeScale,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -689,12 +673,17 @@ class _ShopItemCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                isOwned ? 'OWNED' : '$cost coins',
-                style: GoogleFonts.poppins(
-                  fontSize: 13 * AppTheme.fontSizeScale,
-                  color: isOwned ? Colors.green : Colors.grey[600],
-                  fontWeight: isOwned ? FontWeight.bold : FontWeight.normal,
+                isOwned ? 'OWNED'.toUpperCase() : 'Cost: $cost review set',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: isOwned ? Colors.green : theme.colorScheme.onSurfaceVariant,
                 ),
+
+
+                // GoogleFonts.poppins(
+                //   fontSize: 13 * AppTheme.fontSizeScale,
+                //   color: isOwned ? Colors.green : Colors.grey[600],
+                //   fontWeight: isOwned ? FontWeight.bold : FontWeight.normal,
+                // ),
               ),
             ],
           ),

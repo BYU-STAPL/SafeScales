@@ -17,6 +17,9 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    ThemeData theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(title: Text('Reading Activity'), centerTitle: true),
       body: SingleChildScrollView(
@@ -27,10 +30,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
             // Reading content
             Text(
               'Understanding ${widget.topic}',
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: theme.textTheme.headlineMedium,
             ),
             const SizedBox(height: 16),
             Container(
@@ -47,16 +47,13 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
                 children: [
                   Text(
                     'Reading Content',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: theme.textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'This is where the reading content for ${widget.topic} will be displayed. '
                     'The content should be comprehensive and educational.',
-                    style: GoogleFonts.poppins(fontSize: 16),
+                    style: theme.textTheme.bodySmall,
                   ),
                   const SizedBox(height: 24),
                   // Mark as read button
@@ -98,16 +95,13 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
                   children: [
                     Text(
                       'Comprehension Questions',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 16),
                     // Add your comprehension questions here
                     Text(
                       'Sample question: What are the key points about ${widget.topic}?',
-                      style: GoogleFonts.poppins(fontSize: 16),
+                      style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(height: 24),
                     // Complete questions button

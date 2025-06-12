@@ -261,9 +261,7 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
                                       subtitle: Text(
                                         classData['description'] ??
                                             'No description available',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14 * AppTheme.fontSizeScale,
-                                        ),
+                                        style: theme.textTheme.bodySmall,
                                       ),
                                       trailing: ElevatedButton(
                                         onPressed: () => _joinClass(classData['id']),
