@@ -66,7 +66,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 24),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Score Card
                 Container(
@@ -99,7 +99,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                       Text(
                         '$score%',
                         style: TextStyle(
-                          fontSize: 48,
+                          fontSize: 48 * AppTheme.fontSizeScale,
                           fontWeight: FontWeight.bold,
                           color: readinessColor,
                         ),
@@ -117,7 +117,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                         child: Text(
                           readinessLevel,
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 18 * AppTheme.fontSizeScale,
                             fontWeight: FontWeight.w600,
                             color: readinessColor,
                           ),
@@ -172,16 +172,8 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                   ),
                 ),
 
-                SizedBox(height: 32),
+                SizedBox(height: 30),
 
-                // Questions Summary
-                Text(
-                  'Question Summary',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 16),
                 PostQuizSummary(
                   questionSet: widget.questionSet,
                   userAnswers: widget.userAnswers,

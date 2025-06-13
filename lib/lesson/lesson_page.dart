@@ -402,26 +402,22 @@ class _LessonPageState extends State<LessonPage> {
                         children: [
                           Text(
                             title,
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.onSurface,
-                            ),
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontSize: 18 * AppTheme.fontSizeScale,
+                            )
                           ),
                           if (isCompleted) ...[
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Icon(
                               Icons.check_circle,
                               color: theme.colorScheme.green,
-                              size: 16,
+                              size: 18,
                             ),
                             if (score != null) ...[
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 10),
                               Text(
                                 '${score.toStringAsFixed(0)}%',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                                style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.green,
                                 ),
                               ),
@@ -429,23 +425,18 @@ class _LessonPageState extends State<LessonPage> {
                           ],
                         ],
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 5),
                       Text(
                         description,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.7,
-                          ),
-                        ),
+                        style: theme.textTheme.labelSmall,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 15),
                 Icon(
                   Icons.arrow_forward_ios,
-                  size: 16,
+                  size: 15,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ],
@@ -530,29 +521,24 @@ class _LessonPageState extends State<LessonPage> {
                           children: [
                             Text(
                               'Reading Activity',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: textColor,
-                              ),
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontSize: 18,
+                              )
                             ),
                             if (readingCompleted) ...[
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 10),
                               Icon(
                                 Icons.check_circle,
                                 color: Colors.green,
-                                size: 16,
+                                size: 18,
                               ),
                             ],
                           ],
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 5),
                         Text(
                           'Learn about ${widget.topic ?? _moduleTitle}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: textColor.withOpacity(0.7),
-                          ),
+                          style: theme.textTheme.labelSmall,
                         ),
                       ],
                     ),
@@ -561,15 +547,15 @@ class _LessonPageState extends State<LessonPage> {
                   if (!preQuizCompleted)
                     Image.asset(
                       'assets/images/other/lock.png',
-                      width: 56,
-                      height: 56,
-                      color: textColor.withOpacity(0.5),
+                      width: 50,
+                      height: 50,
+                      color: textColor.withValues(alpha: 0.5),
                     )
                   else if (!readingCompleted)
                     Icon(
                       Icons.arrow_forward_ios,
-                      size: 16,
-                      color: textColor.withOpacity(0.5),
+                      size: 15,
+                      color: textColor.withValues(alpha: 0.5),
                     ),
                 ],
               ),
@@ -641,11 +627,11 @@ class _LessonPageState extends State<LessonPage> {
     String imageUrl = _dragonData?['egg'] ?? 'assets/images/other/egg.png';
 
     if (progress >= 80) {
-      imageUrl = _dragonData?['final'] ?? 'assets/images/other/adult.png';
+      imageUrl = _dragonData?['adult'] ?? 'assets/images/other/adult.png';
     } else if (progress >= 50) {
-      imageUrl = _dragonData?['stage2'] ?? 'assets/images/other/teen.png';
+      imageUrl = _dragonData?['teen'] ?? 'assets/images/other/teen.png';
     } else if (progress >= 30) {
-      imageUrl = _dragonData?['stage1'] ?? 'assets/images/other/young.png';
+      imageUrl = _dragonData?['baby'] ?? 'assets/images/other/young.png';
     }
 
     // Check if the image URL is a network URL or a local asset

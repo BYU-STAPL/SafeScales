@@ -33,18 +33,15 @@ class SelectionScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Welcome to SafeScales',
-                    style: GoogleFonts.poppins(
-                      fontSize: 28 * AppTheme.fontSizeScale,
-                      fontWeight: FontWeight.bold,
+                    style: theme.textTheme.headlineLarge?.copyWith(
                       color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Choose your learning path',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16 * AppTheme.fontSizeScale,
-                      color: Colors.white70,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 48),
@@ -113,19 +110,13 @@ class SelectionScreen extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 title,
-                style: GoogleFonts.poppins(
-                  fontSize: 20 * AppTheme.fontSizeScale,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: theme.textTheme.headlineSmall,
               ),
               const SizedBox(height: 8),
               Text(
                 description,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 14 * AppTheme.fontSizeScale,
-                  color: Colors.grey[600],
-                ),
+                style: theme.textTheme.labelMedium,
               ),
             ],
           ),

@@ -42,6 +42,19 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
     return true;
   }
 
+  List<int> getCorrectQuestions() {
+    final int userAnswersLength = widget.userAnswers.length;
+
+    List<int> correctQuestions = [];
+
+    for (int i = 0; i < userAnswersLength; i++) {
+      if (_isAnswerCorrect(i)) {
+        correctQuestions.add(i);
+      }
+    }
+    return correctQuestions;
+  }
+
   List<int> getMissedQuestions() {
     List<int> missedQuestions = [];
     for (int i = 0; i < widget.questionSet.questions.length; i++) {
@@ -52,9 +65,20 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
     return missedQuestions;
   }
 
+  String getUserAnswerText(Question question, List<int> userAnswer) {
+    if (userAnswer.isEmpty) {
+      return 'Not answered';
+    }
+    else {
+      return userAnswer
+          .map((index) => question.options[index])
+          .join(', ');
+    }
+  }
+
   Widget buildQuestionCard(int questionIndex, bool isMissed) {
-    final List<List<int>> userAnswers = widget.userAnswers;
-    QuestionSet questionSet = widget.questionSet;
+    // final List<List<int>> userAnswers = widget.userAnswers;
+    // QuestionSet questionSet = widget.questionSet;
 
     final question = widget.questionSet.questions[questionIndex];
     final userAnswer = widget.userAnswers[questionIndex];
@@ -64,7 +88,7 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
     return SizedBox(
       width: double.infinity,
       child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 0),
+        margin: const EdgeInsets.only(bottom: 20),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           child: Column(
@@ -72,58 +96,61 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
             children: [
               Text(
                 'Question ${questionIndex + 1}',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontSize: 15 * AppTheme.fontSizeScale,
+                )
               ),
-              const SizedBox(height: 8),
-              Text(question.questionText, style: theme.textTheme.bodyMedium),
-              const SizedBox(height: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Your Answer:',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    userAnswer.isEmpty
-                        ? 'No answer provided'
-                        : userAnswer
-                            .map((index) => question.options[index])
-                            .join(', '),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 5),
               const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceVariant,
-                  borderRadius: BorderRadius.circular(8),
+              Text(
+                  question.questionText,
+                  style: theme.textTheme.bodyMedium
+              ),
+              const SizedBox(height: 10),
+
+              if (isMissed) ... [
+                Text(
+                  'Your Answer: ${getUserAnswerText(question, userAnswer)}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.red
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Correct Answer:',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      question.correctAnswerIndices
-                          .map((index) => question.options[index])
-                          .join(', '),
-                    ),
-                  ],
+                const SizedBox(height: 5),
+              ],
+              Text(
+                'Correct Answer: ${question.correctAnswerIndices.map((index) => question.options[index]).join(', ')}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.green
                 ),
               ),
+
+              const SizedBox(height: 5),
+
+              if (question.explanation.isNotEmpty) ... [
+                SizedBox(height: 10),
+                Container(
+                  padding: EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Explanation:",
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontSize: 15 * AppTheme.fontSizeScale,
+                        ),
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        question.explanation,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ]
             ],
           ),
         ),
@@ -141,10 +168,8 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           child: Text(
-            'Quiz Summary',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            'Missed Questions',
+            style: theme.textTheme.headlineSmall,
           ),
         ),
         SizedBox(height: 12),
@@ -165,7 +190,6 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
                   "Nice work! No missed questions.",
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.green,
-                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -176,15 +200,13 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
             (index) => buildQuestionCard(index, true),
           ),
 
-        SizedBox(height: 24),
+        SizedBox(height: 20),
 
         // Expandable correct questions
         ExpansionTile(
           title: Text(
-            'View Question Details',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            'Correct Questions',
+            style: theme.textTheme.headlineSmall,
           ),
           trailing: Icon(
             _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
@@ -197,24 +219,40 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
           },
           shape: Border(),
           collapsedShape: Border(),
-          children: [
-            ...List.generate(
-              widget.questionSet.questions.length,
-              (index) => Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
-                child: Text(
-                  'Question ${index + 1}: ${_isAnswerCorrect(index) ? 'Correct' : 'Incorrect'}',
-                  style: TextStyle(
-                    color: _isAnswerCorrect(index) ? Colors.green : Colors.red,
-                  ),
-                ),
+
+          children: getCorrectQuestions().isEmpty ? [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              child: Text(
+                "No correct answers yet. Keep practicing!",
+                style: theme.textTheme.labelMedium
               ),
             ),
-          ],
+          ]
+              : getCorrectQuestions().map((index) => buildQuestionCard(index, false)).toList(),
+
+
+
+          // children: [
+          //   ...List.generate(
+          //     widget.questionSet.questions.length,
+          //     (index) => Padding(
+          //       padding: const EdgeInsets.symmetric(
+          //         horizontal: 20,
+          //         vertical: 10,
+          //       ),
+          //       child: Text(
+          //         'Question ${index + 1}: ${_isAnswerCorrect(index) ? 'Correct' : 'Incorrect'}',
+          //         style: TextStyle(
+          //           color: _isAnswerCorrect(index) ? Colors.green : Colors.red,
+          //         ),
+          //       ),
+          //     ),
+          //   ),
+          // ],
         ),
+
+        SizedBox(height: 30,)
       ],
     );
   }

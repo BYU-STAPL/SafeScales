@@ -144,7 +144,7 @@ class SettingsDrawer extends StatelessWidget {
                           Text(
                             themeNotifier.isDarkMode ? 'Dark theme enabled' : 'Light theme enabled',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               color: colorScheme.onSurfaceVariant,
                             ),
                           ),

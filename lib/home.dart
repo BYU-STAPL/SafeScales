@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
@@ -16,7 +17,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  // final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final QuizService _quizService = QuizService();
   final _userState = UserStateService();
   final _dragonService = DragonService(QuizService().supabase);
@@ -129,9 +130,9 @@ class _HomePageState extends State<HomePage> {
           if (dragon['stages'] != null) {
             _moduleDragons[module['id']] = {
               'egg': dragon['stages']['egg'] ?? 'assets/images/other/egg.png',
-              'stage1':
+              'baby':
                   dragon['stages']['baby'] ?? 'assets/images/other/young.png',
-              'stage2':
+              'teen':
                   dragon['stages']['teen'] ?? 'assets/images/other/teen.png',
               'final':
                   dragon['stages']['adult'] ?? 'assets/images/other/adult.png',
@@ -169,13 +170,13 @@ class _HomePageState extends State<HomePage> {
 
     // Add phases based on progress, ensuring all previous phases are included
     if (progress >= 30) {
-      phases.add('stage1'); // Add baby phase
+      phases.add('baby'); // Add baby phase
     }
     if (progress >= 50) {
-      phases.add('stage2'); // Add teen phase
+      phases.add('teen'); // Add teen phase
     }
     if (progress >= 80) {
-      phases.add('final'); // Add adult phase
+      phases.add('adult'); // Add adult phase
     }
 
     // Save dragon phases if we have a valid dragon ID
@@ -217,11 +218,11 @@ class _HomePageState extends State<HomePage> {
 
     // Set the image URL based on the highest achieved phase
     if (progress >= 80) {
-      imageUrl = dragonData?['final'] ?? 'assets/images/other/adult.png';
+      imageUrl = dragonData?['adult'] ?? 'assets/images/other/adult.png';
     } else if (progress >= 50) {
-      imageUrl = dragonData?['stage2'] ?? 'assets/images/other/teen.png';
+      imageUrl = dragonData?['teen'] ?? 'assets/images/other/teen.png';
     } else if (progress >= 30) {
-      imageUrl = dragonData?['stage1'] ?? 'assets/images/other/young.png';
+      imageUrl = dragonData?['baby'] ?? 'assets/images/other/young.png';
     }
 
     // Check if the image URL is a network URL or a local asset
@@ -255,7 +256,7 @@ class _HomePageState extends State<HomePage> {
     const borderRadius = 16.0;
 
     return Scaffold(
-      key: _scaffoldKey,
+      //key: _scaffoldKey,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -267,20 +268,13 @@ class _HomePageState extends State<HomePage> {
                 if (_currentClass != null) ...[
                   Text(
                     _currentClass!['name'] ?? 'Class',
-                    style: GoogleFonts.poppins(
-                      fontSize: 28 * AppTheme.fontSizeScale,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
+                    style: theme.textTheme.headlineLarge,
                   ),
                   if (_currentClass!['description'] != null) ...[
                     const SizedBox(height: 8),
                     Text(
                       _currentClass!['description'],
-                      style: GoogleFonts.poppins(
-                        fontSize: 16 * AppTheme.fontSizeScale,
-                        color: mutedTextColor,
-                      ),
+                      style: theme.textTheme.labelMedium,
                     ),
                   ],
                   const SizedBox(height: 24),
@@ -337,10 +331,9 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Continue Learning',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 22 * AppTheme.fontSizeScale,
-                                  fontWeight: FontWeight.w600,
+                                'Continue Learning'..toTitleCase(),
+                                // Note: Copy with for some reason can't change font weight, but everything else it can
+                                style: theme.textTheme.headlineSmall?.copyWith(
                                   color: Colors.white,
                                 ),
                               ),
@@ -362,11 +355,9 @@ class _HomePageState extends State<HomePage> {
                                   return Text(
                                     (targetModule['title'] ?? 'Module')
                                         .toUpperCase(),
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14 * AppTheme.fontSizeScale,
-                                      color: Colors.white.withOpacity(0.9),
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: Colors.white.withValues(alpha: 0.9),
                                       letterSpacing: 1.2,
-                                      fontWeight: FontWeight.w500,
                                     ),
                                   );
                                 },
@@ -404,11 +395,9 @@ class _HomePageState extends State<HomePage> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
-                                      '${progress.toStringAsFixed(0)}% Complete',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12 * AppTheme.fontSizeScale,
+                                      '${progress.toStringAsFixed(0)}% Complete'.toTitleCase(),
+                                      style: theme.textTheme.labelSmall?.copyWith(
                                         color: Colors.white,
-                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   );
@@ -431,12 +420,8 @@ class _HomePageState extends State<HomePage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Modules',
-                      style: GoogleFonts.poppins(
-                        fontSize: 20 * AppTheme.fontSizeScale,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+                      'Modules'.toTitleCase(),
+                      style: theme.textTheme.headlineSmall,
                     ),
                     Builder(
                       builder: (context) {
@@ -451,12 +436,8 @@ class _HomePageState extends State<HomePage> {
                                 .length;
 
                         return Text(
-                          '${completedCount}/${_modules.length} Completed',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14 * AppTheme.fontSizeScale,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                          '${completedCount}/${_modules.length} Completed'.toTitleCase(),
+                          style: theme.textTheme.labelMedium,
                         );
                       },
                     ),
@@ -481,10 +462,7 @@ class _HomePageState extends State<HomePage> {
                         _currentClass == null
                             ? 'No class assigned'
                             : 'No modules available',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16 * AppTheme.fontSizeScale,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                        style: theme.textTheme.labelLarge,
                       ),
                     ),
                   )
@@ -627,13 +605,8 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontSize: 20 * AppTheme.fontSizeScale,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-                letterSpacing: 0.8,
-              ),
+              title.toTitleCase(),
+              style: theme.textTheme.headlineSmall,
             ),
             if (!shouldBeUnlocked &&
                 (newUnlockRequirement != null ||
@@ -641,10 +614,9 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 4),
               Text(
                 newUnlockRequirement ?? unlockRequirement ?? '',
-                style: GoogleFonts.poppins(
-                  fontSize: 12 * AppTheme.fontSizeScale,
-                  color: mutedTextColor.withOpacity(0.7),
+                style: theme.textTheme.labelSmall?.copyWith(
                   fontStyle: FontStyle.italic,
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -653,68 +625,65 @@ class _HomePageState extends State<HomePage> {
               Text(
                 description,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 14 * AppTheme.fontSizeScale,
-                  color: mutedTextColor,
-                ),
+                style: theme.textTheme.labelMedium,
               ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (hasPreQuiz)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.quiz, size: 16, color: primary),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Pre-Quiz',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12 * AppTheme.fontSizeScale,
-                              color: primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (hasPreQuiz && hasPostQuiz) const SizedBox(width: 8),
-                  if (hasPostQuiz)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.assignment, size: 16, color: primary),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Post-Quiz',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12 * AppTheme.fontSizeScale,
-                              color: primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
+              // const SizedBox(height: 8),
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   children: [
+              //     if (hasPreQuiz)
+              //       Container(
+              //         padding: const EdgeInsets.symmetric(
+              //           horizontal: 8,
+              //           vertical: 4,
+              //         ),
+              //         decoration: BoxDecoration(
+              //           color: primary.withValues(alpha: 0.1),
+              //           borderRadius: BorderRadius.circular(12),
+              //         ),
+              //         child: Row(
+              //           mainAxisSize: MainAxisSize.min,
+              //           children: [
+              //             Icon(Icons.quiz, size: 16, color: primary),
+              //             const SizedBox(width: 4),
+              //             Text(
+              //               'Pre-Quiz',
+              //               style: GoogleFonts.poppins(
+              //                 fontSize: 12 * AppTheme.fontSizeScale,
+              //                 color: primary,
+              //               ),
+              //             ),
+              //           ],
+              //         ),
+              //       ),
+              //     if (hasPreQuiz && hasPostQuiz) const SizedBox(width: 8),
+              //     if (hasPostQuiz)
+              //       Container(
+              //         padding: const EdgeInsets.symmetric(
+              //           horizontal: 8,
+              //           vertical: 4,
+              //         ),
+              //         decoration: BoxDecoration(
+              //           color: primary.withValues(alpha: 0.1),
+              //           borderRadius: BorderRadius.circular(12),
+              //         ),
+              //         child: Row(
+              //           mainAxisSize: MainAxisSize.min,
+              //           children: [
+              //             Icon(Icons.assignment, size: 16, color: primary),
+              //             const SizedBox(width: 4),
+              //             Text(
+              //               'Post-Quiz',
+              //               style: GoogleFonts.poppins(
+              //                 fontSize: 12 * AppTheme.fontSizeScale,
+              //                 color: primary,
+              //               ),
+              //             ),
+              //           ],
+              //         ),
+              //       ),
+              //   ],
+              // ),
             ],
             const SizedBox(height: 16),
             // Semi-circular progress bar with icon
@@ -751,11 +720,9 @@ class _HomePageState extends State<HomePage> {
             if (shouldBeUnlocked && moduleId != 'settings') ...[
               Text(
                 '${actualProgress.toStringAsFixed(0)}% Complete',
-                style: GoogleFonts.poppins(
-                  fontSize: 13 * AppTheme.fontSizeScale,
+                style: theme.textTheme.labelSmall?.copyWith(
                   color: secondary,
-                  fontWeight: FontWeight.w500,
-                ),
+                )
               ),
             ],
           ],
