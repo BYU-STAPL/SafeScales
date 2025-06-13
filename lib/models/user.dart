@@ -9,6 +9,7 @@ class User {
   final String aud;
   final String role;
   final Map<String, dynamic>? quizzes;
+  final Map<String, dynamic>? modules;
 
   User({
     required this.id,
@@ -19,11 +20,13 @@ class User {
     required this.aud,
     required this.role,
     this.quizzes,
+    this.modules,
   });
 
   factory User.fromSupabaseUser(
     supabase.User supabaseUser, {
     Map<String, dynamic>? quizzes,
+    Map<String, dynamic>? modules,
   }) {
     return User(
       id: supabaseUser.id,
@@ -34,6 +37,7 @@ class User {
       aud: supabaseUser.aud ?? 'authenticated',
       role: supabaseUser.role ?? 'authenticated',
       quizzes: quizzes,
+      modules: modules,
     );
   }
 }

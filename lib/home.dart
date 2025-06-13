@@ -182,10 +182,35 @@ class _HomePageState extends State<HomePage> {
     if (dragonData != null && dragonData['id'] != null) {
       final user = _userState.currentUser;
       if (user != null) {
-        _dragonService
-            .saveDragonPhases(user.id, dragonData['id'].toString(), phases)
+        // Get current dragons data first
+        _dragonService.supabase
+            .from('Users')
+            .select('dragons')
+            .eq('id', user.id)
+            .single()
+            .then((response) {
+              Map<String, dynamic> dragons = {};
+              if (response['dragons'] != null) {
+                dragons = Map<String, dynamic>.from(response['dragons']);
+              }
+
+              // Update the dragon's phases
+              dragons[dragonData['id'].toString()] = phases;
+
+              // Save the updated dragons data
+              _dragonService.supabase
+                  .from('Users')
+                  .update({'dragons': dragons})
+                  .eq('id', user.id)
+                  .then((_) {
+                    print('✅ Successfully saved dragon phases: $phases');
+                  })
+                  .catchError((e) {
+                    print('❌ Error saving dragon phases: $e');
+                  });
+            })
             .catchError((e) {
-              print('Error saving dragon phases: $e');
+              print('❌ Error getting current dragons data: $e');
             });
       }
     }

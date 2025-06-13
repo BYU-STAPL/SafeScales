@@ -115,10 +115,13 @@ class _AuthScreenState extends State<AuthScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        leading:
+            _authService.currentUser == null
+                ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.of(context).pop(),
+                )
+                : null,
       ),
       body: Container(
         decoration: BoxDecoration(
