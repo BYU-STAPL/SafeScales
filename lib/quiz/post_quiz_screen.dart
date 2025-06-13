@@ -49,12 +49,12 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     int totalQuestions = widget.questionSet.questions.length;
     int scorePercentage = ((correctAnswers / totalQuestions) * 100).round();
 
-    print('Post-quiz completed:');
-    print('Quiz ID: ${widget.questionSet.id}');
-    print('Total questions: $totalQuestions');
-    print('Correct answers: $correctAnswers');
-    print('Score percentage: $scorePercentage');
-    print('User answers: $userAnswers');
+    // print('Post-quiz completed:');
+    // print('Quiz ID: ${widget.questionSet.id}');
+    // print('Total questions: $totalQuestions');
+    // print('Correct answers: $correctAnswers');
+    // print('Score percentage: $scorePercentage');
+    // print('User answers: $userAnswers');
 
     // Save quiz progress
     try {
@@ -203,9 +203,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
 
     return Scaffold(
       appBar: appBar,
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-        child: Column(
+      body: Column(
           children: [
             Container(
               padding: const EdgeInsets.symmetric(
@@ -248,7 +246,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
 
             Expanded(
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                 child: QuestionWidget(
                   question: widget.questionSet.questions[currentQuestionIndex],
                   selectedAnswers: userAnswers[currentQuestionIndex],
@@ -320,7 +318,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
             SizedBox(height: 15,),
           ],
         ),
-      ),
     );
   }
 }
