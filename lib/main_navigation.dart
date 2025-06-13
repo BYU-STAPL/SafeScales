@@ -33,7 +33,13 @@ class _MainNavigationState extends State<MainNavigation> {
 
     _selectedIndex = widget.initialIndex;
 
-    _pages = <Widget>[HomePage(), MyDragonsPage(), ToyBoxPage(), ShopPage()];
+    _pages = <Widget>[
+      HomePage(),
+      MyDragonsPage(),
+      ToyBoxPage(),
+      ShopPage(),
+      DevTestingPage(), //TODO: Remove later
+    ];
   }
 
   String _getAppBarTitle(int index) {
@@ -53,7 +59,6 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    final themeNotifier = ThemeProvider.of(context);
 
     ThemeData theme = Theme.of(context);
 
@@ -129,6 +134,12 @@ class _MainNavigationState extends State<MainNavigation> {
             const BottomNavigationBarItem(
               icon: Icon(Icons.storefront),
               label: 'Shop',
+            ),
+
+            //TODO: Remove later
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.device_hub),
+              label: 'Dev',
             ),
           ],
         ),

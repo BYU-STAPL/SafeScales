@@ -47,14 +47,16 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
         userAccessories =
             accessories
                 .where(
-                  (accessory) => acquiredAccessories.contains(accessory['id']),
+                  (accessory) =>
+                      acquiredAccessories.contains(accessory['id'].toString()),
                 )
                 .toList();
         userEnvironments =
             environments
                 .where(
-                  (environment) =>
-                      acquiredEnvironments.contains(environment['id']),
+                  (environment) => acquiredEnvironments.contains(
+                    environment['id'].toString(),
+                  ),
                 )
                 .toList();
       }
@@ -79,6 +81,8 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
     final Color selectedText = Colors.white;
     final Color unselectedText = primary;
 
+    ThemeData theme = Theme.of(context);
+
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -92,10 +96,8 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
               // Subtitle
               Text(
                 'This is your current collection of\nitems and environments',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  height: 1.4,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 18),
@@ -115,13 +117,10 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                         child: Center(
                           child: Text(
                             'ACCESSORIES',
-                            style: GoogleFonts.poppins(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color:
-                                  selectedTab == 0
-                                      ? selectedText
-                                      : unselectedText,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: selectedTab == 0
+                                  ? selectedText
+                                  : unselectedText,
                               letterSpacing: 1.1,
                             ),
                           ),
@@ -143,15 +142,12 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                         child: Center(
                           child: Text(
                             'ENVIRONMENTS',
-                            style: GoogleFonts.poppins(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color:
-                                  selectedTab == 1
-                                      ? selectedText
-                                      : unselectedText,
-                              letterSpacing: 1.1,
-                            ),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: selectedTab == 1
+                                    ? selectedText
+                                    : unselectedText,
+                                letterSpacing: 1.1,
+                              )
                           ),
                         ),
                       ),
@@ -179,13 +175,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                                   const SizedBox(height: 16),
                                   Text(
                                     'No accessories yet.\nVisit the shop to buy some!',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 16,
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                    ),
+                                    style: theme.textTheme.labelLarge,
                                     textAlign: TextAlign.center,
                                   ),
                                 ],
@@ -201,6 +191,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                                   _ToyBoxItemCard(
                                     image:
                                         accessory['image_url'] ??
+                                        accessory['imageUrl'] ??
                                         accessory['image'],
                                     name: accessory['name'],
                                   ),
@@ -219,13 +210,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                               const SizedBox(height: 16),
                               Text(
                                 'No environments yet.\nVisit the shop to buy some!',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  color:
-                                      Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                ),
+                                style: theme.textTheme.labelLarge,
                                 textAlign: TextAlign.center,
                               ),
                             ],
@@ -241,6 +226,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                               _ToyBoxItemCard(
                                 image:
                                     environment['image_url'] ??
+                                    environment['imageUrl'] ??
                                     environment['image'],
                                 name: environment['name'],
                               ),
@@ -263,6 +249,9 @@ class _ToyBoxItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    ThemeData theme = Theme.of(context);
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -316,11 +305,7 @@ class _ToyBoxItemCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             name,
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
+            style: theme.textTheme.bodySmall,
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

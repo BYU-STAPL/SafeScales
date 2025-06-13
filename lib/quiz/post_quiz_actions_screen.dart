@@ -82,7 +82,7 @@ class PostQuizActionsScreen extends StatelessWidget {
                 Text(
                   '$score%',
                   style: TextStyle(
-                    fontSize: 40,
+                    fontSize: 40 * AppTheme.fontSizeScale,
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.orange,
                   ),

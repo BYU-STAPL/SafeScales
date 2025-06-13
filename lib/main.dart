@@ -7,6 +7,7 @@ import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/themes/theme_notifier.dart';
 import 'package:safe_scales/themes/theme_provider.dart';
 import 'package:safe_scales/components/health_check.dart';
+import 'package:safe_scales/screens/selection_screen.dart';
 
 import 'main_navigation.dart';
 
@@ -93,7 +94,7 @@ class _MyAppState extends State<MyApp> {
                   return MainNavigation(initialIndex: 0);
                 }
 
-                return AuthScreen();
+                return const SelectionScreen();
               },
             ),
           );

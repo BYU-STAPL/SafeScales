@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/services/dragon_service.dart';
+import 'package:safe_scales/services/class_service.dart';
 
 import 'lesson/lesson_page.dart';
 
@@ -15,177 +17,212 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  // final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final QuizService _quizService = QuizService();
   final _userState = UserStateService();
   final _dragonService = DragonService(QuizService().supabase);
-  String? _username;
+  late final ClassService _classService;
 
-  List<String> _topics = [];
-  Map<String, List<Map<String, dynamic>>> _quizzesByTopic = {};
-  Map<String, double> _topicProgress = {};
-  Map<String, Map<String, dynamic>> _moduleDragons = {};
+  // Class-based variables
+  Map<String, dynamic>? _currentClass;
+  List<Map<String, dynamic>> _modules = [];
+  Map<String, double> _moduleProgress = {};
+  List<dynamic>? _classAssets;
+  final Map<String, Map<String, dynamic>> _moduleDragons = {};
+
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadQuizzes();
+    _classService = ClassService(_quizService.supabase);
+    _loadClassData();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Reload data when returning to this page
-    _loadQuizzes();
+    _loadClassData();
   }
 
-  Future<void> _loadQuizzes() async {
+  Future<void> _loadClassData() async {
     try {
-      final allQuizzes = await _quizService.getAllQuizzes();
       final user = _userState.currentUser;
-
-      // Group quizzes by topic
-      final Map<String, List<Map<String, dynamic>>> grouped = {};
-      for (var quiz in allQuizzes) {
-        final topic = quiz['topic'] ?? 'Unknown Topic';
-        if (!grouped.containsKey(topic)) {
-          grouped[topic] = [];
-        }
-        grouped[topic]!.add(quiz);
+      if (user == null) {
+        setState(() {
+          _isLoading = false;
+          _currentClass = null;
+          _modules = [];
+        });
+        return;
       }
 
-      // Calculate progress for each topic
-      if (user != null) {
-        for (var topic in grouped.keys) {
-          // Get all quizzes for this topic
-          final topicQuizzes = await _quizService.supabase
-              .from('quizzes')
-              .select()
-              .eq('topic', topic)
-              .order('created_at', ascending: true);
+      // Get user's class
+      final classData = await _classService.getUserClass(user.id);
 
-          // Get user's quiz progress
-          final response =
-              await _quizService.supabase
-                  .from('Users')
-                  .select('quizzes')
-                  .eq('id', user.id)
-                  .single();
-
-          if (response['quizzes'] != null) {
-            final quizzesData = Map<String, dynamic>.from(response['quizzes']);
-
-            double preQuizScore = 0;
-            double postQuizScore = 0;
-            bool hasPreQuiz = false;
-            bool hasPostQuiz = false;
-
-            // Find pre and post quiz scores
-            for (var quiz in topicQuizzes) {
-              final quizId = quiz['id'].toString();
-              final activityType =
-                  quiz['activity_type'].toString().toLowerCase();
-
-              if (quizzesData.containsKey(quizId)) {
-                final quizData = quizzesData[quizId];
-
-                if (activityType == 'prequiz') {
-                  preQuizScore = quizData['score'].toDouble();
-                  hasPreQuiz = true;
-                } else if (activityType == 'postquiz') {
-                  postQuizScore = quizData['score'].toDouble();
-                  hasPostQuiz = true;
-                }
-              }
-            }
-
-            // Calculate progress
-            double progress = 0;
-            if (hasPreQuiz && hasPostQuiz) {
-              progress = (preQuizScore / 2) + (postQuizScore / 2);
-            } else if (hasPreQuiz) {
-              progress = preQuizScore / 2;
-            } else if (hasPostQuiz) {
-              progress = postQuizScore / 2;
-            }
-
-            _topicProgress[topic] = progress;
-          } else {
-            _topicProgress[topic] = 0;
-          }
-        }
+      if (classData.isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _currentClass = null;
+          _modules = [];
+        });
+        return;
       }
+
+      // Get class modules
+      final modules = await _classService.getClassModules(classData['id']);
+
+      // Get module progress
+      final moduleIds = modules.map((m) => m['id'] as String).toList();
+      final moduleProgress = await _quizService.getModuleProgress(
+        userId: user.id,
+        moduleIds: moduleIds,
+      );
+
+      // Get class assets (dragons)
+      final assets = await _classService.getClassAssets(classData['id']);
+      _classAssets = assets;
 
       if (mounted) {
         setState(() {
-          _quizzesByTopic = grouped;
-          _topics = grouped.keys.toList();
+          _currentClass = classData;
+          _modules = modules;
+          _moduleProgress = moduleProgress;
           _isLoading = false;
         });
 
         await _loadDragonImages();
       }
     } catch (e) {
-      // Error loading quizzes
+      print('Error loading class data: $e');
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   Future<void> _loadDragonImages() async {
     try {
-      await _dragonService.initialize();
+      // Use dragons from class assets if available
+      if (_classAssets != null) {
+        List<dynamic> assetsList;
+        if (_classAssets is List) {
+          assetsList = _classAssets as List;
+        } else if (_classAssets is Map) {
+          // If it's a Map, try to get the assets list from it
+          assetsList = (_classAssets as Map)['assets'] as List? ?? [];
+        } else {
+          assetsList = [];
+        }
 
-      for (var i = 0; i < _topics.length; i++) {
-        final dragonData = await _dragonService.getDragonImagesForModule(i);
-        if (mounted) {
-          setState(() {
-            _moduleDragons[_topics[i]] = dragonData;
-          });
+        // Find dragon assets
+        final dragonAssets =
+            assetsList
+                .where((asset) => asset is Map && asset['type'] == 'dragon')
+                .toList();
+
+        // Assign dragons to modules
+        for (var i = 0; i < _modules.length && i < dragonAssets.length; i++) {
+          final module = _modules[i];
+          final dragon = dragonAssets[i];
+
+          if (dragon['stages'] != null) {
+            _moduleDragons[module['id']] = {
+              'egg': dragon['stages']['egg'] ?? 'assets/images/other/egg.png',
+              'baby':
+                  dragon['stages']['baby'] ?? 'assets/images/other/young.png',
+              'teen':
+                  dragon['stages']['teen'] ?? 'assets/images/other/teen.png',
+              'final':
+                  dragon['stages']['adult'] ?? 'assets/images/other/adult.png',
+              'id': dragon['id'],
+              'name': dragon['name'] ?? 'Dragon',
+              'moduleId': dragon['moduleId'] ?? module['id'],
+            };
+          }
+        }
+      } else {
+        // Fallback to old dragon loading system
+        await _dragonService.initialize();
+
+        for (var i = 0; i < _modules.length; i++) {
+          final dragonData = await _dragonService.getDragonImagesForModule(i);
+          if (mounted) {
+            setState(() {
+              _moduleDragons[_modules[i]['id']] = dragonData;
+            });
+          }
         }
       }
     } catch (e) {
-      // Error loading dragon images
+      print('Error loading dragon images: $e');
     }
   }
 
-  // Get icon based on topic progress
-  Widget _getDragonPhaseIcon(String topic) {
-    final progress = _topicProgress[topic] ?? 0.0;
-    final dragonData = _moduleDragons[topic];
+  // Get icon based on module progress
+  Widget _getDragonPhaseIcon(String moduleId) {
+    final progress = _moduleProgress[moduleId] ?? 0.0;
+    final dragonData = _moduleDragons[moduleId];
 
     String imageUrl = dragonData?['egg'] ?? 'assets/images/other/egg.png';
     List<String> phases = ['egg']; // Always start with egg
 
     // Add phases based on progress, ensuring all previous phases are included
     if (progress >= 30) {
-      phases.add('stage1'); // Add baby phase
+      phases.add('baby'); // Add baby phase
     }
     if (progress >= 50) {
-      phases.add('stage2'); // Add teen phase
+      phases.add('teen'); // Add teen phase
     }
     if (progress >= 80) {
-      phases.add('final'); // Add adult phase
+      phases.add('adult'); // Add adult phase
     }
 
     // Save dragon phases if we have a valid dragon ID
     if (dragonData != null && dragonData['id'] != null) {
       final user = _userState.currentUser;
       if (user != null) {
-        _dragonService
-            .saveDragonPhases(user.id, dragonData['id'].toString(), phases)
+        // Get current dragons data first
+        _dragonService.supabase
+            .from('Users')
+            .select('dragons')
+            .eq('id', user.id)
+            .single()
+            .then((response) {
+              Map<String, dynamic> dragons = {};
+              if (response['dragons'] != null) {
+                dragons = Map<String, dynamic>.from(response['dragons']);
+              }
+
+              // Update the dragon's phases
+              dragons[dragonData['id'].toString()] = phases;
+
+              // Save the updated dragons data
+              _dragonService.supabase
+                  .from('Users')
+                  .update({'dragons': dragons})
+                  .eq('id', user.id)
+                  .then((_) {
+                    print('✅ Successfully saved dragon phases: $phases');
+                  })
+                  .catchError((e) {
+                    print('❌ Error saving dragon phases: $e');
+                  });
+            })
             .catchError((e) {
-              // Error saving dragon phases
+              print('❌ Error getting current dragons data: $e');
             });
       }
     }
 
     // Set the image URL based on the highest achieved phase
     if (progress >= 80) {
-      imageUrl = dragonData?['final'] ?? 'assets/images/other/adult.png';
+      imageUrl = dragonData?['adult'] ?? 'assets/images/other/adult.png';
     } else if (progress >= 50) {
-      imageUrl = dragonData?['stage2'] ?? 'assets/images/other/teen.png';
+      imageUrl = dragonData?['teen'] ?? 'assets/images/other/teen.png';
     } else if (progress >= 30) {
-      imageUrl = dragonData?['stage1'] ?? 'assets/images/other/young.png';
+      imageUrl = dragonData?['baby'] ?? 'assets/images/other/young.png';
     }
 
     // Check if the image URL is a network URL or a local asset
@@ -208,12 +245,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Get color based on topic from database
-  Color _getColorForTopic(String topic) {
-    // Default to grey if no specific color is found
-    return Colors.grey;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -225,7 +256,7 @@ class _HomePageState extends State<HomePage> {
     const borderRadius = 16.0;
 
     return Scaffold(
-      key: _scaffoldKey,
+      //key: _scaffoldKey,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -233,27 +264,45 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Class Header
+                if (_currentClass != null) ...[
+                  Text(
+                    _currentClass!['name'] ?? 'Class',
+                    style: theme.textTheme.headlineLarge,
+                  ),
+                  if (_currentClass!['description'] != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _currentClass!['description'],
+                      style: theme.textTheme.labelMedium,
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                ],
+
                 // Continue Learning Card
-                if (_topics.isNotEmpty)
+                if (_modules.isNotEmpty)
                   GestureDetector(
                     onTap: () {
-                      // Find the latest incomplete activity
-                      String? targetTopic;
-                      for (var topic in _topics) {
-                        final progress = _topicProgress[topic] ?? 0.0;
+                      // Find the latest incomplete module
+                      Map<String, dynamic>? targetModule;
+                      for (var module in _modules) {
+                        final progress = _moduleProgress[module['id']] ?? 0.0;
                         if (progress < 100) {
-                          targetTopic = topic;
+                          targetModule = module;
                           break;
                         }
                       }
 
-                      // If all activities are complete, go to the last topic
-                      targetTopic ??= _topics.last;
+                      // If all modules are complete, go to the last module
+                      targetModule ??= _modules.last;
 
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => LessonPage(topic: targetTopic!),
+                          builder:
+                              (context) =>
+                                  LessonPage(moduleId: targetModule!['id']),
                         ),
                       );
                     },
@@ -282,35 +331,33 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Continue Learning',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 22 * AppTheme.fontSizeScale,
-                                  fontWeight: FontWeight.w600,
+                                'Continue Learning'..toTitleCase(),
+                                // Note: Copy with for some reason can't change font weight, but everything else it can
+                                style: theme.textTheme.headlineSmall?.copyWith(
                                   color: Colors.white,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Builder(
                                 builder: (context) {
-                                  // Find the target topic
-                                  String? targetTopic;
-                                  for (var topic in _topics) {
+                                  // Find the target module
+                                  Map<String, dynamic>? targetModule;
+                                  for (var module in _modules) {
                                     final progress =
-                                        _topicProgress[topic] ?? 0.0;
+                                        _moduleProgress[module['id']] ?? 0.0;
                                     if (progress < 100) {
-                                      targetTopic = topic;
+                                      targetModule = module;
                                       break;
                                     }
                                   }
-                                  targetTopic ??= _topics.last;
+                                  targetModule ??= _modules.last;
 
                                   return Text(
-                                    targetTopic.toUpperCase(),
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14 * AppTheme.fontSizeScale,
-                                      color: Colors.white.withOpacity(0.9),
+                                    (targetModule['title'] ?? 'Module')
+                                        .toUpperCase(),
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: Colors.white.withValues(alpha: 0.9),
                                       letterSpacing: 1.2,
-                                      fontWeight: FontWeight.w500,
                                     ),
                                   );
                                 },
@@ -318,22 +365,24 @@ class _HomePageState extends State<HomePage> {
                               const SizedBox(height: 8),
                               Builder(
                                 builder: (context) {
-                                  // Find the target topic and its progress
-                                  String? targetTopic;
+                                  // Find the target module and its progress
+                                  Map<String, dynamic>? targetModule;
                                   double progress = 0;
-                                  for (var topic in _topics) {
-                                    final topicProgress =
-                                        _topicProgress[topic] ?? 0.0;
-                                    if (topicProgress < 100) {
-                                      targetTopic = topic;
-                                      progress = topicProgress;
+                                  for (var module in _modules) {
+                                    final moduleProgress =
+                                        _moduleProgress[module['id']] ?? 0.0;
+                                    if (moduleProgress < 100) {
+                                      targetModule = module;
+                                      progress = moduleProgress;
                                       break;
                                     }
                                   }
-                                  if (targetTopic == null) {
-                                    targetTopic = _topics.last;
+                                  if (targetModule == null &&
+                                      _modules.isNotEmpty) {
+                                    targetModule = _modules.last;
                                     progress =
-                                        _topicProgress[targetTopic] ?? 0.0;
+                                        _moduleProgress[targetModule['id']] ??
+                                        0.0;
                                   }
 
                                   return Container(
@@ -346,11 +395,9 @@ class _HomePageState extends State<HomePage> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
-                                      '${progress.toStringAsFixed(0)}% Complete',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12 * AppTheme.fontSizeScale,
+                                      '${progress.toStringAsFixed(0)}% Complete'.toTitleCase(),
+                                      style: theme.textTheme.labelSmall?.copyWith(
                                         color: Colors.white,
-                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   );
@@ -368,36 +415,29 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 const SizedBox(height: 30),
-                // Activities Section
+                // Modules Section
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Activities',
-                      style: GoogleFonts.poppins(
-                        fontSize: 20 * AppTheme.fontSizeScale,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+                      'Modules'.toTitleCase(),
+                      style: theme.textTheme.headlineSmall,
                     ),
                     Builder(
                       builder: (context) {
-                        // Count completed activities (100% progress)
+                        // Count completed modules (100% progress)
                         final completedCount =
-                            _topics
+                            _modules
                                 .where(
-                                  (topic) =>
-                                      (_topicProgress[topic] ?? 0.0) >= 100,
+                                  (module) =>
+                                      (_moduleProgress[module['id']] ?? 0.0) >=
+                                      100,
                                 )
                                 .length;
 
                         return Text(
-                          '${completedCount}/${_topics.length} Completed',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14 * AppTheme.fontSizeScale,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                          '${completedCount}/${_modules.length} Completed'.toTitleCase(),
+                          style: theme.textTheme.labelMedium,
                         );
                       },
                     ),
@@ -406,7 +446,7 @@ class _HomePageState extends State<HomePage> {
 
                 const SizedBox(height: 30),
 
-                // Show loading or activities
+                // Show loading or modules
                 if (_isLoading)
                   const Center(
                     child: Padding(
@@ -414,51 +454,56 @@ class _HomePageState extends State<HomePage> {
                       child: CircularProgressIndicator(),
                     ),
                   )
-                else if (_topics.isEmpty)
+                else if (_modules.isEmpty)
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.all(32.0),
                       child: Text(
-                        'No activities available',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16 * AppTheme.fontSizeScale,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                        _currentClass == null
+                            ? 'No class assigned'
+                            : 'No modules available',
+                        style: theme.textTheme.labelLarge,
                       ),
                     ),
                   )
                 else
-                  // Dynamic activities list
-                  ..._topics.asMap().entries.map((entry) {
+                  // Dynamic modules list
+                  ..._modules.asMap().entries.map((entry) {
                     final index = entry.key;
-                    final topic = entry.value;
-                    final quizzes = _quizzesByTopic[topic] ?? [];
+                    final module = entry.value;
                     final isUnlocked =
                         index == 0 ||
-                        (_topicProgress[_topics[index - 1]] ?? 0) >= 100;
-                    final progress = _topicProgress[topic] ?? 0.0;
+                        (_moduleProgress[_modules[index - 1]['id']] ?? 0) >=
+                            100;
+                    final progress = _moduleProgress[module['id']] ?? 0.0;
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 30),
-                      child: _buildActivityCard(
+                      child: _buildModuleCard(
                         context: context,
-                        title: topic,
+                        module: module,
+                        moduleId: module['id'],
+                        title: module['title'] ?? 'Module ${index + 1}',
                         isUnlocked: isUnlocked,
                         progress: progress,
-                        dragonIcon: _getDragonPhaseIcon(topic),
-                        iconColor: _getColorForTopic(topic),
+                        dragonIcon: _getDragonPhaseIcon(module['id']),
+                        iconColor: primary,
                         unlockRequirement:
-                            index > 0 ? 'Complete ${_topics[index - 1]}' : null,
+                            index > 0
+                                ? 'Complete ${_modules[index - 1]['title'] ?? 'previous module'}'
+                                : null,
                         onTap: () {
                           if (isUnlocked) {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => LessonPage(topic: topic),
+                                builder:
+                                    (context) =>
+                                        LessonPage(moduleId: module['id']),
                               ),
                             ).then((_) {
-                              // Reload quizzes when returning from the lesson page
-                              _loadQuizzes();
+                              // Reload data when returning from the lesson page
+                              _loadClassData();
                             });
                           }
                         },
@@ -466,21 +511,6 @@ class _HomePageState extends State<HomePage> {
                     );
                   }).toList(),
 
-                const SizedBox(height: 24),
-
-                // Settings Activity - Always shown at the end
-                _buildActivityCard(
-                  context: context,
-                  title: 'SETTINGS',
-                  isUnlocked: false,
-                  progress: 0.0,
-                  dragonIcon: _getDragonPhaseIcon('SETTINGS'),
-                  iconColor: Colors.grey[700]!,
-                  unlockRequirement: 'Complete all activities',
-                  onTap: () {
-                    _scaffoldKey.currentState?.openEndDrawer();
-                  },
-                ),
                 const SizedBox(height: 20),
               ],
             ),
@@ -490,8 +520,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildActivityCard({
+  Widget _buildModuleCard({
     required BuildContext context,
+    required Map<String, dynamic> module,
+    required String moduleId,
     required String title,
     required bool isUnlocked,
     required double progress,
@@ -500,25 +532,28 @@ class _HomePageState extends State<HomePage> {
     required VoidCallback onTap,
     String? unlockRequirement,
   }) {
-    // Get actual progress for this topic
-    final actualProgress = _topicProgress[title] ?? 0.0;
+    // Get actual progress for this module
+    final actualProgress = _moduleProgress[moduleId] ?? 0.0;
 
-    // Check if this activity should be unlocked
-    final int currentIndex = _topics.indexOf(title);
+    // Check if this module should be unlocked
+    final int currentIndex = _modules.indexOf(module);
     bool shouldBeUnlocked = false;
     String? newUnlockRequirement;
 
-    if (currentIndex == 0) {
-      // First activity is always unlocked
+    // Handle settings card specially
+    if (moduleId == 'settings') {
+      shouldBeUnlocked = false;
+    } else if (currentIndex == 0) {
+      // First module is always unlocked
       shouldBeUnlocked = true;
     } else if (currentIndex > 0) {
-      // Check if previous activity is completed
-      final previousTopic = _topics[currentIndex - 1];
-      final previousProgress = _topicProgress[previousTopic] ?? 0.0;
+      // Check if previous module is completed
+      final previousModule = _modules[currentIndex - 1];
+      final previousProgress = _moduleProgress[previousModule['id']] ?? 0.0;
       shouldBeUnlocked = previousProgress >= 100;
       if (!shouldBeUnlocked) {
         newUnlockRequirement =
-            'Complete ${previousTopic} (${previousProgress.toStringAsFixed(0)}%)';
+            'Complete ${previousModule['title'] ?? 'previous module'} (${previousProgress.toStringAsFixed(0)}%)';
       }
     }
 
@@ -533,13 +568,13 @@ class _HomePageState extends State<HomePage> {
     final Color mutedTextColor = theme.colorScheme.onSurfaceVariant;
     final double borderRadius = 24.0;
 
-    // Get quiz info for this topic
-    final quizzes = _quizzesByTopic[title] ?? [];
-    final hasPreQuiz = quizzes.isNotEmpty && quizzes[0]['has_pre_quiz'] == true;
-    final hasPostQuiz =
-        quizzes.isNotEmpty && quizzes[0]['has_post_quiz'] == true;
+    // Get quiz info for this module from module data
+    final hasPreQuiz = module['pre_quiz'] != null;
+    final hasPostQuiz = module['post_quiz'] != null;
     final description =
-        quizzes.isNotEmpty ? quizzes[0]['description'] : 'Learn about $title';
+        moduleId == 'settings'
+            ? 'Configure your app settings'
+            : 'Learn about $title';
 
     return GestureDetector(
       onTap: shouldBeUnlocked ? onTap : null,
@@ -560,9 +595,7 @@ class _HomePageState extends State<HomePage> {
               shouldBeUnlocked
                   ? [
                     BoxShadow(
-                      color: theme.colorScheme.shadow.withValues(
-                        alpha: 0.2,
-                      ), //withValues(alpha: 0.08),
+                      color: theme.colorScheme.shadow.withValues(alpha: 0.2),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -572,13 +605,8 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontSize: 20 * AppTheme.fontSizeScale,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-                letterSpacing: 0.8,
-              ),
+              title.toTitleCase(),
+              style: theme.textTheme.headlineSmall,
             ),
             if (!shouldBeUnlocked &&
                 (newUnlockRequirement != null ||
@@ -586,80 +614,76 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 4),
               Text(
                 newUnlockRequirement ?? unlockRequirement ?? '',
-                style: GoogleFonts.poppins(
-                  fontSize: 12 * AppTheme.fontSizeScale,
-                  color: mutedTextColor.withOpacity(0.7),
+                style: theme.textTheme.labelSmall?.copyWith(
                   fontStyle: FontStyle.italic,
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                 ),
               ),
             ],
-            if (shouldBeUnlocked) ...[
+            if (shouldBeUnlocked && moduleId != 'settings') ...[
               const SizedBox(height: 8),
               Text(
                 description,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 14 * AppTheme.fontSizeScale,
-                  color: mutedTextColor,
-                ),
+                style: theme.textTheme.labelMedium,
               ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (hasPreQuiz)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.quiz, size: 16, color: primary),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Pre-Quiz',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12 * AppTheme.fontSizeScale,
-                              color: primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (hasPreQuiz && hasPostQuiz) const SizedBox(width: 8),
-                  if (hasPostQuiz)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.assignment, size: 16, color: primary),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Post-Quiz',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12 * AppTheme.fontSizeScale,
-                              color: primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
+              // const SizedBox(height: 8),
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   children: [
+              //     if (hasPreQuiz)
+              //       Container(
+              //         padding: const EdgeInsets.symmetric(
+              //           horizontal: 8,
+              //           vertical: 4,
+              //         ),
+              //         decoration: BoxDecoration(
+              //           color: primary.withValues(alpha: 0.1),
+              //           borderRadius: BorderRadius.circular(12),
+              //         ),
+              //         child: Row(
+              //           mainAxisSize: MainAxisSize.min,
+              //           children: [
+              //             Icon(Icons.quiz, size: 16, color: primary),
+              //             const SizedBox(width: 4),
+              //             Text(
+              //               'Pre-Quiz',
+              //               style: GoogleFonts.poppins(
+              //                 fontSize: 12 * AppTheme.fontSizeScale,
+              //                 color: primary,
+              //               ),
+              //             ),
+              //           ],
+              //         ),
+              //       ),
+              //     if (hasPreQuiz && hasPostQuiz) const SizedBox(width: 8),
+              //     if (hasPostQuiz)
+              //       Container(
+              //         padding: const EdgeInsets.symmetric(
+              //           horizontal: 8,
+              //           vertical: 4,
+              //         ),
+              //         decoration: BoxDecoration(
+              //           color: primary.withValues(alpha: 0.1),
+              //           borderRadius: BorderRadius.circular(12),
+              //         ),
+              //         child: Row(
+              //           mainAxisSize: MainAxisSize.min,
+              //           children: [
+              //             Icon(Icons.assignment, size: 16, color: primary),
+              //             const SizedBox(width: 4),
+              //             Text(
+              //               'Post-Quiz',
+              //               style: GoogleFonts.poppins(
+              //                 fontSize: 12 * AppTheme.fontSizeScale,
+              //                 color: primary,
+              //               ),
+              //             ),
+              //           ],
+              //         ),
+              //       ),
+              //   ],
+              // ),
             ],
             const SizedBox(height: 16),
             // Semi-circular progress bar with icon
@@ -670,7 +694,7 @@ class _HomePageState extends State<HomePage> {
                 alignment: Alignment.center,
                 children: [
                   // Semi-circular progress
-                  if (shouldBeUnlocked)
+                  if (shouldBeUnlocked && moduleId != 'settings')
                     CustomPaint(
                       size: const Size(160, 80),
                       painter: _SemiCircleProgressPainter(
@@ -679,7 +703,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   // Icon in circle
-                  shouldBeUnlocked
+                  shouldBeUnlocked && moduleId != 'settings'
                       ? Positioned(top: 35, child: dragonIcon)
                       : Positioned(
                         top: 10,
@@ -693,14 +717,12 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            if (shouldBeUnlocked) ...[
+            if (shouldBeUnlocked && moduleId != 'settings') ...[
               Text(
                 '${actualProgress.toStringAsFixed(0)}% Complete',
-                style: GoogleFonts.poppins(
-                  fontSize: 13 * AppTheme.fontSizeScale,
+                style: theme.textTheme.labelSmall?.copyWith(
                   color: secondary,
-                  fontWeight: FontWeight.w500,
-                ),
+                )
               ),
             ],
           ],
