@@ -207,17 +207,45 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
         padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
         child: Column(
           children: [
-            LinearProgressIndicator(
-              value:
-                  (currentQuestionIndex + 1) /
-                  widget.questionSet.questions.length,
-              backgroundColor: theme.colorScheme.primaryContainer,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                theme.colorScheme.primary,
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 30,
+                vertical: 10,
               ),
-              minHeight: 15,
-              borderRadius: BorderRadius.circular(10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child:
+                Column(
+                  children: [
+                    LinearProgressIndicator(
+                      value:
+                      (currentQuestionIndex + 1) /
+                          widget.questionSet.questions.length,
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.colorScheme.primary,
+                      ),
+                      minHeight: 10,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      '${(currentQuestionIndex + 1)} of ${widget.questionSet.questions.length} questions',
+                      style: theme.textTheme.labelSmall,
+                    ),
+                  ],
+                )
             ),
+
+
             Expanded(
               child: Padding(
                 padding: EdgeInsets.all(16),
@@ -234,73 +262,62 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  if (currentQuestionIndex > 0)
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          currentQuestionIndex--;
-                        });
-                      },
-                      iconSize: 30,
-                      icon: Icon(Icons.arrow_back_ios_rounded),
-                    ),
-                  Spacer(),
 
-                  currentQuestionIndex ==
-                          widget.questionSet.questions.length - 1
-                      ? TextButton(
-                        onPressed:
-                            userAnswers[currentQuestionIndex].isNotEmpty
-                                ? () {
-                                  if (currentQuestionIndex <
-                                      widget.questionSet.questions.length - 1) {
-                                    setState(() {
-                                      currentQuestionIndex++;
-                                    });
-                                  } else {
-                                    _finishPostQuiz();
-                                  }
-                                }
-                                : null,
-                        child: Text(
-                          'Submit'.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: theme.textTheme.bodyLarge?.fontSize,
-                          ),
-                        ),
-                      )
-                      : IconButton(
-                        onPressed:
-                            userAnswers[currentQuestionIndex].isNotEmpty
-                                ? () {
-                                  if (currentQuestionIndex <
-                                      widget.questionSet.questions.length - 1) {
-                                    setState(() {
-                                      currentQuestionIndex++;
-                                    });
-                                  } else {
-                                    _finishPostQuiz();
-                                  }
-                                }
-                                : null,
-                        iconSize: 30,
-                        icon: Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          color:
-                              userAnswers[currentQuestionIndex].isEmpty
-                                  ? theme.colorScheme.onSurfaceVariant
-                                  : theme.colorScheme.primary,
-                        ),
-                      ),
+
+            // Navigation
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton.icon(
+                    onPressed: currentQuestionIndex == widget.questionSet.questions.length - 1
+                        ? () {
+                          setState(() {
+                            currentQuestionIndex--;
+                          });
+                        }
+                        : null,
+                    icon: const Icon(Icons.arrow_back_ios_rounded),
+                    label: const Text('Previous'),
+                  ),
+
+
+                  TextButton.icon(
+                    iconAlignment: IconAlignment.end,
+                    onPressed: userAnswers[currentQuestionIndex].isNotEmpty
+                        ? () {
+                      if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
+                        setState(() {
+                          currentQuestionIndex++;
+                        });
+                      } else {
+                        _finishPostQuiz();
+                      }
+                    }
+                        : null,
+                    label: Text(
+                      currentQuestionIndex == widget.questionSet.questions.length - 1
+                          ? 'Complete'
+                          : 'Next',
+                    ),
+                    icon: Icon(Icons.arrow_forward_ios_rounded),
+                  ),
                 ],
               ),
             ),
 
-            SizedBox(height: 10),
+            SizedBox(height: 15,),
           ],
         ),
       ),
