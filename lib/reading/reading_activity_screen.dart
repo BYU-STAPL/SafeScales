@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
@@ -179,6 +180,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
 
   Widget _buildTableOfContents() {
     return Container(
+      padding: EdgeInsets.all(30),
       color: Theme.of(context).colorScheme.surface,
       child: ListView.builder(
         itemCount: _slides.length,
@@ -186,9 +188,8 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
           final isBookmarked = _bookmarkedPages.contains(index);
           return ListTile(
             leading: Icon(
-              isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-              color:
-                  isBookmarked ? Theme.of(context).colorScheme.primary : null,
+              isBookmarked ? FontAwesomeIcons.solidBookmark : FontAwesomeIcons.bookmark,
+              color: Theme.of(context).colorScheme.primary,
             ),
             title: Text(
               _slides[index]['headline'] ?? 'Page ${index + 1}',
@@ -210,7 +211,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
   Widget _buildPageContent() {
     final theme = Theme.of(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(30),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -219,17 +220,16 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
             children: [
               Text(
                 'Page ${_currentSlideIndex + 1}',
-                style: GoogleFonts.playfairDisplay(
-                  fontSize: 14,
+                style: theme.textTheme.labelMedium?.copyWith(
                   fontStyle: FontStyle.italic,
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),
               ),
               IconButton(
+                iconSize: 22,
                 icon: Icon(
                   _bookmarkedPages.contains(_currentSlideIndex)
-                      ? Icons.bookmark
-                      : Icons.bookmark_border,
+                      ? FontAwesomeIcons.solidBookmark
+                      : FontAwesomeIcons.bookmark,
                   color:
                       _bookmarkedPages.contains(_currentSlideIndex)
                           ? theme.colorScheme.primary
@@ -242,19 +242,13 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
           const SizedBox(height: 16),
           Text(
             _slides[_currentSlideIndex]['headline'] ?? 'Reading Content',
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              height: 1.3,
-            ),
+            style: theme.textTheme.headlineMedium,
           ),
           const SizedBox(height: 24),
           Text(
             _slides[_currentSlideIndex]['content'] ?? '',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
+            style: theme.textTheme.bodyMedium?.copyWith(
               height: 1.8,
-              letterSpacing: 0.3,
             ),
           ),
         ],
@@ -269,11 +263,12 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Reading Activity'),
+        title: Text('Reading'),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(_showTableOfContents ? Icons.close : Icons.menu_book),
+            icon: Icon(_showTableOfContents ? Icons.close : FontAwesomeIcons.list),
+            iconSize: 25,
             onPressed: () {
               setState(() {
                 _showTableOfContents = !_showTableOfContents;
@@ -289,7 +284,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
               ? Center(
                 child: Text(
                   'No reading content available',
-                  style: GoogleFonts.poppins(fontSize: 16),
+                  style: theme.textTheme.labelMedium,
                 ),
               )
               : Column(
@@ -297,14 +292,14 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
                   // Progress bar
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                      horizontal: 30,
+                      vertical: 10,
                     ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -314,18 +309,18 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
                       children: [
                         LinearProgressIndicator(
                           value: progress,
-                          backgroundColor: theme.colorScheme.surfaceVariant,
+                          backgroundColor: theme.colorScheme.primaryContainer,
                           valueColor: AlwaysStoppedAnimation<Color>(
                             theme.colorScheme.primary,
                           ),
+                          minHeight: 10,
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        const SizedBox(height: 4),
+
+                        const SizedBox(height: 10),
                         Text(
                           '${(_currentSlideIndex + 1)} of ${_slides.length} pages',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
-                          ),
+                          style: theme.textTheme.labelSmall,
                         ),
                       ],
                     ),
@@ -344,12 +339,12 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
                   ),
                   // Navigation controls
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: const Offset(0, -2),
                         ),
@@ -361,25 +356,24 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
                         TextButton.icon(
                           onPressed:
                               _currentSlideIndex > 0 ? _previousSlide : null,
-                          icon: const Icon(Icons.arrow_back),
-                          label: const Text('Previous'),
+                          icon: const Icon(Icons.arrow_back_ios_rounded),
+                          label: Text('Previous'.toUpperCase()),
                         ),
-                        ElevatedButton.icon(
-                          onPressed: _nextSlide,
-                          icon: Icon(
-                            _currentSlideIndex < _slides.length - 1
-                                ? Icons.arrow_forward
-                                : Icons.check,
-                          ),
-                          label: Text(
-                            _currentSlideIndex < _slides.length - 1
-                                ? 'Next'
-                                : 'Complete',
-                          ),
+                        TextButton.icon(
+                            iconAlignment: IconAlignment.end,
+                            onPressed: _nextSlide,
+                            label: Text(
+                              _currentSlideIndex < _slides.length - 1
+                                  ? 'Next'.toUpperCase()
+                                  : 'Complete'.toUpperCase(),
+                            ),
+                          icon: Icon(Icons.arrow_forward_ios_rounded),
                         ),
                       ],
                     ),
                   ),
+
+                  SizedBox(height: 15,)
                 ],
               ),
     );
