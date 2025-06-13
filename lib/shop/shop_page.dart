@@ -20,7 +20,7 @@ class _ShopPageState extends State<ShopPage> {
   final UserStateService _userState = UserStateService();
   int selectedTab = 0; // 0 = Accessories, 1 = Environments
   int? selectedIndex; // Track selected item index
-  int? selectedLessonIndex; // Track selected lesson in popup
+  String? selectedLessonIndex; // Track selected lesson in popup
   bool showLessonDialog = false;
   List<Map<String, dynamic>> accessories = [];
   List<Map<String, dynamic>> environments = [];
@@ -28,6 +28,7 @@ class _ShopPageState extends State<ShopPage> {
   List<String> acquiredAccessories = [];
   List<String> acquiredEnvironments = [];
   Map<String, Map<String, dynamic>> quizDetails = {};
+  Map<String, Map<String, dynamic>> moduleDetails = {};
 
   // Placeholder completed lessons
   final List<String> completedLessons = [
@@ -48,31 +49,31 @@ class _ShopPageState extends State<ShopPage> {
     print('Reloading user profile in shop page');
     await _userState.loadUserProfile();
     print(
-      'User profile reloaded. Quizzes data: ${_userState.currentUser?.quizzes}',
+      'User profile reloaded. Modules data: ${_userState.currentUser?.modules}',
     );
-    await _loadQuizDetails();
+    await _loadModuleDetails();
   }
 
-  Future<void> _loadQuizDetails() async {
+  Future<void> _loadModuleDetails() async {
     try {
-      final completedQuizzes = _getCompletedQuizzes();
-      if (completedQuizzes.isEmpty) return;
+      final completedModules = _getCompletedQuizzes();
+      if (completedModules.isEmpty) return;
 
-      final quizIds = completedQuizzes.map((q) => int.parse(q['id'])).toList();
-      print('Loading details for quiz IDs: $quizIds');
+      final moduleIds = completedModules.map((m) => m['id']).toList();
+      print('Loading details for module IDs: $moduleIds');
 
       final response = await SupabaseConfig.client
-          .from('quizzes')
+          .from('modules')
           .select()
-          .inFilter('id', quizIds);
+          .inFilter('id', moduleIds);
 
-      print('Loaded quiz details: $response');
+      print('Loaded module details: $response');
 
       setState(() {
-        quizDetails = {for (var quiz in response) quiz['id'].toString(): quiz};
+        moduleDetails = {for (var module in response) module['id']: module};
       });
     } catch (e) {
-      print('Error loading quiz details: $e');
+      print('Error loading module details: $e');
     }
   }
 
@@ -111,38 +112,48 @@ class _ShopPageState extends State<ShopPage> {
 
   List<Map<String, dynamic>> _getCompletedQuizzes() {
     final user = _userState.currentUser;
-    print('Getting completed quizzes for user: ${user?.id}');
-    print('User quizzes data: ${user?.quizzes}');
+    print('Getting completed modules for user: ${user?.id}');
+    print('User modules data: ${user?.modules}');
 
-    if (user == null || user.quizzes == null) {
-      print('No user or quizzes data available');
+    if (user == null || user.modules == null) {
+      print('No user or modules data available');
       return [];
     }
 
-    final Map<String, dynamic> quizzes = user.quizzes!;
-    print('Processing quizzes: $quizzes');
+    final Map<String, dynamic> modules = user.modules!;
+    print('Processing modules: $modules');
 
     final completedQuizzes =
-        quizzes.entries
-            .where((entry) {
-              print(
-                'Checking quiz ${entry.key}: score = ${entry.value['score']}, spent = ${entry.value['spent']}',
-              );
-              // Only include quizzes with 100% score and not spent
-              return entry.value['score'] == 100 &&
-                  entry.value['spent'] != true;
+        modules.entries
+            .where((moduleEntry) {
+              final moduleData = moduleEntry.value as Map<String, dynamic>;
+              // Check if both preQuiz and postQuiz are completed with 100% score
+              final preQuiz = moduleData['preQuiz'] as Map<String, dynamic>?;
+              final postQuiz = moduleData['postQuiz'] as Map<String, dynamic>?;
+
+              // Check if either quiz is already spent
+              final isPreQuizSpent = preQuiz?['spent'] == true;
+              final isPostQuizSpent = postQuiz?['spent'] == true;
+
+              return preQuiz != null &&
+                  postQuiz != null &&
+                  preQuiz['score'] == 100 &&
+                  postQuiz['score'] == 100 &&
+                  !isPreQuizSpent &&
+                  !isPostQuizSpent;
             })
-            .map(
-              (entry) => {
-                'id': entry.key,
-                'score': entry.value['score'],
-                'completed_at': entry.value['completed_at'],
-              },
-            )
+            .map((moduleEntry) {
+              final moduleData = moduleEntry.value as Map<String, dynamic>;
+              return {
+                'id': moduleEntry.key,
+                'preQuiz': moduleData['preQuiz'],
+                'postQuiz': moduleData['postQuiz'],
+              };
+            })
             .toList();
 
     print(
-      'Found ${completedQuizzes.length} available completed quizzes: $completedQuizzes',
+      'Found ${completedQuizzes.length} available completed modules: $completedQuizzes',
     );
     return completedQuizzes;
   }
@@ -176,24 +187,47 @@ class _ShopPageState extends State<ShopPage> {
     if (userId == null) return;
 
     try {
-      // Get current user's quizzes data
+      // Get current user's modules data
       final response =
           await SupabaseConfig.client
               .from('Users')
-              .select('quizzes')
+              .select('modules')
               .eq('id', userId)
               .single();
 
-      final Map<String, dynamic> quizzes = response['quizzes'] ?? {};
+      final Map<String, dynamic> modules = response['modules'] ?? {};
 
-      // Update the spent flag for the selected quiz
-      if (quizzes[selectedLessonIndex.toString()] != null) {
-        quizzes[selectedLessonIndex.toString()]['spent'] = true;
+      // Update the spent flag for the selected module
+      if (modules[selectedLessonIndex] != null) {
+        final moduleData = modules[selectedLessonIndex] as Map<String, dynamic>;
 
-        // Update the quizzes data in the database
+        // Check if module is already spent
+        final preQuiz = moduleData['preQuiz'] as Map<String, dynamic>?;
+        final postQuiz = moduleData['postQuiz'] as Map<String, dynamic>?;
+
+        if (preQuiz?['spent'] == true || postQuiz?['spent'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('This module has already been used for a purchase'),
+            ),
+          );
+          return;
+        }
+
+        // Mark both preQuiz and postQuiz as spent
+        if (preQuiz != null) {
+          preQuiz['spent'] = true;
+          preQuiz['spent_at'] = DateTime.now().toIso8601String();
+        }
+        if (postQuiz != null) {
+          postQuiz['spent'] = true;
+          postQuiz['spent_at'] = DateTime.now().toIso8601String();
+        }
+
+        // Update the modules data in the database
         await SupabaseConfig.client
             .from('Users')
-            .update({'quizzes': quizzes})
+            .update({'modules': modules})
             .eq('id', userId);
 
         // Update local user state
@@ -214,11 +248,29 @@ class _ShopPageState extends State<ShopPage> {
         }
 
         if (purchaseSuccess) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Purchase successful!')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Purchase successful! Module marked as spent.'),
+            ),
+          );
           await _loadItems(); // Reload items to update owned status
         } else {
+          // If purchase fails, revert the spent flags
+          if (preQuiz != null) {
+            preQuiz['spent'] = false;
+            preQuiz.remove('spent_at');
+          }
+          if (postQuiz != null) {
+            postQuiz['spent'] = false;
+            postQuiz.remove('spent_at');
+          }
+
+          // Update the database to revert the spent flags
+          await SupabaseConfig.client
+              .from('Users')
+              .update({'modules': modules})
+              .eq('id', userId);
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Failed to complete purchase')),
           );
@@ -445,14 +497,13 @@ class _ShopPageState extends State<ShopPage> {
                           child: ListView(
                             shrinkWrap: true,
                             children:
-                                _getCompletedQuizzes().map((quiz) {
-                                  final quizDetail = quizDetails[quiz['id']];
+                                _getCompletedQuizzes().map((module) {
+                                  final moduleDetail =
+                                      moduleDetails[module['id']];
                                   return GestureDetector(
                                     onTap: () {
                                       setState(() {
-                                        selectedLessonIndex = int.parse(
-                                          quiz['id'],
-                                        );
+                                        selectedLessonIndex = module['id'];
                                       });
                                     },
                                     child: Container(
@@ -463,15 +514,14 @@ class _ShopPageState extends State<ShopPage> {
                                       ),
                                       decoration: BoxDecoration(
                                         color:
-                                            selectedLessonIndex ==
-                                                    int.parse(quiz['id'])
+                                            selectedLessonIndex == module['id']
                                                 ? primary.withOpacity(0.12)
                                                 : Colors.grey[100],
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
                                           color:
                                               selectedLessonIndex ==
-                                                      int.parse(quiz['id'])
+                                                      module['id']
                                                   ? primary
                                                   : Colors.transparent,
                                           width: 2,
@@ -482,20 +532,20 @@ class _ShopPageState extends State<ShopPage> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            quizDetail?['topic'] ??
-                                                'Unknown Topic',
+                                            moduleDetail?['title'] ??
+                                                'Unknown Module',
                                             style: theme.textTheme.headlineSmall?.copyWith(
                                               fontSize: 15 * AppTheme.fontSizeScale,
                                             ),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            'Activity: ${quizDetail?['activity_type'] ?? 'Unknown'}',
+                                            'Pre-Quiz Score: ${module['preQuiz']['score']}%',
                                             style: theme.textTheme.bodySmall,
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            'Score: ${quiz['score']}%',
+                                            'Post-Quiz Score: ${module['postQuiz']['score']}%',
                                             style: theme.textTheme.bodySmall?.copyWith(
                                               color: theme.colorScheme.green,
                                             ),
@@ -677,13 +727,6 @@ class _ShopItemCard extends StatelessWidget {
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: isOwned ? Colors.green : theme.colorScheme.onSurfaceVariant,
                 ),
-
-
-                // GoogleFonts.poppins(
-                //   fontSize: 13 * AppTheme.fontSizeScale,
-                //   color: isOwned ? Colors.green : Colors.grey[600],
-                //   fontWeight: isOwned ? FontWeight.bold : FontWeight.normal,
-                // ),
               ),
             ],
           ),

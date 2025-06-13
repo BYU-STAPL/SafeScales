@@ -107,6 +107,21 @@ class _LessonPageState extends State<LessonPage> {
           moduleId: widget.moduleId!,
           activityType: 'postQuiz',
         );
+
+        // If quizzes have no questions, mark them as complete with 100% score
+        if (preQuiz != null && preQuiz.questions.isEmpty) {
+          setState(() {
+            preQuizCompleted = true;
+            preQuizScore = 100.0;
+          });
+        }
+
+        if (postQuiz != null && postQuiz.questions.isEmpty) {
+          setState(() {
+            postQuizCompleted = true;
+            postQuizScore = 100.0;
+          });
+        }
       } else if (widget.topic != null) {
         // Fallback to topic-based system for backward compatibility
         _moduleTitle = widget.topic!;
@@ -120,6 +135,21 @@ class _LessonPageState extends State<LessonPage> {
           topic: widget.topic!,
           activityType: 'postQuiz',
         );
+
+        // If quizzes have no questions, mark them as complete with 100% score
+        if (preQuiz != null && preQuiz.questions.isEmpty) {
+          setState(() {
+            preQuizCompleted = true;
+            preQuizScore = 100.0;
+          });
+        }
+
+        if (postQuiz != null && postQuiz.questions.isEmpty) {
+          setState(() {
+            postQuizCompleted = true;
+            postQuizScore = 100.0;
+          });
+        }
       }
 
       // Get user's quiz progress
@@ -147,6 +177,14 @@ class _LessonPageState extends State<LessonPage> {
               setState(() {
                 preQuizCompleted = true;
                 preQuizScore = preQuizData['score'].toDouble();
+              });
+            }
+
+            // Check for reading completion
+            if (moduleData.containsKey('reading')) {
+              final readingData = moduleData['reading'];
+              setState(() {
+                readingCompleted = readingData['completed'] == true;
               });
             }
 
@@ -451,6 +489,7 @@ class _LessonPageState extends State<LessonPage> {
                         builder:
                             (context) => ReadingActivityScreen(
                               topic: widget.topic ?? _moduleTitle,
+                              moduleId: widget.moduleId,
                             ),
                       ),
                     ).then((completed) {
@@ -528,6 +567,22 @@ class _LessonPageState extends State<LessonPage> {
   }
 
   void _startQuiz(QuestionSet quiz) {
+    // Check if quiz has no questions
+    if (quiz.questions.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'This quiz is not available yet',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onInverseSurface,
+            ),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
+        ),
+      );
+      return;
+    }
+
     // Check if post-quiz is being attempted before reading is completed
     if (quiz.activityType == ActivityType.postQuiz && !readingCompleted) {
       ScaffoldMessenger.of(context).showSnackBar(

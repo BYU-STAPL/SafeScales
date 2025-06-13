@@ -58,17 +58,17 @@ class UserStateService {
               .single();
 
       print('Loaded user profile: $response');
-      print('Quizzes data from response: ${response['quizzes']}');
+      print('Modules data from response: ${response['modules']}');
       _userProfile = response;
 
-      // Update current user with quizzes data
+      // Update current user with modules data
       if (_supabaseUser != null) {
-        print('Creating user with quizzes data: ${response['quizzes']}');
+        print('Creating user with modules data: ${response['modules']}');
         _currentUser = User.fromSupabaseUser(
           _supabaseUser!,
-          quizzes: response['quizzes'],
+          modules: response['modules'],
         );
-        print('Updated current user quizzes: ${_currentUser?.quizzes}');
+        print('Updated current user modules: ${_currentUser?.modules}');
       }
     } catch (e) {
       print('Error loading user profile: $e');
@@ -102,7 +102,8 @@ class UserStateService {
   }
 
   Future<void> saveQuizProgress({
-    required int quizId,
+    required String moduleId,
+    required String quizType, // 'preQuiz' or 'postQuiz'
     required int totalQuestions,
     required int correctAnswers,
     required double scorePercentage,
@@ -114,18 +115,23 @@ class UserStateService {
     }
 
     try {
-      // Get current user's quizzes data
+      // Get current user's modules data
       final response =
           await SupabaseConfig.client
               .from('Users')
-              .select('quizzes')
+              .select('modules')
               .eq('id', _userId!)
               .single();
 
-      Map<String, dynamic> quizzes = response['quizzes'] ?? {};
+      Map<String, dynamic> modules = response['modules'] ?? {};
+
+      // Initialize module if it doesn't exist
+      if (!modules.containsKey(moduleId)) {
+        modules[moduleId] = {};
+      }
 
       // Add or update the quiz data
-      quizzes[quizId.toString()] = {
+      modules[moduleId][quizType] = {
         'score': scorePercentage,
         'answers': userAnswers,
         'completed_at': DateTime.now().toIso8601String(),
@@ -134,10 +140,10 @@ class UserStateService {
         'spent': false, // Initialize spent flag as false
       };
 
-      // Update the quizzes data in the database
+      // Update the modules data in the database
       await SupabaseConfig.client
           .from('Users')
-          .update({'quizzes': quizzes})
+          .update({'modules': modules})
           .eq('id', _userId!);
 
       // Update local user state

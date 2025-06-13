@@ -1,7 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:safe_scales/config/supabase_config.dart';
-import 'package:crypto/crypto.dart';
-import 'dart:convert';
 import 'package:safe_scales/services/user_state_service.dart';
 
 class AuthService {
@@ -26,7 +24,7 @@ class AuthService {
           'id': authResponse.user!.id,
           'Username': username,
           'Email': email,
-          'password': hashPassword(password),
+          'password': password, // Store plain password
         });
 
         // Set the current user in UserStateService
@@ -42,45 +40,59 @@ class AuthService {
 
   Future<bool> signIn({required String email, required String password}) async {
     try {
-      // Get user from Users table
-      final response =
-          await supabaseClient
-              .from('Users')
-              .select()
-              .eq('Email', email)
-              .single();
+      print('Attempting sign in with email: $email');
 
-      // Hash the provided password
-      final hashedPassword = hashPassword(password);
+      // Get all users with matching email
+      final response = await supabaseClient
+          .from('Users')
+          .select()
+          .eq('Email', email);
 
-      print('Input hashed password: $hashedPassword');
-      print('Stored password: ${response['password']}');
+      print('Database response: $response');
 
-      // Compare passwords
-      if (response['password'] != hashedPassword) {
-        print('Passwords do not match');
+      if (response == null || response.isEmpty) {
+        print('No user found with email: $email');
         return false;
       }
 
-      print('Passwords match!');
+      // Check all matching users for password match
+      for (var user in response) {
+        print('Checking user: ${user['Username']}');
+        print('Stored email: ${user['Email']}');
+        print('Stored password: ${user['password']}');
+        print('Input password: $password');
+        print('Password comparison result: ${user['password'] == password}');
 
-      // Create a simple user object with the necessary data
-      final user = supabase.User(
-        id: response['id'],
-        email: response['Email'],
-        createdAt: response['created_at'],
-        appMetadata: {},
-        userMetadata: {},
-        aud: 'authenticated',
-        role: 'authenticated',
-      );
+        if (user['password'] == password) {
+          print('Password match found for user: ${user['Username']}');
 
-      // Set the current user in UserStateService
-      _userState.setUser(user);
-      _userState.setUserProfile(response);
-      return true;
+          // Create a simple user object with the necessary data
+          final supabaseUser = supabase.User(
+            id: user['id'],
+            email: user['Email'],
+            createdAt: user['created_at'],
+            appMetadata: {},
+            userMetadata: {},
+            aud: 'authenticated',
+            role: 'authenticated',
+          );
+
+          print('Created user object: ${supabaseUser.toJson()}');
+
+          // Set the current user in UserStateService
+          _userState.setUser(supabaseUser);
+          _userState.setUserProfile(user);
+          print('User state updated successfully');
+          return true;
+        }
+      }
+
+      print('No matching password found for any user with email: $email');
+      return false;
     } catch (e) {
       print('Error signing in: $e');
+      print('Error type: ${e.runtimeType}');
+      print('Error details: $e');
       // Clear any existing user state on error
       _userState.setUser(null);
       _userState.setUserProfile(null);
@@ -94,10 +106,4 @@ class AuthService {
   }
 
   supabase.User? get currentUser => _userState.supabaseUser;
-
-  String hashPassword(String password) {
-    final bytes = utf8.encode(password);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
-  }
 }

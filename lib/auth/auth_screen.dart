@@ -140,7 +140,8 @@ class _AuthScreenState extends State<AuthScreen> {
                 // Add back button at the top
                 // Not using app bar, so that the linear gradient takes up whole screen
                 // More aesthetic
-                Align(
+                _authService.currentUser == null
+                    ? Align(
                   alignment: Alignment.topLeft,
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -149,7 +150,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ),
-                ),
+                )
+                    : SizedBox.shrink(),
 
                 Center(
                   child: SingleChildScrollView(
