@@ -5,6 +5,8 @@ import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 
+import '../components/progress_bar.dart';
+
 class ReadingActivityScreen extends StatefulWidget {
   final String topic;
   final String? moduleId;
@@ -16,8 +18,7 @@ class ReadingActivityScreen extends StatefulWidget {
   State<ReadingActivityScreen> createState() => _ReadingActivityScreenState();
 }
 
-class _ReadingActivityScreenState extends State<ReadingActivityScreen>
-    with TickerProviderStateMixin {
+class _ReadingActivityScreenState extends State<ReadingActivityScreen> with TickerProviderStateMixin {
   final ClassService _classService = ClassService(SupabaseConfig.client);
   final UserStateService _userState = UserStateService();
 
@@ -153,6 +154,47 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
     }
   }
 
+  Container _buildNavigationBar() {
+
+    ThemeData theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          TextButton.icon(
+            onPressed:
+            _currentSlideIndex > 0 ? _previousSlide : null,
+            icon: const Icon(Icons.arrow_back_ios_rounded),
+            label: Text('Previous'.toUpperCase()),
+          ),
+          TextButton.icon(
+            iconAlignment: IconAlignment.end,
+            onPressed: _nextSlide,
+            label: Text(
+              _currentSlideIndex < _slides.length - 1
+                  ? 'Next'.toUpperCase()
+                  : 'Complete'.toUpperCase(),
+            ),
+            icon: Icon(Icons.arrow_forward_ios_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+
+
   void _toggleBookmark() {
     setState(() {
       if (_bookmarkedPages.contains(_currentSlideIndex)) {
@@ -192,7 +234,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
               color: Theme.of(context).colorScheme.primary,
             ),
             title: Text(
-              _slides[index]['headline'] ?? 'Page ${index + 1}',
+              'P${index + 1}: ${_slides[index]['headline'] ?? 'Page ${index + 1}'}',
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight:
@@ -290,41 +332,14 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
               : Column(
                 children: [
                   // Progress bar
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        LinearProgressIndicator(
-                          value: progress,
-                          backgroundColor: theme.colorScheme.primaryContainer,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            theme.colorScheme.primary,
-                          ),
-                          minHeight: 10,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-
-                        const SizedBox(height: 10),
-                        Text(
-                          '${(_currentSlideIndex + 1)} of ${_slides.length} pages',
-                          style: theme.textTheme.labelSmall,
-                        ),
-                      ],
-                    ),
+                  ProgressBar(
+                    progress: progress,
+                    currentSlideIndex: _currentSlideIndex,
+                    slideLength: _slides.length,
+                    slideName: 'page',
                   ),
+
+
                   // Main content
                   Expanded(
                     child:
@@ -337,41 +352,11 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
                               child: _buildPageContent(),
                             ),
                   ),
+
+
+
                   // Navigation controls
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, -2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        TextButton.icon(
-                          onPressed:
-                              _currentSlideIndex > 0 ? _previousSlide : null,
-                          icon: const Icon(Icons.arrow_back_ios_rounded),
-                          label: Text('Previous'.toUpperCase()),
-                        ),
-                        TextButton.icon(
-                            iconAlignment: IconAlignment.end,
-                            onPressed: _nextSlide,
-                            label: Text(
-                              _currentSlideIndex < _slides.length - 1
-                                  ? 'Next'.toUpperCase()
-                                  : 'Complete'.toUpperCase(),
-                            ),
-                          icon: Icon(Icons.arrow_forward_ios_rounded),
-                        ),
-                      ],
-                    ),
-                  ),
+                  _buildNavigationBar(),
 
                   SizedBox(height: 15,)
                 ],
@@ -379,3 +364,4 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
     );
   }
 }
+
