@@ -9,6 +9,7 @@ import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 
+import '../components/progress_bar.dart';
 import '../question/question_widget.dart';
 
 class PreQuizScreen extends StatefulWidget {
@@ -114,6 +115,65 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
     return true;
   }
 
+
+  void _nextQuestion() {
+    if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
+      setState(() {
+        currentQuestionIndex++;
+      });
+    } else {
+      _finishPreQuiz();
+    }
+  }
+
+  void _previousQuestion() {
+    if (currentQuestionIndex > 0) {
+      setState(() {
+        currentQuestionIndex--;
+      });
+    }
+  }
+
+  Container _buildNavigationBar() {
+
+    ThemeData theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          TextButton.icon(
+            onPressed: currentQuestionIndex > 0 ? _previousQuestion : null,
+            icon: const Icon(Icons.arrow_back_ios_rounded),
+            label: const Text('Previous'),
+          ),
+
+          TextButton.icon(
+            iconAlignment: IconAlignment.end,
+            onPressed: userAnswers[currentQuestionIndex].isNotEmpty ? _nextQuestion : null,
+            label: Text(
+              currentQuestionIndex == widget.questionSet.questions.length - 1
+                  ? 'Complete'
+                  : 'Next',
+            ),
+            icon: Icon(Icons.arrow_forward_ios_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
@@ -192,26 +252,23 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
       );
     }
 
+    final progress = (currentQuestionIndex + 1) / widget.questionSet.questions.length;
+
     return Scaffold(
       appBar: appBar,
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-        child: Column(
+      body: Column(
           children: [
-            LinearProgressIndicator(
-              value:
-                  (currentQuestionIndex + 1) /
-                  widget.questionSet.questions.length,
-              backgroundColor: theme.colorScheme.primaryContainer,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                theme.colorScheme.primary,
-              ),
-              minHeight: 15,
-              borderRadius: BorderRadius.circular(10),
+
+            ProgressBar(
+              progress: progress,
+              currentSlideIndex: currentQuestionIndex,
+              slideLength: widget.questionSet.questions.length,
+              slideName: 'questions',
             ),
+
             Expanded(
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                 child: QuestionWidget(
                   question: widget.questionSet.questions[currentQuestionIndex],
                   selectedAnswers: userAnswers[currentQuestionIndex],
@@ -228,67 +285,12 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  if (currentQuestionIndex > 0)
-                    IconButton(
-                      onPressed: () {
-                        print('Moving to previous question');
-                        setState(() {
-                          currentQuestionIndex--;
-                        });
-                      },
-                      iconSize: 30,
-                      icon: Icon(Icons.arrow_back_ios_rounded),
-                    ),
-                  Spacer(),
-                  if (currentQuestionIndex ==
-                      widget.questionSet.questions.length - 1)
-                    TextButton(
-                      onPressed:
-                          userAnswers[currentQuestionIndex].isNotEmpty
-                              ? () {
-                                print('Submit button pressed on last question');
-                                print('Current answers: $userAnswers');
-                                _finishPreQuiz();
-                              }
-                              : null,
-                      child: Text(
-                        'Submit'.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: theme.textTheme.bodyLarge?.fontSize,
-                        ),
-                      ),
-                    )
-                  else
-                    IconButton(
-                      onPressed:
-                          userAnswers[currentQuestionIndex].isNotEmpty
-                              ? () {
-                                print('Moving to next question');
-                                setState(() {
-                                  currentQuestionIndex++;
-                                });
-                              }
-                              : null,
-                      iconSize: 30,
-                      icon: Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        color:
-                            userAnswers[currentQuestionIndex].isEmpty
-                                ? theme.colorScheme.onSurfaceVariant
-                                : theme.colorScheme.primary,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            SizedBox(height: 10),
+
+            _buildNavigationBar(),
+
+            SizedBox(height: 15),
           ],
         ),
-      ),
     );
   }
 }
