@@ -261,6 +261,25 @@ class _PostQuizScreenState extends State<PostQuizScreen> with TickerProviderStat
     );
   }
 
+  Expanded _buildQuestionContent() {
+    return Expanded(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+        child: QuestionWidget(
+          question: widget.questionSet.questions[currentQuestionIndex],
+          selectedAnswers: userAnswers[currentQuestionIndex],
+          onAnswerChanged: (answers) {
+            setState(() {
+              userAnswers[currentQuestionIndex] = answers;
+            });
+          },
+          showCorrectAnswer: widget.questionSet.showCorrectAnswers,
+          showExplanation: widget.questionSet.showExplanations,
+        ),
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -393,25 +412,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> with TickerProviderStat
           ],
         ),
     );
-  }
-
-  Expanded _buildQuestionContent() {
-    return Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-              child: QuestionWidget(
-                question: widget.questionSet.questions[currentQuestionIndex],
-                selectedAnswers: userAnswers[currentQuestionIndex],
-                onAnswerChanged: (answers) {
-                  setState(() {
-                    userAnswers[currentQuestionIndex] = answers;
-                  });
-                },
-                showCorrectAnswer: widget.questionSet.showCorrectAnswers,
-                showExplanation: widget.questionSet.showExplanations,
-              ),
-            ),
-          );
   }
 
 
