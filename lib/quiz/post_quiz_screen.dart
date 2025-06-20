@@ -11,6 +11,7 @@ import 'package:safe_scales/quiz/post_quiz_results_screen.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/services/user_state_service.dart';
+import 'package:safe_scales/themes/app_theme.dart';
 
 import '../components/progress_bar.dart';
 import '../question/question_widget.dart';
@@ -175,6 +176,67 @@ class _PostQuizScreenState extends State<PostQuizScreen> with TickerProviderStat
     }
   }
 
+  bool _hasUserAnsweredAllQuestions() {
+    bool allAnswered = true;
+    for (List<int> questionAnswers in userAnswers) {
+      if (questionAnswers.isEmpty) {
+        allAnswered = false;
+        break;
+      }
+    }
+
+    return allAnswered;
+  }
+
+  bool _isLastQuestion() {
+    return currentQuestionIndex == widget.questionSet.questions.length - 1;
+  }
+
+  void _showIncompleteDialog() {
+
+    ThemeData theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Incomplete Quiz'),
+          backgroundColor: theme.colorScheme.surfaceDim,
+          content: RichText(
+            text: TextSpan(
+              style: theme.textTheme.bodyMedium, // Inherit default text style
+              children: [
+                TextSpan(text: 'Please answer all questions before submitting the quiz.\n\nYou can check the table of contents  '),
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: Icon(
+                    FontAwesomeIcons.list,
+                    size: theme.textTheme.bodyLarge?.fontSize,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                TextSpan(text: '  to see all questions'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                  'OK',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Container _buildNavigationBar() {
 
     ThemeData theme = Theme.of(context);
@@ -202,9 +264,9 @@ class _PostQuizScreenState extends State<PostQuizScreen> with TickerProviderStat
 
           TextButton.icon(
             iconAlignment: IconAlignment.end,
-            onPressed: userAnswers[currentQuestionIndex].isNotEmpty ? _nextQuestion : null,
+            onPressed: _isLastQuestion() && !_hasUserAnsweredAllQuestions() ? _showIncompleteDialog: _nextQuestion,
             label: Text(
-              currentQuestionIndex == widget.questionSet.questions.length - 1
+              _isLastQuestion()
                   ? 'Complete'
                   : 'Next',
             ),
@@ -253,6 +315,10 @@ class _PostQuizScreenState extends State<PostQuizScreen> with TickerProviderStat
                     ? FontWeight.bold
                     : FontWeight.normal,
               ),
+            ),
+            trailing: Icon(
+              userAnswers[index].isNotEmpty ? FontAwesomeIcons.solidCircleCheck : FontAwesomeIcons.circle,
+              color: Theme.of(context).colorScheme.green,
             ),
             onTap: () => _jumpToPage(index),
           );
