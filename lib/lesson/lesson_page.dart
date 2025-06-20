@@ -329,10 +329,11 @@ class _LessonPageState extends State<LessonPage> {
                               color: theme.colorScheme.primary,
                               isCompleted: preQuizCompleted,
                               score: preQuizScore,
+                              isUnlocked: true,
                             ),
                             const SizedBox(height: 20),
                           ],
-                          _buildReadingCard(),
+                          _buildReadingCard(isUnlocked: preQuizCompleted),
                           if (_postQuiz != null) ...[
                             const SizedBox(height: 20),
                             _buildQuizCard(
@@ -343,6 +344,7 @@ class _LessonPageState extends State<LessonPage> {
                               color: theme.colorScheme.primary,
                               isCompleted: postQuizCompleted,
                               score: postQuizScore,
+                              isUnlocked: readingCompleted,
                             ),
                           ],
                         ],
@@ -361,6 +363,7 @@ class _LessonPageState extends State<LessonPage> {
     required IconData icon,
     required Color color,
     required bool isCompleted,
+    required bool isUnlocked,
     double? score,
   }) {
     ThemeData theme = Theme.of(context);
@@ -444,11 +447,19 @@ class _LessonPageState extends State<LessonPage> {
                   ),
                 ),
                 const SizedBox(width: 15),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 15,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
+                if (!isUnlocked)
+                  Image.asset(
+                    'assets/images/other/lock.png',
+                    width: 50,
+                    height: 50,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  )
+                else
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 15,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
               ],
             ),
           ),
@@ -457,7 +468,9 @@ class _LessonPageState extends State<LessonPage> {
     );
   }
 
-  Widget _buildReadingCard() {
+  Widget _buildReadingCard({
+    required bool isUnlocked,
+  }) {
     ThemeData theme = Theme.of(context);
     final Color cardBg = theme.colorScheme.surface;
     final Color textColor = theme.colorScheme.onSurface;
@@ -510,7 +523,21 @@ class _LessonPageState extends State<LessonPage> {
                       }
                     });
                   }
-                  : null,
+                  : () {
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Please complete the Pre-Quiz activity first',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onInverseSurface,
+                        ),
+                      ),
+                      backgroundColor: Theme.of(context).colorScheme.inverseSurface,
+                    ),
+                  );
+                  return;
+              },
           borderRadius: BorderRadius.circular(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -554,14 +581,14 @@ class _LessonPageState extends State<LessonPage> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  if (!preQuizCompleted)
+                  if (!isUnlocked)
                     Image.asset(
                       'assets/images/other/lock.png',
                       width: 50,
                       height: 50,
                       color: textColor.withValues(alpha: 0.5),
                     )
-                  else if (!readingCompleted)
+                  else
                     Icon(
                       Icons.arrow_forward_ios,
                       size: 15,
@@ -598,7 +625,7 @@ class _LessonPageState extends State<LessonPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Please complete the reading activity first',
+            'Please complete the Reading activity first',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onInverseSurface,
             ),
