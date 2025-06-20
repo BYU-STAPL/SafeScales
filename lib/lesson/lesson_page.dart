@@ -395,6 +395,21 @@ class _LessonPageState extends State<LessonPage> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
+          // TODO: Should we lock the pre-quiz after completing?, Leave open for testing for now
+          /*
+          ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'You've already completed the Pre-quiz',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onInverseSurface,
+            ),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
+        ),
+      );
+      return;
+           */
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
