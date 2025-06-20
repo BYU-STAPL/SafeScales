@@ -289,6 +289,7 @@ class _LessonPageState extends State<LessonPage> {
           _isLoading
               ? const Center(child: CircularProgressIndicator())
               : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Dragon image container
                   Container(
@@ -302,10 +303,19 @@ class _LessonPageState extends State<LessonPage> {
                     ),
                     child: Center(child: _getDragonPhaseIcon(topicProgress)),
                   ),
+
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
+                    child: Text(
+                      'Lesson Activities',
+                      style: theme.textTheme.headlineSmall,
+                    ),
+                  ),
+
                   // Existing content
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -320,11 +330,11 @@ class _LessonPageState extends State<LessonPage> {
                               isCompleted: preQuizCompleted,
                               score: preQuizScore,
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 20),
                           ],
                           _buildReadingCard(),
                           if (_postQuiz != null) ...[
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 20),
                             _buildQuizCard(
                               title: 'Post-Quiz',
                               description: 'Test what you\'ve learned',
