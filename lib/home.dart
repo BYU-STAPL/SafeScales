@@ -627,63 +627,6 @@ class _HomePageState extends State<HomePage> {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.labelMedium,
               ),
-              // const SizedBox(height: 8),
-              // Row(
-              //   mainAxisAlignment: MainAxisAlignment.center,
-              //   children: [
-              //     if (hasPreQuiz)
-              //       Container(
-              //         padding: const EdgeInsets.symmetric(
-              //           horizontal: 8,
-              //           vertical: 4,
-              //         ),
-              //         decoration: BoxDecoration(
-              //           color: primary.withValues(alpha: 0.1),
-              //           borderRadius: BorderRadius.circular(12),
-              //         ),
-              //         child: Row(
-              //           mainAxisSize: MainAxisSize.min,
-              //           children: [
-              //             Icon(Icons.quiz, size: 16, color: primary),
-              //             const SizedBox(width: 4),
-              //             Text(
-              //               'Pre-Quiz',
-              //               style: GoogleFonts.poppins(
-              //                 fontSize: 12 * AppTheme.fontSizeScale,
-              //                 color: primary,
-              //               ),
-              //             ),
-              //           ],
-              //         ),
-              //       ),
-              //     if (hasPreQuiz && hasPostQuiz) const SizedBox(width: 8),
-              //     if (hasPostQuiz)
-              //       Container(
-              //         padding: const EdgeInsets.symmetric(
-              //           horizontal: 8,
-              //           vertical: 4,
-              //         ),
-              //         decoration: BoxDecoration(
-              //           color: primary.withValues(alpha: 0.1),
-              //           borderRadius: BorderRadius.circular(12),
-              //         ),
-              //         child: Row(
-              //           mainAxisSize: MainAxisSize.min,
-              //           children: [
-              //             Icon(Icons.assignment, size: 16, color: primary),
-              //             const SizedBox(width: 4),
-              //             Text(
-              //               'Post-Quiz',
-              //               style: GoogleFonts.poppins(
-              //                 fontSize: 12 * AppTheme.fontSizeScale,
-              //                 color: primary,
-              //               ),
-              //             ),
-              //           ],
-              //         ),
-              //       ),
-              //   ],
-              // ),
             ],
             const SizedBox(height: 16),
             // Semi-circular progress bar with icon

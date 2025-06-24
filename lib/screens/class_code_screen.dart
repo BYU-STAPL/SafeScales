@@ -94,11 +94,11 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                 ),
               );
 
-              // Navigate to main navigation
-              Navigator.of(context).pushReplacement(
+              Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
                   builder: (context) => MainNavigation(initialIndex: 0),
                 ),
+                    (route) => false, // Remove all previous routes
               );
             }
             return;
@@ -164,10 +164,11 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
           );
 
           // Navigate to main navigation
-          Navigator.of(context).pushReplacement(
+          Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
               builder: (context) => MainNavigation(initialIndex: 0),
             ),
+                (route) => false, // Remove all previous routes
           );
         }
       } catch (e) {
@@ -191,14 +192,14 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
     ThemeData theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
+      // appBar: AppBar(
+      //   backgroundColor: Colors.transparent,
+      //   elevation: 0,
+      //   leading: IconButton(
+      //     icon: const Icon(Icons.arrow_back),
+      //     onPressed: () => Navigator.of(context).pop(),
+      //   ),
+      // ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -211,94 +212,111 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Card(
-                color: theme.colorScheme.surfaceContainer,
-                elevation: 8,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
+          child: Stack(
+            children: [
+              // Add back button at the top
+              // Not using app bar, so that the linear gradient takes up whole screen, more aesthetic
+              Align(
+                alignment: Alignment.topLeft,
                 child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+              ),
+
+              Center(
+                child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Join a Class',
-                          style: theme.textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: 25),
-                        TextFormField(
-                          controller: _classCodeController,
-                          decoration: InputDecoration(
-                            labelText: 'Class Code',
-                            prefixIcon: Icon(
-                              Icons.class_,
-                              size: 25 * AppTheme.fontSizeScale,
+                  child: Card(
+                    color: theme.colorScheme.surfaceContainer,
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Join a Class',
+                              style: theme.textTheme.headlineMedium,
                             ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter the class code';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _usernameController,
-                          decoration: InputDecoration(
-                            labelText: 'Username',
-                            prefixIcon: Icon(
-                              Icons.person,
-                              size: 24 * AppTheme.fontSizeScale,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter a username';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: isLoading ? null : _submitForm,
-                            style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                            const SizedBox(height: 25),
+                            TextFormField(
+                              controller: _classCodeController,
+                              decoration: InputDecoration(
+                                labelText: 'Class Code',
+                                prefixIcon: Icon(
+                                  Icons.class_,
+                                  size: 25 * AppTheme.fontSizeScale,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter the class code';
+                                }
+                                return null;
+                              },
                             ),
-                            child:
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _usernameController,
+                              decoration: InputDecoration(
+                                labelText: 'Username',
+                                prefixIcon: Icon(
+                                  Icons.person,
+                                  size: 24 * AppTheme.fontSizeScale,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter a username';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: ElevatedButton(
+                                onPressed: isLoading ? null : _submitForm,
+                                style: ElevatedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child:
                                 isLoading
                                     ? const CircularProgressIndicator()
                                     : Text(
-                                      'Join Class',
-                                      style: TextStyle(
-                                        fontSize: 16 * AppTheme.fontSizeScale,
-                                      ),
-                                    ),
-                          ),
+                                  'Join Class',
+                                  style: TextStyle(
+                                    fontSize: 16 * AppTheme.fontSizeScale,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),
