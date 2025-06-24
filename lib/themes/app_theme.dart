@@ -217,7 +217,9 @@ extension CustomColorScheme on ColorScheme {
 
   // If you need direct access to specific color variants
   Color get green => AppColors.green;
+  Color get paleGreen => AppColors.paleGreen;
   Color get red => AppColors.red;
+  Color get paleRed => AppColors.paleRed;
   Color get orange => AppColors.orange;
 }
 

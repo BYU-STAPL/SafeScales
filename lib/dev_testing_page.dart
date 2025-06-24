@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:safe_scales/pre_quiz/pre_quiz_screen.dart';
 import 'package:safe_scales/question/question.dart';
 import 'package:safe_scales/quiz/post_quiz_screen.dart';
+import 'package:safe_scales/review/review_screen.dart';
 
 // ##################################################
 /*
@@ -62,11 +63,20 @@ class _DevTestingPageState extends State<DevTestingPage> {
     );
 
     QuestionSet questionSet2 = QuestionSet(
-      id: "qset1",
+      id: "qset2",
       title: "Test Post Quiz",
       description: "This is a post-test",
       activityType: ActivityType.postQuiz,
       subject: "test subject",
+      questions: [singleQ, singleQ2, multipleQ,],
+    );
+
+    QuestionSet questionSet3 = QuestionSet(
+      id: "qset3",
+      title: "Review",
+      description: "This is a review set",
+      activityType: ActivityType.review,
+      subject: "review subject",
       questions: [singleQ, singleQ2, multipleQ,],
     );
 
@@ -101,6 +111,21 @@ class _DevTestingPageState extends State<DevTestingPage> {
                 );
               },
               child: Text("Testing Post-quiz"),
+            ),
+
+            SizedBox(height: 50),
+
+
+            ElevatedButton(
+              onPressed: (){
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => ReviewScreen(questionSet: questionSet3)
+                  ),
+                );
+              },
+              child: Text("Testing Review set"),
             ),
           ],
         ),
