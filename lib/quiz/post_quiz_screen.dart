@@ -308,13 +308,9 @@ class _PostQuizScreenState extends State<PostQuizScreen> with TickerProviderStat
             // ),
             title: Text(
               'Q${index + 1}: ${widget.questionSet.questions[index].questionText}',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight:
-                index == currentQuestionIndex
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-              ),
+              style: index == currentQuestionIndex
+                  ? Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 18,)
+                  : Theme.of(context).textTheme.bodyMedium,
             ),
             trailing: Icon(
               userAnswers[index].isNotEmpty ? FontAwesomeIcons.solidCircleCheck : FontAwesomeIcons.circle,

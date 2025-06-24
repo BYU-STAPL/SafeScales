@@ -235,13 +235,9 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
             ),
             title: Text(
               'P${index + 1}: ${_slides[index]['headline'] ?? 'Page ${index + 1}'}',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight:
-                    index == _currentSlideIndex
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-              ),
+              style: index == _currentSlideIndex
+                  ? Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 18,)
+                  : Theme.of(context).textTheme.bodyMedium,
             ),
             onTap: () => _jumpToPage(index),
           );

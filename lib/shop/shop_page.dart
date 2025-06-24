@@ -318,9 +318,7 @@ class _ShopPageState extends State<ShopPage> {
                   // Subtitle
                   Text(
                     'Buy new accessories and environments for your dragons! Earn coins by playing and reviewing.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16 * AppTheme.fontSizeScale,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    style: theme.textTheme.labelMedium?.copyWith(
                       height: 1.4,
                     ),
                   ),
