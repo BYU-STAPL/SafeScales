@@ -101,16 +101,13 @@ class PostQuizActionsScreen extends StatelessWidget {
 
         SizedBox(height: 20),
 
+        //TODO: Implement these buttons
         score >= 50 ? ElevatedButton(
-            onPressed: () {
-              //TODO: Implement
-            },
+            onPressed: null,
             child: Text("Retake Quiz".toUpperCase())
         )
             : ElevatedButton(
-            onPressed: () {
-              //TODO: Implement
-            },
+            onPressed: null,
             child: Text("Re-read".toUpperCase())
         ),
 
@@ -134,6 +131,7 @@ class PostQuizActionsScreen extends StatelessWidget {
           child: Column(
             children: [
 
+              // TODO: Implement Retake Button then enter back in
               score >= passingScore ? _buildDragonAction(context) : _buildSuggestedAction(context),
 
               Spacer(),

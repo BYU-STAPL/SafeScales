@@ -329,7 +329,7 @@ class _LessonPageState extends State<LessonPage> {
                               color: theme.colorScheme.primary,
                               isCompleted: preQuizCompleted,
                               score: preQuizScore,
-                              isUnlocked: true,
+                              isUnlocked: !preQuizCompleted, // Only unlock when the pre-quiz is not completed, lock after
                             ),
                             const SizedBox(height: 20),
                           ],
@@ -635,7 +635,23 @@ class _LessonPageState extends State<LessonPage> {
       return;
     }
 
-    // Check if post-quiz is being attempted before reading is completed
+    // Check if pre-quiz has already been completed
+    if (quiz.activityType == ActivityType.preQuiz && preQuizCompleted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Pre-Quiz has already been completed',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onInverseSurface,
+            ),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
+        ),
+      );
+      return;
+    }
+
+      // Check if post-quiz is being attempted before reading is completed
     if (quiz.activityType == ActivityType.postQuiz && !readingCompleted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -666,7 +682,7 @@ class _LessonPageState extends State<LessonPage> {
         setState(() {
           if (quiz.activityType == ActivityType.preQuiz) {
             preQuizCompleted = true;
-          } else if (quiz.activityType == ActivityType.postQuiz) {
+          } else if (quiz.activityType == ActivityType.postQuiz && postQuizScore! >= _postQuiz!.passingScore) {
             postQuizCompleted = true;
           }
         });
