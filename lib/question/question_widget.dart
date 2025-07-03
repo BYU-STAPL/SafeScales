@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/question/question.dart';
 
-class QuestionWidget extends StatelessWidget {
+class QuestionWidget extends StatefulWidget {
   final Question question;
   final List<int> selectedAnswers;
   final Function(List<int>) onAnswerChanged;
   final bool showCorrectAnswer;
   final bool showExplanation;
-  final bool isDisabled;
+  final bool isResponseLocked;
 
   const QuestionWidget({
     Key? key,
@@ -15,15 +15,24 @@ class QuestionWidget extends StatelessWidget {
     required this.selectedAnswers,
     required this.onAnswerChanged,
     required this.showCorrectAnswer,
+    required this.isResponseLocked,
     this.showExplanation = false,
-    this.isDisabled = false,
   }) : super(key: key);
+
+  @override
+  _QuestionWidgetState createState() => _QuestionWidgetState();
+
+}
+
+class _QuestionWidgetState extends State<QuestionWidget> {
 
   @override
   Widget build(BuildContext context) {
 
     ThemeData theme = Theme.of(context);
 
+    Question question = widget.question;
+    List<int> selectedAnswers = widget.selectedAnswers;
 
     Text instructionText = Text(
       'Choose one option:',
@@ -91,7 +100,7 @@ class QuestionWidget extends StatelessWidget {
           final isSelected = selectedAnswers.contains(index);
 
           return GestureDetector(
-            onTap: isDisabled ? null : () {
+            onTap: widget.isResponseLocked ? null : () {
               List<int> newAnswers = List.from(selectedAnswers);
 
               if (question.isMultipleChoice) {
@@ -104,7 +113,7 @@ class QuestionWidget extends StatelessWidget {
                 newAnswers = [index];
               }
 
-              onAnswerChanged(newAnswers);
+              widget.onAnswerChanged(newAnswers);
             },
             child: Container(
               margin: EdgeInsets.symmetric(vertical: 10),
@@ -113,7 +122,7 @@ class QuestionWidget extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 color: isSelected
                     ? theme.colorScheme.primaryContainer
-                    : isDisabled
+                    : widget.isResponseLocked
                     ? theme.colorScheme.surfaceDim
                     : null,
               ),
@@ -123,14 +132,14 @@ class QuestionWidget extends StatelessWidget {
                     question.isMultipleChoice
                         ? (isSelected ? Icons.check_box : Icons.check_box_outline_blank_rounded)
                         : (isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked),
-                    color: theme.colorScheme.primary, //isSelected ? theme.colorScheme.primary : theme.colorScheme.shadow,
+                    color: isSelected || !widget.isResponseLocked ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.4),
                   ),
                   SizedBox(width: 12),
                   Expanded(
                       child: Text(
                         option,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.primary,
+                            color: isSelected || !widget.isResponseLocked ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.4),
                           ),
                       ),
                   )
@@ -142,4 +151,6 @@ class QuestionWidget extends StatelessWidget {
       ],
     );
   }
+
+
 }

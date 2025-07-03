@@ -282,6 +282,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
                   },
                   showCorrectAnswer: widget.questionSet.showCorrectAnswers,
                   showExplanation: widget.questionSet.showExplanations,
+                  isResponseLocked: false,
                 ),
               ),
             ),
