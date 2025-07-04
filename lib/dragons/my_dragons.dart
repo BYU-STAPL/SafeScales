@@ -140,33 +140,34 @@ class _MyDragonsPageState extends State<MyDragonsPage> {
                               final String item = dragonData['favorite_item'] ?? 'Unknown';
                               final String environment = dragonData['preferred_environment'] ?? 'Unknown';
 
-                              return DragonIdCard(dragonImagePath: imageUrl,
-                                  species: speciesName,
-                                  name: 'Jack',
-                                  favoriteItem: item,
-                                  favoriteEnvironment: environment,
-                                  onTapPlayButton: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (context) =>
-                                            DragonDressUpPage(
-                                              dragonId: dragonId,
-                                              dragonData:
-                                              dragonData,
-                                              phases: phases,
-                                              parentState: this,
-                                            ),
-                                      ),
-                                    );
-                                  },
-                                  // TODO: Add backend to change dragon name
-                                  // onNameChanged: (newName) {
-                                  //   setState(() {
-                                  //     dragonName = newName;
-                                  //   });
-                                  // },
+                              return DragonIdCard(
+                                dragonImagePath: imageUrl,
+                                species: speciesName,
+                                name: 'Jack',
+                                favoriteItem: item,
+                                favoriteEnvironment: environment,
+                                onTapPlayButton: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) =>
+                                          DragonDressUpPage(
+                                            dragonId: dragonId,
+                                            dragonData:
+                                            dragonData,
+                                            phases: phases,
+                                            parentState: this,
+                                          ),
+                                    ),
+                                  );
+                                },
+                                // TODO: Add backend to change dragon name
+                                // onNameChanged: (newName) {
+                                //   setState(() {
+                                //     dragonName = newName;
+                                //   });
+                                // },
                               );
                             }).toList(),
                         ],
