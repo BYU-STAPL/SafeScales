@@ -372,7 +372,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 SizedBox(width: 15), // Add spacing between icon and text
                 Expanded(
                     child: Text(
-                        isCurrentQuestionCorrect ? 'Correct' : 'Incorrect',
+                        isCurrentQuestionCorrect ? 'Correct!' : 'Incorrect, try again.',
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: color,
                       ),

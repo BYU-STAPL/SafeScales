@@ -562,7 +562,7 @@ class _HomePageState extends State<HomePage> {
     final Color primary = theme.colorScheme.primary;
     final Color secondary = theme.colorScheme.secondary;
     final Color tertiary = theme.colorScheme.tertiary;
-    final Color cardBg = theme.colorScheme.surfaceContainerLowest;
+    final Color cardBg = theme.colorScheme.surfaceDim;
     final Color lockedBg = theme.colorScheme.surfaceContainerHigh;
     final Color textColor = theme.colorScheme.onSurface;
     final Color mutedTextColor = theme.colorScheme.onSurfaceVariant;
