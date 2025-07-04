@@ -1,0 +1,395 @@
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:safe_scales/extensions/string_extensions.dart';
+
+class DragonIdCard extends StatefulWidget {
+  final String dragonImagePath;
+  final String species;
+  final String name;
+  // final String length; not in use currently
+  // final String weight;
+  final String favoriteItem;
+  final String favoriteEnvironment;
+  final VoidCallback? onTapPlayButton;
+  final Function(String)? onNameChanged; // Add this callback
+
+
+  DragonIdCard({
+    Key? key,
+    required this.dragonImagePath,
+    required this.species,
+    required this.name,
+    // required this.length,
+    // required this.weight,
+    required this.favoriteItem,
+    required this.favoriteEnvironment,
+    this.onTapPlayButton,
+    this.onNameChanged,
+  }) : super(key: key);
+
+  @override
+  State<DragonIdCard> createState() => _DragonIdCardState();
+
+}
+
+class _DragonIdCardState extends State<DragonIdCard> {
+
+  void openEditNameDialog() {
+    // TODO: Add Backend to saving dragon name
+
+    final TextEditingController _controller = TextEditingController(text: widget.name);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Edit Name"),
+          content: TextField(
+            controller: _controller,
+            style: Theme.of(context).textTheme.bodyLarge,
+            decoration: InputDecoration(
+              hintText: 'Enter Dragon\'s name',
+              hintStyle: Theme.of(context).textTheme.labelLarge,
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // setState(() {
+                //   widget.name = _controller.text;
+                // });
+                widget.onNameChanged?.call(_controller.text);
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+
+    ThemeData theme = Theme.of(context);
+
+    return Container(
+        margin: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.surfaceDim.withValues(alpha: 0.9), // Darker royal blue
+              theme.colorScheme.surfaceDim, // Royal blue
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.shadow.withValues(alpha: 0.2),
+              blurRadius: 15,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            children: [
+              // Header with dragon image and name
+              Container(
+                padding: EdgeInsets.all(20),
+                child: Row(
+                  children: [
+
+                    // Dragon image
+                    Container(
+                      width: 140,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                          width: 2,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(13),
+                        child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          child: widget.dragonImagePath.startsWith('http')
+                              ? Image.network(
+                            widget.dragonImagePath,
+                            height: 180,
+                            fit: BoxFit.contain,
+                            errorBuilder:
+                                (
+                                context,
+                                error,
+                                stackTrace,
+                                ) => Icon(
+                              Icons.pets,
+                              size: 80,
+                              color: theme.primaryColor,
+                            ),
+                          )
+                              : Image.asset(
+                            widget.dragonImagePath,
+                            height: 180,
+                            fit: BoxFit.contain,
+                            errorBuilder:
+                                (
+                                context,
+                                error,
+                                stackTrace,
+                                ) => Icon(
+                              Icons.pets,
+                              size: 80,
+                              color: theme.primaryColor,
+                            ),
+                          ),
+                        )
+
+
+
+
+
+
+                        // Image.asset(
+                        //   widget.dragonImagePath,
+                        //   fit: BoxFit.cover,
+                        //   errorBuilder: (context, error, stackTrace) {
+                        //     return Container(
+                        //       color: Colors.white.withOpacity(0.1),
+                        //       child: Icon(
+                        //         Icons.pets,
+                        //         color: Colors.white,
+                        //         size: 40,
+                        //       ),
+                        //     );
+                        //   },
+                        // ),
+                      ),
+                    ),
+
+                    SizedBox(width: 20),
+
+                    // Name and species
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Name'.toTitleCase(),
+                            style: theme.textTheme.labelMedium,
+                          ),
+
+                          // SizedBox(height: 2),
+
+                          Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 10),
+                            child: Row(
+                              children: [
+                                Text(
+                                  widget.name,
+                                  style: theme.textTheme.headlineSmall,
+                                ),
+
+                                //TODO: Enable when dragon names can be saved
+                                // IconButton(
+                                //   onPressed: openEditNameDialog,
+                                //   icon: Icon(
+                                //     FontAwesomeIcons.pencil,
+                                //     size: 15,
+                                //   ),
+                                // ),
+                              ],
+                            )
+                          ),
+
+                          SizedBox(height: 7),
+
+                          Text(
+                            'Species'.toTitleCase(),
+                            style: theme.textTheme.labelMedium,
+                          ),
+
+                          SizedBox(height: 3),
+
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(
+                              widget.species,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Details section
+              Container(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
+                child: Column(
+                  children: [
+
+                    // Divider
+                    Container(
+                      height: 1.5,
+                      margin: EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Stats grid
+
+                    //TODO: Maybe delete the weight and length
+                    // Row(
+                    //   children: [
+                    //     Expanded(
+                    //       child: _buildStatItem(
+                    //         context: context,
+                    //         icon: Icons.straighten,
+                    //         label: 'Length',
+                    //         value: widget.length,
+                    //       ),
+                    //     ),
+                    //     SizedBox(width: 16),
+                    //     Expanded(
+                    //       child: _buildStatItem(
+                    //         context: context,
+                    //         icon: Icons.monitor_weight,
+                    //         label: 'Weight',
+                    //         value: widget.weight,
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
+                    //
+                    // SizedBox(height: 16),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatItem(
+                            context: context,
+                            icon: Icons.favorite,
+                            label: 'Favorite Item',
+                            value: widget.favoriteItem,
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: _buildStatItem(
+                            context: context,
+                            icon: Icons.landscape,
+                            label: 'Environment',
+                            value: widget.favoriteEnvironment,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+
+              // Play Button
+              Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                child: ElevatedButton(
+                    onPressed: widget.onTapPlayButton,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(FontAwesomeIcons.gamepad),
+
+                        SizedBox(width: 20,),
+
+                        Text(
+                            'Play with Dragon'.toUpperCase()
+                        ),
+                      ],
+                    )
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+  }
+
+  Widget _buildStatItem({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+
+    ThemeData theme = Theme.of(context);
+
+
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1), //Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                color: theme.colorScheme.primary,
+                size: 15,
+              ),
+              SizedBox(width: 10),
+              Text(
+                label,
+                style: theme.textTheme.labelSmall,
+              ),
+            ],
+          ),
+          SizedBox(height: 6),
+          Text(
+            value,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontSize: 15,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
