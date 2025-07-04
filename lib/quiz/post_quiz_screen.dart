@@ -337,6 +337,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> with TickerProviderStat
           },
           showCorrectAnswer: widget.questionSet.showCorrectAnswers,
           showExplanation: widget.questionSet.showExplanations,
+          isResponseLocked: false,
         ),
       ),
     );

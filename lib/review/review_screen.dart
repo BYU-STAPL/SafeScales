@@ -29,6 +29,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
   bool showAnswerMessage = false;
   List<List<List<int>>> attempts = [];
 
+  bool isResponseLocked = false;
+
   @override
   void initState() {
     super.initState();
@@ -121,6 +123,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       setState(() {
         isCurrentQuestionCorrect = true;
         showAnswerMessage = true;
+        isResponseLocked = true;
       });
     }
     else {
@@ -128,6 +131,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       setState(() {
         isCurrentQuestionCorrect = false;
         showAnswerMessage = true;
+        isResponseLocked = false;
       });
     }
 
@@ -140,6 +144,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         currentQuestionIndex++;
         isCurrentQuestionCorrect = false;
         showAnswerMessage = false;
+        isResponseLocked = false;
       });
     } else {
       _finishReview();
@@ -277,7 +282,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    print('Starting pre-quiz...');
+                    print('Starting review set...');
                     _startReview();
                   },
                   child: Text(
@@ -329,6 +334,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 },
                 showCorrectAnswer: widget.questionSet.showCorrectAnswers,
                 showExplanation: widget.questionSet.showExplanations,
+                isResponseLocked: isResponseLocked,
               ),
             ),
           ),
@@ -366,7 +372,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 SizedBox(width: 15), // Add spacing between icon and text
                 Expanded(
                     child: Text(
-                        isCurrentQuestionCorrect ? 'Correct' : 'Incorrect',
+                        isCurrentQuestionCorrect ? 'Correct!' : 'Incorrect, try again.',
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: color,
                       ),
