@@ -25,16 +25,13 @@ class PostQuizScreen extends StatefulWidget {
   _PostQuizScreenState createState() => _PostQuizScreenState();
 }
 
-class _PostQuizScreenState extends State<PostQuizScreen> with TickerProviderStateMixin {
+class _PostQuizScreenState extends State<PostQuizScreen> {
 
   int currentQuestionIndex = 0;
   List<List<int>> userAnswers = [];
   bool isStarted = false;
   bool _showTableOfContents = false;
   final _userState = UserStateService();
-
-  late AnimationController _pageController;
-  late Animation<Offset> _slideAnimation;
 
   bool _isForward = true;
   bool _isFirstLoad = true;
@@ -44,21 +41,10 @@ class _PostQuizScreenState extends State<PostQuizScreen> with TickerProviderStat
   void initState() {
     super.initState();
     userAnswers = List.generate(widget.questionSet.questions.length, (_) => []);
-    _pageController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(1.0, 0.0),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _pageController, curve: Curves.easeInOut),
-    );
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
     super.dispose();
   }
 
@@ -151,11 +137,9 @@ class _PostQuizScreenState extends State<PostQuizScreen> with TickerProviderStat
         _isForward = true;
         _isFirstLoad = false;
       });
-      _pageController.forward(from: 0.0).then((_) {
         setState(() {
           currentQuestionIndex++;
         });
-      });
     } else {
       _finishPostQuiz();
     }
@@ -168,11 +152,9 @@ class _PostQuizScreenState extends State<PostQuizScreen> with TickerProviderStat
         _isFirstLoad = false;
       });
 
-      _pageController.forward(from: 0.0).then((_) {
         setState(() {
           currentQuestionIndex--;
         });
-      });
     }
   }
 
@@ -283,12 +265,10 @@ class _PostQuizScreenState extends State<PostQuizScreen> with TickerProviderStat
         _isForward = index > currentQuestionIndex;
         _isFirstLoad = false;
       });
-      _pageController.forward(from: 0.0).then((_) {
         setState(() {
           currentQuestionIndex = index;
           _showTableOfContents = false;
         });
-      });
     }
   }
 
@@ -464,7 +444,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> with TickerProviderStat
             Expanded(
                 child: _showTableOfContents ? _buildTableOfContents()
               : _isFirstLoad ? _buildQuestionContent()
-                    : SlideTransition(position: _slideAnimation, child: _buildQuestionContent(),)
+                : _buildQuestionContent(),
             ),
 
 
