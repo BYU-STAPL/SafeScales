@@ -27,8 +27,8 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
   bool _isLoading = true;
   bool _showTableOfContents = false;
   Set<int> _bookmarkedPages = {};
-  late AnimationController _pageController;
-  late Animation<Offset> _slideAnimation;
+  // late AnimationController _pageController;
+  // late Animation<Offset> _slideAnimation;
   bool _isForward = true;
   bool _isFirstLoad = true;
 
@@ -36,21 +36,21 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
   void initState() {
     super.initState();
     _loadSlides();
-    _pageController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(1.0, 0.0),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _pageController, curve: Curves.easeInOut),
-    );
+    // _pageController = AnimationController(
+    //   duration: const Duration(milliseconds: 300),
+    //   vsync: this,
+    // );
+    // _slideAnimation = Tween<Offset>(
+    //   begin: const Offset(1.0, 0.0),
+    //   end: Offset.zero,
+    // ).animate(
+    //   CurvedAnimation(parent: _pageController, curve: Curves.easeInOut),
+    // );
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    // _pageController.dispose();
     super.dispose();
   }
 
@@ -130,11 +130,11 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
         _isForward = true;
         _isFirstLoad = false;
       });
-      _pageController.forward(from: 0.0).then((_) {
+      // _pageController.forward(from: 0.0).then((_) {
         setState(() {
           _currentSlideIndex++;
         });
-      });
+      // });
     } else {
       _markAsCompleted();
     }
@@ -146,11 +146,11 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
         _isForward = false;
         _isFirstLoad = false;
       });
-      _pageController.forward(from: 0.0).then((_) {
+      // _pageController.forward(from: 0.0).then((_) {
         setState(() {
           _currentSlideIndex--;
         });
-      });
+      // });
     }
   }
 
@@ -211,12 +211,12 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
         _isForward = index > _currentSlideIndex;
         _isFirstLoad = false;
       });
-      _pageController.forward(from: 0.0).then((_) {
+      // _pageController.forward(from: 0.0).then((_) {
         setState(() {
           _currentSlideIndex = index;
           _showTableOfContents = false;
         });
-      });
+      // });
     }
   }
 
@@ -343,10 +343,12 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
                             ? _buildTableOfContents()
                             : _isFirstLoad
                             ? _buildPageContent()
-                            : SlideTransition(
-                              position: _slideAnimation,
-                              child: _buildPageContent(),
-                            ),
+                            : _buildPageContent(),
+
+                            // : SlideTransition(
+                            //   position: _slideAnimation,
+                            //   child: _buildPageContent(),
+                            // ),
                   ),
 
 
