@@ -48,7 +48,7 @@ class DragonService {
         'egg': 'assets/images/other/egg.png',
         'baby': 'assets/images/other/young.png',
         'teen': 'assets/images/other/teen.png',
-        'adult': 'assets/images/other/adult.png',
+        'final': 'assets/images/other/adult.png',
         'id': null,
         'preferred_environment': 'Unknown',
         'favorite_item': 'Unknown',
