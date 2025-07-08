@@ -488,10 +488,12 @@ class QuizService {
             // Calculate progress
             double progress = 0;
 
-
             bool isReadingComplete = moduleData['reading']['completed'];
-            bool isPreQuizComplete = moduleData['preQuiz']['completed_at'] != null;
-            bool isPostQuizComplete = moduleData['postQuiz']['completed_at'] != null && moduleData['postQuiz']['score'] > 80;
+            bool isPreQuizComplete =
+                moduleData['preQuiz']['completed_at'] != null;
+            bool isPostQuizComplete =
+                moduleData['postQuiz']['completed_at'] != null &&
+                moduleData['postQuiz']['score'] > 80;
 
             print("---------Calulate Progress---------");
             print(isReadingComplete);
@@ -499,17 +501,16 @@ class QuizService {
             print(isPostQuizComplete);
 
             if (isPreQuizComplete) {
-              progress += 1/3 * 100;
+              progress += 1 / 3 * 100;
             }
 
             if (isReadingComplete) {
-              progress += 1/3 * 100;
+              progress += 1 / 3 * 100;
             }
 
             if (isPostQuizComplete) {
-              progress += 1/3 * 100;
+              progress += 1 / 3 * 100;
             }
-
 
             // if (hasPreQuiz && hasPostQuiz) {
             //   progress = (preQuizScore / 2) + (postQuizScore / 2);

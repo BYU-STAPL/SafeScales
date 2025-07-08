@@ -263,6 +263,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    print('--- HomePage Build ---');
+    print('Modules:');
+    for (var m in _modules) print('  ' + (m['title'] ?? 'Untitled'));
+    print('Module Progress Map:');
+    _moduleProgress.forEach((k, v) => print('  $k: $v'));
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
     final cardBg = theme.colorScheme.surface;
@@ -492,9 +497,15 @@ class _HomePageState extends State<HomePage> {
                     final module = entry.value;
                     final isUnlocked =
                         index == 0 ||
-                        (_moduleProgress[_modules[index - 1]['id']] ?? 0) >=
-                            100;
+                        ((_moduleProgress[_modules[index - 1]['id']] ?? 0)
+                                .round() >=
+                            100);
                     final progress = _moduleProgress[module['id']] ?? 0.0;
+
+                    // Debug print for each module card
+                    print(
+                      '[ModuleCard] Title: ${module['title'] ?? 'Module ${index + 1}'} | Progress: $progress | isUnlocked: $isUnlocked | PrevProgress: ${index > 0 ? (_moduleProgress[_modules[index - 1]['id']] ?? 0) : 'N/A'}',
+                    );
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 30),
@@ -551,29 +562,27 @@ class _HomePageState extends State<HomePage> {
     required VoidCallback onTap,
     String? unlockRequirement,
   }) {
-    // Get actual progress for this module
     final actualProgress = _moduleProgress[moduleId] ?? 0.0;
-
-    // Check if this module should be unlocked
     final int currentIndex = _modules.indexOf(module);
     bool shouldBeUnlocked = false;
     String? newUnlockRequirement;
 
-    // Handle settings card specially
     if (moduleId == 'settings') {
       shouldBeUnlocked = false;
     } else if (currentIndex == 0) {
-      // First module is always unlocked
       shouldBeUnlocked = true;
     } else if (currentIndex > 0) {
-      // Check if previous module is completed
       final previousModule = _modules[currentIndex - 1];
       final previousProgress = _moduleProgress[previousModule['id']] ?? 0.0;
-      shouldBeUnlocked = previousProgress >= 100;
+      shouldBeUnlocked = previousProgress.round() >= 100;
       if (!shouldBeUnlocked) {
         newUnlockRequirement =
             'Complete ${previousModule['title'] ?? 'previous module'} (${previousProgress.toStringAsFixed(0)}%)';
       }
+      // Debug print for unlock logic
+      print(
+        '[BuildModuleCard] $title: actualProgress=$actualProgress, shouldBeUnlocked=$shouldBeUnlocked, previousProgress=$previousProgress',
+      );
     }
 
     ThemeData theme = Theme.of(context);

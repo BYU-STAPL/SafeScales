@@ -101,8 +101,19 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    _userState.setUser(null);
-    _userState.setUserProfile(null);
+    try {
+      // Sign out from Supabase
+      await supabaseClient.auth.signOut();
+
+      // Clear user state
+      _userState.setUser(null);
+      _userState.setUserProfile(null);
+    } catch (e) {
+      print('Error signing out: $e');
+      // Even if there's an error, clear the local user state
+      _userState.setUser(null);
+      _userState.setUserProfile(null);
+    }
   }
 
   supabase.User? get currentUser => _userState.supabaseUser;
