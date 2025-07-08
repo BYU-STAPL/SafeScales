@@ -761,6 +761,8 @@ class _LessonPageState extends State<LessonPage> {
           if (quiz.activityType == ActivityType.preQuiz) {
             preQuizCompleted = true;
           } else if (quiz.activityType == ActivityType.postQuiz &&
+              postQuizScore != null &&
+              _postQuiz != null &&
               postQuizScore! >= _postQuiz!.passingScore) {
             postQuizCompleted = true;
           }

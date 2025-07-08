@@ -419,6 +419,18 @@ class QuizService {
               ? ActivityType.preQuiz
               : ActivityType.postQuiz;
 
+      // Get minimum passing grade from module for postQuiz, default to 80
+      int passingScore = 80;
+      if (activityType == 'postQuiz') {
+        passingScore =
+            moduleResponse['minimum_passing_grade'] != null
+                ? int.tryParse(
+                      moduleResponse['minimum_passing_grade'].toString(),
+                    ) ??
+                    80
+                : 80;
+      }
+
       // Create QuestionSet with module ID as the quiz ID
       final questionSet = QuestionSet(
         id: '${moduleId}_${activityType}', // Unique ID for this quiz
@@ -426,7 +438,7 @@ class QuizService {
         description: '',
         activityType: activityTypeEnum,
         subject: moduleResponse['title'] ?? 'Module',
-        passingScore: 80,
+        passingScore: passingScore,
         showResults: true,
         showCorrectAnswers: activityType == 'preQuiz' ? false : true,
         showExplanations: activityType == 'preQuiz' ? false : true,
@@ -462,6 +474,24 @@ class QuizService {
       if (response['modules'] != null) {
         final modulesData = Map<String, dynamic>.from(response['modules']);
 
+        // Fetch all module minimum_passing_grade values in one query
+        final moduleDetailsResponse = await supabase
+            .from('modules')
+            .select('id, minimum_passing_grade')
+            .inFilter('id', moduleIds);
+        final Map<String, int> modulePassingScores = {};
+        if (moduleDetailsResponse is List) {
+          for (final mod in moduleDetailsResponse) {
+            if (mod['id'] != null) {
+              modulePassingScores[mod['id'].toString()] =
+                  mod['minimum_passing_grade'] != null
+                      ? int.tryParse(mod['minimum_passing_grade'].toString()) ??
+                          80
+                      : 80;
+            }
+          }
+        }
+
         for (var moduleId in moduleIds) {
           if (modulesData.containsKey(moduleId)) {
             final moduleData = Map<String, dynamic>.from(modulesData[moduleId]);
@@ -483,22 +513,19 @@ class QuizService {
               hasPostQuiz = true;
             }
 
-            //TODO: Will need to move and improve logic, moduleProgress shouldn't be based on quiz score
-            //TODO: This is a temp fix
             // Calculate progress
             double progress = 0;
 
-            bool isReadingComplete = moduleData['reading']['completed'];
+            bool isReadingComplete =
+                moduleData['reading']?['completed'] == true;
             bool isPreQuizComplete =
-                moduleData['preQuiz']['completed_at'] != null;
+                moduleData['preQuiz']?['completed_at'] != null;
+            // Use correct passing score for post-quiz
+            int passingScore = modulePassingScores[moduleId] ?? 80;
             bool isPostQuizComplete =
-                moduleData['postQuiz']['completed_at'] != null &&
-                moduleData['postQuiz']['score'] > 80;
-
-            print("---------Calulate Progress---------");
-            print(isReadingComplete);
-            print(isPreQuizComplete);
-            print(isPostQuizComplete);
+                moduleData['postQuiz']?['completed_at'] != null &&
+                moduleData['postQuiz']?['score'] != null &&
+                moduleData['postQuiz']['score'] >= passingScore;
 
             if (isPreQuizComplete) {
               progress += 1 / 3 * 100;
@@ -511,14 +538,6 @@ class QuizService {
             if (isPostQuizComplete) {
               progress += 1 / 3 * 100;
             }
-
-            // if (hasPreQuiz && hasPostQuiz) {
-            //   progress = (preQuizScore / 2) + (postQuizScore / 2);
-            // } else if (hasPreQuiz) {
-            //   progress = preQuizScore / 2;
-            // } else if (hasPostQuiz) {
-            //   progress = postQuizScore / 2;
-            // }
 
             moduleProgress[moduleId] = progress;
           }

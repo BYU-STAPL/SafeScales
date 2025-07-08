@@ -1,7 +1,7 @@
-
 import 'package:flutter/cupertino.dart';
 
 import '../services/user_state_service.dart';
+import '../themes/app_theme.dart';
 
 class ThemeNotifier extends ChangeNotifier {
   bool _isDarkMode = false;
@@ -33,9 +33,15 @@ class ThemeNotifier extends ChangeNotifier {
   // Load settings from persistent storage
   Future<void> loadSettings() async {
     try {
-      // TODO: Add methods to UserStateService to get these values
-      // _isDarkMode = await _userState.getDarkMode() ?? false;
-      // _fontSize = await _userState.getFontSize() ?? 1.0;
+      final settings = await _userState.getUserSettings();
+      _isDarkMode = settings['isDarkMode'] ?? false;
+      _fontSize =
+          (settings['fontSize'] != null)
+              ? (settings['fontSize'] as num).toDouble()
+              : 1.0;
+      AppTheme.setFontSizeScale(
+        _fontSize,
+      ); // Ensure font size is applied globally
       notifyListeners();
     } catch (e) {
       // Handle any loading errors
@@ -46,9 +52,10 @@ class ThemeNotifier extends ChangeNotifier {
   // Save settings to persistent storage
   Future<void> _saveSettings() async {
     try {
-      // TODO: Add methods to UserStateService to get these values
-      // await _userState.saveDarkMode(_isDarkMode);
-      // await _userState.saveFontSize(_fontSize);
+      await _userState.saveUserSettings(
+        isDarkMode: _isDarkMode,
+        fontSize: _fontSize,
+      );
     } catch (e) {
       // Handle any saving errors
       print('Error saving settings: $e');

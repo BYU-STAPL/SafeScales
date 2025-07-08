@@ -152,4 +152,60 @@ class UserStateService {
       print('Error saving quiz progress: $e');
     }
   }
+
+  // Get user's theme and font size settings from the Users table
+  Future<Map<String, dynamic>> getUserSettings() async {
+    if (_userId == null) {
+      print('Cannot get settings: No user ID available');
+      return {};
+    }
+    try {
+      final response =
+          await SupabaseConfig.client
+              .from('Users')
+              .select('settings')
+              .eq('id', _userId!)
+              .single();
+      if (response['settings'] != null) {
+        return Map<String, dynamic>.from(response['settings']);
+      }
+      return {};
+    } catch (e) {
+      print('Error getting user settings: $e');
+      return {};
+    }
+  }
+
+  // Save user's theme and font size settings to the Users table
+  Future<void> saveUserSettings({
+    required bool isDarkMode,
+    required double fontSize,
+  }) async {
+    if (_userId == null) {
+      print('Cannot save settings: No user ID available');
+      return;
+    }
+    try {
+      // Get current settings
+      final response =
+          await SupabaseConfig.client
+              .from('Users')
+              .select('settings')
+              .eq('id', _userId!)
+              .single();
+      Map<String, dynamic> settings = {};
+      if (response['settings'] != null) {
+        settings = Map<String, dynamic>.from(response['settings']);
+      }
+      settings['isDarkMode'] = isDarkMode;
+      settings['fontSize'] = fontSize;
+      await SupabaseConfig.client
+          .from('Users')
+          .update({'settings': settings})
+          .eq('id', _userId!);
+      print('Saved user settings: $settings');
+    } catch (e) {
+      print('Error saving user settings: $e');
+    }
+  }
 }
