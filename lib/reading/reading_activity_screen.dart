@@ -18,7 +18,8 @@ class ReadingActivityScreen extends StatefulWidget {
   State<ReadingActivityScreen> createState() => _ReadingActivityScreenState();
 }
 
-class _ReadingActivityScreenState extends State<ReadingActivityScreen> with TickerProviderStateMixin {
+class _ReadingActivityScreenState extends State<ReadingActivityScreen>
+    with TickerProviderStateMixin {
   final ClassService _classService = ClassService(SupabaseConfig.client);
   final UserStateService _userState = UserStateService();
 
@@ -65,6 +66,9 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
               _slides = List<Map<String, dynamic>>.from(revision['slides']);
               _isLoading = false;
             });
+
+            // Load previously saved bookmarks
+            await _loadBookmarks();
           }
         }
       }
@@ -73,6 +77,74 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadBookmarks() async {
+    try {
+      final user = _userState.currentUser;
+      if (user == null || widget.moduleId == null) return;
+
+      final response =
+          await _classService.supabase
+              .from('Users')
+              .select('modules')
+              .eq('id', user.id)
+              .single();
+
+      if (response['modules'] != null) {
+        final modulesData = Map<String, dynamic>.from(response['modules']);
+        if (modulesData.containsKey(widget.moduleId!) &&
+            modulesData[widget.moduleId!]['reading'] != null &&
+            modulesData[widget.moduleId!]['reading']['bookmarks'] != null) {
+          final bookmarks = List<int>.from(
+            modulesData[widget.moduleId!]['reading']['bookmarks'],
+          );
+          setState(() {
+            _bookmarkedPages = Set<int>.from(bookmarks);
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading bookmarks: $e');
+    }
+  }
+
+  Future<void> _saveBookmarks() async {
+    try {
+      final user = _userState.currentUser;
+      if (user == null || widget.moduleId == null) return;
+
+      final response =
+          await _classService.supabase
+              .from('Users')
+              .select('modules')
+              .eq('id', user.id)
+              .single();
+
+      Map<String, dynamic> modulesData = {};
+      if (response['modules'] != null) {
+        modulesData = Map<String, dynamic>.from(response['modules']);
+      }
+
+      if (!modulesData.containsKey(widget.moduleId!)) {
+        modulesData[widget.moduleId!] = {};
+      }
+
+      if (!modulesData[widget.moduleId!].containsKey('reading')) {
+        modulesData[widget.moduleId!]['reading'] = {};
+      }
+
+      // Update only the bookmarks, preserve other reading data
+      modulesData[widget.moduleId!]['reading']['bookmarks'] =
+          _bookmarkedPages.toList();
+
+      await _classService.supabase
+          .from('Users')
+          .update({'modules': modulesData})
+          .eq('id', user.id);
+    } catch (e) {
+      print('Error saving bookmarks: $e');
     }
   }
 
@@ -131,9 +203,9 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
         _isFirstLoad = false;
       });
       // _pageController.forward(from: 0.0).then((_) {
-        setState(() {
-          _currentSlideIndex++;
-        });
+      setState(() {
+        _currentSlideIndex++;
+      });
       // });
     } else {
       _markAsCompleted();
@@ -147,15 +219,14 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
         _isFirstLoad = false;
       });
       // _pageController.forward(from: 0.0).then((_) {
-        setState(() {
-          _currentSlideIndex--;
-        });
+      setState(() {
+        _currentSlideIndex--;
+      });
       // });
     }
   }
 
   Container _buildNavigationBar() {
-
     ThemeData theme = Theme.of(context);
 
     return Container(
@@ -174,8 +245,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           TextButton.icon(
-            onPressed:
-            _currentSlideIndex > 0 ? _previousSlide : null,
+            onPressed: _currentSlideIndex > 0 ? _previousSlide : null,
             icon: const Icon(Icons.arrow_back_ios_rounded),
             label: Text('Previous'.toUpperCase()),
           ),
@@ -194,7 +264,6 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
     );
   }
 
-
   void _toggleBookmark() {
     setState(() {
       if (_bookmarkedPages.contains(_currentSlideIndex)) {
@@ -203,6 +272,9 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
         _bookmarkedPages.add(_currentSlideIndex);
       }
     });
+
+    // Save bookmarks in real-time
+    _saveBookmarks();
   }
 
   void _jumpToPage(int index) {
@@ -212,10 +284,10 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
         _isFirstLoad = false;
       });
       // _pageController.forward(from: 0.0).then((_) {
-        setState(() {
-          _currentSlideIndex = index;
-          _showTableOfContents = false;
-        });
+      setState(() {
+        _currentSlideIndex = index;
+        _showTableOfContents = false;
+      });
       // });
     }
   }
@@ -230,14 +302,19 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
           final isBookmarked = _bookmarkedPages.contains(index);
           return ListTile(
             leading: Icon(
-              isBookmarked ? FontAwesomeIcons.solidBookmark : FontAwesomeIcons.bookmark,
+              isBookmarked
+                  ? FontAwesomeIcons.solidBookmark
+                  : FontAwesomeIcons.bookmark,
               color: Theme.of(context).colorScheme.primary,
             ),
             title: Text(
               'P${index + 1}: ${_slides[index]['headline'] ?? 'Page ${index + 1}'}',
-              style: index == _currentSlideIndex
-                  ? Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 18,)
-                  : Theme.of(context).textTheme.bodyMedium,
+              style:
+                  index == _currentSlideIndex
+                      ? Theme.of(
+                        context,
+                      ).textTheme.headlineSmall?.copyWith(fontSize: 18)
+                      : Theme.of(context).textTheme.bodyMedium,
             ),
             onTap: () => _jumpToPage(index),
           );
@@ -285,9 +362,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
           const SizedBox(height: 24),
           Text(
             _slides[_currentSlideIndex]['content'] ?? '',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              height: 1.8,
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.8),
           ),
         ],
       ),
@@ -305,7 +380,9 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(_showTableOfContents ? Icons.close : FontAwesomeIcons.list),
+            icon: Icon(
+              _showTableOfContents ? Icons.close : FontAwesomeIcons.list,
+            ),
             iconSize: 25,
             onPressed: () {
               setState(() {
@@ -335,7 +412,6 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
                     slideName: 'page',
                   ),
 
-
                   // Main content
                   Expanded(
                     child:
@@ -345,21 +421,18 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> with Tick
                             ? _buildPageContent()
                             : _buildPageContent(),
 
-                            // : SlideTransition(
-                            //   position: _slideAnimation,
-                            //   child: _buildPageContent(),
-                            // ),
+                    // : SlideTransition(
+                    //   position: _slideAnimation,
+                    //   child: _buildPageContent(),
+                    // ),
                   ),
-
-
 
                   // Navigation controls
                   _buildNavigationBar(),
 
-                  SizedBox(height: 15,)
+                  SizedBox(height: 15),
                 ],
               ),
     );
   }
 }
-
