@@ -89,8 +89,10 @@ class _MyAppState extends State<MyApp> {
                 if (currentUser != null) {
                   // Initialize user state
                   _userState.setUser(currentUser);
-                  _userState.loadUserProfile();
-
+                  _userState.loadUserProfile().then((_) {
+                    _themeNotifier
+                        .loadSettings(); // Reload settings after profile is loaded
+                  });
                   return MainNavigation(initialIndex: 0);
                 }
 

@@ -43,6 +43,7 @@ class _LessonPageState extends State<LessonPage> {
   Map<String, dynamic>? _dragonData;
   Map<String, dynamic>? _moduleData;
   String _moduleTitle = '';
+  double _moduleProgress = 0.0;
 
   @override
   void initState() {
@@ -50,15 +51,57 @@ class _LessonPageState extends State<LessonPage> {
     _classService = ClassService(_quizService.supabase);
     _loadQuizzes();
     _loadDragonImages();
+    _loadModuleProgress();
   }
 
   Future<void> _loadDragonImages() async {
     try {
       // If using module-based system
       if (widget.moduleId != null) {
-        // Try to get dragon from class assets first
-        // This will be implemented when we have access to class assets
-        // For now, use the fallback system
+        // Get user's class and assets
+        final user = _userState.currentUser;
+        if (user != null) {
+          final classData = await _classService.getUserClass(user.id);
+          if (classData.isNotEmpty) {
+            final assets = await _classService.getClassAssets(classData['id']);
+
+            if (assets != null) {
+              // Find the dragon that belongs to this module
+              final dragon = assets.firstWhere(
+                (asset) =>
+                    asset['type'] == 'dragon' &&
+                    asset['moduleId'] == widget.moduleId,
+                orElse: () => null,
+              );
+
+              if (dragon != null && dragon['stages'] != null) {
+                final dragonData = {
+                  'egg':
+                      dragon['stages']['egg'] ?? 'assets/images/other/egg.png',
+                  'baby':
+                      dragon['stages']['baby'] ??
+                      'assets/images/other/young.png',
+                  'teen':
+                      dragon['stages']['teen'] ??
+                      'assets/images/other/teen.png',
+                  'final':
+                      dragon['stages']['adult'] ??
+                      'assets/images/other/adult.png',
+                  'id': dragon['id'],
+                  'name': dragon['name'] ?? 'Dragon',
+                  'moduleId': dragon['moduleId'] ?? widget.moduleId,
+                };
+
+                if (mounted) {
+                  setState(() {
+                    _dragonData = dragonData;
+                  });
+                }
+                return; // Exit early if we found the dragon
+              }
+            }
+          }
+        }
       }
 
       // Fallback to old system for backward compatibility
@@ -82,6 +125,35 @@ class _LessonPageState extends State<LessonPage> {
       }
     } catch (e) {
       print('Error loading dragon images: $e');
+    }
+  }
+
+  Future<void> _loadModuleProgress() async {
+    try {
+      if (widget.moduleId != null) {
+        final user = _userState.currentUser;
+        if (user != null) {
+          print('📊 Loading module progress for module: ${widget.moduleId}');
+          final progressMap = await _quizService.getModuleProgress(
+            userId: user.id,
+            moduleIds: [widget.moduleId!],
+          );
+
+          print('📊 Progress map: $progressMap');
+
+          if (mounted && progressMap.containsKey(widget.moduleId!)) {
+            final progress = progressMap[widget.moduleId!] ?? 0.0;
+            print('📊 Setting module progress to: $progress');
+            setState(() {
+              _moduleProgress = progress;
+            });
+          } else {
+            print('📊 No progress found for module: ${widget.moduleId}');
+          }
+        }
+      }
+    } catch (e) {
+      print('Error loading module progress: $e');
     }
   }
 
@@ -268,16 +340,21 @@ class _LessonPageState extends State<LessonPage> {
 
     final screenSize = MediaQuery.of(context).size;
 
-    double topicProgress = 0.0;
-    if (preQuizCompleted &&
-        postQuizCompleted &&
-        preQuizScore != null &&
-        postQuizScore != null) {
-      topicProgress = (preQuizScore! / 2) + (postQuizScore! / 2);
-    } else if (preQuizCompleted && preQuizScore != null) {
-      topicProgress = preQuizScore! / 2;
-    } else if (postQuizCompleted && postQuizScore != null) {
-      topicProgress = postQuizScore! / 2;
+    // Use the loaded module progress for module-based lessons
+    double topicProgress = _moduleProgress;
+
+    // Fallback to quiz-based calculation for backward compatibility (topic-based lessons)
+    if (widget.moduleId == null) {
+      if (preQuizCompleted &&
+          postQuizCompleted &&
+          preQuizScore != null &&
+          postQuizScore != null) {
+        topicProgress = (preQuizScore! / 2) + (postQuizScore! / 2);
+      } else if (preQuizCompleted && preQuizScore != null) {
+        topicProgress = preQuizScore! / 2;
+      } else if (postQuizCompleted && postQuizScore != null) {
+        topicProgress = postQuizScore! / 2;
+      }
     }
 
     return Scaffold(
@@ -305,7 +382,11 @@ class _LessonPageState extends State<LessonPage> {
                   ),
 
                   Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
+                    padding: const EdgeInsets.only(
+                      left: 20,
+                      right: 20,
+                      top: 20,
+                    ),
                     child: Text(
                       'Lesson Activities',
                       style: theme.textTheme.headlineSmall,
@@ -329,7 +410,8 @@ class _LessonPageState extends State<LessonPage> {
                               color: theme.colorScheme.primary,
                               isCompleted: preQuizCompleted,
                               score: preQuizScore,
-                              isUnlocked: !preQuizCompleted, // Only unlock when the pre-quiz is not completed, lock after
+                              isUnlocked:
+                                  !preQuizCompleted, // Only unlock when the pre-quiz is not completed, lock after
                             ),
                             const SizedBox(height: 20),
                           ],
@@ -432,7 +514,7 @@ class _LessonPageState extends State<LessonPage> {
                             title,
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontSize: 18 * AppTheme.fontSizeScale,
-                            )
+                            ),
                           ),
                           if (isCompleted) ...[
                             const SizedBox(width: 10),
@@ -454,10 +536,7 @@ class _LessonPageState extends State<LessonPage> {
                         ],
                       ),
                       const SizedBox(height: 5),
-                      Text(
-                        description,
-                        style: theme.textTheme.labelSmall,
-                      ),
+                      Text(description, style: theme.textTheme.labelSmall),
                     ],
                   ),
                 ),
@@ -483,9 +562,7 @@ class _LessonPageState extends State<LessonPage> {
     );
   }
 
-  Widget _buildReadingCard({
-    required bool isUnlocked,
-  }) {
+  Widget _buildReadingCard({required bool isUnlocked}) {
     ThemeData theme = Theme.of(context);
     final Color cardBg = theme.colorScheme.surface;
     final Color textColor = theme.colorScheme.onSurface;
@@ -539,20 +616,21 @@ class _LessonPageState extends State<LessonPage> {
                     });
                   }
                   : () {
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Please complete the Pre-Quiz activity first',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onInverseSurface,
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Please complete the Pre-Quiz activity first',
+                          style: TextStyle(
+                            color:
+                                Theme.of(context).colorScheme.onInverseSurface,
+                          ),
                         ),
+                        backgroundColor:
+                            Theme.of(context).colorScheme.inverseSurface,
                       ),
-                      backgroundColor: Theme.of(context).colorScheme.inverseSurface,
-                    ),
-                  );
-                  return;
-              },
+                    );
+                    return;
+                  },
           borderRadius: BorderRadius.circular(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -575,7 +653,7 @@ class _LessonPageState extends State<LessonPage> {
                               'Reading Activity',
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 fontSize: 18,
-                              )
+                              ),
                             ),
                             if (readingCompleted) ...[
                               const SizedBox(width: 10),
@@ -651,7 +729,7 @@ class _LessonPageState extends State<LessonPage> {
       return;
     }
 
-      // Check if post-quiz is being attempted before reading is completed
+    // Check if post-quiz is being attempted before reading is completed
     if (quiz.activityType == ActivityType.postQuiz && !readingCompleted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -682,7 +760,10 @@ class _LessonPageState extends State<LessonPage> {
         setState(() {
           if (quiz.activityType == ActivityType.preQuiz) {
             preQuizCompleted = true;
-          } else if (quiz.activityType == ActivityType.postQuiz && postQuizScore! >= _postQuiz!.passingScore) {
+          } else if (quiz.activityType == ActivityType.postQuiz &&
+              postQuizScore != null &&
+              _postQuiz != null &&
+              postQuizScore! >= _postQuiz!.passingScore) {
             postQuizCompleted = true;
           }
         });
@@ -692,14 +773,24 @@ class _LessonPageState extends State<LessonPage> {
   }
 
   Widget _getDragonPhaseIcon(double progress) {
+    print(
+      '🐉 Dragon phase calculation - Progress: $progress, Module ID: ${widget.moduleId}',
+    );
+    print('🐉 Dragon data: $_dragonData');
+
     String imageUrl = _dragonData?['egg'] ?? 'assets/images/other/egg.png';
 
     if (progress >= 80) {
-      imageUrl = _dragonData?['adult'] ?? 'assets/images/other/adult.png';
+      imageUrl = _dragonData?['final'] ?? 'assets/images/other/adult.png';
+      print('🐉 Using final stage: $imageUrl');
     } else if (progress >= 50) {
       imageUrl = _dragonData?['teen'] ?? 'assets/images/other/teen.png';
+      print('🐉 Using teen stage: $imageUrl');
     } else if (progress >= 30) {
       imageUrl = _dragonData?['baby'] ?? 'assets/images/other/young.png';
+      print('🐉 Using baby stage: $imageUrl');
+    } else {
+      print('🐉 Using egg stage: $imageUrl');
     }
 
     // Check if the image URL is a network URL or a local asset

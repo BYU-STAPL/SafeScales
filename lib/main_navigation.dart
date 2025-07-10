@@ -3,7 +3,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:safe_scales/settings_drawer.dart';
 import 'package:safe_scales/shop/shop_page.dart';
 import 'package:safe_scales/services/user_state_service.dart';
+import 'package:safe_scales/services/auth_service.dart';
 import 'package:safe_scales/themes/theme_provider.dart';
+import 'package:safe_scales/screens/selection_screen.dart';
 
 import 'accessories/toy_box_page.dart';
 import 'dev_testing_page.dart';
@@ -22,6 +24,7 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final _userState = UserStateService();
+  final _authService = AuthService();
 
   int _selectedIndex = 0;
 
@@ -57,9 +60,31 @@ class _MainNavigationState extends State<MainNavigation> {
     }
   }
 
+  Future<void> _handleLogout() async {
+    try {
+      await _authService.signOut();
+
+      if (mounted) {
+        // Navigate to selection screen and remove all previous routes
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const SelectionScreen()),
+          (route) => false, // Remove all previous routes
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error logging out: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-
     ThemeData theme = Theme.of(context);
 
     final Color primary = theme.colorScheme.primary;
@@ -87,7 +112,7 @@ class _MainNavigationState extends State<MainNavigation> {
         email: _userState.currentUser?.email ?? '',
         onTutorial: () {},
         onHelp: () {},
-        onLogout: () {},
+        onLogout: _handleLogout,
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: Container(

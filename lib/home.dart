@@ -122,13 +122,18 @@ class _HomePageState extends State<HomePage> {
                 .where((asset) => asset is Map && asset['type'] == 'dragon')
                 .toList();
 
-        // Assign dragons to modules
-        for (var i = 0; i < _modules.length && i < dragonAssets.length; i++) {
-          final module = _modules[i];
-          final dragon = dragonAssets[i];
+        // Match dragons to modules based on moduleId
+        for (var module in _modules) {
+          final moduleId = module['id'] as String;
 
-          if (dragon['stages'] != null) {
-            _moduleDragons[module['id']] = {
+          // Find the dragon that belongs to this module
+          final dragon = dragonAssets.firstWhere(
+            (asset) => asset['moduleId'] == moduleId,
+            orElse: () => null,
+          );
+
+          if (dragon != null && dragon['stages'] != null) {
+            _moduleDragons[moduleId] = {
               'egg': dragon['stages']['egg'] ?? 'assets/images/other/egg.png',
               'baby':
                   dragon['stages']['baby'] ?? 'assets/images/other/young.png',
@@ -138,7 +143,18 @@ class _HomePageState extends State<HomePage> {
                   dragon['stages']['adult'] ?? 'assets/images/other/adult.png',
               'id': dragon['id'],
               'name': dragon['name'] ?? 'Dragon',
-              'moduleId': dragon['moduleId'] ?? module['id'],
+              'moduleId': dragon['moduleId'] ?? moduleId,
+            };
+          } else {
+            // Fallback for modules without dragons
+            _moduleDragons[moduleId] = {
+              'egg': 'assets/images/other/egg.png',
+              'baby': 'assets/images/other/young.png',
+              'teen': 'assets/images/other/teen.png',
+              'final': 'assets/images/other/adult.png',
+              'id': null,
+              'name': 'Dragon',
+              'moduleId': moduleId,
             };
           }
         }
@@ -176,7 +192,7 @@ class _HomePageState extends State<HomePage> {
       phases.add('teen'); // Add teen phase
     }
     if (progress >= 80) {
-      phases.add('adult'); // Add adult phase
+      phases.add('final'); // Add final phase
     }
 
     // Save dragon phases if we have a valid dragon ID
@@ -218,7 +234,7 @@ class _HomePageState extends State<HomePage> {
 
     // Set the image URL based on the highest achieved phase
     if (progress >= 80) {
-      imageUrl = dragonData?['adult'] ?? 'assets/images/other/adult.png';
+      imageUrl = dragonData?['final'] ?? 'assets/images/other/adult.png';
     } else if (progress >= 50) {
       imageUrl = dragonData?['teen'] ?? 'assets/images/other/teen.png';
     } else if (progress >= 30) {
@@ -247,6 +263,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    print('--- HomePage Build ---');
+    print('Modules:');
+    for (var m in _modules) print('  ' + (m['title'] ?? 'Untitled'));
+    print('Module Progress Map:');
+    _moduleProgress.forEach((k, v) => print('  $k: $v'));
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
     final cardBg = theme.colorScheme.surface;
@@ -356,7 +377,9 @@ class _HomePageState extends State<HomePage> {
                                     (targetModule['title'] ?? 'Module')
                                         .toUpperCase(),
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                      color: Colors.white.withValues(alpha: 0.9),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.9,
+                                      ),
                                       letterSpacing: 1.2,
                                     ),
                                   );
@@ -395,10 +418,10 @@ class _HomePageState extends State<HomePage> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
-                                      '${progress.toStringAsFixed(0)}% Complete'.toTitleCase(),
-                                      style: theme.textTheme.labelSmall?.copyWith(
-                                        color: Colors.white,
-                                      ),
+                                      '${progress.toStringAsFixed(0)}% Complete'
+                                          .toTitleCase(),
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(color: Colors.white),
                                     ),
                                   );
                                 },
@@ -436,7 +459,8 @@ class _HomePageState extends State<HomePage> {
                                 .length;
 
                         return Text(
-                          '${completedCount}/${_modules.length} Completed'.toTitleCase(),
+                          '${completedCount}/${_modules.length} Completed'
+                              .toTitleCase(),
                           style: theme.textTheme.labelMedium,
                         );
                       },
@@ -473,9 +497,15 @@ class _HomePageState extends State<HomePage> {
                     final module = entry.value;
                     final isUnlocked =
                         index == 0 ||
-                        (_moduleProgress[_modules[index - 1]['id']] ?? 0) >=
-                            100;
+                        ((_moduleProgress[_modules[index - 1]['id']] ?? 0)
+                                .round() >=
+                            100);
                     final progress = _moduleProgress[module['id']] ?? 0.0;
+
+                    // Debug print for each module card
+                    print(
+                      '[ModuleCard] Title: ${module['title'] ?? 'Module ${index + 1}'} | Progress: $progress | isUnlocked: $isUnlocked | PrevProgress: ${index > 0 ? (_moduleProgress[_modules[index - 1]['id']] ?? 0) : 'N/A'}',
+                    );
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 30),
@@ -532,29 +562,27 @@ class _HomePageState extends State<HomePage> {
     required VoidCallback onTap,
     String? unlockRequirement,
   }) {
-    // Get actual progress for this module
     final actualProgress = _moduleProgress[moduleId] ?? 0.0;
-
-    // Check if this module should be unlocked
     final int currentIndex = _modules.indexOf(module);
     bool shouldBeUnlocked = false;
     String? newUnlockRequirement;
 
-    // Handle settings card specially
     if (moduleId == 'settings') {
       shouldBeUnlocked = false;
     } else if (currentIndex == 0) {
-      // First module is always unlocked
       shouldBeUnlocked = true;
     } else if (currentIndex > 0) {
-      // Check if previous module is completed
       final previousModule = _modules[currentIndex - 1];
       final previousProgress = _moduleProgress[previousModule['id']] ?? 0.0;
-      shouldBeUnlocked = previousProgress >= 100;
+      shouldBeUnlocked = previousProgress.round() >= 100;
       if (!shouldBeUnlocked) {
         newUnlockRequirement =
             'Complete ${previousModule['title'] ?? 'previous module'} (${previousProgress.toStringAsFixed(0)}%)';
       }
+      // Debug print for unlock logic
+      print(
+        '[BuildModuleCard] $title: actualProgress=$actualProgress, shouldBeUnlocked=$shouldBeUnlocked, previousProgress=$previousProgress',
+      );
     }
 
     ThemeData theme = Theme.of(context);
@@ -604,10 +632,7 @@ class _HomePageState extends State<HomePage> {
         ),
         child: Column(
           children: [
-            Text(
-              title.toTitleCase(),
-              style: theme.textTheme.headlineSmall,
-            ),
+            Text(title.toTitleCase(), style: theme.textTheme.headlineSmall),
             if (!shouldBeUnlocked &&
                 (newUnlockRequirement != null ||
                     unlockRequirement != null)) ...[
@@ -616,7 +641,9 @@ class _HomePageState extends State<HomePage> {
                 newUnlockRequirement ?? unlockRequirement ?? '',
                 style: theme.textTheme.labelSmall?.copyWith(
                   fontStyle: FontStyle.italic,
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.7,
+                  ),
                 ),
               ),
             ],
@@ -663,9 +690,7 @@ class _HomePageState extends State<HomePage> {
             if (shouldBeUnlocked && moduleId != 'settings') ...[
               Text(
                 '${actualProgress.toStringAsFixed(0)}% Complete',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: secondary,
-                )
+                style: theme.textTheme.labelSmall?.copyWith(color: secondary),
               ),
             ],
           ],

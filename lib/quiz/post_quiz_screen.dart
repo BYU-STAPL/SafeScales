@@ -26,7 +26,6 @@ class PostQuizScreen extends StatefulWidget {
 }
 
 class _PostQuizScreenState extends State<PostQuizScreen> {
-
   int currentQuestionIndex = 0;
   List<List<int>> userAnswers = [];
   bool isStarted = false;
@@ -35,7 +34,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
 
   bool _isForward = true;
   bool _isFirstLoad = true;
-
 
   @override
   void initState() {
@@ -137,9 +135,9 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
         _isForward = true;
         _isFirstLoad = false;
       });
-        setState(() {
-          currentQuestionIndex++;
-        });
+      setState(() {
+        currentQuestionIndex++;
+      });
     } else {
       _finishPostQuiz();
     }
@@ -152,9 +150,9 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
         _isFirstLoad = false;
       });
 
-        setState(() {
-          currentQuestionIndex--;
-        });
+      setState(() {
+        currentQuestionIndex--;
+      });
     }
   }
 
@@ -175,7 +173,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   }
 
   void _showIncompleteDialog() {
-
     ThemeData theme = Theme.of(context);
 
     showDialog(
@@ -188,7 +185,10 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
             text: TextSpan(
               style: theme.textTheme.bodyMedium, // Inherit default text style
               children: [
-                TextSpan(text: 'Please answer all questions before submitting the quiz.\n\nYou can check the table of contents  '),
+                TextSpan(
+                  text:
+                      'Please answer all questions before submitting the quiz.\n\nYou can check the table of contents  ',
+                ),
                 WidgetSpan(
                   alignment: PlaceholderAlignment.middle,
                   child: Icon(
@@ -207,7 +207,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                 Navigator.of(context).pop();
               },
               child: Text(
-                  'OK',
+                'OK',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: theme.colorScheme.primary,
                 ),
@@ -220,7 +220,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   }
 
   Container _buildNavigationBar() {
-
     ThemeData theme = Theme.of(context);
 
     return Container(
@@ -246,12 +245,11 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
 
           TextButton.icon(
             iconAlignment: IconAlignment.end,
-            onPressed: _isLastQuestion() && !_hasUserAnsweredAllQuestions() ? _showIncompleteDialog: _nextQuestion,
-            label: Text(
-              _isLastQuestion()
-                  ? 'Complete'
-                  : 'Next',
-            ),
+            onPressed:
+                _isLastQuestion() && !_hasUserAnsweredAllQuestions()
+                    ? _showIncompleteDialog
+                    : _nextQuestion,
+            label: Text(_isLastQuestion() ? 'Complete' : 'Next'),
             icon: Icon(Icons.arrow_forward_ios_rounded),
           ),
         ],
@@ -265,10 +263,10 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
         _isForward = index > currentQuestionIndex;
         _isFirstLoad = false;
       });
-        setState(() {
-          currentQuestionIndex = index;
-          _showTableOfContents = false;
-        });
+      setState(() {
+        currentQuestionIndex = index;
+        _showTableOfContents = false;
+      });
     }
   }
 
@@ -288,12 +286,17 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
             // ),
             title: Text(
               'Q${index + 1}: ${widget.questionSet.questions[index].questionText}',
-              style: index == currentQuestionIndex
-                  ? Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 18,)
-                  : Theme.of(context).textTheme.bodyMedium,
+              style:
+                  index == currentQuestionIndex
+                      ? Theme.of(
+                        context,
+                      ).textTheme.headlineSmall?.copyWith(fontSize: 18)
+                      : Theme.of(context).textTheme.bodyMedium,
             ),
             trailing: Icon(
-              userAnswers[index].isNotEmpty ? FontAwesomeIcons.solidCircleCheck : FontAwesomeIcons.circle,
+              userAnswers[index].isNotEmpty
+                  ? FontAwesomeIcons.solidCircleCheck
+                  : FontAwesomeIcons.circle,
               color: Theme.of(context).colorScheme.green,
             ),
             onTap: () => _jumpToPage(index),
@@ -323,7 +326,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
@@ -331,18 +333,22 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     AppBar appBar = AppBar(
       centerTitle: true,
       title: Text('Post-Quiz'),
-      actions: isStarted ? [
-        IconButton(
-          icon: Icon(_showTableOfContents ? Icons.close : FontAwesomeIcons.list),
-          iconSize: 25,
-          onPressed: () {
-            setState(() {
-              _showTableOfContents = !_showTableOfContents;
-            });
-          },
-        ),
-      ]: null,
-
+      actions:
+          isStarted
+              ? [
+                IconButton(
+                  icon: Icon(
+                    _showTableOfContents ? Icons.close : FontAwesomeIcons.list,
+                  ),
+                  iconSize: 25,
+                  onPressed: () {
+                    setState(() {
+                      _showTableOfContents = !_showTableOfContents;
+                    });
+                  },
+                ),
+              ]
+              : null,
     );
 
     if (!isStarted) {
@@ -424,38 +430,37 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
       );
     }
 
-    final progress = (currentQuestionIndex + 1) / widget.questionSet.questions.length;
+    final progress =
+        (currentQuestionIndex + 1) / widget.questionSet.questions.length;
 
     return Scaffold(
       appBar: appBar,
       body: Column(
-          children: [
+        children: [
+          // Progress bar
+          ProgressBar(
+            progress: progress,
+            currentSlideIndex: currentQuestionIndex,
+            slideLength: widget.questionSet.questions.length,
+            slideName: 'question',
+          ),
 
-            // Progress bar
-            ProgressBar(
-              progress: progress,
-              currentSlideIndex: currentQuestionIndex,
-              slideLength: widget.questionSet.questions.length,
-              slideName: 'question',
-            ),
+          // Main Content
+          Expanded(
+            child:
+                _showTableOfContents
+                    ? _buildTableOfContents()
+                    : _isFirstLoad
+                    ? _buildQuestionContent()
+                    : _buildQuestionContent(),
+          ),
 
-            // Main Content
+          // Navigation
+          _buildNavigationBar(),
 
-            Expanded(
-                child: _showTableOfContents ? _buildTableOfContents()
-              : _isFirstLoad ? _buildQuestionContent()
-                : _buildQuestionContent(),
-            ),
-
-
-            // Navigation
-            _buildNavigationBar(),
-
-            SizedBox(height: 15,),
-          ],
-        ),
+          SizedBox(height: 15),
+        ],
+      ),
     );
   }
-
-
 }

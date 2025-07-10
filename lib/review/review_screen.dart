@@ -26,7 +26,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   final _userState = UserStateService();
 
   bool isCurrentQuestionCorrect = false;
-  bool showAnswerMessage = false;
+  // bool showAnswerMessage = false;
   List<List<List<int>>> attempts = [];
 
   bool isResponseLocked = false;
@@ -122,7 +122,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       print("Correct Answer");
       setState(() {
         isCurrentQuestionCorrect = true;
-        showAnswerMessage = true;
+        // showAnswerMessage = true; // Currently using snack-bar function: showAnswerCheckMessage
         isResponseLocked = true;
       });
     }
@@ -130,10 +130,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
       isCurrentQuestionCorrect = false;
       setState(() {
         isCurrentQuestionCorrect = false;
-        showAnswerMessage = true;
+        // showAnswerMessage = true;
         isResponseLocked = false;
       });
     }
+
+    showAnswerCheckMessage();
 
   }
 
@@ -143,7 +145,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       setState(() {
         currentQuestionIndex++;
         isCurrentQuestionCorrect = false;
-        showAnswerMessage = false;
+        // showAnswerMessage = false;
         isResponseLocked = false;
       });
     } else {
@@ -316,7 +318,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
             slideName: 'questions',
           ),
 
-          showAnswerMessage ? _buildAnswerCheckCard() : SizedBox.shrink(),
+          // showAnswerMessage ? _buildAnswerCheckCard() : SizedBox.shrink(),
 
           Expanded(
             child: Padding(
@@ -347,41 +349,74 @@ class _ReviewScreenState extends State<ReviewScreen> {
     );
   }
 
-  Card _buildAnswerCheckCard() {
+  void showAnswerCheckMessage() {
+
     ThemeData theme = Theme.of(context);
 
-    Color color = isCurrentQuestionCorrect ? theme.colorScheme.green : theme.colorScheme.red;
-    Color bgColor = isCurrentQuestionCorrect ? theme.colorScheme.paleGreen : theme.colorScheme.paleRed;
+    // Secondary Color is green, so correct -> green
+    Color color = isCurrentQuestionCorrect ? theme.colorScheme.secondary : theme.colorScheme.error;
+    Color bgColor = isCurrentQuestionCorrect ? theme.colorScheme.secondaryContainer : theme.colorScheme.errorContainer;
 
-    return Card(
-          color: bgColor,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isCurrentQuestionCorrect ? Icons.check_circle : Icons.error,
               color: color,
-              width: 2.0,
             ),
-          ),
-          margin: EdgeInsets.only(left: 30, right: 30, top: 30),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            child: Row(
-              children: [
-                Icon(FontAwesomeIcons.solidCircleCheck, color: color,),
-                SizedBox(width: 15), // Add spacing between icon and text
-                Expanded(
-                    child: Text(
-                        isCurrentQuestionCorrect ? 'Correct!' : 'Incorrect, try again.',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: color,
-                      ),
-                    )
-                ),
-              ],
+            SizedBox(width: 10),
+            Text(
+              isCurrentQuestionCorrect ? 'Correct!' : 'Incorrect, try again.',
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: color,
+              ),
             ),
-          ),
-        );
+          ],
+        ),
+        duration: Duration(seconds: 1),
+        backgroundColor: bgColor,
+        // behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
+
+  // Might keep and add explanation here???
+  // Card _buildAnswerCheckCard() {
+  //   ThemeData theme = Theme.of(context);
+  //
+  //   Color color = isCurrentQuestionCorrect ? theme.colorScheme.green : theme.colorScheme.red;
+  //   Color bgColor = isCurrentQuestionCorrect ? theme.colorScheme.paleGreen : theme.colorScheme.paleRed;
+  //
+  //   return Card(
+  //         color: bgColor,
+  //         shadowColor: Colors.transparent,
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(12),
+  //           side: BorderSide(
+  //             color: color,
+  //             width: 2.0,
+  //           ),
+  //         ),
+  //         margin: EdgeInsets.only(left: 30, right: 30, top: 30),
+  //         child: Padding(
+  //           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+  //           child: Row(
+  //             children: [
+  //               Icon(FontAwesomeIcons.solidCircleCheck, color: color,),
+  //               SizedBox(width: 15), // Add spacing between icon and text
+  //               Expanded(
+  //                   child: Text(
+  //                       isCurrentQuestionCorrect ? 'Correct!' : 'Incorrect, try again.',
+  //                     style: theme.textTheme.labelLarge?.copyWith(
+  //                       color: color,
+  //                     ),
+  //                   )
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       );
+  // }
 
 }
