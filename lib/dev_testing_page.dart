@@ -39,16 +39,19 @@ class _DevTestingPageState extends State<DevTestingPage> {
     Question singleQ2 = Question.singleAnswer(
       id: 'q2',
       questionText: 'What season are oranges ripe?',
-      options: ['Spring', 'Summer', 'Fall', 'Winter'],
+      options: ['Spring', 'Summer', 'Fall', 'Winter', "Year-round"],
       correctAnswerIndex: 3,
       explanation: 'Oranges taste best during the winter',
     );
 
     Question multipleQ = Question.multipleAnswer(
       id: 'q3',
-      text: "At your school, there is a security guard named Quinn. You have never met or talked to Quinn, but some of your school mates have.",
+      text: "At your school, there is a security guard named Quinn. You have never met or talked to Quinn, but some of your school mates have."
+          "At your school, there is a security guard named Quinn. At your school, there is a security guard named Quinn."
+          "At your school, there is a security guard named Quinn. At your school, there is a security guard named Quinn. "
+          "At your school, there is a security guard named Quinn. At your school, there is a security guard named Quinn.",
       questionText: 'What social tag(s) apply to Quinn?',
-      options: ['Acquaintance', 'Community Helper', 'Stranger', 'Work Peer', ],
+      options: ['Acquaintance', 'Community Helper', 'Stranger', 'Work Peer', 'In-Person Friend', 'Family'],
       correctAnswerIndices: [1, 2,],
       explanation: 'Quinn serves the community, but don\'t know him', // Apple, Banana, Orange
     );
@@ -77,7 +80,7 @@ class _DevTestingPageState extends State<DevTestingPage> {
       description: "This is a review set",
       activityType: ActivityType.review,
       subject: "review subject",
-      questions: [singleQ, singleQ2, multipleQ,],
+      questions: [multipleQ,],
     );
 
 
