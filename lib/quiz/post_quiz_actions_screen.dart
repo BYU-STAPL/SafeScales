@@ -102,7 +102,6 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
 
     return Column(
       children: [
-        SizedBox(height: 30),
         Text(
           'Your dragon is fully grown!',
           textAlign: TextAlign.center,
@@ -117,16 +116,23 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium,
         ),
-        TextButton.icon(
-          onPressed: _handleGoToDragon,
-          icon: FaIcon(FontAwesomeIcons.dragon),
-          label: Text(
-            'Dragon',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.primary,
+
+        SizedBox(height: 30),
+
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _handleGoToDragon,
+            icon: FaIcon(FontAwesomeIcons.dragon),
+            label: Text("GO TO DRAGON".toUpperCase()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              padding: EdgeInsets.symmetric(vertical: 12),
             ),
           ),
         ),
+
         SizedBox(height: 30),
       ],
     );
@@ -233,7 +239,7 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
       appBar: AppBar(title: Text('Results')),
       body: Center(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 25),
           child: Column(
             children: [
               // Show dragon action if passed, suggested action if failed

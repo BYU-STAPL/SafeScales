@@ -29,9 +29,9 @@ class PreQuizResultScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
+          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 25),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            // mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 'Great job completing the quiz!',
@@ -40,7 +40,24 @@ class PreQuizResultScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 32),
+
+              SizedBox(height: 30),
+
+              Text(
+                'Your new dragon egg hatched!',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyLarge,
+              ),
+
+              SizedBox(height: 30),
+              
+              // TODO: Replace later with dragon
+              Image.asset("assets/images/other/QuestionMark.png"),
+              
+              SizedBox(height: 30),
+
+              Spacer(),
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -48,14 +65,14 @@ class PreQuizResultScreen extends StatelessWidget {
                     Navigator.pop(context, true);
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    backgroundColor: theme.colorScheme.secondary,
+                    foregroundColor: theme.colorScheme.onSecondary,
                   ),
                   child: Text(
-                    'Continue Learning',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    'Return to lesson'.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: theme.textTheme.bodyMedium?.fontSize,
+                    ),
                   ),
                 ),
               ),
