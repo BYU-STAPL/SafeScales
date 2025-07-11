@@ -6,6 +6,7 @@ import 'package:safe_scales/quiz/post_quiz_actions_screen.dart';
 import 'package:safe_scales/quiz/post_quiz_summary.dart';
 import 'package:safe_scales/quiz/post_quiz_screen.dart';
 import 'package:safe_scales/lesson/lesson_page.dart';
+import 'package:safe_scales/reading/reading_activity_screen.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/themes/theme_notifier.dart';
 import 'package:safe_scales/themes/theme_provider.dart';
@@ -20,6 +21,7 @@ class PostQuizResultScreen extends StatefulWidget {
     required this.totalQuestions,
     required this.userAnswers,
     this.moduleId, // Add optional moduleId
+    this.topic,
   }) : super(key: key);
 
   final QuestionSet questionSet;
@@ -29,6 +31,7 @@ class PostQuizResultScreen extends StatefulWidget {
   final int totalQuestions;
   final List<List<int>> userAnswers;
   final String? moduleId;
+  final String? topic;
 
   @override
   State<PostQuizResultScreen> createState() => _PostQuizResultScreenState();
@@ -74,7 +77,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => LessonPage(moduleId: widget.moduleId!),
+          builder: (context) => ReadingActivityScreen(topic: widget.topic!, moduleId: widget.moduleId!),
         ),
       );
     } else {
