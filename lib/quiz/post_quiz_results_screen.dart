@@ -177,7 +177,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: readinessColor.withOpacity(0.1),
+                          color: readinessColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(

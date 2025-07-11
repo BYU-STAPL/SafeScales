@@ -358,7 +358,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
       return Scaffold(
         appBar: appBar,
         body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 25),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -419,7 +419,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                   child: Text(
                     'Start'.toUpperCase(),
                     style: TextStyle(
-                      fontSize: theme.textTheme.bodyLarge?.fontSize,
+                      fontSize: theme.textTheme.bodyMedium?.fontSize,
                       color: theme.colorScheme.onPrimary,
                     ),
                   ),
