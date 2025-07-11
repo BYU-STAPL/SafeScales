@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:safe_scales/dragons/dragons_page.dart';
 import 'package:safe_scales/settings_drawer.dart';
 import 'package:safe_scales/shop/shop_page.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/services/auth_service.dart';
-import 'package:safe_scales/themes/theme_provider.dart';
 import 'package:safe_scales/screens/selection_screen.dart';
 
 import 'accessories/toy_box_page.dart';
 import 'dev_testing_page.dart';
-import 'dragons/my_dragons.dart';
 import 'home.dart';
 
 class MainNavigation extends StatefulWidget {
@@ -38,7 +37,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
     _pages = <Widget>[
       HomePage(),
-      MyDragonsPage(),
+      DragonsPage(),
       ToyBoxPage(),
       ShopPage(),
       DevTestingPage(), //TODO: Remove later
