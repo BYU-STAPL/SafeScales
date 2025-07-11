@@ -596,6 +596,7 @@ class _LessonPageState extends State<LessonPage> {
                       if (completed == true) {
                         setState(() {
                           readingCompleted = true;
+                          _loadModuleProgress();
                         });
                       }
                     });
