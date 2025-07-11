@@ -30,7 +30,7 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
   Map<String, dynamic>? _currentClass;
   List<Map<String, dynamic>> _modules = [];
   Map<String, double> _moduleProgress = {};
-  String? _nextModuleId;
+  // String? _nextModuleId;
 
   @override
   void initState() {
@@ -68,8 +68,8 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
             _moduleProgress = progress;
           });
 
-          // Find next incomplete module
-          _findNextModule();
+          // // Find next incomplete module
+          // _findNextModule();
         }
       }
     } catch (e) {
@@ -77,44 +77,49 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
     }
   }
 
-  void _findNextModule() {
-    for (var module in _modules) {
-      final progress = _moduleProgress[module['id']] ?? 0.0;
-      if (progress < 100) {
-        setState(() {
-          _nextModuleId = module['id'];
-        });
-        return;
-      }
-    }
-    // If all modules are complete, set to last module
-    if (_modules.isNotEmpty) {
-      setState(() {
-        _nextModuleId = _modules.last['id'];
-      });
-    }
-  }
+  // void _findNextModule() {
+  //   for (var module in _modules) {
+  //     final progress = _moduleProgress[module['id']] ?? 0.0;
+  //     if (progress < 100) {
+  //       setState(() {
+  //         _nextModuleId = module['id'];
+  //       });
+  //       return;
+  //     }
+  //   }
+  //   // If all modules are complete, set to last module
+  //   if (_modules.isNotEmpty) {
+  //     setState(() {
+  //       _nextModuleId = _modules.last['id'];
+  //     });
+  //   }
+  // }
 
-  void _navigateToNextModule() {
-    if (_nextModuleId != null) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LessonPage(moduleId: _nextModuleId!),
-        ),
-        (route) => false, // Remove all previous routes
-      );
-    } else {
-      // Fallback to home page if no next module found
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MainNavigation(initialIndex: 0),
-        ),
-        (route) => false,
-      );
-    }
-  }
+  // void _navigateToNextModule() {
+  //   print(_nextModuleId);
+  //
+  //   if (_nextModuleId != null) {
+  //     print("NEXT MODULE-----");
+  //     Navigator.pushAndRemoveUntil(
+  //       context,
+  //       MaterialPageRoute(
+  //         builder: (context) => LessonPage(moduleId: _nextModuleId!),
+  //       ),
+  //       (route) => false, // Remove all previous routes
+  //     );
+  //   } else {
+  //     print("HOME-----");
+  //
+  //     // Fallback to home page if no next module found
+  //     Navigator.pushAndRemoveUntil(
+  //       context,
+  //       MaterialPageRoute(
+  //         builder: (context) => MainNavigation(initialIndex: 0),
+  //       ),
+  //       (route) => false,
+  //     );
+  //   }
+  // }
 
   Widget _buildDragonAction(BuildContext context) {
     ThemeData theme = Theme.of(context);
@@ -238,19 +243,23 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    if (widget.score >= widget.passingScore &&
-                        _nextModuleId != null) {
-                      // If passed and there's a next module, navigate to it
-                      _navigateToNextModule();
-                    } else {
-                      // Otherwise return to lesson page
-                      Navigator.pop(context, true);
-                    }
+
+                    Navigator.pop(context, true);
+
+                    // if (widget.score >= widget.passingScore &&
+                    //     _nextModuleId != null) {
+                    //   // If passed and there's a next module, navigate to it
+                    //   _navigateToNextModule();
+                    // } else {
+                    //   // Otherwise return to lesson page
+                    //   Navigator.pop(context, true);
+                    // }
                   },
                   child: Text(
-                    widget.score >= widget.passingScore && _nextModuleId != null
-                        ? 'Continue to Next Module'.toUpperCase()
-                        : 'Return to lesson'.toUpperCase(),
+                    'Return to lesson'.toUpperCase(),
+                    // widget.score >= widget.passingScore && _nextModuleId != null
+                    //     ? 'Continue to Next Module'.toUpperCase()
+                    //     : 'Return to lesson'.toUpperCase(),
                     style: TextStyle(
                       fontSize: theme.textTheme.bodyMedium?.fontSize,
                     ),
