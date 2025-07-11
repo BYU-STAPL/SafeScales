@@ -4,6 +4,9 @@ import 'package:safe_scales/main_navigation.dart';
 import 'package:safe_scales/question/question.dart';
 import 'package:safe_scales/quiz/post_quiz_actions_screen.dart';
 import 'package:safe_scales/quiz/post_quiz_summary.dart';
+import 'package:safe_scales/quiz/post_quiz_screen.dart';
+import 'package:safe_scales/lesson/lesson_page.dart';
+import 'package:safe_scales/reading/reading_activity_screen.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/themes/theme_notifier.dart';
 import 'package:safe_scales/themes/theme_provider.dart';
@@ -17,6 +20,8 @@ class PostQuizResultScreen extends StatefulWidget {
     required this.correctAnswers,
     required this.totalQuestions,
     required this.userAnswers,
+    this.moduleId, // Add optional moduleId
+    this.topic,
   }) : super(key: key);
 
   final QuestionSet questionSet;
@@ -25,12 +30,73 @@ class PostQuizResultScreen extends StatefulWidget {
   final int correctAnswers;
   final int totalQuestions;
   final List<List<int>> userAnswers;
+  final String? moduleId;
+  final String? topic;
 
   @override
   State<PostQuizResultScreen> createState() => _PostQuizResultScreenState();
 }
 
 class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
+
+  Future<void> _handleQuizAction(QuizAction action) async {
+    switch (action) {
+      case QuizAction.retake:
+        await _retakeQuiz();
+        break;
+      case QuizAction.reread:
+        await _reReadLesson();
+        break;
+      case QuizAction.returnToLesson:
+        Navigator.pop(context, true);
+        break;
+      case QuizAction.goToDragon:
+        _goToDragon();
+        break;
+    }
+  }
+
+  Future<void> _retakeQuiz() async {
+    // Navigate back to quiz screen
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PostQuizScreen(questionSet: widget.questionSet),
+      ),
+    );
+
+    // If quiz was completed, pop back to lesson
+    if (result == true && mounted) {
+      Navigator.pop(context, true);
+    }
+  }
+
+  Future<void> _reReadLesson() async {
+    if (widget.moduleId != null) {
+      // Navigate back to lesson page for re-reading
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ReadingActivityScreen(topic: widget.topic!, moduleId: widget.moduleId!),
+        ),
+      );
+    } else {
+      // Fallback: just return to previous screen
+      Navigator.pop(context, true);
+    }
+  }
+
+  void _goToDragon() {
+    // Navigate to dragon screen
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MainNavigation(initialIndex: 1),
+      ),
+          (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final QuestionSet questionSet = widget.questionSet;
@@ -43,17 +109,17 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
     ThemeData theme = Theme.of(context);
 
     String readinessLevel =
-        score >= passingScore
-            ? 'Passed'
-            : score >= 50
-            ? 'Needs Retake'
-            : 'Needs to Re-read';
+    score >= passingScore
+        ? 'Passed'
+        : score >= 50
+        ? 'Needs Retake'
+        : 'Needs to Re-read';
     Color readinessColor =
-        score >= passingScore
-            ? theme.colorScheme.green
-            : score < passingScore
-            ? theme.colorScheme.orange
-            : theme.colorScheme.red;
+    score >= passingScore
+        ? theme.colorScheme.green
+        : score < passingScore
+        ? theme.colorScheme.orange
+        : theme.colorScheme.red;
 
     return Scaffold(
       appBar: AppBar(
@@ -144,15 +210,17 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder:
-                              (context) => PostQuizActionsScreen(
-                                score: score,
-                                passingScore: widget.questionSet.passingScore,
-                              ),
+                          builder: (context) => PostQuizActionsScreen(
+                            score: score,
+                            passingScore: widget.questionSet.passingScore,
+                          ),
                         ),
                       );
 
-                      if (result == true) {
+                      // Handle the returned action
+                      if (result is QuizAction) {
+                        await _handleQuizAction(result);
+                      } else if (result == true) {
                         Navigator.pop(context, true);
                       }
                     },

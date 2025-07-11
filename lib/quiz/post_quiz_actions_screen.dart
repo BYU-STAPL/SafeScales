@@ -4,9 +4,16 @@ import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
-import 'package:safe_scales/lesson/lesson_page.dart';
 
 import '../main_navigation.dart';
+
+// Define action types for better type safety
+enum QuizAction {
+  retake,
+  reread,
+  returnToLesson,
+  goToDragon,
+}
 
 class PostQuizActionsScreen extends StatefulWidget {
   const PostQuizActionsScreen({
@@ -30,7 +37,6 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
   Map<String, dynamic>? _currentClass;
   List<Map<String, dynamic>> _modules = [];
   Map<String, double> _moduleProgress = {};
-  String? _nextModuleId;
 
   @override
   void initState() {
@@ -67,9 +73,6 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
           setState(() {
             _moduleProgress = progress;
           });
-
-          // Find next incomplete module
-          _findNextModule();
         }
       }
     } catch (e) {
@@ -77,43 +80,21 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
     }
   }
 
-  void _findNextModule() {
-    for (var module in _modules) {
-      final progress = _moduleProgress[module['id']] ?? 0.0;
-      if (progress < 100) {
-        setState(() {
-          _nextModuleId = module['id'];
-        });
-        return;
-      }
-    }
-    // If all modules are complete, set to last module
-    if (_modules.isNotEmpty) {
-      setState(() {
-        _nextModuleId = _modules.last['id'];
-      });
-    }
+  // Simple action handlers that just return the action type
+  void _handleRetakeQuiz() {
+    Navigator.pop(context, QuizAction.retake);
   }
 
-  void _navigateToNextModule() {
-    if (_nextModuleId != null) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LessonPage(moduleId: _nextModuleId!),
-        ),
-        (route) => false, // Remove all previous routes
-      );
-    } else {
-      // Fallback to home page if no next module found
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MainNavigation(initialIndex: 0),
-        ),
-        (route) => false,
-      );
-    }
+  void _handleReReadLesson() {
+    Navigator.pop(context, QuizAction.reread);
+  }
+
+  void _handleReturnToLesson() {
+    Navigator.pop(context, QuizAction.returnToLesson);
+  }
+
+  void _handleGoToDragon() {
+    Navigator.pop(context, QuizAction.goToDragon);
   }
 
   Widget _buildDragonAction(BuildContext context) {
@@ -122,38 +103,22 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
     return Column(
       children: [
         SizedBox(height: 30),
-
         Text(
           'Your dragon is fully grown!',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyLarge,
         ),
         SizedBox(height: 30),
-
         // TODO: Replace later with dragon
         Image.asset("assets/images/other/QuestionMark.png"),
-
         SizedBox(height: 30),
-
         Text(
           'Now you can play with your dragon by going to the dragon screen',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium,
         ),
-
         TextButton.icon(
-          onPressed: () {
-            // Go to Dragon Page
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (context) =>
-                        MainNavigation(initialIndex: 1), // Index of desired tab
-              ),
-              (route) => false, // Remove all previous routes
-            );
-          },
+          onPressed: _handleGoToDragon,
           icon: FaIcon(FontAwesomeIcons.dragon),
           label: Text(
             'Dragon',
@@ -162,7 +127,6 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
             ),
           ),
         ),
-
         SizedBox(height: 30),
       ],
     );
@@ -174,7 +138,6 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
     return Column(
       children: [
         SizedBox(height: 30),
-
         Container(
           child: Padding(
             padding: EdgeInsets.all(16),
@@ -193,24 +156,70 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
             ),
           ),
         ),
-
+        SizedBox(height: 30),
+        Text("Suggested Action", style: theme.textTheme.headlineMedium),
         SizedBox(height: 30),
 
-        Text("Suggested Action", style: theme.textTheme.headlineMedium),
-
-        SizedBox(height: 20),
-
-        //TODO: Implement these buttons
+        // Action buttons that delegate to parent
         widget.score >= 50
-            ? ElevatedButton(
-              onPressed: null,
-              child: Text("Retake Quiz".toUpperCase()),
-            )
-            : ElevatedButton(
-              onPressed: null,
-              child: Text("Re-read".toUpperCase()),
+            ? Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _handleRetakeQuiz,
+                icon: Icon(Icons.refresh),
+                label: Text("Retake Quiz".toUpperCase()),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
             ),
 
+            SizedBox(height: 30),
+
+            Text('OR'.toUpperCase()),
+
+            SizedBox(height: 30),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _handleReReadLesson,
+                icon: Icon(Icons.menu_book),
+                label: Text("Re-read Lesson".toUpperCase()),
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.2), width: 2),
+                  backgroundColor: theme.colorScheme.surface, // optional: contrast background
+                  foregroundColor: theme.colorScheme.primary, // optional: text/icon color
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 12,),
+                ),
+              ),
+            ),
+
+
+
+          ],
+        )
+            : SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _handleReReadLesson,
+            icon: Icon(Icons.menu_book),
+            label: Text("Re-read Lesson".toUpperCase()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              padding: EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ),
         SizedBox(height: 30),
       ],
     );
@@ -231,33 +240,23 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
               widget.score >= widget.passingScore
                   ? _buildDragonAction(context)
                   : _buildSuggestedAction(context),
-
               Spacer(),
-
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    if (widget.score >= widget.passingScore &&
-                        _nextModuleId != null) {
-                      // If passed and there's a next module, navigate to it
-                      _navigateToNextModule();
-                    } else {
-                      // Otherwise return to lesson page
-                      Navigator.pop(context, true);
-                    }
-                  },
+                  onPressed: _handleReturnToLesson,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.secondary,
+                    foregroundColor: theme.colorScheme.onSecondary,
+                  ),
                   child: Text(
-                    widget.score >= widget.passingScore && _nextModuleId != null
-                        ? 'Continue to Next Module'.toUpperCase()
-                        : 'Return to lesson'.toUpperCase(),
+                    'Return to lesson'.toUpperCase(),
                     style: TextStyle(
                       fontSize: theme.textTheme.bodyMedium?.fontSize,
                     ),
                   ),
                 ),
               ),
-
               SizedBox(height: 30),
             ],
           ),
