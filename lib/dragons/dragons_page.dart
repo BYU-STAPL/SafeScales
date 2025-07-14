@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:safe_scales/dragons/dragon_id_card.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/services/dragon_service.dart';
@@ -7,7 +6,6 @@ import 'package:safe_scales/services/quiz_service.dart';
 import 'package:flutter/rendering.dart';
 
 import '../services/class_service.dart';
-import '../themes/app_theme.dart';
 import 'dragon_decoration_screen.dart';
 
 class DragonsPage extends StatefulWidget {
@@ -30,10 +28,9 @@ class _DragonsPageState extends State<DragonsPage> {
   @override
   void initState() {
     super.initState();
-
     _dragonService = DragonService(QuizService().supabase);
+    _classService = ClassService(QuizService().supabase);
     _loadUserDragons();
-
   }
 
   // Add refresh method
@@ -58,155 +55,122 @@ class _DragonsPageState extends State<DragonsPage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
-
     ThemeData theme = Theme.of(context);
-
-
     final Color primary = theme.colorScheme.primary;
     final Color cardBg = theme.colorScheme.surface;
-    // final Color cardShadow = theme.colorScheme.shadow.withOpacity(0.07);
-    // final Color lockedBg = theme.colorScheme.surfaceDim;
-    // final double borderRadius = 28.0;
-    // final double cardPadding = 24.0;
-
 
     return Scaffold(
       backgroundColor: cardBg,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refreshDragons,
-          child:
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_userDragons.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.egg_outlined,
+                              size: 64,
+                              color: primary.withValues(alpha: 0.5),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No dragons yet.\nComplete topics to unlock dragons!',
+                              style: theme.textTheme.labelLarge,
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_userDragons.isEmpty)
-                            Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(32.0),
-                                child: Column(
-                                  children: [
-                                    Icon(
-                                      Icons.egg_outlined,
-                                      size: 64,
-                                      color: primary.withValues(alpha: 0.5),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'No dragons yet.\nComplete topics to unlock dragons!',
-                                      style: theme.textTheme.labelLarge,
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          else
-                            ..._userDragons.entries.map((entry) {
-                              final dragonId = entry.key;
-                              final phases = entry.value;
-                              final dragonData = _dragonDetails[dragonId];
+                    )
+                  else
+                    ..._userDragons.entries.map((entry) {
+                      final dragonId = entry.key;
+                      final phases = entry.value;
+                      final dragonData = _dragonDetails[dragonId];
 
-                              if (dragonData == null)
-                                return const SizedBox.shrink();
+                      if (dragonData == null) return const SizedBox.shrink();
 
-                              // Get the highest phase achieved
-                              String currentPhase = 'egg';
-                              String imageUrl = dragonData['egg_image'];
+                      // Get the highest phase achieved
+                      String currentPhase = 'egg';
+                      String imageUrl = dragonData['egg_image'];
 
-                              // Handle both List and Map formats for phases
-                              bool hasPhase(String phase) {
-                                if (phases is List) {
-                                  // Map new phase names to old phase names for checking
-                                  String phaseToCheck = phase;
-                                  if (phase == 'stage1') phaseToCheck = 'baby';
-                                  if (phase == 'stage2') phaseToCheck = 'teen';
-                                  if (phase == 'final') phaseToCheck = 'adult';
+                      // Handle both List and Map formats for phases
+                      bool hasPhase(String phase) {
+                        if (phases is List) {
+                          // Map new phase names to old phase names for checking
+                          String phaseToCheck = phase;
+                          if (phase == 'stage1') phaseToCheck = 'baby';
+                          if (phase == 'stage2') phaseToCheck = 'teen';
+                          if (phase == 'final') phaseToCheck = 'adult';
 
-                                  return phases.contains(phase) ||
-                                      phases.contains(phaseToCheck);
-                                } else if (phases is Map) {
-                                  String phaseToCheck = phase;
-                                  if (phase == 'stage1') phaseToCheck = 'baby';
-                                  if (phase == 'stage2') phaseToCheck = 'teen';
-                                  if (phase == 'final') phaseToCheck = 'adult';
+                          return phases.contains(phase) ||
+                              phases.contains(phaseToCheck);
+                        } else if (phases is Map) {
+                          String phaseToCheck = phase;
+                          if (phase == 'stage1') phaseToCheck = 'baby';
+                          if (phase == 'stage2') phaseToCheck = 'teen';
+                          if (phase == 'final') phaseToCheck = 'adult';
 
-                                  final phasesList = phases['phases'] ?? [];
-                                  return phasesList.contains(phase) ||
-                                      phasesList.contains(phaseToCheck);
-                                }
-                                return false;
-                              }
+                          final phasesList = phases['phases'] ?? [];
+                          return phasesList.contains(phase) ||
+                              phasesList.contains(phaseToCheck);
+                        }
+                        return false;
+                      }
 
-                              if (hasPhase('final') || hasPhase('adult')) {
-                                currentPhase = 'final';
-                                imageUrl = dragonData['final_stage_image'];
-                              } else if (hasPhase('stage2') || hasPhase('teen')) {
-                                currentPhase = 'stage2';
-                                imageUrl = dragonData['stage2_image'];
-                              } else if (hasPhase('stage1') || hasPhase('baby')) {
-                                currentPhase = 'stage1';
-                                imageUrl = dragonData['stage1_image'];
-                              }
+                      if (hasPhase('final') || hasPhase('adult')) {
+                        currentPhase = 'final';
+                        imageUrl = dragonData['final_stage_image'];
+                      } else if (hasPhase('stage2') || hasPhase('teen')) {
+                        currentPhase = 'stage2';
+                        imageUrl = dragonData['stage2_image'];
+                      } else if (hasPhase('stage1') || hasPhase('baby')) {
+                        currentPhase = 'stage1';
+                        imageUrl = dragonData['stage1_image'];
+                      }
 
-                              final String speciesName = dragonData['name'] ?? 'Unknown';
-                              final String item = dragonData['favorite_item'] ?? 'Unknown';
-                              final String environment = dragonData['preferred_environment'] ?? 'Unknown';
+                      final String speciesName = dragonData['name'] ?? 'Unknown';
+                      final String item = dragonData['favorite_item'] ?? 'Unknown';
+                      final String environment = dragonData['preferred_environment'] ?? 'Unknown';
 
-                              return DragonIdCard(
-                                dragonImagePath: imageUrl,
-                                species: speciesName,
-                                name: 'Jack',
-                                favoriteItem: item,
-                                favoriteEnvironment: environment,
-                                onTapPlayButton: () {
-                                  navigateToDressUp(
-                                      dragonId,
-                                      dragonData,
-                                      phases
-                                  );
-                                },
-
-
-                                //     () {
-                                //   Navigator.push(
-                                //     context,
-                                //     MaterialPageRoute(
-                                //       builder:
-                                //           (context) =>
-                                //           DragonDressUpPage(
-                                //             dragonId: dragonId,
-                                //             dragonData:
-                                //             dragonData,
-                                //             phases: phases,
-                                //             // parentState: this,
-                                //           ),
-                                //     ),
-                                //   );
-                                // },
-                                // TODO: Add backend to change dragon name
-                                // onNameChanged: (newName) {
-                                //   setState(() {
-                                //     dragonName = newName;
-                                //   });
-                                // },
-                              );
-                            }).toList(),
-                        ],
-                      ),
-                    ),
-                  ),
+                      return DragonIdCard(
+                        dragonImagePath: imageUrl,
+                        species: speciesName,
+                        name: 'Jack',
+                        favoriteItem: item,
+                        favoriteEnvironment: environment,
+                        onTapPlayButton: () {
+                          navigateToDressUp(dragonId, dragonData, phases);
+                        },
+                        // TODO: Add backend to change dragon name
+                        // onNameChanged: (newName) {
+                        //   setState(() {
+                        //     dragonName = newName;
+                        //   });
+                        // },
+                      );
+                    }).toList(),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -222,12 +186,12 @@ class _DragonsPageState extends State<DragonsPage> {
       // Get user's dragons
       final user = _userState.currentUser;
       if (user != null) {
-        final response =
-            await _dragonService.supabase
-                .from('Users')
-                .select('dragons')
-                .eq('id', user.id)
-                .single();
+        // Get user's dragons data
+        final response = await _dragonService.supabase
+            .from('Users')
+            .select('dragons')
+            .eq('id', user.id)
+            .single();
 
         if (response['dragons'] != null) {
           // Convert the dragons map to the correct types
@@ -247,42 +211,77 @@ class _DragonsPageState extends State<DragonsPage> {
             return MapEntry(key, value);
           });
 
-          // Load details for each dragon from classes.assets
-          for (var dragonId in _userDragons.keys) {
-            if (dragonId != 'current_dragon_env') {
-              // Get all classes and their assets
-              final classesResponse = await _dragonService.supabase
-                  .from('classes')
-                  .select('assets');
+          // Get user's current class
+          final userClass = await _classService.getUserClass(user.id);
+          if (userClass.isNotEmpty) {
+            final classId = userClass['id'];
+            print('📚 Loading dragons for class: $classId');
 
-              for (var classData in classesResponse) {
-                if (classData['assets'] != null) {
-                  final assets = List<dynamic>.from(classData['assets']);
+            // Get assets from the current class only
+            final classAssets = await _classService.getClassAssets(classId);
 
-                  // Find the dragon with matching ID
-                  for (var asset in assets) {
-                    if (asset['type'] == 'dragon' && asset['id'] == dragonId) {
-                      // Convert the new structure to match the expected format
-                      final dragonData = {
-                        'id': asset['id'],
-                        'name': asset['name'],
-                        // Map new stage names to old field names for compatibility
-                        'egg_image': asset['stages']['egg'],
-                        'stage1_image': asset['stages']['baby'],
-                        'stage2_image': asset['stages']['teen'],
-                        'final_stage_image': asset['stages']['adult'],
-                        // Add some default values
-                        'length': 15,
-                        'weight': 2000,
-                        'preferred_environment': 'Mountain',
-                      };
-                      _dragonDetails[dragonId] = dragonData;
-                      break;
-                    }
+            if (classAssets != null) {
+              // Filter _userDragons to only include dragons from this class
+              final sortedUserDragons = <String, dynamic>{};
+
+              // final filteredUserDragons = <String, dynamic>{};
+
+              // Always keep the current_dragon_env
+              if (_userDragons.containsKey('current_dragon_env')) {
+                sortedUserDragons['current_dragon_env'] = _userDragons['current_dragon_env'];
+              }
+
+              // Find dragons in the class assets and check if user has them
+              for (var asset in classAssets) {
+                if (asset['type'] == 'dragon') {
+                  final dragonId = asset['id'];
+
+                  // Only include this dragon if the user has it
+                  if (_userDragons.containsKey(dragonId)) {
+                    // filteredUserDragons[dragonId] = _userDragons[dragonId];
+
+                    // Convert the new structure to match the expected format
+                    final dragonData = {
+                      'id': asset['id'],
+                      'name': asset['name'],
+                      // Map new stage names to old field names for compatibility
+                      'egg_image': asset['stages']['egg'],
+                      'stage1_image': asset['stages']['baby'],
+                      'stage2_image': asset['stages']['teen'],
+                      'final_stage_image': asset['stages']['adult'],
+                      // Add some default values
+                      'length': 15,
+                      'weight': 2000,
+                      'preferred_environment': 'Mountain',
+                      'favorite_item': asset['favorite_item'] ?? 'Unknown',
+                      'module_id': asset['moduleId']!,
+                    };
+                    _dragonDetails[dragonId] = dragonData;
                   }
                 }
               }
+
+              // Sort Dragons by Module ID
+              final sortedEntries = _dragonDetails.entries.toList()
+                ..sort((a, b) => a.value['moduleId'].compareTo(b.value['moduleId']));
+
+              final sortedDragonMaps = Map.fromEntries(sortedEntries);
+
+              // Create the Sored User Dragons
+              for (var dragonId in sortedDragonMaps.keys) {
+                if (_userDragons.containsKey(dragonId)) {
+                  sortedUserDragons[dragonId] = _userDragons[dragonId];
+                }
+              }
+
+              _userDragons = sortedUserDragons;
+
+              print('🐉 Filtered dragons for current class: ${_userDragons.keys.where((k) => k != 'current_dragon_env').toList()}');
             }
+          } else {
+            print('⚠️ No class found for user');
+            // If no class found, show no dragons
+            _userDragons = {};
           }
         }
       }
@@ -309,7 +308,7 @@ class _DragonsPageState extends State<DragonsPage> {
   }
 
   // Helper method to save environment selection
-  Future<void> saveEnvironmentSelection(String dragonId, String environmentId,) async {
+  Future<void> saveEnvironmentSelection(String dragonId, String environmentId) async {
     try {
       final user = _userState.currentUser;
       if (user != null) {
