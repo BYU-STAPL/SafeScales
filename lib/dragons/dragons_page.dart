@@ -263,7 +263,7 @@ class _DragonsPageState extends State<DragonsPage> {
 
               // Sort Dragons by Module ID
               final sortedEntries = _dragonDetails.entries.toList()
-                ..sort((a, b) => a.value['moduleId'].compareTo(b.value['moduleId']));
+                ..sort((a, b) => a.value['moduleId']!.compareTo(b.value['moduleId']));
 
               final sortedDragonMaps = Map.fromEntries(sortedEntries);
 
