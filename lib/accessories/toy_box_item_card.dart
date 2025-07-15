@@ -19,8 +19,6 @@ class ToyBoxItemCard extends StatelessWidget {
 
     ThemeData theme = Theme.of(context);
 
-    Color green = theme.colorScheme.secondary;
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -54,8 +52,8 @@ class ToyBoxItemCard extends StatelessWidget {
                     image != null
                         ? Image.network(
                       image!,
-                      width: 60 * AppTheme.fontSizeScale,
-                      height: 60 * AppTheme.fontSizeScale,
+                      width: 75 * AppTheme.fontSizeScale,
+                      height: 75 * AppTheme.fontSizeScale,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
