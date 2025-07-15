@@ -13,9 +13,11 @@ class StickerCollectionWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
+    ThemeData theme = Theme.of(context);
+    ColorScheme colorScheme = theme.colorScheme;
 
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
       decoration: BoxDecoration(
         color: colorScheme.surfaceVariant,
@@ -34,14 +36,10 @@ class StickerCollectionWidget extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'Drag accessories onto your dragon',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.primary,
-            ),
+            'Drag stickers onto your dragon',
+            style: theme.textTheme.bodyMedium
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 15),
           _isLoadingAccessories
               ? const Center(child: CircularProgressIndicator())
               : userAccessories.isEmpty
@@ -53,9 +51,9 @@ class StickerCollectionWidget extends StatelessWidget {
                   size: 48,
                   color: colorScheme.primary.withOpacity(0.5),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 15),
                 Text(
-                  'No accessories yet.\nVisit the shop to buy some!',
+                  'No stickers yet.\nVisit the shop to buy some!',
                   style: TextStyle(
                     fontSize: 14,
                     color: colorScheme.onSurfaceVariant,
@@ -121,14 +119,13 @@ class StickerCollectionWidget extends StatelessWidget {
               }).toList(),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 15),
           Text(
             'Long press a sticker to remove it',
-            style: TextStyle(
-              fontSize: 14,
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: theme.textTheme.labelMedium,
           ),
+          const SizedBox(height: 10),
+
         ],
       ),
     );
