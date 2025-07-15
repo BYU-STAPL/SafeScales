@@ -75,7 +75,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     //     print('No user logged in, skipping review progress save');
     //   }
     // } catch (e) {
-    //   print('Error saving review progress: $e');
+    //   print('❌Error saving review progress: $e');
     //   // Continue to show results even if saving fails
     // }
     //

@@ -60,7 +60,7 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
         return;
       }
     } catch (e) {
-      print('Error checking joined classes: $e');
+      print('❌Error checking joined classes: $e');
     }
 
     // If no joined classes or error occurred, fetch available classes

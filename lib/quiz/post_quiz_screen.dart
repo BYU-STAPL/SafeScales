@@ -86,7 +86,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
         print('No user logged in, skipping post-quiz progress save');
       }
     } catch (e) {
-      print('Error saving post-quiz progress: $e');
+      print('❌ Error saving post-quiz progress: $e');
       // Continue to show results even if saving fails
     }
 

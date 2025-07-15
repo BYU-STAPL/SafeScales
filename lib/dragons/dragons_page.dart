@@ -35,7 +35,7 @@ class _DragonsPageState extends State<DragonsPage> {
 
   // Add refresh method
   Future<void> _refreshDragons() async {
-    print('🔄 Refreshing dragons data...');
+    // print('🔄 Refreshing dragons data...');
     await _loadUserDragons();
   }
 
@@ -215,7 +215,7 @@ class _DragonsPageState extends State<DragonsPage> {
           final userClass = await _classService.getUserClass(user.id);
           if (userClass.isNotEmpty) {
             final classId = userClass['id'];
-            print('📚 Loading dragons for class: $classId');
+            // print('📚 Loading dragons for class: $classId');
 
             // Get assets from the current class only
             final classAssets = await _classService.getClassAssets(classId);
@@ -224,12 +224,12 @@ class _DragonsPageState extends State<DragonsPage> {
               // Filter _userDragons to only include dragons from this class
               final sortedUserDragons = <String, dynamic>{};
 
-              // final filteredUserDragons = <String, dynamic>{};
-
               // Always keep the current_dragon_env
               if (_userDragons.containsKey('current_dragon_env')) {
                 sortedUserDragons['current_dragon_env'] = _userDragons['current_dragon_env'];
               }
+
+              final moduleIdKeyName = 'module_id';
 
               // Find dragons in the class assets and check if user has them
               for (var asset in classAssets) {
@@ -254,16 +254,18 @@ class _DragonsPageState extends State<DragonsPage> {
                       'weight': 2000,
                       'preferred_environment': 'Mountain',
                       'favorite_item': asset['favorite_item'] ?? 'Unknown',
-                      'module_id': asset['moduleId']!,
+                      moduleIdKeyName: asset['moduleId']!,
                     };
+
                     _dragonDetails[dragonId] = dragonData;
                   }
                 }
               }
 
               // Sort Dragons by Module ID
+              // TODO: using the module id the dragons are in opposite order
               final sortedEntries = _dragonDetails.entries.toList()
-                ..sort((a, b) => a.value['moduleId']!.compareTo(b.value['moduleId']));
+                ..sort((b, a) => (a.value[moduleIdKeyName] ?? 0).compareTo(b.value[moduleIdKeyName] ?? 0));
 
               final sortedDragonMaps = Map.fromEntries(sortedEntries);
 
@@ -276,7 +278,7 @@ class _DragonsPageState extends State<DragonsPage> {
 
               _userDragons = sortedUserDragons;
 
-              print('🐉 Filtered dragons for current class: ${_userDragons.keys.where((k) => k != 'current_dragon_env').toList()}');
+              // print('🐉 Filtered dragons for current class: ${_userDragons.keys.where((k) => k != 'current_dragon_env').toList()}');
             }
           } else {
             print('⚠️ No class found for user');
@@ -287,8 +289,9 @@ class _DragonsPageState extends State<DragonsPage> {
       }
 
       setState(() => _isLoading = false);
+
     } catch (e) {
-      print('✗ Error loading user dragons: $e');
+      print('❌ Error loading user dragons: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -312,25 +315,25 @@ class _DragonsPageState extends State<DragonsPage> {
     try {
       final user = _userState.currentUser;
       if (user != null) {
-        print('🔄 Starting environment selection save...');
-        print('📦 Current dragons data: $_userDragons');
+        // print('🔄 Starting environment selection save...');
+        // print('📦 Current dragons data: $_userDragons');
 
         // Create a new map with the updated environment
         final updatedDragons = Map<String, dynamic>.from(_userDragons);
-        print('📦 Created updatedDragons map: $updatedDragons');
+        // print('📦 Created updatedDragons map: $updatedDragons');
 
         // Add the current_dragon_env field
         updatedDragons['current_dragon_env'] = environmentId;
-        print('📦 Added current_dragon_env: $environmentId');
+        // print('📦 Added current_dragon_env: $environmentId');
 
         // Ensure we keep the existing dragon phases
         if (!updatedDragons.containsKey(dragonId)) {
           final phases = getDragonPhases(dragonId);
           updatedDragons[dragonId] = phases;
-          print('📦 Added missing dragon phases for $dragonId: $phases');
+          // print('📦 Added missing dragon phases for $dragonId: $phases');
         }
 
-        print('📦 Final updatedDragons to save: $updatedDragons');
+        // print('📦 Final updatedDragons to save: $updatedDragons');
 
         // Update the database
         final response = await _dragonService.supabase

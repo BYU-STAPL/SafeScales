@@ -76,7 +76,7 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
         }
       }
     } catch (e) {
-      print('Error loading class and module data: $e');
+      print('❌ Error loading class and module data: $e');
     }
   }
 

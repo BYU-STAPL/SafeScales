@@ -45,7 +45,7 @@ class ThemeNotifier extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       // Handle any loading errors
-      print('Error loading settings: $e');
+      print('❌Error loading settings: $e');
     }
   }
 
@@ -58,7 +58,7 @@ class ThemeNotifier extends ChangeNotifier {
       );
     } catch (e) {
       // Handle any saving errors
-      print('Error saving settings: $e');
+      print('❌Error saving settings: $e');
     }
   }
 
