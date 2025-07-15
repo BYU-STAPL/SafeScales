@@ -124,7 +124,7 @@ class _LessonPageState extends State<LessonPage> {
         }
       }
     } catch (e) {
-      print('Error loading dragon images: $e');
+      print('❌ Error loading dragon images: $e');
     }
   }
 
@@ -153,7 +153,7 @@ class _LessonPageState extends State<LessonPage> {
         }
       }
     } catch (e) {
-      print('Error loading module progress: $e');
+      print('❌ Error loading module progress: $e');
     }
   }
 

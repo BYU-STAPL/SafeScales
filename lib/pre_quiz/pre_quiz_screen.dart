@@ -73,7 +73,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
         print('No user logged in, skipping pre-quiz progress save');
       }
     } catch (e) {
-      print('Error saving pre-quiz progress: $e');
+      print('❌ Error saving pre-quiz progress: $e');
       // Continue to show results even if saving fails
     }
 

@@ -73,7 +73,7 @@ class _ShopPageState extends State<ShopPage> {
         moduleDetails = {for (var module in response) module['id']: module};
       });
     } catch (e) {
-      print('Error loading module details: $e');
+      print('❌Error loading module details: $e');
     }
   }
 
@@ -103,7 +103,7 @@ class _ShopPageState extends State<ShopPage> {
         isLoading = false;
       });
     } catch (e) {
-      print('Error loading shop items: $e');
+      print('❌Error loading shop items: $e');
       setState(() {
         isLoading = false;
       });
@@ -282,7 +282,7 @@ class _ShopPageState extends State<ShopPage> {
         selectedLessonIndex = null;
       });
     } catch (e) {
-      print('Error during purchase: $e');
+      print('❌Error during purchase: $e');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));

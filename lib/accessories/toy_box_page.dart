@@ -65,7 +65,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
         isLoading = false;
       });
     } catch (e) {
-      print('Error loading user items: $e');
+      print('❌ Error loading user items: $e');
       setState(() {
         isLoading = false;
       });

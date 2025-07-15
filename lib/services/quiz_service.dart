@@ -99,7 +99,7 @@ class QuizService {
         questions: questions,
       );
     } catch (e) {
-      print('Error fetching quiz: $e');
+      print('❌Error fetching quiz: $e');
       return null;
     }
   }
@@ -221,7 +221,7 @@ class QuizService {
       print('Database quiz ID: ${response['id']}');
       return questionSet;
     } catch (e) {
-      print('Error fetching quiz by topic and activity type: $e');
+      print('❌Error fetching quiz by topic and activity type: $e');
       return null;
     }
   }
@@ -307,7 +307,7 @@ class QuizService {
         'Saved to modules[$moduleId][$quizType]: ${modules[moduleId][quizType]}',
       );
     } catch (e) {
-      print('Error saving quiz progress: $e');
+      print('❌Error saving quiz progress: $e');
       throw Exception('Failed to save quiz progress: $e');
     }
   }
@@ -345,7 +345,7 @@ class QuizService {
       print('Converted quiz progress: $result');
       return result;
     } catch (e) {
-      print('Error getting quiz progress: $e');
+      print('❌Error getting quiz progress: $e');
       throw Exception('Failed to get quiz progress: $e');
     }
   }
@@ -449,7 +449,7 @@ class QuizService {
       print('Created QuestionSet with ID: ${questionSet.id}');
       return questionSet;
     } catch (e) {
-      print('Error fetching quiz by module ID: $e');
+      print('❌Error fetching quiz by module ID: $e');
       return null;
     }
   }
@@ -589,7 +589,7 @@ class QuizService {
 
       return moduleProgress;
     } catch (e) {
-      print('Error getting module progress: $e');
+      print('❌Error getting module progress: $e');
       return {};
     }
   }

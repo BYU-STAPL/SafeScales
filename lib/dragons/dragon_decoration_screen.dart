@@ -47,7 +47,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   @override
   void initState() {
     super.initState();
-    print('🚀 Initializing DragonDressUpPage...');
+    // print('🚀 Initializing DragonDressUpPage...');
     _loadUserEnvironments();
     _loadUserAccessories();
     _loadCurrentPhase();
@@ -176,7 +176,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
         }
       }
     } catch (e) {
-      print('Error loading user environments: $e');
+      print('❌ Error loading user environments: $e');
       if (mounted) {
         setState(() {
           userEnvironments = ['Default'];
@@ -207,7 +207,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
         if (userResponse['acquired_accessories'] != null) {
           final List<dynamic> acquiredAccessories =
           userResponse['acquired_accessories'];
-          print('📦 Acquired accessories IDs: $acquiredAccessories');
+          // print('📦 Acquired accessories IDs: $acquiredAccessories');
 
           // Get accessories from classes.assets
           final classesResponse = await dragonService.supabase
@@ -304,10 +304,9 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
     final double dragonSize = MediaQuery.of(context).size.width * 0.75;
 
-    final environmentSize = dragonSize * 1.25; // 25% larger
+    final environmentSize = (width: dragonSize * 1.25, height: dragonSize * 1.75);
 
-    final stickerEnvironmentSize = environmentSize - 10;
-
+    final stickerEnvironmentSize = (width: environmentSize.width - 10, height: environmentSize.height - 10);
 
     return Scaffold(
       appBar: AppBar(
@@ -379,8 +378,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                   if (userEnvironmentImages.isNotEmpty &&
                       selectedEnvironment < userEnvironmentImages.length)
                     Container(
-                      width: environmentSize,
-                      height: environmentSize,
+                      width: environmentSize.width,
+                      height: environmentSize.height,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(24),
                         image: DecorationImage(
@@ -412,8 +411,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                   DragTarget<Map<String, dynamic>>(
                     builder: (context, candidateData, rejectedData) {
                       return Container(
-                        width: environmentSize,
-                        height: environmentSize,
+                        width: environmentSize.width,
+                        height: environmentSize.height,
                         decoration: BoxDecoration(
                           color:
                           candidateData.isNotEmpty
@@ -597,10 +596,10 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   }
 
   void _showEnvironmentDialog() async {
-    print('🔄 Opening environment selection dialog...');
+    // print('🔄 Opening environment selection dialog...');
 
     if (_isLoadingEnvironments) {
-      print('⏳ Environments still loading...');
+      // print('⏳ Environments still loading...');
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Loading environments...'))
       );
@@ -615,8 +614,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       return;
     }
 
-    print('📦 Available environments: $userEnvironments');
-    print('📦 Environment IDs: $userEnvironmentIds');
+    // print('📦 Available environments: $userEnvironments');
+    // print('📦 Environment IDs: $userEnvironmentIds');
 
     int? choice = await showDialog<int>(
       context: context,
@@ -636,15 +635,15 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     );
 
     if (choice != null && choice < userEnvironments.length) {
-      print('🔄 Processing environment selection...');
-      print('📦 Selected environment: ${userEnvironments[choice]}');
-      print('📦 Selected environment ID: ${userEnvironmentIds[choice]}');
+      // print('🔄 Processing environment selection...');
+      // print('📦 Selected environment: ${userEnvironments[choice]}');
+      // print('📦 Selected environment ID: ${userEnvironmentIds[choice]}');
 
       setState(() => selectedEnvironment = choice);
 
       // Use the callback instead of parent state
       if (widget.onEnvironmentChanged != null) {
-        print('🔄 Calling environment changed callback...');
+        // print('🔄 Calling environment changed callback...');
         widget.onEnvironmentChanged!(widget.dragonId, userEnvironmentIds[choice]);
       } else {
         print('⚠️ No environment change callback provided');
@@ -654,7 +653,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     }
   }
 
-  Positioned _buildSticker(StickerItem sticker, bool isSelected, double stickerEnvironmentSize) {
+  Positioned _buildSticker(StickerItem sticker, bool isSelected, ({double width, double height}) stickerEnvironmentSize) {
 
     ThemeData theme = Theme.of(context);
 
@@ -684,7 +683,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                   _updateStickerPosition(
                     sticker.id,
                     newPosition,
-                    (stickerEnvironmentSize - sticker.size),);
+                    (width: stickerEnvironmentSize.width - sticker.size, height: stickerEnvironmentSize.height - sticker.size),);
                 }
               },
               child: Container(
@@ -733,7 +732,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     );
   }
 
-  void _updateStickerPosition(String id, Offset newPosition, double containerSize) {
+  void _updateStickerPosition(String id, Offset newPosition, ({double width, double height}) containerSize) {
     setState(() {
       final sticker = placedStickers.firstWhere((s) => s.id == id);
 
@@ -741,12 +740,12 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       // Subtract an extra for padding
       final clampedX = newPosition.dx.clamp(
           0,
-          containerSize
+          containerSize.width
       ).toDouble();
 
       final clampedY = newPosition.dy.clamp(
           0,
-          containerSize
+          containerSize.height
       ).toDouble();
 
       sticker.position = Offset(clampedX, clampedY);
@@ -758,9 +757,9 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     setState(() {
       final sticker = placedStickers.firstWhere((s) => s.id == id);
       sticker.size = newSize.clamp(
-        24.0,
-        120.0,
-      ); // Limit size between 24 and 120
+        20.0,
+        150.0,
+      ); // Limit size
     });
     _saveStickers(); // Save after resizing
   }
@@ -781,6 +780,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
+
         final dragonService = DragonService(QuizService().supabase);
 
         // Get current dragons data
@@ -807,11 +807,13 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
           // Update the dragon's data
           if (dragonsData[widget.dragonId] is Map) {
             dragonsData[widget.dragonId]['stickers'] = stickersData;
-          } else {
+
+          }
+          else {
             dragonsData[widget.dragonId] = {
               'phases': widget.phases,
               'stickers': stickersData,
-              'current_dragon_env': userEnvironmentIds[selectedEnvironment],
+              'current_dragon_env': userEnvironmentIds.isEmpty ? 'default': userEnvironmentIds[selectedEnvironment],
             };
           }
 
@@ -895,10 +897,10 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     _loadStickers();
   }
 
-  void setDetails(DragTargetDetails details, double dragonSize, double environmentSize) {
+  void setDetails(DragTargetDetails details, double dragonSize, ({double height, double width}) environmentSize) {
     final data = details.data;
-    final RenderBox renderBox = context.findRenderObject() as RenderBox;
-    final localPosition = renderBox.globalToLocal(details.offset);
+    // final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    // final localPosition = renderBox.globalToLocal(details.offset);
 
     // Find the dragon container's position
     final dragonBox = context.findRenderObject() as RenderBox;
@@ -906,20 +908,22 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     final screenSize = MediaQuery.of(context).size;
 
     // Calculate position relative to drag target container (which is now larger)
-    final dragTargetLeft = (screenSize.width - environmentSize) / 2;
-    final dragTargetTop = dragonPosition.dy + (dragonBox.size.height - environmentSize) / 2;
+    final dragTargetLeft = (screenSize.width - environmentSize.width) / 2;
+    final dragTargetTop = dragonPosition.dy + (dragonBox.size.height - environmentSize.height) / 2;
 
     // Calculate position relative to the actual dragon area within the drag target
-    final dragonOffsetX = (environmentSize - dragonSize) / 2;
-    final dragonOffsetY = (environmentSize - dragonSize) / 2;
+    final dragonOffsetX = (environmentSize.width - dragonSize) / 2;
+    final dragonOffsetY = (environmentSize.height - dragonSize) / 2;
 
     final relativeX = details.offset.dx - dragTargetLeft - dragonOffsetX - 24; // Adjust for icon size
     final relativeY = details.offset.dy - dragTargetTop - dragonOffsetY - 24;
 
-    // Allow stickers to be placed in the expanded area (outside dragon bounds)
-    final expandedBounds = environmentSize - 48; // Account for sticker size
-    final clampedX = relativeX.clamp(-dragonOffsetX, expandedBounds - dragonOffsetX).toDouble();
-    final clampedY = relativeY.clamp(-dragonOffsetY, expandedBounds - dragonOffsetY).toDouble();
+    // Allow stickers to be placed in the expanded area
+    final expandedBoundsX = environmentSize.width - 48; // Account for sticker size
+    final expandedBoundsY = environmentSize.height - 48; // Account for sticker size
+
+    final clampedX = relativeX.clamp(-dragonOffsetX, expandedBoundsX - dragonOffsetX).toDouble();
+    final clampedY = relativeY.clamp(-dragonOffsetY, expandedBoundsY - dragonOffsetY).toDouble();
 
     setState(() {
       final newSticker = StickerItem(

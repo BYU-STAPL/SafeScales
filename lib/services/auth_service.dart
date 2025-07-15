@@ -90,9 +90,9 @@ class AuthService {
       print('No matching password found for any user with email: $email');
       return false;
     } catch (e) {
-      print('Error signing in: $e');
-      print('Error type: ${e.runtimeType}');
-      print('Error details: $e');
+      print('❌Error signing in: $e');
+      print('❌Error type: ${e.runtimeType}');
+      print('❌Error details: $e');
       // Clear any existing user state on error
       _userState.setUser(null);
       _userState.setUserProfile(null);
@@ -109,7 +109,7 @@ class AuthService {
       _userState.setUser(null);
       _userState.setUserProfile(null);
     } catch (e) {
-      print('Error signing out: $e');
+      print('❌Error signing out: $e');
       // Even if there's an error, clear the local user state
       _userState.setUser(null);
       _userState.setUserProfile(null);

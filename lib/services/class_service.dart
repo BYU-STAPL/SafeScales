@@ -29,10 +29,12 @@ class ClassService {
       final classResponse =
           await supabase.from('classes').select().eq('id', classId).single();
 
-      print('Class details: $classResponse');
+      // print('Class details: $classResponse');
+
       return Map<String, dynamic>.from(classResponse);
+
     } catch (e) {
-      print('Error getting user class: $e');
+      print('❌Error getting user class: $e');
       return {};
     }
   }
@@ -68,7 +70,7 @@ class ClassService {
 
       return modules;
     } catch (e) {
-      print('Error getting class modules: $e');
+      print('❌Error getting class modules: $e');
       return [];
     }
   }
@@ -80,7 +82,7 @@ class ClassService {
 
       return Map<String, dynamic>.from(moduleResponse);
     } catch (e) {
-      print('Error getting module by ID: $e');
+      print('❌Error getting module by ID: $e');
       return null;
     }
   }
@@ -100,7 +102,7 @@ class ClassService {
 
       return null;
     } catch (e) {
-      print('Error getting class assets: $e');
+      print('❌Error getting class assets: $e');
       return null;
     }
   }
