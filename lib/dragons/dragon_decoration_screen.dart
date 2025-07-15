@@ -301,8 +301,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     ThemeData theme = Theme.of(context);
 
     final colorScheme = theme.colorScheme;
-    final double dragonSize = MediaQuery.of(context).size.width * 0.75;
 
+    final double dragonSize = MediaQuery.of(context).size.width * 0.75;
 
     final environmentSize = dragonSize * 1.25; // 25% larger
 
@@ -312,8 +312,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Dress Up Your Dragon',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          'Play',
         ),
         centerTitle: true,
         backgroundColor: colorScheme.surface,
@@ -321,7 +320,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
         iconTheme: IconThemeData(color: colorScheme.primary),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
+            icon: const Icon(Icons.more_vert, size: 35,),
             onSelected: (value) {
               if (value == 'phase') _showPhaseDialog();
               if (value == 'env') _showEnvironmentDialog();
@@ -359,15 +358,12 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
               children: [
                 Text(
                   'Phase: ${getPhaseDisplayName(availablePhases[selectedPhase])}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary,
-                  ),
+                  style: theme.textTheme.bodySmall,
                 ),
+                SizedBox(height: 10,),
                 Text(
                   'Environment: ${_isLoadingEnvironments ? 'Loading...' : (userEnvironments.isNotEmpty && selectedEnvironment < userEnvironments.length ? userEnvironments[selectedEnvironment] : 'None')}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary,
-                  ),
+                  style: theme.textTheme.bodySmall,
                 ),
               ],
             ),
@@ -439,81 +435,9 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
                               // Placed stickers
                               ...placedStickers.map((sticker) {
-                                final isSelected =
-                                    selectedStickerId == sticker.id;
-                                return Positioned(
-                                  left: sticker.position.dx,
-                                  top: sticker.position.dy,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        selectedStickerId =
-                                        isSelected ? null : sticker.id;
-                                      });
-                                    },
-                                    onLongPress:
-                                        () => _removeSticker(sticker.id),
-                                    child: Stack(
-                                      children: [
-                                        GestureDetector(
-                                          onPanUpdate: (details) {
-                                            if (isSelected) {
-                                              final newPosition = Offset(
-                                                sticker.position.dx +
-                                                    details.delta.dx,
-                                                sticker.position.dy +
-                                                    details.delta.dy,
-                                              );
-                                              _updateStickerPosition(
-                                                sticker.id,
-                                                newPosition,
-                                                (stickerEnvironmentSize - sticker.size),);
-                                            }
-                                          },
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                              BorderRadius.circular(10),
-                                              border: Border.all(
-                                                color:
-                                                isSelected ? theme.colorScheme.primary : Colors.transparent,
-                                                width: isSelected ? 3 : 1,
-                                              ),
-                                            ),
-                                            child: Image.network(
-                                              sticker.imageUrl,
-                                              width: sticker.size,
-                                              height: sticker.size,
-                                              fit: BoxFit.contain,
-                                            ),
-                                          ),
-                                        ),
-                                        if (isSelected)
-                                          Positioned(
-                                            right: -8,
-                                            bottom: -8,
-                                            child: GestureDetector(
-                                              onPanUpdate: (details) {
-                                                // Calculate new size based on drag distance
-                                                final newSize = sticker.size + details.delta.dx;
-                                                _updateStickerSize(sticker.id, newSize,);
-                                              },
-                                              child: Container(
-                                                width: 25,
-                                                height: 25,
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                  Theme.of(
-                                                    context,
-                                                  ).colorScheme.primary,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                );
+                                final isSelected = selectedStickerId == sticker.id;
+
+                                return _buildSticker(sticker, isSelected, stickerEnvironmentSize,);
                               }).toList(),
                             ],
                           ),
@@ -536,6 +460,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       backgroundColor: colorScheme.surface,
     );
   }
+
 
   // Get available phases based on the dragon data
   List<String> get availablePhases {
@@ -729,6 +654,85 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     }
   }
 
+  Positioned _buildSticker(StickerItem sticker, bool isSelected, double stickerEnvironmentSize) {
+
+    ThemeData theme = Theme.of(context);
+
+    return Positioned(
+      left: sticker.position.dx,
+      top: sticker.position.dy,
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            selectedStickerId =
+            isSelected ? null : sticker.id;
+          });
+        },
+        onLongPress:
+            () => _removeSticker(sticker.id),
+        child: Stack(
+          children: [
+            GestureDetector(
+              onPanUpdate: (details) {
+                if (isSelected) {
+                  final newPosition = Offset(
+                    sticker.position.dx +
+                        details.delta.dx,
+                    sticker.position.dy +
+                        details.delta.dy,
+                  );
+                  _updateStickerPosition(
+                    sticker.id,
+                    newPosition,
+                    (stickerEnvironmentSize - sticker.size),);
+                }
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius:
+                  BorderRadius.circular(10),
+                  border: Border.all(
+                    color:
+                    isSelected ? theme.colorScheme.primary : Colors.transparent,
+                    width: isSelected ? 3 : 1,
+                  ),
+                ),
+                child: Image.network(
+                  sticker.imageUrl,
+                  width: sticker.size,
+                  height: sticker.size,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            if (isSelected)
+              Positioned(
+                right: -8,
+                bottom: -8,
+                child: GestureDetector(
+                  onPanUpdate: (details) {
+                    // Calculate new size based on drag distance
+                    final newSize = sticker.size + details.delta.dx;
+                    _updateStickerSize(sticker.id, newSize,);
+                  },
+                  child: Container(
+                    width: 25,
+                    height: 25,
+                    decoration: BoxDecoration(
+                      color:
+                      Theme.of(
+                        context,
+                      ).colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _updateStickerPosition(String id, Offset newPosition, double containerSize) {
     setState(() {
       final sticker = placedStickers.firstWhere((s) => s.id == id);
@@ -891,7 +895,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     _loadStickers();
   }
 
-  void setDetails(DragTargetDetails details, double dragonSize, double dragTargetSize) {
+  void setDetails(DragTargetDetails details, double dragonSize, double environmentSize) {
     final data = details.data;
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final localPosition = renderBox.globalToLocal(details.offset);
@@ -902,18 +906,18 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     final screenSize = MediaQuery.of(context).size;
 
     // Calculate position relative to drag target container (which is now larger)
-    final dragTargetLeft = (screenSize.width - dragTargetSize) / 2;
-    final dragTargetTop = dragonPosition.dy + (dragonBox.size.height - dragTargetSize) / 2;
+    final dragTargetLeft = (screenSize.width - environmentSize) / 2;
+    final dragTargetTop = dragonPosition.dy + (dragonBox.size.height - environmentSize) / 2;
 
     // Calculate position relative to the actual dragon area within the drag target
-    final dragonOffsetX = (dragTargetSize - dragonSize) / 2;
-    final dragonOffsetY = (dragTargetSize - dragonSize) / 2;
+    final dragonOffsetX = (environmentSize - dragonSize) / 2;
+    final dragonOffsetY = (environmentSize - dragonSize) / 2;
 
     final relativeX = details.offset.dx - dragTargetLeft - dragonOffsetX - 24; // Adjust for icon size
     final relativeY = details.offset.dy - dragTargetTop - dragonOffsetY - 24;
 
     // Allow stickers to be placed in the expanded area (outside dragon bounds)
-    final expandedBounds = dragTargetSize - 48; // Account for sticker size
+    final expandedBounds = environmentSize - 48; // Account for sticker size
     final clampedX = relativeX.clamp(-dragonOffsetX, expandedBounds - dragonOffsetX).toDouble();
     final clampedY = relativeY.clamp(-dragonOffsetY, expandedBounds - dragonOffsetY).toDouble();
 
