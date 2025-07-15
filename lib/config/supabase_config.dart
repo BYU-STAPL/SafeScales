@@ -47,7 +47,7 @@ class SupabaseConfig {
       _isInitialized = true;
       debugPrint('Supabase initialized successfully');
     } catch (e) {
-      debugPrint('Error initializing Supabase: $e');
+      debugPrint('❌ Error initializing Supabase: $e');
       rethrow;
     }
   }
@@ -56,7 +56,7 @@ class SupabaseConfig {
     try {
       return Supabase.instance.client;
     } catch (e) {
-      debugPrint('Error getting Supabase client: $e');
+      debugPrint('❌ Error getting Supabase client: $e');
       rethrow;
     }
   }

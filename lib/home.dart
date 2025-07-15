@@ -95,7 +95,7 @@ class _HomePageState extends State<HomePage> {
         await _loadDragonImages();
       }
     } catch (e) {
-      print('Error loading class data: $e');
+      print('❌ Error loading class data: $e');
       setState(() {
         _isLoading = false;
       });
@@ -172,7 +172,7 @@ class _HomePageState extends State<HomePage> {
         }
       }
     } catch (e) {
-      print('Error loading dragon images: $e');
+      print('❌ Error loading dragon images: $e');
     }
   }
 
@@ -263,11 +263,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    print('--- HomePage Build ---');
-    print('Modules:');
-    for (var m in _modules) print('  ' + (m['title'] ?? 'Untitled'));
-    print('Module Progress Map:');
-    _moduleProgress.forEach((k, v) => print('  $k: $v'));
+
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
     final cardBg = theme.colorScheme.surface;
@@ -503,9 +499,9 @@ class _HomePageState extends State<HomePage> {
                     final progress = _moduleProgress[module['id']] ?? 0.0;
 
                     // Debug print for each module card
-                    print(
-                      '[ModuleCard] Title: ${module['title'] ?? 'Module ${index + 1}'} | Progress: $progress | isUnlocked: $isUnlocked | PrevProgress: ${index > 0 ? (_moduleProgress[_modules[index - 1]['id']] ?? 0) : 'N/A'}',
-                    );
+                    // print(
+                    //   '[ModuleCard] Title: ${module['title'] ?? 'Module ${index + 1}'} | Progress: $progress | isUnlocked: $isUnlocked | PrevProgress: ${index > 0 ? (_moduleProgress[_modules[index - 1]['id']] ?? 0) : 'N/A'}',
+                    // );
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 30),
@@ -580,9 +576,9 @@ class _HomePageState extends State<HomePage> {
             'Complete ${previousModule['title'] ?? 'previous module'} (${previousProgress.toStringAsFixed(0)}%)';
       }
       // Debug print for unlock logic
-      print(
-        '[BuildModuleCard] $title: actualProgress=$actualProgress, shouldBeUnlocked=$shouldBeUnlocked, previousProgress=$previousProgress',
-      );
+      // print(
+      //   '[BuildModuleCard] $title: actualProgress=$actualProgress, shouldBeUnlocked=$shouldBeUnlocked, previousProgress=$previousProgress',
+      // );
     }
 
     ThemeData theme = Theme.of(context);

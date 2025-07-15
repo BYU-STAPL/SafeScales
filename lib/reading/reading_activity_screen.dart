@@ -73,7 +73,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
         }
       }
     } catch (e) {
-      print('Error loading slides: $e');
+      print('❌Error loading slides: $e');
       setState(() {
         _isLoading = false;
       });
@@ -106,7 +106,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
         }
       }
     } catch (e) {
-      print('Error loading bookmarks: $e');
+      print('❌Error loading bookmarks: $e');
     }
   }
 
@@ -144,7 +144,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
           .update({'modules': modulesData})
           .eq('id', user.id);
     } catch (e) {
-      print('Error saving bookmarks: $e');
+      print('❌Error saving bookmarks: $e');
     }
   }
 
@@ -184,7 +184,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
         Navigator.pop(context, true);
       }
     } catch (e) {
-      print('Error marking reading as completed: $e');
+      print('❌Error marking reading as completed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

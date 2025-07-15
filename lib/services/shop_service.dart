@@ -28,7 +28,7 @@ class ShopService {
 
       return List<Map<String, dynamic>>.from(assets);
     } catch (e) {
-      print('Error getting class assets: $e');
+      print('❌Error getting class assets: $e');
       return [];
     }
   }
@@ -49,7 +49,7 @@ class ShopService {
           )
           .toList();
     } catch (e) {
-      print('Error fetching accessories: $e');
+      print('❌Error fetching accessories: $e');
       return [];
     }
   }
@@ -70,7 +70,7 @@ class ShopService {
           )
           .toList();
     } catch (e) {
-      print('Error fetching environments: $e');
+      print('❌Error fetching environments: $e');
       return [];
     }
   }
@@ -114,7 +114,7 @@ class ShopService {
 
       return true;
     } catch (e) {
-      print('Error purchasing accessory: $e');
+      print('❌Error purchasing accessory: $e');
       return false;
     }
   }
@@ -142,7 +142,7 @@ class ShopService {
 
       return acquiredAccessories.map((id) => id.toString()).toList();
     } catch (e) {
-      print('Error getting user acquired accessories: $e');
+      print('❌Error getting user acquired accessories: $e');
       return [];
     }
   }
@@ -170,7 +170,7 @@ class ShopService {
 
       return acquiredEnvironments.map((id) => id as String).toList();
     } catch (e) {
-      print('Error getting user acquired environments: $e');
+      print('❌Error getting user acquired environments: $e');
       return [];
     }
   }
@@ -214,7 +214,7 @@ class ShopService {
 
       return true;
     } catch (e) {
-      print('Error purchasing environment: $e');
+      print('❌Error purchasing environment: $e');
       return false;
     }
   }

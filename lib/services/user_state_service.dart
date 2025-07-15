@@ -71,7 +71,7 @@ class UserStateService {
         print('Updated current user modules: ${_currentUser?.modules}');
       }
     } catch (e) {
-      print('Error loading user profile: $e');
+      print('❌ Error loading user profile: $e');
       _userProfile = null;
     }
   }
@@ -96,7 +96,7 @@ class UserStateService {
       print('Extracted username: $username');
       return username;
     } catch (e) {
-      print('Error getting username: $e');
+      print('❌ Error getting username: $e');
       return null;
     }
   }
@@ -149,7 +149,7 @@ class UserStateService {
       // Update local user state
       await loadUserProfile();
     } catch (e) {
-      print('Error saving quiz progress: $e');
+      print('❌ Error saving quiz progress: $e');
     }
   }
 
@@ -171,7 +171,7 @@ class UserStateService {
       }
       return {};
     } catch (e) {
-      print('Error getting user settings: $e');
+      print('❌ Error getting user settings: $e');
       return {};
     }
   }
@@ -205,7 +205,7 @@ class UserStateService {
           .eq('id', _userId!);
       print('Saved user settings: $settings');
     } catch (e) {
-      print('Error saving user settings: $e');
+      print('❌ Error saving user settings: $e');
     }
   }
 }
