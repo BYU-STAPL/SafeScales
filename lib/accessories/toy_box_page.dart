@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:safe_scales/accessories/toy_box_item_card.dart';
 import 'package:safe_scales/settings_drawer.dart';
 import 'package:safe_scales/services/shop_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
+
+import '../services/dragon_service.dart';
+import '../services/quiz_service.dart';
 
 class ToyBoxPage extends StatefulWidget {
   const ToyBoxPage({super.key});
@@ -18,17 +22,19 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
   int selectedTab = 0; // 0 = Accessories, 1 = Environments
   List<Map<String, dynamic>> userAccessories = [];
   List<Map<String, dynamic>> userEnvironments = [];
-  bool isLoading = true;
+  bool isLoadingItems = true;
+  bool isLoadingEnvironments = true;
 
   @override
   void initState() {
     super.initState();
-    _loadUserItems();
+    // _loadUserItems();
+    _loadUserAccessories();
   }
 
   Future<void> _loadUserItems() async {
     setState(() {
-      isLoading = true;
+      isLoadingItems = true;
     });
 
     try {
@@ -62,13 +68,146 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
       }
 
       setState(() {
-        isLoading = false;
+        isLoadingItems = false;
       });
     } catch (e) {
       print('❌ Error loading user items: $e');
       setState(() {
-        isLoading = false;
+        isLoadingItems = false;
       });
+    }
+  }
+
+  Future<void> _loadUserAccessories() async {
+    try {
+      setState(() => isLoadingItems = true);
+
+      final userState = UserStateService();
+      final user = userState.currentUser;
+
+      if (user != null) {
+        final dragonService = DragonService(QuizService().supabase);
+        final userResponse =
+        await dragonService.supabase
+            .from('Users')
+            .select('acquired_accessories')
+            .eq('id', user.id)
+            .single();
+
+        if (userResponse['acquired_accessories'] != null) {
+          final List<dynamic> acquiredAccessories =
+          userResponse['acquired_accessories'];
+          // print('📦 Acquired accessories IDs: $acquiredAccessories');
+
+          // Get accessories from classes.assets
+          final classesResponse = await dragonService.supabase
+              .from('classes')
+              .select('assets');
+
+          List<Map<String, dynamic>> foundAccessories = [];
+
+          for (var classData in classesResponse) {
+            if (classData['assets'] != null) {
+              final assets = List<dynamic>.from(classData['assets']);
+
+              // Find accessories with matching IDs
+              for (var asset in assets) {
+                if (asset['type'] == 'accessory' &&
+                    acquiredAccessories.contains(asset['id'])) {
+                  foundAccessories.add({
+                    'id': asset['id'],
+                    'name': asset['name'],
+                    'image':
+                    asset['imageUrl'], // Note: imageUrl not image in new structure
+                  });
+                }
+              }
+            }
+          }
+
+          setState(() {
+            userAccessories = foundAccessories;
+            isLoadingItems = false;
+          });
+          print('✅ Loaded ${userAccessories.length} accessories');
+          // _onAccessoriesLoaded();
+        } else {
+          print('⚠️ No acquired accessories found');
+          setState(() => isLoadingItems = false);
+        }
+      } else {
+        print('⚠️ No user found');
+        setState(() => isLoadingItems = false);
+      }
+    } catch (e) {
+      print('❌ Error loading accessories: $e');
+      setState(() => isLoadingItems = false);
+    }
+  }
+
+  Future<void> _loadUserEnvironments() async {
+    try {
+      setState(() => isLoadingEnvironments = true);
+
+      final userState = UserStateService();
+      final user = userState.currentUser;
+
+      if (user != null) {
+        final dragonService = DragonService(QuizService().supabase);
+        final userResponse =
+        await dragonService.supabase
+            .from('Users')
+            .select('acquired_environments')
+            .eq('id', user.id)
+            .single();
+
+        if (userResponse['acquired_environments'] != null) {
+          final List<dynamic> acquiredEnvironments =
+          userResponse['acquired_environments'];
+          // print('📦 Acquired accessories IDs: $acquiredAccessories');
+
+          // Get accessories from classes.assets
+          final classesResponse = await dragonService.supabase
+              .from('classes')
+              .select('assets');
+
+          List<Map<String, dynamic>> foundEnvironments = [];
+
+          for (var classData in classesResponse) {
+            if (classData['assets'] != null) {
+              final assets = List<dynamic>.from(classData['assets']);
+
+              // Find accessories with matching IDs
+              for (var asset in assets) {
+                if (asset['type'] == 'environment' &&
+                    acquiredEnvironments.contains(asset['id'])) {
+                  foundEnvironments.add({
+                    'id': asset['id'],
+                    'name': asset['name'],
+                    'image':
+                    asset['imageUrl'], // Note: imageUrl not image in new structure
+                  });
+                }
+              }
+            }
+          }
+
+          setState(() {
+            userEnvironments = foundEnvironments;
+            isLoadingEnvironments = false;
+          });
+          print('✅ Loaded ${userEnvironments.length} environments');
+        } else {
+          print('⚠️ No acquired environments found');
+          setState(() => isLoadingEnvironments = false);
+        }
+      } else {
+        print('⚠️ No user found');
+        setState(() => isLoadingEnvironments = false);
+      }
+    } catch (e) {
+      print('❌ Error loading environments: $e');
+      setState(() => isLoadingEnvironments = false);
     }
   }
 
@@ -159,7 +298,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
               // Items Grid
               Expanded(
                 child:
-                    isLoading
+                    isLoadingItems
                         ? const Center(child: CircularProgressIndicator())
                         : selectedTab == 0
                         ? userAccessories.isEmpty
@@ -188,12 +327,13 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                               childAspectRatio: 0.95,
                               children: [
                                 for (var accessory in userAccessories)
-                                  _ToyBoxItemCard(
+                                  ToyBoxItemCard(
                                     image:
                                         accessory['image_url'] ??
                                         accessory['imageUrl'] ??
                                         accessory['image'],
                                     name: accessory['name'],
+                                    onTap: () {  },
                                   ),
                               ],
                             )
@@ -223,12 +363,13 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                           childAspectRatio: 0.95,
                           children: [
                             for (var environment in userEnvironments)
-                              _ToyBoxItemCard(
+                              ToyBoxItemCard(
                                 image:
                                     environment['image_url'] ??
                                     environment['imageUrl'] ??
                                     environment['image'],
                                 name: environment['name'],
+                                onTap: () {  },
                               ),
                           ],
                         ),
@@ -241,77 +382,77 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
   }
 }
 
-class _ToyBoxItemCard extends StatelessWidget {
-  final String? image;
-  final String name;
-
-  const _ToyBoxItemCard({this.image, required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-
-    ThemeData theme = Theme.of(context);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child:
-                image != null
-                    ? Image.network(
-                      image!,
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 60,
-                          height: 60,
-                          color: Colors.grey[300],
-                          child: Icon(
-                            Icons.shopping_bag,
-                            size: 32,
-                            color: Colors.grey[600],
-                          ),
-                        );
-                      },
-                    )
-                    : Container(
-                      width: 60,
-                      height: 60,
-                      color: Colors.grey[300],
-                      child: Icon(
-                        Icons.shopping_bag,
-                        size: 32,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            name,
-            style: theme.textTheme.bodySmall,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-}
+// class _ToyBoxItemCard extends StatelessWidget {
+//   final String? image;
+//   final String name;
+//
+//   const _ToyBoxItemCard({this.image, required this.name});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//
+//     ThemeData theme = Theme.of(context);
+//
+//     return Container(
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(16),
+//         border: Border.all(color: Colors.black12, width: 1.2),
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.black.withOpacity(0.04),
+//             blurRadius: 8,
+//             offset: const Offset(0, 4),
+//           ),
+//         ],
+//       ),
+//       padding: const EdgeInsets.all(12),
+//       child: Column(
+//         mainAxisAlignment: MainAxisAlignment.center,
+//         children: [
+//           ClipRRect(
+//             borderRadius: BorderRadius.circular(10),
+//             child:
+//                 image != null
+//                     ? Image.network(
+//                       image!,
+//                       width: 60,
+//                       height: 60,
+//                       fit: BoxFit.cover,
+//                       errorBuilder: (context, error, stackTrace) {
+//                         return Container(
+//                           width: 60,
+//                           height: 60,
+//                           color: Colors.grey[300],
+//                           child: Icon(
+//                             Icons.shopping_bag,
+//                             size: 32,
+//                             color: Colors.grey[600],
+//                           ),
+//                         );
+//                       },
+//                     )
+//                     : Container(
+//                       width: 60,
+//                       height: 60,
+//                       color: Colors.grey[300],
+//                       child: Icon(
+//                         Icons.shopping_bag,
+//                         size: 32,
+//                         color: Colors.grey[600],
+//                       ),
+//                     ),
+//           ),
+//           const SizedBox(height: 10),
+//           Text(
+//             name,
+//             style: theme.textTheme.bodySmall,
+//             textAlign: TextAlign.center,
+//             maxLines: 2,
+//             overflow: TextOverflow.ellipsis,
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
