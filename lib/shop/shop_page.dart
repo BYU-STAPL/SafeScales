@@ -630,22 +630,24 @@ class _ShopItemCard extends StatelessWidget {
 
     ThemeData theme = Theme.of(context);
 
+    Color green = theme.colorScheme.secondary;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(15),
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: isSelected ? highlight : Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            color: isSelected ? highlight : theme.colorScheme.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isOwned ? Colors.green : Colors.black12,
+              color: isOwned ? green : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
               width: isOwned ? 2 : 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -665,16 +667,16 @@ class _ShopItemCard extends StatelessWidget {
                               image!,
                               width: 60 * AppTheme.fontSizeScale,
                               height: 60 * AppTheme.fontSizeScale,
-                              fit: BoxFit.cover,
+                              fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   width: 60 * AppTheme.fontSizeScale,
                                   height: 60 * AppTheme.fontSizeScale,
-                                  color: Colors.grey[300],
+                                  color: theme.colorScheme.surface,
                                   child: Icon(
                                     Icons.shopping_bag,
                                     size: 32 * AppTheme.fontSizeScale,
-                                    color: Colors.grey[600],
+                                    color: theme.colorScheme.onSurface,
                                   ),
                                 );
                               },
@@ -682,11 +684,11 @@ class _ShopItemCard extends StatelessWidget {
                             : Container(
                               width: 60 * AppTheme.fontSizeScale,
                               height: 60 * AppTheme.fontSizeScale,
-                              color: Colors.grey[300],
+                              color: theme.colorScheme.surface,
                               child: Icon(
                                 Icons.shopping_bag,
                                 size: 32 * AppTheme.fontSizeScale,
-                                color: Colors.grey[600],
+                                color: theme.colorScheme.onSurface,
                               ),
                             ),
                   ),
@@ -697,7 +699,7 @@ class _ShopItemCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.green,
+                          color: green,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
@@ -723,7 +725,7 @@ class _ShopItemCard extends StatelessWidget {
               Text(
                 isOwned ? 'OWNED'.toUpperCase() : 'Cost: $cost review set',
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: isOwned ? Colors.green : theme.colorScheme.onSurfaceVariant,
+                  color: isOwned ? green : theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
