@@ -146,6 +146,11 @@ class _DragonsPageState extends State<DragonsPage> {
                         imageUrl = dragonData['stage1_image'];
                       }
 
+                      // TODO: Update later to be based on users progress on app, so more robust checking
+                      // TODO: This section of code can't be async so not sure how to do it
+                      // Use highest phase achieved to lock or unlock playing with dragon
+                      final isPlayUnlocked = hasPhase('final') || hasPhase('adult');
+
                       final String speciesName = dragonData['name'] ?? 'Unknown';
                       final String item = dragonData['favorite_item'] ?? 'Unknown';
                       final String environment = dragonData['preferred_environment'] ?? 'Unknown';
@@ -156,6 +161,7 @@ class _DragonsPageState extends State<DragonsPage> {
                         name: 'Jack',
                         favoriteItem: item,
                         favoriteEnvironment: environment,
+                        isPlayUnlocked: isPlayUnlocked,
                         onTapPlayButton: () {
                           navigateToDressUp(dragonId, dragonData, phases);
                         },

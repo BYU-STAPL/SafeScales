@@ -10,6 +10,9 @@ class DragonIdCard extends StatefulWidget {
   // final String weight;
   final String favoriteItem;
   final String favoriteEnvironment;
+
+  bool isPlayUnlocked;
+
   final VoidCallback? onTapPlayButton;
   final Function(String)? onNameChanged; // Add this callback
 
@@ -19,10 +22,9 @@ class DragonIdCard extends StatefulWidget {
     required this.dragonImagePath,
     required this.species,
     required this.name,
-    // required this.length,
-    // required this.weight,
     required this.favoriteItem,
     required this.favoriteEnvironment,
+    required this.isPlayUnlocked,
     this.onTapPlayButton,
     this.onNameChanged,
   }) : super(key: key);
@@ -323,7 +325,7 @@ class _DragonIdCardState extends State<DragonIdCard> {
               Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 child: ElevatedButton(
-                    onPressed: widget.onTapPlayButton,
+                    onPressed: widget.isPlayUnlocked ? widget.onTapPlayButton : null,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
