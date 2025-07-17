@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:safe_scales/auth/auth_screen.dart';
+import 'package:safe_scales/ui/screens/auth_screen.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/themes/theme_notifier.dart';
 import 'package:safe_scales/themes/theme_provider.dart';
-import 'package:safe_scales/components/health_check.dart';
-import 'package:safe_scales/screens/selection_screen.dart';
+import 'package:safe_scales/ui/health_check.dart';
+import 'package:safe_scales/ui/screens/login/selection_screen.dart';
 
-import 'main_navigation.dart';
+import 'ui/screens/main_navigation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
