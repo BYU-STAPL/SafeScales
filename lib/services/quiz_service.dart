@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:safe_scales/config/supabase_config.dart';
-import 'package:safe_scales/question/question.dart';
+import 'package:safe_scales/models/question.dart';
 
 class QuizService {
   final supabase = SupabaseConfig.client;

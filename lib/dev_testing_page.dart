@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:safe_scales/pre_quiz/pre_quiz_screen.dart';
-import 'package:safe_scales/question/question.dart';
-import 'package:safe_scales/quiz/post_quiz_screen.dart';
-import 'package:safe_scales/review/review_screen.dart';
+import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_screen.dart';
+import 'package:safe_scales/models/question.dart';
+import 'package:safe_scales/ui/screens/post_quiz/post_quiz_screen.dart';
+import 'package:safe_scales/ui/screens/review_set/review_screen.dart';
 
 // ##################################################
 /*
