@@ -424,7 +424,7 @@ class _LessonPageState extends State<LessonPage> {
                               onTap: () => _startQuiz(_postQuiz!),
                               icon: Icons.assignment,
                               color: theme.colorScheme.primary,
-                              isCompleted: postQuizCompleted,
+                              isCompleted: postQuizCompleted && (postQuizScore! >= _postQuiz!.passingScore),
                               score: postQuizScore,
                               isUnlocked: readingCompleted,
                             ),
@@ -508,15 +508,15 @@ class _LessonPageState extends State<LessonPage> {
                               color: theme.colorScheme.green,
                               size: 18,
                             ),
-                            if (score != null) ...[
-                              const SizedBox(width: 10),
-                              Text(
-                                '${score.toStringAsFixed(0)}%',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.green,
-                                ),
+                          ],
+                          if (score != null) ...[
+                            const SizedBox(width: 10),
+                            Text(
+                              '${score.toStringAsFixed(0)}%',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.green,
                               ),
-                            ],
+                            ),
                           ],
                         ],
                       ),
@@ -645,7 +645,7 @@ class _LessonPageState extends State<LessonPage> {
                               const SizedBox(width: 10),
                               Icon(
                                 Icons.check_circle,
-                                color: Colors.green,
+                                color: theme.colorScheme.green,
                                 size: 18,
                               ),
                             ],

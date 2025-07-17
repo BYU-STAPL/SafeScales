@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:safe_scales/ui/screens/home.dart';
+import 'package:safe_scales/ui/screens/home_page.dart';
 import 'package:safe_scales/services/auth_service.dart';
 import '../../main.dart';
 import 'package:safe_scales/themes/app_theme.dart';

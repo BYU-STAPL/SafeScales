@@ -9,7 +9,7 @@ import 'package:safe_scales/ui/screens/login/selection_screen.dart';
 
 import 'toy_box_page.dart';
 import '../../dev_testing_page.dart';
-import 'home.dart';
+import 'home_page.dart';
 
 class MainNavigation extends StatefulWidget {
   final int initialIndex;
