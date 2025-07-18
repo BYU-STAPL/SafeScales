@@ -34,6 +34,9 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
   bool _isForward = true;
   bool _isFirstLoad = true;
 
+  bool _isCompleted = false;
+
+
   @override
   void initState() {
     super.initState();
@@ -149,17 +152,17 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
     }
   }
 
-  Future<void> _markAsCompleted() async {
+  Future<void> _saveReadingProgress() async {
     try {
       final user = _userState.currentUser;
       if (user == null || widget.moduleId == null) return;
 
       final response =
-          await _classService.supabase
-              .from('Users')
-              .select('modules')
-              .eq('id', user.id)
-              .single();
+      await _classService.supabase
+          .from('Users')
+          .select('modules')
+          .eq('id', user.id)
+          .single();
 
       Map<String, dynamic> modulesData = {};
       if (response['modules'] != null) {
@@ -180,7 +183,24 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
           .from('Users')
           .update({'modules': modulesData})
           .eq('id', user.id);
+    } catch (e) {
+      print('❌Error saving reading progress: $e');
+      rethrow; // Re-throw to be caught by _markAsCompleted
+    }
+  }
 
+  Future<void> _markAsCompleted() async {
+    try {
+      final user = _userState.currentUser;
+      if (user == null || widget.moduleId == null) return;
+
+      // Save progress immediately when reading is completed
+      await _saveReadingProgress();
+
+      // Save isComplete flag.
+      _isCompleted = true;
+
+      // Navigate to results screen and wait for it to return
       final shouldPopReading = await Navigator.push(
         context,
         MaterialPageRoute(
@@ -189,6 +209,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
       );
 
       // Only pop the reading screen if the results screen returned true
+      // (meaning the user wants to go back to the lesson)
       if (mounted && shouldPopReading == true) {
         Navigator.pop(context, true);
       }
@@ -383,65 +404,79 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
     final theme = Theme.of(context);
     final progress = (_currentSlideIndex + 1) / _slides.length;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Reading'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(
-              _showTableOfContents ? Icons.close : FontAwesomeIcons.list,
-            ),
-            iconSize: 25,
-            onPressed: () {
-              setState(() {
-                _showTableOfContents = !_showTableOfContents;
-              });
-            },
-          ),
-        ],
-      ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _slides.isEmpty
-              ? Center(
-                child: Text(
-                  'No reading content available',
-                  style: theme.textTheme.labelMedium,
-                ),
-              )
-              : Column(
-                children: [
-                  // Progress bar
-                  ProgressBar(
-                    progress: progress,
-                    currentSlideIndex: _currentSlideIndex,
-                    slideLength: _slides.length,
-                    slideName: 'page',
-                  ),
+    return PopScope(
+      canPop: false, // Prevent default back button behavior
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (didPop) return;
 
-                  // Main content
-                  Expanded(
-                    child:
-                        _showTableOfContents
-                            ? _buildTableOfContents()
-                            : _isFirstLoad
-                            ? _buildPageContent()
-                            : _buildPageContent(),
-
-                    // : SlideTransition(
-                    //   position: _slideAnimation,
-                    //   child: _buildPageContent(),
-                    // ),
-                  ),
-
-                  // Navigation controls
-                  _buildNavigationBar(),
-
-                  SizedBox(height: 15),
-                ],
+        // If reading is completed, return true to indicate completion
+        if (_isCompleted) {
+          Navigator.pop(context, true);
+        } else {
+          // If reading is not completed, just go back normally
+          Navigator.pop(context, false);
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Reading'),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: Icon(
+                _showTableOfContents ? Icons.close : FontAwesomeIcons.list,
               ),
+              iconSize: 25,
+              onPressed: () {
+                setState(() {
+                  _showTableOfContents = !_showTableOfContents;
+                });
+              },
+            ),
+          ],
+        ),
+        body:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _slides.isEmpty
+                ? Center(
+                  child: Text(
+                    'No reading content available',
+                    style: theme.textTheme.labelMedium,
+                  ),
+                )
+                : Column(
+                  children: [
+                    // Progress bar
+                    ProgressBar(
+                      progress: progress,
+                      currentSlideIndex: _currentSlideIndex,
+                      slideLength: _slides.length,
+                      slideName: 'page',
+                    ),
+
+                    // Main content
+                    Expanded(
+                      child:
+                          _showTableOfContents
+                              ? _buildTableOfContents()
+                              : _isFirstLoad
+                              ? _buildPageContent()
+                              : _buildPageContent(),
+
+                      // : SlideTransition(
+                      //   position: _slideAnimation,
+                      //   child: _buildPageContent(),
+                      // ),
+                    ),
+
+                    // Navigation controls
+                    _buildNavigationBar(),
+
+                    SizedBox(height: 15),
+                  ],
+                ),
+      ),
     );
   }
 }

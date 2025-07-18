@@ -56,7 +56,6 @@ class ReadingResultScreen extends StatelessWidget {
 
               Spacer(),
 
-              // TODO: If back button of reading is clicked while on this page and return to lesson isn't pressed reading doesn't save, but quizzes already save
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -68,9 +67,9 @@ class ReadingResultScreen extends StatelessWidget {
                     foregroundColor: theme.colorScheme.onSecondary,
                   ),
                   child: Text(
-                    'Save Progress & Return to lesson'.toUpperCase(),
+                    'Return to lesson'.toUpperCase(),
                     style: TextStyle(
-                      fontSize: theme.textTheme.bodySmall?.fontSize,
+                      fontSize: theme.textTheme.bodyMedium?.fontSize,
                     ),
                   ),
                 ),

@@ -69,9 +69,9 @@ class PreQuizResultScreen extends StatelessWidget {
                     foregroundColor: theme.colorScheme.onSecondary,
                   ),
                   child: Text(
-                    'Save Progress & Return to lesson'.toUpperCase(),
+                    'Return to lesson'.toUpperCase(),
                     style: TextStyle(
-                      fontSize: theme.textTheme.bodySmall?.fontSize,
+                      fontSize: theme.textTheme.bodyMedium?.fontSize,
                     ),
                   ),
                 ),
