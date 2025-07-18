@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/ui/widgets/dragon_id_card.dart';
 import 'package:safe_scales/states/dragon_state_manager.dart';
+import '../../models/dragon.dart';
 import 'dragon_decoration/dragon_decoration_screen.dart';
 
 class DragonsPage extends StatefulWidget {
@@ -33,14 +34,12 @@ class _DragonsPageState extends State<DragonsPage> {
   }
 
   // Navigation to dress up page
-  void navigateToDressUp(String dragonId, Map<String, dynamic> dragonData) {
+  void navigateToDressUp(String dragonId, Dragon dragon) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => DragonDressUpPage(
           dragonId: dragonId,
-          dragonData: dragonData,
-          phases: _dragonStateManager.getUserPhases(dragonId),
           onEnvironmentChanged: _dragonStateManager.saveEnvironmentSelection,
           onDragonUpdated: (_) => _refreshDragons(),
         ),
@@ -108,19 +107,19 @@ class _DragonsPageState extends State<DragonsPage> {
 
     return dragons.map((dragonDisplayData) {
       final dragonId = dragonDisplayData['id'];
-      final dragonData = _dragonStateManager.dragonDetails[dragonId];
+      final dragon = _dragonStateManager.dragons[dragonId];
 
-      if (dragonData == null) return const SizedBox.shrink();
+      if (dragon == null) return const SizedBox.shrink();
 
       return DragonIdCard(
         dragonImagePath: dragonDisplayData['imageUrl'],
-        species: dragonDisplayData['name'],
+        species: dragon.speciesName,
         name: 'Jack', // TODO: Add backend to change dragon name
-        favoriteItem: dragonDisplayData['favoriteItem'],
-        favoriteEnvironment: dragonDisplayData['favoriteEnvironment'],
+        favoriteItem: dragon.favoriteItem,
+        favoriteEnvironment: dragon.preferredEnvironment,
         isPlayUnlocked: dragonDisplayData['isPlayUnlocked'],
         onTapPlayButton: () {
-          navigateToDressUp(dragonId, dragonData);
+          navigateToDressUp(dragonId, dragon);
         },
         // TODO: Add backend to change dragon name
         // onNameChanged: (newName) {

@@ -1,10 +1,10 @@
 // --- Dragon Dress Up Page ---
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:safe_scales/ui/widgets/sticker_collection_widget.dart';
 
 import 'package:safe_scales/models/sticker_item_model.dart';
 
+import '../../../models/dragon.dart';
 import '../../../services/dragon_service.dart';
 import '../../../services/quiz_service.dart';
 import '../../../services/user_state_service.dart';
@@ -12,19 +12,14 @@ import '../../../states/dragon_state_manager.dart';
 
 class DragonDressUpPage extends StatefulWidget {
   final String dragonId;
-  final Map<String, dynamic> dragonData;
-  final dynamic phases;
   final Function(String dragonId, String environmentId)? onEnvironmentChanged;
   final Function(String dragonId)? onDragonUpdated;
 
   const DragonDressUpPage({
     Key? key,
     required this.dragonId,
-    required this.dragonData,
-    required this.phases,
     this.onEnvironmentChanged,
     this.onDragonUpdated,
-    // this.parentState,
   }) : super(key: key);
 
   @override
@@ -45,10 +40,13 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   List<StickerItem> placedStickers = [];
   String? selectedStickerId;
 
+  // State manager instance
+  late final DragonStateManager _stateManager;
+
   @override
   void initState() {
     super.initState();
-    // print('🚀 Initializing DragonDressUpPage...');
+    _stateManager = DragonStateManager();
     _loadUserEnvironments();
     _loadUserAccessories();
     _loadCurrentPhase();
@@ -126,23 +124,17 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                 _isLoadingEnvironments = false;
               });
 
-              // Check for current environment in dragons column
-              if (userResponse['dragons'] != null) {
-                final dragonsData =
-                userResponse['dragons'] as Map<String, dynamic>;
-                final currentEnvId =
-                dragonsData['current_dragon_env'] as String?;
-
-                if (currentEnvId != null) {
-                  final envIndex = userEnvironmentIds.indexOf(currentEnvId);
-                  if (envIndex != -1) {
-                    setState(() {
-                      selectedEnvironment = envIndex;
-                    });
-                    print(
-                      '✅ Set initial environment to: ${userEnvironments[envIndex]}',
-                    );
-                  }
+              // Use state manager to get current environment
+              final currentEnvId = _stateManager.currentEnvironment;
+              if (currentEnvId != null) {
+                final envIndex = userEnvironmentIds.indexOf(currentEnvId);
+                if (envIndex != -1) {
+                  setState(() {
+                    selectedEnvironment = envIndex;
+                  });
+                  print(
+                    '✅ Set initial environment to: ${userEnvironments[envIndex]}',
+                  );
                 }
               }
             } else {
@@ -208,7 +200,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
         if (userResponse['acquired_accessories'] != null) {
           final List<dynamic> acquiredAccessories =
           userResponse['acquired_accessories'];
-          // print('📦 Acquired accessories IDs: $acquiredAccessories');
 
           // Get accessories from classes.assets
           final classesResponse = await dragonService.supabase
@@ -257,8 +248,10 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   }
 
   Future<void> _loadCurrentPhase() async {
-    final phase = DragonStateManager().getUserPreferredPhase(widget.dragonId);
+    // Use state manager to get the display phase for play page context
+    final phase = _stateManager.getUserPreferredPhase(widget.dragonId);
 
+    // final phase = _stateManager.getDisplayPhase(widget.dragonId, 'play_page');
     final index = availablePhases.indexOf(phase);
 
     if (index != -1 && mounted) {
@@ -266,46 +259,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       print('✅ Loaded phase from state manager: $phase');
     }
   }
-
-  // Future<void> _loadCurrentPhase() async {
-  //   try {
-  //     final userState = UserStateService();
-  //     final user = userState.currentUser;
-  //
-  //     if (user != null) {
-  //       final dragonService = DragonService(QuizService().supabase);
-  //
-  //       // Get current dragons data
-  //       final userResponse =
-  //       await dragonService.supabase
-  //           .from('Users')
-  //           .select('dragons')
-  //           .eq('id', user.id)
-  //           .single();
-  //
-  //       if (userResponse['dragons'] != null) {
-  //         final dragonsData = Map<String, dynamic>.from(
-  //           userResponse['dragons'],
-  //         );
-  //         final dragonData = dragonsData[widget.dragonId];
-  //
-  //         if (dragonData is Map && dragonData['current_phase'] != null) {
-  //           final savedPhase = dragonData['current_phase'] as String;
-  //           final phaseIndex = availablePhases.indexOf(savedPhase);
-  //
-  //           if (phaseIndex != -1 && mounted) {
-  //             setState(() {
-  //               selectedPhase = phaseIndex;
-  //             });
-  //             print('✅ Loaded saved phase: $savedPhase');
-  //           }
-  //         }
-  //       }
-  //     }
-  //   } catch (e) {
-  //     print('❌ Error loading current phase: $e');
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -368,7 +321,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
             child: Column(
               children: [
                 Text(
-                  'Phase: ${getPhaseDisplayName(availablePhases[selectedPhase])}',
+                  'Phase: ${_stateManager.getPhaseDisplayName(availablePhases[selectedPhase])}',
                   style: theme.textTheme.bodySmall,
                 ),
                 SizedBox(height: 10,),
@@ -403,7 +356,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                       ),
                     ),
 
-                  // Dragon Image
+                  // Dragon Image - Use state manager
                   Container(
                     height: dragonSize * 0.75,
                     width: dragonSize * 0.75,
@@ -472,77 +425,26 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     );
   }
 
-
-  // Get available phases based on the dragon data
+  // Get available phases using state manager
   List<String> get availablePhases {
+    // Get phases from state manager instead of widget.phases
+    // final userPhases = _stateManager.userDragons;
+
     List<String> phases = ['egg'];
 
-    // Handle both List and Map formats for phases
-    bool hasPhase(String phase) {
-      if (widget.phases is List) {
-        // Check for both old and new phase names
-        List<String> phasesToCheck = [phase];
-        if (phase == 'stage1') phasesToCheck.addAll(['baby', 'stage1']);
-        if (phase == 'stage2') phasesToCheck.addAll(['teen', 'stage2']);
-        if (phase == 'final') phasesToCheck.addAll(['adult', 'final']);
-
-        return phasesToCheck.any((p) => (widget.phases as List).contains(p));
-      } else if (widget.phases is Map) {
-        List<String> phasesToCheck = [phase];
-        if (phase == 'stage1') phasesToCheck.addAll(['baby', 'stage1']);
-        if (phase == 'stage2') phasesToCheck.addAll(['teen', 'stage2']);
-        if (phase == 'final') phasesToCheck.addAll(['adult', 'final']);
-
-        final phasesList = (widget.phases['phases'] as List?) ?? [];
-        return phasesToCheck.any((p) => phasesList.contains(p));
-      }
-      return false;
-    }
-
-    if (hasPhase('stage1')) phases.add('stage1');
-    if (hasPhase('stage2')) phases.add('stage2');
-    if (hasPhase('final')) phases.add('final');
+    // Check if dragon has each phase using state manager
+    if (_stateManager.hasPhase(widget.dragonId, 'stage1')) phases.add('stage1');
+    if (_stateManager.hasPhase(widget.dragonId, 'stage2')) phases.add('stage2');
+    if (_stateManager.hasPhase(widget.dragonId, 'final')) phases.add('final');
 
     return phases;
   }
 
-  // Get phase display names
-  String getPhaseDisplayName(String phase) {
-    switch (phase) {
-      case 'egg':
-        return 'Egg';
-      case 'stage1':
-        return 'Baby';
-      case 'stage2':
-        return 'Teen';
-      case 'final':
-        return 'Adult';
-      default:
-        return 'Unknown';
-    }
-  }
-
-  // Get image URL for current phase
+  // Get image URL for current phase using state manager
   String getCurrentPhaseImage() {
     final phase = availablePhases[selectedPhase];
-    return DragonStateManager().getDragonImageUrlByPhase(widget.dragonId, phase);
+    return _stateManager.getDragonImageUrl(widget.dragonId, forPhase: phase);
   }
-
-  // String getCurrentPhaseImage() {
-  //   final currentPhase = availablePhases[selectedPhase];
-  //   switch (currentPhase) {
-  //     case 'egg':
-  //       return widget.dragonData['egg_image'];
-  //     case 'stage1':
-  //       return widget.dragonData['stage1_image'];
-  //     case 'stage2':
-  //       return widget.dragonData['stage2_image'];
-  //     case 'final':
-  //       return widget.dragonData['final_stage_image'];
-  //     default:
-  //       return widget.dragonData['egg_image'];
-  //   }
-  // }
 
   void _showPhaseDialog() async {
     int? choice = await showDialog<int>(
@@ -554,69 +456,22 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
           availablePhases.length,
               (i) => SimpleDialogOption(
             onPressed: () => Navigator.pop(context, i),
-            child: Text(getPhaseDisplayName(availablePhases[i])),
+            child: Text(_stateManager.getPhaseDisplayName(availablePhases[i])),
           ),
         ),
       ),
     );
     if (choice != null) {
       setState(() => selectedPhase = choice);
-      _saveCurrentPhase(availablePhases[choice]);
-    }
-  }
-
-  Future<void> _saveCurrentPhase(String phase) async {
-    try {
-      final userState = UserStateService();
-      final user = userState.currentUser;
-
-      if (user != null) {
-        final dragonService = DragonService(QuizService().supabase);
-
-        // Get current dragons data
-        final userResponse = await dragonService.supabase
-            .from('Users')
-            .select('dragons')
-            .eq('id', user.id)
-            .single();
-
-        if (userResponse['dragons'] != null) {
-          final dragonsData = Map<String, dynamic>.from(userResponse['dragons']);
-
-          // Update the dragon's data
-          if (dragonsData[widget.dragonId] is Map) {
-            dragonsData[widget.dragonId]['current_phase'] = phase;
-          } else {
-            dragonsData[widget.dragonId] = {
-              'phases': widget.phases,
-              'current_phase': phase,
-            };
-          }
-
-          // Save the updated dragons data
-          await dragonService.supabase
-              .from('Users')
-              .update({'dragons': dragonsData})
-              .eq('id', user.id);
-
-          print('✅ Current phase saved: $phase');
-
-          // Notify parent that dragon was updated
-          if (widget.onDragonUpdated != null) {
-            widget.onDragonUpdated!(widget.dragonId);
-          }
-        }
-      }
-    } catch (e) {
-      print('❌ Error saving current phase: $e');
+      // Note: For now, we're just updating the UI.
+      // When you implement user preference saving in state manager,
+      // you would call something like:
+      // await _stateManager.saveUserPreferredPhase(widget.dragonId, availablePhases[choice]);
     }
   }
 
   void _showEnvironmentDialog() async {
-    // print('🔄 Opening environment selection dialog...');
-
     if (_isLoadingEnvironments) {
-      // print('⏳ Environments still loading...');
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Loading environments...'))
       );
@@ -630,9 +485,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       );
       return;
     }
-
-    // print('📦 Available environments: $userEnvironments');
-    // print('📦 Environment IDs: $userEnvironmentIds');
 
     int? choice = await showDialog<int>(
       context: context,
@@ -652,21 +504,15 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     );
 
     if (choice != null && choice < userEnvironments.length) {
-      // print('🔄 Processing environment selection...');
-      // print('📦 Selected environment: ${userEnvironments[choice]}');
-      // print('📦 Selected environment ID: ${userEnvironmentIds[choice]}');
-
       setState(() => selectedEnvironment = choice);
 
-      // Use the callback instead of parent state
+      // Use state manager to save environment selection
+      await _stateManager.saveEnvironmentSelection(widget.dragonId, userEnvironmentIds[choice]);
+
+      // Use the callback for parent notification
       if (widget.onEnvironmentChanged != null) {
-        // print('🔄 Calling environment changed callback...');
         widget.onEnvironmentChanged!(widget.dragonId, userEnvironmentIds[choice]);
-      } else {
-        print('⚠️ No environment change callback provided');
       }
-    } else {
-      print('❌ Invalid environment selection or dialog cancelled');
     }
   }
 
@@ -828,7 +674,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
           }
           else {
             dragonsData[widget.dragonId] = {
-              'phases': widget.phases,
+              // 'phases': widget.phases,
               'stickers': stickersData,
               'current_dragon_env': userEnvironmentIds.isEmpty ? 'default': userEnvironmentIds[selectedEnvironment],
             };
@@ -916,8 +762,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
   void setDetails(DragTargetDetails details, double dragonSize, ({double height, double width}) environmentSize) {
     final data = details.data;
-    // final RenderBox renderBox = context.findRenderObject() as RenderBox;
-    // final localPosition = renderBox.globalToLocal(details.offset);
 
     // Find the dragon container's position
     final dragonBox = context.findRenderObject() as RenderBox;
@@ -954,7 +798,4 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
     _saveStickers(); // Save after adding
   }
-
-
 }
-
