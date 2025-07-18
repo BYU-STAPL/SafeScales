@@ -1,20 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/models/question.dart';
 
-class PreQuizResultScreen extends StatelessWidget {
-  final QuestionSet questionSet;
-  final int score;
-  final int correctAnswers;
-  final int totalQuestions;
-  final List<List<int>> userAnswers;
+class ReadingResultScreen extends StatelessWidget {
 
-  const PreQuizResultScreen({
+  const ReadingResultScreen({
     Key? key,
-    required this.questionSet,
-    required this.score,
-    required this.correctAnswers,
-    required this.totalQuestions,
-    required this.userAnswers,
   }) : super(key: key);
 
   @override
@@ -23,7 +13,7 @@ class PreQuizResultScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Quiz Complete'),
+        title: Text('Reading Complete'),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
@@ -34,7 +24,7 @@ class PreQuizResultScreen extends StatelessWidget {
             // mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Great job completing the quiz!',
+                'Great job completing the reading!',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -44,20 +34,29 @@ class PreQuizResultScreen extends StatelessWidget {
               SizedBox(height: 30),
 
               Text(
-                'Your new dragon egg hatched!',
+                'Your new dragon is now a teenage dragon!',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyLarge,
               ),
 
               SizedBox(height: 30),
-              
+
               // TODO: Replace later with dragon
               Image.asset("assets/images/other/QuestionMark.png"),
-              
+
+              SizedBox(height: 30),
+
+              Text(
+                'Complete the Post-Quiz with a passing score for your dragon to become a full adult.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium,
+              ),
+
               SizedBox(height: 30),
 
               Spacer(),
 
+              // TODO: If back button of reading is clicked while on this page and return to lesson isn't pressed reading doesn't save, but quizzes already save
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

@@ -258,7 +258,7 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
                   child: Text(
                     'Return to lesson'.toUpperCase(),
                     style: TextStyle(
-                      fontSize: theme.textTheme.bodyMedium?.fontSize,
+                      fontSize: theme.textTheme.bodySmall?.fontSize,
                     ),
                   ),
                 ),

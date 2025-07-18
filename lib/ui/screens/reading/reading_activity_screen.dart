@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
+import 'package:safe_scales/ui/screens/reading/reading_results_screen.dart';
 
 import '../../widgets/progress_bar.dart';
 
@@ -180,7 +181,15 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
           .update({'modules': modulesData})
           .eq('id', user.id);
 
-      if (mounted) {
+      final shouldPopReading = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ReadingResultScreen(),
+        ),
+      );
+
+      // Only pop the reading screen if the results screen returned true
+      if (mounted && shouldPopReading == true) {
         Navigator.pop(context, true);
       }
     } catch (e) {
