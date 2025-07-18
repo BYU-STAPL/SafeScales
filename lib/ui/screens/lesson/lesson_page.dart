@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_screen.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_screen.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
-import 'package:safe_scales/services/dragon_service.dart';
 import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
 import 'package:safe_scales/services/class_service.dart';
+
+import 'package:safe_scales/states/dragon_state_manager.dart';
 
 import '../../../themes/app_theme.dart';
 
 class LessonPage extends StatefulWidget {
   final String? topic; // Keep for backward compatibility
-  final String? moduleId; // New parameter
+  final String? moduleId;
 
   const LessonPage({super.key, this.topic, this.moduleId})
     : assert(
@@ -34,8 +34,12 @@ class _LessonPageState extends State<LessonPage> {
 
   final QuizService _quizService = QuizService();
   final UserStateService _userState = UserStateService();
-  final DragonService _dragonService = DragonService(QuizService().supabase);
+  // final DragonService _dragonService = DragonService(QuizService().supabase);
   late final ClassService _classService;
+
+  final DragonStateManager _dragonStateManager = DragonStateManager();
+
+
 
   QuestionSet? _preQuiz;
   QuestionSet? _postQuiz;
@@ -49,83 +53,19 @@ class _LessonPageState extends State<LessonPage> {
   void initState() {
     super.initState();
     _classService = ClassService(_quizService.supabase);
-    _loadQuizzes();
-    _loadDragonImages();
-    _loadModuleProgress();
+
+    _initializeData();
+
+    // _loadQuizzes();
+    // _loadDragonImages();
+    // _loadModuleProgress();
   }
 
-  Future<void> _loadDragonImages() async {
-    try {
-      // If using module-based system
-      if (widget.moduleId != null) {
-        // Get user's class and assets
-        final user = _userState.currentUser;
-        if (user != null) {
-          final classData = await _classService.getUserClass(user.id);
-          if (classData.isNotEmpty) {
-            final assets = await _classService.getClassAssets(classData['id']);
-
-            if (assets != null) {
-              // Find the dragon that belongs to this module
-              final dragon = assets.firstWhere(
-                (asset) =>
-                    asset['type'] == 'dragon' &&
-                    asset['moduleId'] == widget.moduleId,
-                orElse: () => null,
-              );
-
-              if (dragon != null && dragon['stages'] != null) {
-                final dragonData = {
-                  'egg':
-                      dragon['stages']['egg'] ?? 'assets/images/other/egg.png',
-                  'baby':
-                      dragon['stages']['baby'] ??
-                      'assets/images/other/young.png',
-                  'teen':
-                      dragon['stages']['teen'] ??
-                      'assets/images/other/teen.png',
-                  'final':
-                      dragon['stages']['adult'] ??
-                      'assets/images/other/adult.png',
-                  'id': dragon['id'],
-                  'name': dragon['name'] ?? 'Dragon',
-                  'moduleId': dragon['moduleId'] ?? widget.moduleId,
-                };
-
-                if (mounted) {
-                  setState(() {
-                    _dragonData = dragonData;
-                  });
-                }
-                return; // Exit early if we found the dragon
-              }
-            }
-          }
-        }
-      }
-
-      // Fallback to old system for backward compatibility
-      await _dragonService.initialize();
-
-      // Get the index of the current topic
-      final allQuizzes = await _quizService.getAllQuizzes();
-      final topics =
-          allQuizzes.map((q) => q['topic'] as String).toSet().toList();
-      final topicIndex = topics.indexOf(widget.topic ?? _moduleTitle);
-
-      if (topicIndex != -1) {
-        final dragonData = await _dragonService.getDragonImagesForModule(
-          topicIndex,
-        );
-        if (mounted) {
-          setState(() {
-            _dragonData = dragonData;
-          });
-        }
-      }
-    } catch (e) {
-      print('❌ Error loading dragon images: $e');
-    }
+  Future<void> _initializeData() async {
+    await _dragonStateManager.initialize();
+    await _dragonStateManager.loadUserDragons();
+    await _loadQuizzes();
+    await _loadModuleProgress();
   }
 
   Future<void> _loadModuleProgress() async {
@@ -378,7 +318,7 @@ class _LessonPageState extends State<LessonPage> {
                         bottom: BorderSide(color: Colors.grey[300]!, width: 1),
                       ),
                     ),
-                    child: Center(child: _getDragonPhaseIcon(topicProgress)),
+                    child: Center(child: _getDragonImage(topicProgress)),
                   ),
 
                   Padding(
@@ -759,26 +699,9 @@ class _LessonPageState extends State<LessonPage> {
     });
   }
 
-  Widget _getDragonPhaseIcon(double progress) {
-    print(
-      '🐉 Dragon phase calculation - Progress: $progress, Module ID: ${widget.moduleId}',
-    );
-    print('🐉 Dragon data: $_dragonData');
+  Widget _getDragonImage(double progress) {
 
-    String imageUrl = _dragonData?['egg'] ?? 'assets/images/other/egg.png';
-
-    if (progress >= 80) {
-      imageUrl = _dragonData?['final'] ?? 'assets/images/other/adult.png';
-      print('🐉 Using final stage: $imageUrl');
-    } else if (progress >= 50) {
-      imageUrl = _dragonData?['teen'] ?? 'assets/images/other/teen.png';
-      print('🐉 Using teen stage: $imageUrl');
-    } else if (progress >= 30) {
-      imageUrl = _dragonData?['baby'] ?? 'assets/images/other/young.png';
-      print('🐉 Using baby stage: $imageUrl');
-    } else {
-      print('🐉 Using egg stage: $imageUrl');
-    }
+    final imageUrl = DragonStateManager().getDragonImageForLesson(widget.moduleId, progress);
 
     // Check if the image URL is a network URL or a local asset
     if (imageUrl.startsWith('http')) {

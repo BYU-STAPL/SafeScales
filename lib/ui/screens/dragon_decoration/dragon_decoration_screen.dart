@@ -8,6 +8,7 @@ import 'package:safe_scales/models/sticker_item_model.dart';
 import '../../../services/dragon_service.dart';
 import '../../../services/quiz_service.dart';
 import '../../../services/user_state_service.dart';
+import '../../../states/dragon_state_manager.dart';
 
 class DragonDressUpPage extends StatefulWidget {
   final String dragonId;
@@ -256,44 +257,55 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   }
 
   Future<void> _loadCurrentPhase() async {
-    try {
-      final userState = UserStateService();
-      final user = userState.currentUser;
+    final phase = DragonStateManager().getUserPreferredPhase(widget.dragonId);
 
-      if (user != null) {
-        final dragonService = DragonService(QuizService().supabase);
+    final index = availablePhases.indexOf(phase);
 
-        // Get current dragons data
-        final userResponse =
-        await dragonService.supabase
-            .from('Users')
-            .select('dragons')
-            .eq('id', user.id)
-            .single();
-
-        if (userResponse['dragons'] != null) {
-          final dragonsData = Map<String, dynamic>.from(
-            userResponse['dragons'],
-          );
-          final dragonData = dragonsData[widget.dragonId];
-
-          if (dragonData is Map && dragonData['current_phase'] != null) {
-            final savedPhase = dragonData['current_phase'] as String;
-            final phaseIndex = availablePhases.indexOf(savedPhase);
-
-            if (phaseIndex != -1 && mounted) {
-              setState(() {
-                selectedPhase = phaseIndex;
-              });
-              print('✅ Loaded saved phase: $savedPhase');
-            }
-          }
-        }
-      }
-    } catch (e) {
-      print('❌ Error loading current phase: $e');
+    if (index != -1 && mounted) {
+      setState(() => selectedPhase = index);
+      print('✅ Loaded phase from state manager: $phase');
     }
   }
+
+  // Future<void> _loadCurrentPhase() async {
+  //   try {
+  //     final userState = UserStateService();
+  //     final user = userState.currentUser;
+  //
+  //     if (user != null) {
+  //       final dragonService = DragonService(QuizService().supabase);
+  //
+  //       // Get current dragons data
+  //       final userResponse =
+  //       await dragonService.supabase
+  //           .from('Users')
+  //           .select('dragons')
+  //           .eq('id', user.id)
+  //           .single();
+  //
+  //       if (userResponse['dragons'] != null) {
+  //         final dragonsData = Map<String, dynamic>.from(
+  //           userResponse['dragons'],
+  //         );
+  //         final dragonData = dragonsData[widget.dragonId];
+  //
+  //         if (dragonData is Map && dragonData['current_phase'] != null) {
+  //           final savedPhase = dragonData['current_phase'] as String;
+  //           final phaseIndex = availablePhases.indexOf(savedPhase);
+  //
+  //           if (phaseIndex != -1 && mounted) {
+  //             setState(() {
+  //               selectedPhase = phaseIndex;
+  //             });
+  //             print('✅ Loaded saved phase: $savedPhase');
+  //           }
+  //         }
+  //       }
+  //     }
+  //   } catch (e) {
+  //     print('❌ Error loading current phase: $e');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -512,20 +524,25 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
   // Get image URL for current phase
   String getCurrentPhaseImage() {
-    final currentPhase = availablePhases[selectedPhase];
-    switch (currentPhase) {
-      case 'egg':
-        return widget.dragonData['egg_image'];
-      case 'stage1':
-        return widget.dragonData['stage1_image'];
-      case 'stage2':
-        return widget.dragonData['stage2_image'];
-      case 'final':
-        return widget.dragonData['final_stage_image'];
-      default:
-        return widget.dragonData['egg_image'];
-    }
+    final phase = availablePhases[selectedPhase];
+    return DragonStateManager().getDragonImageUrlByPhase(widget.dragonId, phase);
   }
+
+  // String getCurrentPhaseImage() {
+  //   final currentPhase = availablePhases[selectedPhase];
+  //   switch (currentPhase) {
+  //     case 'egg':
+  //       return widget.dragonData['egg_image'];
+  //     case 'stage1':
+  //       return widget.dragonData['stage1_image'];
+  //     case 'stage2':
+  //       return widget.dragonData['stage2_image'];
+  //     case 'final':
+  //       return widget.dragonData['final_stage_image'];
+  //     default:
+  //       return widget.dragonData['egg_image'];
+  //   }
+  // }
 
   void _showPhaseDialog() async {
     int? choice = await showDialog<int>(
