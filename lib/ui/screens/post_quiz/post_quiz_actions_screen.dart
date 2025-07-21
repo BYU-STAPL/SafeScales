@@ -6,6 +6,7 @@ import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 
 import '../../../states/dragon_state_manager.dart';
+import '../../widgets/dragon_image_widget.dart';
 import '../main_navigation.dart';
 
 // Define action types for better type safety
@@ -100,36 +101,6 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
     Navigator.pop(context, QuizAction.goToDragon);
   }
 
-  Widget buildDragonImage() {
-    final double imageSize = 300;
-
-    final dragon = DragonStateManager().getDragonByModuleId(widget.moduleId);
-
-    String imageUrl = 'assets/images/other/egg.png';
-    if (dragon != null) {
-      imageUrl = DragonStateManager().getDragonImageUrl(dragon.id, forPhase: 'adult');
-    }
-    Widget imageWidget = Image.asset(imageUrl, width: imageSize, height: imageSize);
-
-    if (imageUrl.startsWith('http')) {
-      imageWidget = Image.network(
-        imageUrl,
-        width: imageSize,
-        height: imageSize,
-        errorBuilder: (context, error, stackTrace) {
-          // Error loading dragon image
-          return Image.asset(
-            'assets/images/other/egg.png',
-            width: imageSize,
-            height: imageSize,
-          );
-        },
-      );
-    }
-
-    return imageWidget;
-  }
-
   Widget _buildDragonAction(BuildContext context) {
     ThemeData theme = Theme.of(context);
 
@@ -142,7 +113,7 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
         ),
         SizedBox(height: 30),
 
-        buildDragonImage(),
+        DragonImageWidget(moduleId: widget.moduleId, size: 300, phase: 'adult',),
 
         SizedBox(height: 30),
         Text(

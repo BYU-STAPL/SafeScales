@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/states/dragon_state_manager.dart';
 
+import 'dragon_image_widget.dart';
+
 class LessonCard extends StatelessWidget {
   const LessonCard({
     super.key,
@@ -32,30 +34,6 @@ class LessonCard extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final ThemeData theme = Theme.of(context);
-
-    final dragon = DragonStateManager().getDragonByModuleId(moduleId);
-
-    String imageUrl = 'assets/images/other/egg.png';
-    if (dragon != null) {
-      imageUrl = DragonStateManager().getDragonImageUrl(dragon.id);
-    }
-    Widget imageWidget = Image.asset(imageUrl, width: 64, height: 64);
-
-    if (imageUrl.startsWith('http')) {
-      imageWidget = Image.network(
-        imageUrl,
-        width: 64,
-        height: 64,
-        errorBuilder: (context, error, stackTrace) {
-          // Error loading dragon image
-          return Image.asset(
-            'assets/images/other/egg.png',
-            width: 64,
-            height: 64,
-          );
-        },
-      );
-    }
 
     return GestureDetector(
       onTap: shouldBeUnlocked ? onTapCard : null,
@@ -127,7 +105,8 @@ class LessonCard extends StatelessWidget {
                     ),
                   // Icon in circle
                   shouldBeUnlocked && moduleId != 'settings'
-                      ? Positioned(top: 35, child: imageWidget)
+                      ? Positioned(top: 35, child: DragonImageWidget(moduleId: moduleId, size: 65),
+                  )
                       : Positioned(
                           top: 10,
                           child: Image.asset(
