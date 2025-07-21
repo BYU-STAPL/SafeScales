@@ -103,4 +103,19 @@ class DragonService {
       throw Exception('Failed to save dragon phases: $e');
     }
   }
+
+
+  // Future<void> updateDragonProgress(String userId, String dragonId, String newPhase) async {
+  //   // Get current progress
+  //   final currentProgress = await getUserDragonProgress(userId, dragonId);
+  //
+  //   // Add new phase if not already unlocked
+  //   if (!currentProgress.unlockedPhases.contains(newPhase)) {
+  //     currentProgress.unlockedPhases.add(newPhase);
+  //     await saveUserDragonProgress(userId, dragonId, currentProgress);
+  //
+  //     // Trigger celebration UI
+  //     _showPhaseUnlockedCelebration(dragonId, newPhase);
+  //   }
+  // }
 }
