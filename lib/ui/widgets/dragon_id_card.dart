@@ -3,7 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
 
 class DragonIdCard extends StatefulWidget {
-  final String dragonImagePath;
+  final Widget dragonImage;
   final String species;
   final String name;
   // final String length; not in use currently
@@ -19,7 +19,7 @@ class DragonIdCard extends StatefulWidget {
 
   DragonIdCard({
     Key? key,
-    required this.dragonImagePath,
+    required this.dragonImage,
     required this.species,
     required this.name,
     required this.favoriteItem,
@@ -132,58 +132,8 @@ class _DragonIdCardState extends State<DragonIdCard> {
                         borderRadius: BorderRadius.circular(13),
                         child: Padding(
                             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          child: widget.dragonImagePath.startsWith('http')
-                              ? Image.network(
-                            widget.dragonImagePath,
-                            height: 180,
-                            fit: BoxFit.contain,
-                            errorBuilder:
-                                (
-                                context,
-                                error,
-                                stackTrace,
-                                ) => Icon(
-                              Icons.pets,
-                              size: 80,
-                              color: theme.primaryColor,
-                            ),
-                          )
-                              : Image.asset(
-                            widget.dragonImagePath,
-                            height: 180,
-                            fit: BoxFit.contain,
-                            errorBuilder:
-                                (
-                                context,
-                                error,
-                                stackTrace,
-                                ) => Icon(
-                              Icons.pets,
-                              size: 80,
-                              color: theme.primaryColor,
-                            ),
-                          ),
-                        )
-
-
-
-
-
-
-                        // Image.asset(
-                        //   widget.dragonImagePath,
-                        //   fit: BoxFit.cover,
-                        //   errorBuilder: (context, error, stackTrace) {
-                        //     return Container(
-                        //       color: Colors.white.withOpacity(0.1),
-                        //       child: Icon(
-                        //         Icons.pets,
-                        //         color: Colors.white,
-                        //         size: 40,
-                        //       ),
-                        //     );
-                        //   },
-                        // ),
+                            child: widget.dragonImage,
+                        ),
                       ),
                     ),
 

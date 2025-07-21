@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/models/question.dart';
+import 'package:safe_scales/states/dragon_state_manager.dart';
+
+import '../../widgets/dragon_image_widget.dart';
 
 class PreQuizResultScreen extends StatelessWidget {
+  final String moduleId;
   final QuestionSet questionSet;
   final int score;
   final int correctAnswers;
@@ -10,6 +14,7 @@ class PreQuizResultScreen extends StatelessWidget {
 
   const PreQuizResultScreen({
     Key? key,
+    required this.moduleId,
     required this.questionSet,
     required this.score,
     required this.correctAnswers,
@@ -50,9 +55,8 @@ class PreQuizResultScreen extends StatelessWidget {
               ),
 
               SizedBox(height: 30),
-              
-              // TODO: Replace later with dragon
-              Image.asset("assets/images/other/QuestionMark.png"),
+
+              DragonImageWidget(moduleId: moduleId, size: 300, phase: 'baby',),
               
               SizedBox(height: 30),
 

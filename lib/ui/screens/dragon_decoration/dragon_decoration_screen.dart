@@ -1,5 +1,6 @@
 // --- Dragon Dress Up Page ---
 import 'package:flutter/material.dart';
+import 'package:safe_scales/ui/widgets/dragon_image_widget.dart';
 import 'package:safe_scales/ui/widgets/sticker_collection_widget.dart';
 
 import 'package:safe_scales/models/sticker_item_model.dart';
@@ -354,21 +355,14 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                       ),
                     ),
 
-                  // Dragon Image - Use state manager
-                  Container(
-                    height: dragonSize * 0.75,
-                    width: dragonSize * 0.75,
-                    child: Image.network(
-                      getCurrentPhaseImage(),
-                      fit: BoxFit.contain,
-                      errorBuilder:
-                          (context, error, stackTrace) => Icon(
-                        Icons.pets,
-                        size: dragonSize,
-                        color: colorScheme.primary,
-                      ),
-                    ),
+
+                  // Dragon Image
+                  DragonImageWidget(
+                    dragonId: widget.dragonId,
+                    size: dragonSize * 0.75,
+                    phase: getCurrentPhasePhase(),
                   ),
+
 
                   // Drop zone for dragon
                   DragTarget<Map<String, dynamic>>(
@@ -439,9 +433,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   }
 
   // Get image URL for current phase using state manager
-  String getCurrentPhaseImage() {
-    final phase = availablePhases[selectedPhase];
-    return _stateManager.getDragonImageUrl(widget.dragonId, forPhase: phase);
+  String getCurrentPhasePhase() {
+    return availablePhases[selectedPhase];
   }
 
   void _showPhaseDialog() async {

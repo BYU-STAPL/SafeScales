@@ -94,8 +94,13 @@ class DragonStateManager {
     final dragon = _dragons[dragonId];
     if (dragon == null) return '';
 
+    String? normalizePhase = forPhase;
+    if (normalizePhase != null) {
+      normalizePhase = _normalizePhase(normalizePhase);
+    }
+
     // If not looking for a specific phase use the highest unlocked phase
-    final phase = forPhase ?? getDragonHighestPhase(dragonId);
+    final phase = normalizePhase ?? getDragonHighestPhase(dragonId);
 
     String image = dragon.eggImage;
     switch (phase) {
@@ -119,7 +124,7 @@ class DragonStateManager {
   }
 
   /// Get dragon image for lesson based on progress
-  String getDragonImageForLesson(String moduleId) {
+  String getDragonImageUrlForLesson(String moduleId) {
 
     // if (progress >= 80) {
     //   phase = 'final';

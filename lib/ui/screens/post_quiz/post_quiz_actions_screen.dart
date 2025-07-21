@@ -5,6 +5,8 @@ import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 
+import '../../../states/dragon_state_manager.dart';
+import '../../widgets/dragon_image_widget.dart';
 import '../main_navigation.dart';
 
 // Define action types for better type safety
@@ -18,10 +20,12 @@ enum QuizAction {
 class PostQuizActionsScreen extends StatefulWidget {
   const PostQuizActionsScreen({
     super.key,
+    required this.moduleId,
     required this.passingScore,
     required this.score,
   });
 
+  final String moduleId;
   final int passingScore;
   final int score;
 
@@ -108,8 +112,9 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
           style: theme.textTheme.bodyLarge,
         ),
         SizedBox(height: 30),
-        // TODO: Replace later with dragon
-        Image.asset("assets/images/other/QuestionMark.png"),
+
+        DragonImageWidget(moduleId: widget.moduleId, size: 300, phase: 'adult',),
+
         SizedBox(height: 30),
         Text(
           'Now you can play with your dragon by going to the dragon screen',
