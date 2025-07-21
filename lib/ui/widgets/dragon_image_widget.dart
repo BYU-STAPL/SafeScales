@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 
+import '../../models/dragon.dart';
 import '../../states/dragon_state_manager.dart';
 
 class DragonImageWidget extends StatelessWidget {
-  final String moduleId;
+  final String? dragonId;
+  final String? moduleId;
   final double size;
 
   final String? phase;
@@ -11,14 +13,23 @@ class DragonImageWidget extends StatelessWidget {
 
   const DragonImageWidget({
     Key? key,
-    required this.moduleId,
+    this.dragonId,
+    this.moduleId,
     required this.size,
     this.phase,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final dragon = DragonStateManager().getDragonByModuleId(moduleId);
+
+    Dragon? dragon;
+    if (moduleId != null) {
+      dragon = DragonStateManager().getDragonByModuleId(moduleId!);
+    }
+    else if (dragonId != null) {
+      dragon = DragonStateManager().getDragonById(dragonId!);
+    }
+
 
     String imageUrl = 'assets/images/other/QuestionMark.png';
     if (dragon != null) {

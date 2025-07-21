@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:safe_scales/ui/widgets/dragon_id_card.dart';
 import 'package:safe_scales/states/dragon_state_manager.dart';
 import '../../models/dragon.dart';
+import '../widgets/dragon_image_widget.dart';
 import 'dragon_decoration/dragon_decoration_screen.dart';
 
 class DragonsPage extends StatefulWidget {
@@ -117,8 +118,11 @@ class _DragonsPageState extends State<DragonsPage> {
       // Is dragon unlocked for play
       final isUnlocked = _dragonStateManager.isPlayUnlocked(dragon.id);
 
+
+      Widget dragonImageWidget = DragonImageWidget(dragonId: dragon.id, size: 180);
+
       return DragonIdCard(
-        dragonImagePath: imagePath,
+        dragonImage: dragonImageWidget,
         species: dragon.speciesName,
         name: 'Jack', // TODO: Add backend to change dragon name
         favoriteItem: dragon.favoriteItem,
