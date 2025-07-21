@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:safe_scales/services/class_service.dart';
+import 'package:safe_scales/services/quiz_service.dart';
+import 'package:safe_scales/services/user_state_service.dart';
+import 'package:safe_scales/states/dragon_state_manager.dart';
 import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_screen.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_screen.dart';
@@ -22,11 +26,91 @@ class DevTestingPage extends StatefulWidget {
 }
 
 class _DevTestingPageState extends State<DevTestingPage> {
+  final QuizService _quizService = QuizService();
+  final _userState = UserStateService();
+  final _dragonStateManager = DragonStateManager();
+  late final ClassService _classService;
+
+  // Class-based variables
+  Map<String, dynamic>? _currentClass;
+  List<Map<String, dynamic>> _modules = [];
+  List<String> _moduleIds = [];
+
+  Map<String, double> _moduleProgress = {};
+
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _classService = ClassService(_quizService.supabase);
+    _loadClassData();
+  }
+
+  Future<void> _loadClassData() async {
+    try {
+      final user = _userState.currentUser;
+      if (user == null) {
+        setState(() {
+          _isLoading = false;
+          _currentClass = null;
+          _modules = [];
+        });
+        return;
+      }
+
+      // Get user's class
+      final classData = await _classService.getUserClass(user.id);
+
+      if (classData.isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _currentClass = null;
+          _modules = [];
+        });
+        return;
+      }
+
+      // Get class modules
+      final modules = await _classService.getClassModules(classData['id']);
+
+      // Get module progress
+      final moduleIds = modules.map((m) => m['id'] as String).toList();
+      final moduleProgress = await _quizService.getModuleProgress(
+        userId: user.id,
+        moduleIds: moduleIds,
+      );
+
+      // Initialize dragon state manager and load user dragons
+      await _dragonStateManager.initialize();
+      await _dragonStateManager.loadUserDragons();
+
+      if (mounted) {
+        setState(() {
+          _currentClass = classData;
+          _modules = modules;
+          _moduleProgress = moduleProgress;
+          _isLoading = false;
+          _moduleIds = moduleIds;
+        });
+
+        // Update dragon phases based on current progress
+        // await _updateDragonPhases();
+      }
+    } catch (e) {
+      print('❌ Error loading class data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
 
     ThemeData theme = Theme.of(context);
+
+    print(_moduleIds);
 
     Question singleQ = Question.singleAnswer(
       id: 'q1',
@@ -95,7 +179,7 @@ class _DevTestingPageState extends State<DevTestingPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => PreQuizScreen(questionSet: questionSet)
+                        builder: (context) => PreQuizScreen(moduleId: _moduleIds[0], questionSet: questionSet)
                     ),
                   );
                 },
@@ -109,7 +193,7 @@ class _DevTestingPageState extends State<DevTestingPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => PostQuizScreen(questionSet: questionSet2)
+                      builder: (context) => PostQuizScreen(moduleId: _moduleIds[0], questionSet: questionSet2)
                   ),
                 );
               },

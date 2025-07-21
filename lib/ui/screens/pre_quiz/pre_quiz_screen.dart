@@ -13,9 +13,14 @@ import '../../widgets/progress_bar.dart';
 import '../../widgets/question_widget.dart';
 
 class PreQuizScreen extends StatefulWidget {
+  final String moduleId;
   final QuestionSet questionSet;
 
-  const PreQuizScreen({Key? key, required this.questionSet}) : super(key: key);
+  const PreQuizScreen({
+    Key? key,
+    required this.moduleId,
+    required this.questionSet,
+  }) : super(key: key);
 
   @override
   _PreQuizScreenState createState() => _PreQuizScreenState();
@@ -85,6 +90,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
       MaterialPageRoute(
         builder:
             (context) => PreQuizResultScreen(
+              moduleId: widget.moduleId,
               questionSet: widget.questionSet,
               score: scorePercentage,
               correctAnswers: correctAnswers,

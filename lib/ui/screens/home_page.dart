@@ -282,6 +282,7 @@ class _HomePageState extends State<HomePage> {
                 else
                 // Dynamic modules list
                   ..._modules.asMap().entries.map((entry) {
+
                     final index = entry.key;
                     final module = entry.value;
                     final moduleId = module['id'] as String;

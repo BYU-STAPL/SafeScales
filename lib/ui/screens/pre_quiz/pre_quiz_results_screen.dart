@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/models/question.dart';
+import 'package:safe_scales/states/dragon_state_manager.dart';
 
 class PreQuizResultScreen extends StatelessWidget {
+  final String moduleId;
   final QuestionSet questionSet;
   final int score;
   final int correctAnswers;
@@ -10,12 +12,43 @@ class PreQuizResultScreen extends StatelessWidget {
 
   const PreQuizResultScreen({
     Key? key,
+    required this.moduleId,
     required this.questionSet,
     required this.score,
     required this.correctAnswers,
     required this.totalQuestions,
     required this.userAnswers,
   }) : super(key: key);
+
+  Widget buildDragonImage() {
+    final double imageSize = 300;
+
+    final dragon = DragonStateManager().getDragonByModuleId(moduleId);
+
+    String imageUrl = 'assets/images/other/egg.png';
+    if (dragon != null) {
+      imageUrl = DragonStateManager().getDragonImageUrl(dragon.id, forPhase: 'baby');
+    }
+    Widget imageWidget = Image.asset(imageUrl, width: imageSize, height: imageSize);
+
+    if (imageUrl.startsWith('http')) {
+      imageWidget = Image.network(
+        imageUrl,
+        width: imageSize,
+        height: imageSize,
+        errorBuilder: (context, error, stackTrace) {
+          // Error loading dragon image
+          return Image.asset(
+            'assets/images/other/egg.png',
+            width: imageSize,
+            height: imageSize,
+          );
+        },
+      );
+    }
+
+    return imageWidget;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,9 +83,8 @@ class PreQuizResultScreen extends StatelessWidget {
               ),
 
               SizedBox(height: 30),
-              
-              // TODO: Replace later with dragon
-              Image.asset("assets/images/other/QuestionMark.png"),
+
+              buildDragonImage(),
               
               SizedBox(height: 30),
 

@@ -39,7 +39,6 @@ class LessonCard extends StatelessWidget {
     if (dragon != null) {
       imageUrl = DragonStateManager().getDragonImageUrl(dragon.id);
     }
-
     Widget imageWidget = Image.asset(imageUrl, width: 64, height: 64);
 
     if (imageUrl.startsWith('http')) {

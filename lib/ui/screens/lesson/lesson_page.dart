@@ -673,9 +673,9 @@ class _LessonPageState extends State<LessonPage> {
 
     Widget quizScreen;
     if (quiz.activityType == ActivityType.preQuiz) {
-      quizScreen = PreQuizScreen(questionSet: quiz);
+      quizScreen = PreQuizScreen(moduleId: widget.moduleId, questionSet: quiz);
     } else {
-      quizScreen = PostQuizScreen(questionSet: quiz);
+      quizScreen = PostQuizScreen(moduleId: widget.moduleId, questionSet: quiz);
     }
 
     Navigator.push(
@@ -701,7 +701,7 @@ class _LessonPageState extends State<LessonPage> {
 
   Widget _getDragonImage(double progress) {
 
-    final imageUrl = DragonStateManager().getDragonImageForLesson(widget.moduleId);
+    final imageUrl = DragonStateManager().getDragonImageUrlForLesson(widget.moduleId);
 
     // Check if the image URL is a network URL or a local asset
     if (imageUrl.startsWith('http')) {
