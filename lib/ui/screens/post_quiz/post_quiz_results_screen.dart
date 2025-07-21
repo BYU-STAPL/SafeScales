@@ -14,23 +14,23 @@ import 'package:safe_scales/themes/theme_provider.dart';
 class PostQuizResultScreen extends StatefulWidget {
   const PostQuizResultScreen({
     Key? key,
+    required this.moduleId,
     required this.questionSet,
     required this.passingScore,
     required this.score,
     required this.correctAnswers,
     required this.totalQuestions,
     required this.userAnswers,
-    this.moduleId, // Add optional moduleId
     this.topic,
   }) : super(key: key);
 
+  final String moduleId;
   final QuestionSet questionSet;
   final int passingScore;
   final int score;
   final int correctAnswers;
   final int totalQuestions;
   final List<List<int>> userAnswers;
-  final String? moduleId;
   final String? topic;
 
   @override
@@ -61,7 +61,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PostQuizScreen(questionSet: widget.questionSet),
+        builder: (context) => PostQuizScreen(moduleId: widget.moduleId, questionSet: widget.questionSet),
       ),
     );
 
@@ -211,6 +211,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => PostQuizActionsScreen(
+                            moduleId: widget.moduleId,
                             score: score,
                             passingScore: widget.questionSet.passingScore,
                           ),

@@ -10,6 +10,7 @@ import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/states/dragon_state_manager.dart';
 
 import '../../../themes/app_theme.dart';
+import '../../widgets/dragon_image_widget.dart';
 
 class LessonPage extends StatefulWidget {
   final String moduleId;
@@ -34,11 +35,11 @@ class _LessonPageState extends State<LessonPage> {
 
   final QuizService _quizService = QuizService();
   final UserStateService _userState = UserStateService();
+
   // final DragonService _dragonService = DragonService(QuizService().supabase);
   late final ClassService _classService;
 
   final DragonStateManager _dragonStateManager = DragonStateManager();
-
 
 
   QuestionSet? _preQuiz;
@@ -168,11 +169,11 @@ class _LessonPageState extends State<LessonPage> {
       final user = _userState.currentUser;
       if (user != null) {
         final response =
-            await _quizService.supabase
-                .from('Users')
-                .select('quizzes, modules')
-                .eq('id', user.id)
-                .single();
+        await _quizService.supabase
+            .from('Users')
+            .select('quizzes, modules')
+            .eq('id', user.id)
+            .single();
 
         // Check new modules column first
         if (response['modules'] != null && widget.moduleId != null) {
@@ -278,7 +279,9 @@ class _LessonPageState extends State<LessonPage> {
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
 
-    final screenSize = MediaQuery.of(context).size;
+    final screenSize = MediaQuery
+        .of(context)
+        .size;
 
     // Use the loaded module progress for module-based lessons
     double topicProgress = _moduleProgress;
@@ -303,78 +306,79 @@ class _LessonPageState extends State<LessonPage> {
         centerTitle: true,
       ),
       body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
+      _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Dragon image container
+          Container(
+            width: screenSize.width,
+            height: screenSize.height * 0.3, // 30% of screen height
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              border: Border(
+                bottom: BorderSide(color: Colors.grey[300]!, width: 1),
+              ),
+            ),
+            child: Center(child: _getDragonImage(topicProgress)),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+            ),
+            child: Text(
+              'Lesson Activities',
+              style: theme.textTheme.headlineSmall,
+            ),
+          ),
+
+          // Existing content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Dragon image container
-                  Container(
-                    width: screenSize.width,
-                    height: screenSize.height * 0.3, // 30% of screen height
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      border: Border(
-                        bottom: BorderSide(color: Colors.grey[300]!, width: 1),
-                      ),
+                  if (_preQuiz != null) ...[
+                    _buildQuizCard(
+                      title: 'Pre-Quiz',
+                      description:
+                      'Test your knowledge before starting',
+                      onTap: () => _startQuiz(_preQuiz!),
+                      icon: Icons.quiz,
+                      color: theme.colorScheme.primary,
+                      isCompleted: preQuizCompleted,
+                      score: preQuizScore,
+                      isUnlocked:
+                      !preQuizCompleted, // Only unlock when the pre-quiz is not completed, lock after
                     ),
-                    child: Center(child: _getDragonImage(topicProgress)),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: 20,
-                      right: 20,
-                      top: 20,
+                    const SizedBox(height: 20),
+                  ],
+                  _buildReadingCard(isUnlocked: preQuizCompleted),
+                  if (_postQuiz != null) ...[
+                    const SizedBox(height: 20),
+                    _buildQuizCard(
+                      title: 'Post-Quiz',
+                      description: 'Test what you\'ve learned',
+                      onTap: () => _startQuiz(_postQuiz!),
+                      icon: Icons.assignment,
+                      color: theme.colorScheme.primary,
+                      isCompleted: postQuizCompleted &&
+                          (postQuizScore! >= _postQuiz!.passingScore),
+                      score: postQuizScore,
+                      isUnlocked: readingCompleted,
                     ),
-                    child: Text(
-                      'Lesson Activities',
-                      style: theme.textTheme.headlineSmall,
-                    ),
-                  ),
-
-                  // Existing content
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_preQuiz != null) ...[
-                            _buildQuizCard(
-                              title: 'Pre-Quiz',
-                              description:
-                                  'Test your knowledge before starting',
-                              onTap: () => _startQuiz(_preQuiz!),
-                              icon: Icons.quiz,
-                              color: theme.colorScheme.primary,
-                              isCompleted: preQuizCompleted,
-                              score: preQuizScore,
-                              isUnlocked:
-                                  !preQuizCompleted, // Only unlock when the pre-quiz is not completed, lock after
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                          _buildReadingCard(isUnlocked: preQuizCompleted),
-                          if (_postQuiz != null) ...[
-                            const SizedBox(height: 20),
-                            _buildQuizCard(
-                              title: 'Post-Quiz',
-                              description: 'Test what you\'ve learned',
-                              onTap: () => _startQuiz(_postQuiz!),
-                              icon: Icons.assignment,
-                              color: theme.colorScheme.primary,
-                              isCompleted: postQuizCompleted && (postQuizScore! >= _postQuiz!.passingScore),
-                              score: postQuizScore,
-                              isUnlocked: readingCompleted,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
+                  ],
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -393,17 +397,17 @@ class _LessonPageState extends State<LessonPage> {
     return Container(
       decoration: BoxDecoration(
         color:
-            isCompleted
-                ? theme.colorScheme.green.withValues(
-                  alpha: 0.1,
-                ) //secondary.withValues(alpha: 0.1)
-                : theme.colorScheme.surface,
+        isCompleted
+            ? theme.colorScheme.green.withValues(
+          alpha: 0.1,
+        ) //secondary.withValues(alpha: 0.1)
+            : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color:
-              isCompleted
-                  ? theme.colorScheme.green
-                  : color.withValues(alpha: 0.5),
+          isCompleted
+              ? theme.colorScheme.green
+              : color.withValues(alpha: 0.5),
           width: 2,
         ),
         boxShadow: [
@@ -497,15 +501,15 @@ class _LessonPageState extends State<LessonPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color:
-            readingCompleted
-                ? theme.colorScheme.green.withValues(alpha: 0.1)
-                : cardBg,
+        readingCompleted
+            ? theme.colorScheme.green.withValues(alpha: 0.1)
+            : cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color:
-              readingCompleted
-                  ? theme.colorScheme.green
-                  : primary.withValues(alpha: 0.5),
+          readingCompleted
+              ? theme.colorScheme.green
+              : primary.withValues(alpha: 0.5),
           width: 2,
         ),
         boxShadow: [
@@ -520,43 +524,50 @@ class _LessonPageState extends State<LessonPage> {
         color: Colors.transparent,
         child: InkWell(
           onTap:
-              preQuizCompleted
-                  ? () {
-                    // Navigate to reading activity screen
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => ReadingActivityScreen(
-                              topic: widget.topic ?? _moduleTitle,
-                              moduleId: widget.moduleId,
-                            ),
-                      ),
-                    ).then((completed) {
-                      if (completed == true) {
-                        setState(() {
-                          readingCompleted = true;
-                          _loadModuleProgress();
-                        });
-                      }
-                    });
-                  }
-                  : () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Please complete the Pre-Quiz activity first',
-                          style: TextStyle(
-                            color:
-                                Theme.of(context).colorScheme.onInverseSurface,
-                          ),
-                        ),
-                        backgroundColor:
-                            Theme.of(context).colorScheme.inverseSurface,
-                      ),
-                    );
-                    return;
-                  },
+          preQuizCompleted
+              ? () {
+            // Navigate to reading activity screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) =>
+                    ReadingActivityScreen(
+                      topic: widget.topic ?? _moduleTitle,
+                      moduleId: widget.moduleId,
+                    ),
+              ),
+            ).then((completed) {
+              if (completed == true) {
+                setState(() {
+                  readingCompleted = true;
+                  _loadModuleProgress();
+                });
+              }
+            });
+          }
+              : () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Please complete the Pre-Quiz activity first',
+                  style: TextStyle(
+                    color:
+                    Theme
+                        .of(context)
+                        .colorScheme
+                        .onInverseSurface,
+                  ),
+                ),
+                backgroundColor:
+                Theme
+                    .of(context)
+                    .colorScheme
+                    .inverseSurface,
+              ),
+            );
+            return;
+          },
           borderRadius: BorderRadius.circular(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,10 +641,16 @@ class _LessonPageState extends State<LessonPage> {
           content: Text(
             'This quiz is not available yet',
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onInverseSurface,
+              color: Theme
+                  .of(context)
+                  .colorScheme
+                  .onInverseSurface,
             ),
           ),
-          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
+          backgroundColor: Theme
+              .of(context)
+              .colorScheme
+              .inverseSurface,
         ),
       );
       return;
@@ -646,10 +663,16 @@ class _LessonPageState extends State<LessonPage> {
           content: Text(
             'Pre-Quiz has already been completed',
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onInverseSurface,
+              color: Theme
+                  .of(context)
+                  .colorScheme
+                  .onInverseSurface,
             ),
           ),
-          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
+          backgroundColor: Theme
+              .of(context)
+              .colorScheme
+              .inverseSurface,
         ),
       );
       return;
@@ -662,10 +685,16 @@ class _LessonPageState extends State<LessonPage> {
           content: Text(
             'Please complete the Reading activity first',
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onInverseSurface,
+              color: Theme
+                  .of(context)
+                  .colorScheme
+                  .onInverseSurface,
             ),
           ),
-          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
+          backgroundColor: Theme
+              .of(context)
+              .colorScheme
+              .inverseSurface,
         ),
       );
       return;
@@ -673,9 +702,9 @@ class _LessonPageState extends State<LessonPage> {
 
     Widget quizScreen;
     if (quiz.activityType == ActivityType.preQuiz) {
-      quizScreen = PreQuizScreen(questionSet: quiz);
+      quizScreen = PreQuizScreen(moduleId: widget.moduleId, questionSet: quiz);
     } else {
-      quizScreen = PostQuizScreen(questionSet: quiz);
+      quizScreen = PostQuizScreen(moduleId: widget.moduleId, questionSet: quiz);
     }
 
     Navigator.push(
@@ -700,25 +729,6 @@ class _LessonPageState extends State<LessonPage> {
   }
 
   Widget _getDragonImage(double progress) {
-
-    final imageUrl = DragonStateManager().getDragonImageForLesson(widget.moduleId);
-
-    // Check if the image URL is a network URL or a local asset
-    if (imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
-        width: 240,
-        height: 240,
-        errorBuilder: (context, error, stackTrace) {
-          return Image.asset(
-            'assets/images/other/egg.png',
-            width: 240,
-            height: 240,
-          );
-        },
-      );
-    } else {
-      return Image.asset(imageUrl, width: 240, height: 240);
-    }
+    return DragonImageWidget(moduleId: widget.moduleId, size: 250);
   }
 }

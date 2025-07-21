@@ -17,9 +17,15 @@ import '../../widgets/progress_bar.dart';
 import '../../widgets/question_widget.dart';
 
 class PostQuizScreen extends StatefulWidget {
+  const PostQuizScreen({
+    Key? key,
+    required this.moduleId,
+    required this.questionSet
+  }) : super(key: key);
+
+  final String moduleId;
   final QuestionSet questionSet;
 
-  const PostQuizScreen({Key? key, required this.questionSet}) : super(key: key);
 
   @override
   _PostQuizScreenState createState() => _PostQuizScreenState();
@@ -98,6 +104,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
       MaterialPageRoute(
         builder:
             (context) => PostQuizResultScreen(
+              moduleId: widget.moduleId,
               questionSet: widget.questionSet,
               score: scorePercentage,
               correctAnswers: correctAnswers,
