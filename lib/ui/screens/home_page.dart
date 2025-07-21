@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
-import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
-import 'package:safe_scales/services/dragon_service.dart';
 import 'package:safe_scales/services/class_service.dart';
+import 'package:safe_scales/ui/widgets/lesson_card.dart';
 
+import '../../states/dragon_state_manager.dart';
+import '../widgets/continue_learning_widget.dart';
 import 'lesson/lesson_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -17,18 +17,15 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final QuizService _quizService = QuizService();
   final _userState = UserStateService();
-  final _dragonService = DragonService(QuizService().supabase);
+  final _dragonStateManager = DragonStateManager();
   late final ClassService _classService;
 
   // Class-based variables
   Map<String, dynamic>? _currentClass;
   List<Map<String, dynamic>> _modules = [];
   Map<String, double> _moduleProgress = {};
-  List<dynamic>? _classAssets;
-  final Map<String, Map<String, dynamic>> _moduleDragons = {};
 
   bool _isLoading = true;
 
@@ -80,9 +77,9 @@ class _HomePageState extends State<HomePage> {
         moduleIds: moduleIds,
       );
 
-      // Get class assets (dragons)
-      final assets = await _classService.getClassAssets(classData['id']);
-      _classAssets = assets;
+      // Initialize dragon state manager and load user dragons
+      await _dragonStateManager.initialize();
+      await _dragonStateManager.loadUserDragons();
 
       if (mounted) {
         setState(() {
@@ -92,7 +89,8 @@ class _HomePageState extends State<HomePage> {
           _isLoading = false;
         });
 
-        await _loadDragonImages();
+        // Update dragon phases based on current progress
+        await _updateDragonPhases();
       }
     } catch (e) {
       print('❌ Error loading class data: $e');
@@ -102,178 +100,88 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _loadDragonImages() async {
+  /// Update dragon phases based on module progress
+  Future<void> _updateDragonPhases() async {
     try {
-      // Use dragons from class assets if available
-      if (_classAssets != null) {
-        List<dynamic> assetsList;
-        if (_classAssets is List) {
-          assetsList = _classAssets as List;
-        } else if (_classAssets is Map) {
-          // If it's a Map, try to get the assets list from it
-          assetsList = (_classAssets as Map)['assets'] as List? ?? [];
-        } else {
-          assetsList = [];
+      final user = _userState.currentUser;
+      if (user == null) return;
+
+      // Get current dragons data from database
+      final response = await _quizService.supabase
+          .from('Users')
+          .select('dragons')
+          .eq('id', user.id)
+          .single();
+
+      Map<String, dynamic> dragons = {};
+      if (response['dragons'] != null) {
+        dragons = Map<String, dynamic>.from(response['dragons']);
+      }
+
+      bool hasChanges = false;
+
+      // Update phases for each module
+      for (var module in _modules) {
+        final moduleId = module['id'] as String;
+        final progress = _moduleProgress[moduleId] ?? 0.0;
+
+        // Find the dragon for this module
+        final dragon = _dragonStateManager.getDragonByModuleId(moduleId);
+        if (dragon == null) continue;
+
+        // Calculate phases based on progress
+        List<String> phases = ['egg']; // Always start with egg
+
+        if (progress >= 30) {
+          phases.add('baby'); // Add baby phase
+        }
+        if (progress >= 50) {
+          phases.add('teen'); // Add teen phase
+        }
+        if (progress >= 80) {
+          phases.add('adult'); // Add final phase
         }
 
-        // Find dragon assets
-        final dragonAssets =
-            assetsList
-                .where((asset) => asset is Map && asset['type'] == 'dragon')
-                .toList();
-
-        // Match dragons to modules based on moduleId
-        for (var module in _modules) {
-          final moduleId = module['id'] as String;
-
-          // Find the dragon that belongs to this module
-          final dragon = dragonAssets.firstWhere(
-            (asset) => asset['moduleId'] == moduleId,
-            orElse: () => null,
-          );
-
-          if (dragon != null && dragon['stages'] != null) {
-            _moduleDragons[moduleId] = {
-              'egg': dragon['stages']['egg'] ?? 'assets/images/other/egg.png',
-              'baby':
-                  dragon['stages']['baby'] ?? 'assets/images/other/young.png',
-              'teen':
-                  dragon['stages']['teen'] ?? 'assets/images/other/teen.png',
-              'final':
-                  dragon['stages']['adult'] ?? 'assets/images/other/adult.png',
-              'id': dragon['id'],
-              'name': dragon['name'] ?? 'Dragon',
-              'moduleId': dragon['moduleId'] ?? moduleId,
-            };
-          } else {
-            // Fallback for modules without dragons
-            _moduleDragons[moduleId] = {
-              'egg': 'assets/images/other/egg.png',
-              'baby': 'assets/images/other/young.png',
-              'teen': 'assets/images/other/teen.png',
-              'final': 'assets/images/other/adult.png',
-              'id': null,
-              'name': 'Dragon',
-              'moduleId': moduleId,
-            };
-          }
-        }
-      } else {
-        // Fallback to old dragon loading system
-        await _dragonService.initialize();
-
-        for (var i = 0; i < _modules.length; i++) {
-          final dragonData = await _dragonService.getDragonImagesForModule(i);
-          if (mounted) {
-            setState(() {
-              _moduleDragons[_modules[i]['id']] = dragonData;
-            });
-          }
+        // Check if phases have changed
+        final currentPhases = dragons[dragon.id] as List<dynamic>?;
+        if (currentPhases == null ||
+            !_areListsEqual(currentPhases.cast<String>(), phases)) {
+          dragons[dragon.id] = phases;
+          hasChanges = true;
         }
       }
+
+      // Save updated dragons data if there are changes
+      if (hasChanges) {
+        await _quizService.supabase
+            .from('Users')
+            .update({'dragons': dragons})
+            .eq('id', user.id);
+
+        // Reload dragon state to reflect changes
+        await _dragonStateManager.loadUserDragons();
+
+        print('✅ Successfully updated dragon phases');
+      }
     } catch (e) {
-      print('❌ Error loading dragon images: $e');
+      print('❌ Error updating dragon phases: $e');
     }
   }
 
-  // Get icon based on module progress
-  Widget _getDragonPhaseIcon(String moduleId) {
-    final progress = _moduleProgress[moduleId] ?? 0.0;
-    final dragonData = _moduleDragons[moduleId];
-
-    String imageUrl = dragonData?['egg'] ?? 'assets/images/other/egg.png';
-    List<String> phases = ['egg']; // Always start with egg
-
-    // Add phases based on progress, ensuring all previous phases are included
-    if (progress >= 30) {
-      phases.add('baby'); // Add baby phase
+  /// Helper method to compare two lists
+  bool _areListsEqual<T>(List<T> list1, List<T> list2) {
+    if (list1.length != list2.length) return false;
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i] != list2[i]) return false;
     }
-    if (progress >= 50) {
-      phases.add('teen'); // Add teen phase
-    }
-    if (progress >= 80) {
-      phases.add('final'); // Add final phase
-    }
-
-    // Save dragon phases if we have a valid dragon ID
-    if (dragonData != null && dragonData['id'] != null) {
-      final user = _userState.currentUser;
-      if (user != null) {
-        // Get current dragons data first
-        _dragonService.supabase
-            .from('Users')
-            .select('dragons')
-            .eq('id', user.id)
-            .single()
-            .then((response) {
-              Map<String, dynamic> dragons = {};
-              if (response['dragons'] != null) {
-                dragons = Map<String, dynamic>.from(response['dragons']);
-              }
-
-              // Update the dragon's phases
-              dragons[dragonData['id'].toString()] = phases;
-
-              // Save the updated dragons data
-              _dragonService.supabase
-                  .from('Users')
-                  .update({'dragons': dragons})
-                  .eq('id', user.id)
-                  .then((_) {
-                    print('✅ Successfully saved dragon phases: $phases');
-                  })
-                  .catchError((e) {
-                    print('❌ Error saving dragon phases: $e');
-                  });
-            })
-            .catchError((e) {
-              print('❌ Error getting current dragons data: $e');
-            });
-      }
-    }
-
-    // Set the image URL based on the highest achieved phase
-    if (progress >= 80) {
-      imageUrl = dragonData?['final'] ?? 'assets/images/other/adult.png';
-    } else if (progress >= 50) {
-      imageUrl = dragonData?['teen'] ?? 'assets/images/other/teen.png';
-    } else if (progress >= 30) {
-      imageUrl = dragonData?['baby'] ?? 'assets/images/other/young.png';
-    }
-
-    // Check if the image URL is a network URL or a local asset
-    if (imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
-        width: 64,
-        height: 64,
-        errorBuilder: (context, error, stackTrace) {
-          // Error loading dragon image
-          return Image.asset(
-            'assets/images/other/egg.png',
-            width: 64,
-            height: 64,
-          );
-        },
-      );
-    } else {
-      return Image.asset(imageUrl, width: 64, height: 64);
-    }
+    return true;
   }
 
   @override
   Widget build(BuildContext context) {
-
     final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
-    final cardBg = theme.colorScheme.surface;
-    final textColor = theme.colorScheme.onSurface;
-    final mutedTextColor = theme.colorScheme.onSurfaceVariant;
-    final lockedBg = theme.colorScheme.surfaceVariant;
-    const borderRadius = 16.0;
 
     return Scaffold(
-      //key: _scaffoldKey,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -317,146 +225,32 @@ class _HomePageState extends State<HomePage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder:
-                              (context) =>
-                                  LessonPage(moduleId: targetModule!['id']),
+                          builder: (context) => LessonPage(moduleId: targetModule!['id']),
                         ),
                       );
                     },
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [primary.withOpacity(0.9), primary],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(borderRadius),
-                        boxShadow: [
-                          BoxShadow(
-                            color: primary.withValues(alpha: 0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Continue Learning'..toTitleCase(),
-                                // Note: Copy with for some reason can't change font weight, but everything else it can
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Builder(
-                                builder: (context) {
-                                  // Find the target module
-                                  Map<String, dynamic>? targetModule;
-                                  for (var module in _modules) {
-                                    final progress =
-                                        _moduleProgress[module['id']] ?? 0.0;
-                                    if (progress < 100) {
-                                      targetModule = module;
-                                      break;
-                                    }
-                                  }
-                                  targetModule ??= _modules.last;
-
-                                  return Text(
-                                    (targetModule['title'] ?? 'Module')
-                                        .toUpperCase(),
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.9,
-                                      ),
-                                      letterSpacing: 1.2,
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 8),
-                              Builder(
-                                builder: (context) {
-                                  // Find the target module and its progress
-                                  Map<String, dynamic>? targetModule;
-                                  double progress = 0;
-                                  for (var module in _modules) {
-                                    final moduleProgress =
-                                        _moduleProgress[module['id']] ?? 0.0;
-                                    if (moduleProgress < 100) {
-                                      targetModule = module;
-                                      progress = moduleProgress;
-                                      break;
-                                    }
-                                  }
-                                  if (targetModule == null &&
-                                      _modules.isNotEmpty) {
-                                    targetModule = _modules.last;
-                                    progress =
-                                        _moduleProgress[targetModule['id']] ??
-                                        0.0;
-                                  }
-
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      '${progress.toStringAsFixed(0)}% Complete'
-                                          .toTitleCase(),
-                                      style: theme.textTheme.labelSmall
-                                          ?.copyWith(color: Colors.white),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            color: Colors.white,
-                            size: 24 * AppTheme.fontSizeScale,
-                          ),
-                        ],
-                      ),
-                    ),
+                    child: ContinueLearningWidget(modules: _modules, moduleProgress: _moduleProgress),
                   ),
                 const SizedBox(height: 30),
-                // Modules Section
+
+
+                // Lesson Heading
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Modules'.toTitleCase(),
+                      'Lessons'.toTitleCase(),
                       style: theme.textTheme.headlineSmall,
                     ),
                     Builder(
                       builder: (context) {
                         // Count completed modules (100% progress)
-                        final completedCount =
-                            _modules
-                                .where(
-                                  (module) =>
-                                      (_moduleProgress[module['id']] ?? 0.0) >=
-                                      100,
-                                )
-                                .length;
+                        final completedCount = _modules
+                            .where((module) => (_moduleProgress[module['id']] ?? 0.0) >= 100)
+                            .length;
 
                         return Text(
-                          '${completedCount}/${_modules.length} Completed'
-                              .toTitleCase(),
+                          '${completedCount}/${_modules.length} Completed'.toTitleCase(),
                           style: theme.textTheme.labelMedium,
                         );
                       },
@@ -466,8 +260,9 @@ class _HomePageState extends State<HomePage> {
 
                 const SizedBox(height: 30),
 
-                // Show loading or modules
-                if (_isLoading)
+
+                // Show loading or lesson List
+                if (_isLoading || _dragonStateManager.isLoading)
                   const Center(
                     child: Padding(
                       padding: EdgeInsets.all(32.0),
@@ -479,53 +274,54 @@ class _HomePageState extends State<HomePage> {
                     child: Padding(
                       padding: const EdgeInsets.all(32.0),
                       child: Text(
-                        _currentClass == null
-                            ? 'No class assigned'
-                            : 'No modules available',
+                        _currentClass == null ? 'No class assigned' : 'No modules available',
                         style: theme.textTheme.labelLarge,
                       ),
                     ),
                   )
                 else
-                  // Dynamic modules list
+                // Dynamic modules list
                   ..._modules.asMap().entries.map((entry) {
                     final index = entry.key;
                     final module = entry.value;
-                    final isUnlocked =
-                        index == 0 ||
-                        ((_moduleProgress[_modules[index - 1]['id']] ?? 0)
-                                .round() >=
-                            100);
-                    final progress = _moduleProgress[module['id']] ?? 0.0;
+                    final moduleId = module['id'] as String;
+                    final title = module['title'] ?? 'Module ${index + 1}';
+                    final actualProgress = _moduleProgress[moduleId] ?? 0.0;
 
-                    // Debug print for each module card
-                    // print(
-                    //   '[ModuleCard] Title: ${module['title'] ?? 'Module ${index + 1}'} | Progress: $progress | isUnlocked: $isUnlocked | PrevProgress: ${index > 0 ? (_moduleProgress[_modules[index - 1]['id']] ?? 0) : 'N/A'}',
-                    // );
+                    // Calculate unlock status
+                    bool shouldBeUnlocked = false;
+                    String? newUnlockRequirement;
+
+                    if (index == 0) {
+                      shouldBeUnlocked = true;
+                    } else if (index > 0) {
+                      final previousModule = _modules[index - 1];
+                      final previousProgress = _moduleProgress[previousModule['id']] ?? 0.0;
+                      shouldBeUnlocked = previousProgress.round() >= 100;
+                      if (!shouldBeUnlocked) {
+                        newUnlockRequirement =
+                        'Complete ${previousModule['title'] ?? 'previous module'} (${previousProgress.toStringAsFixed(0)}%)';
+                      }
+                    }
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 30),
-                      child: _buildModuleCard(
-                        context: context,
-                        module: module,
-                        moduleId: module['id'],
-                        title: module['title'] ?? 'Module ${index + 1}',
-                        isUnlocked: isUnlocked,
-                        progress: progress,
-                        dragonIcon: _getDragonPhaseIcon(module['id']),
-                        iconColor: primary,
-                        unlockRequirement:
-                            index > 0
-                                ? 'Complete ${_modules[index - 1]['title'] ?? 'previous module'}'
-                                : null,
-                        onTap: () {
-                          if (isUnlocked) {
+                      child: LessonCard(
+                        moduleId: moduleId,
+                        title: title,
+                        description: 'Learn about $title',
+                        actualProgress: actualProgress,
+                        shouldBeUnlocked: shouldBeUnlocked,
+                        newUnlockRequirement: newUnlockRequirement,
+                        unlockRequirement: index > 0
+                            ? 'Complete ${_modules[index - 1]['title'] ?? 'previous module'}'
+                            : null,
+                        onTapCard: () {
+                          if (shouldBeUnlocked) {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder:
-                                    (context) =>
-                                        LessonPage(moduleId: module['id']),
+                                builder: (context) => LessonPage(moduleId: moduleId),
                               ),
                             ).then((_) {
                               // Reload data when returning from the lesson page
@@ -546,214 +342,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildModuleCard({
-    required BuildContext context,
-    required Map<String, dynamic> module,
-    required String moduleId,
-    required String title,
-    required bool isUnlocked,
-    required double progress,
-    required Widget dragonIcon,
-    required Color iconColor,
-    required VoidCallback onTap,
-    String? unlockRequirement,
-  }) {
-    final actualProgress = _moduleProgress[moduleId] ?? 0.0;
-    final int currentIndex = _modules.indexOf(module);
-    bool shouldBeUnlocked = false;
-    String? newUnlockRequirement;
 
-    if (moduleId == 'settings') {
-      shouldBeUnlocked = false;
-    } else if (currentIndex == 0) {
-      shouldBeUnlocked = true;
-    } else if (currentIndex > 0) {
-      final previousModule = _modules[currentIndex - 1];
-      final previousProgress = _moduleProgress[previousModule['id']] ?? 0.0;
-      shouldBeUnlocked = previousProgress.round() >= 100;
-      if (!shouldBeUnlocked) {
-        newUnlockRequirement =
-            'Complete ${previousModule['title'] ?? 'previous module'} (${previousProgress.toStringAsFixed(0)}%)';
-      }
-      // Debug print for unlock logic
-      // print(
-      //   '[BuildModuleCard] $title: actualProgress=$actualProgress, shouldBeUnlocked=$shouldBeUnlocked, previousProgress=$previousProgress',
-      // );
-    }
-
-    ThemeData theme = Theme.of(context);
-
-    final Color primary = theme.colorScheme.primary;
-    final Color secondary = theme.colorScheme.secondary;
-    final Color tertiary = theme.colorScheme.tertiary;
-    final Color cardBg = theme.colorScheme.surfaceDim;
-    final Color lockedBg = theme.colorScheme.surfaceContainerHigh;
-    final Color textColor = theme.colorScheme.onSurface;
-    final Color mutedTextColor = theme.colorScheme.onSurfaceVariant;
-    final double borderRadius = 24.0;
-
-    // Get quiz info for this module from module data
-    final hasPreQuiz = module['pre_quiz'] != null;
-    final hasPostQuiz = module['post_quiz'] != null;
-    final description =
-        moduleId == 'settings'
-            ? 'Configure your app settings'
-            : 'Learn about $title';
-
-    return GestureDetector(
-      onTap: shouldBeUnlocked ? onTap : null,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(borderRadius),
-          border:
-              shouldBeUnlocked
-                  ? null
-                  : Border.all(
-                    color: theme.colorScheme.outlineVariant.withOpacity(0.5),
-                    width: 1,
-                  ),
-          boxShadow:
-              shouldBeUnlocked
-                  ? [
-                    BoxShadow(
-                      color: theme.colorScheme.shadow.withValues(alpha: 0.2),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                  : null,
-        ),
-        child: Column(
-          children: [
-            Text(title.toTitleCase(), style: theme.textTheme.headlineSmall),
-            if (!shouldBeUnlocked &&
-                (newUnlockRequirement != null ||
-                    unlockRequirement != null)) ...[
-              const SizedBox(height: 4),
-              Text(
-                newUnlockRequirement ?? unlockRequirement ?? '',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontStyle: FontStyle.italic,
-                  color: theme.colorScheme.onSurfaceVariant.withValues(
-                    alpha: 0.7,
-                  ),
-                ),
-              ),
-            ],
-            if (shouldBeUnlocked && moduleId != 'settings') ...[
-              const SizedBox(height: 8),
-              Text(
-                description,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.labelMedium,
-              ),
-            ],
-            const SizedBox(height: 16),
-            // Semi-circular progress bar with icon
-            SizedBox(
-              height: 100,
-              width: 180,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Semi-circular progress
-                  if (shouldBeUnlocked && moduleId != 'settings')
-                    CustomPaint(
-                      size: const Size(160, 80),
-                      painter: _SemiCircleProgressPainter(
-                        color: secondary,
-                        progress: actualProgress / 100,
-                      ),
-                    ),
-                  // Icon in circle
-                  shouldBeUnlocked && moduleId != 'settings'
-                      ? Positioned(top: 35, child: dragonIcon)
-                      : Positioned(
-                        top: 10,
-                        child: Image.asset(
-                          'assets/images/other/lock.png',
-                          width: 96,
-                          height: 96,
-                          color: mutedTextColor.withOpacity(0.5),
-                        ),
-                      ),
-                ],
-              ),
-            ),
-            if (shouldBeUnlocked && moduleId != 'settings') ...[
-              Text(
-                '${actualProgress.toStringAsFixed(0)}% Complete',
-                style: theme.textTheme.labelSmall?.copyWith(color: secondary),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
 }
 
-// Custom painter for semi-circular progress bar
-class _SemiCirclePainter extends CustomPainter {
-  final Color color;
-  _SemiCirclePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Paint paint =
-        Paint()
-          ..color = color
-          ..strokeWidth = 16
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round;
-    final Rect rect = Rect.fromLTWH(0, 0, size.width, size.height * 2);
-    canvas.drawArc(rect, 3.14, 3.14, false, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// Custom painter for semi-circular progress bar with progress
-class _SemiCircleProgressPainter extends CustomPainter {
-  final Color color;
-  final double progress;
-
-  _SemiCircleProgressPainter({required this.color, required this.progress});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Background arc
-    final Paint backgroundPaint =
-        Paint()
-          ..color = color.withValues(alpha: 0.2)
-          ..strokeWidth = 12
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round;
-
-    // Progress arc
-    final Paint progressPaint =
-        Paint()
-          ..color = color.withValues(alpha: 0.75)
-          ..strokeWidth = 12
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round;
-
-    final Rect rect = Rect.fromLTWH(0, 0, size.width, size.height * 2);
-
-    // Draw background arc (full semi-circle)
-    canvas.drawArc(rect, 3.14159, 3.14159, false, backgroundPaint);
-
-    // Draw progress arc (partial semi-circle based on progress)
-    if (progress > 0) {
-      canvas.drawArc(rect, 3.14159, 3.14159 * progress, false, progressPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _SemiCircleProgressPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.color != color;
-}
