@@ -112,19 +112,17 @@ class _DragonsPageState extends State<DragonsPage> {
 
       if (dragon == null) return const SizedBox.shrink();
 
-      // Get correct image
-      final imagePath = _dragonStateManager.getDragonImageUrl(dragon.id);
-
       // Is dragon unlocked for play
       final isUnlocked = _dragonStateManager.isPlayUnlocked(dragon.id);
 
 
+      // TODO: Eventually use preferred phase for setting up the id card image
       Widget dragonImageWidget = DragonImageWidget(dragonId: dragon.id, size: 180);
 
       return DragonIdCard(
         dragonImage: dragonImageWidget,
         species: dragon.speciesName,
-        name: 'Jack', // TODO: Add backend to change dragon name
+        name: 'Jack',
         favoriteItem: dragon.favoriteItem,
         favoriteEnvironment: dragon.preferredEnvironment,
         isPlayUnlocked: isUnlocked,
