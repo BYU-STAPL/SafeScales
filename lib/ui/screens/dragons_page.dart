@@ -34,7 +34,7 @@ class _DragonsPageState extends State<DragonsPage> {
   }
 
   // Navigation to dress up page
-  void navigateToDressUp(String dragonId, Dragon dragon) {
+  void navigateToDressUp(String dragonId) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -103,23 +103,29 @@ class _DragonsPageState extends State<DragonsPage> {
   }
 
   List<Widget> _buildDragonCards() {
-    final dragons = _dragonStateManager.getAllDragonsForDisplay();
+    // final dragons = _dragonStateManager.getAllDragonsForDisplay();
 
-    return dragons.map((dragonDisplayData) {
-      final dragonId = dragonDisplayData['id'];
-      final dragon = _dragonStateManager.dragons[dragonId];
+    final dragons = _dragonStateManager.getAllDragons();
+
+    return dragons.map((dragon) {
 
       if (dragon == null) return const SizedBox.shrink();
 
+      // Get correct image
+      final imagePath = _dragonStateManager.getDragonImageUrl(dragon.id);
+
+      // Is dragon unlocked for play
+      final isUnlocked = _dragonStateManager.isPlayUnlocked(dragon.id);
+
       return DragonIdCard(
-        dragonImagePath: dragonDisplayData['imageUrl'],
+        dragonImagePath: imagePath,
         species: dragon.speciesName,
         name: 'Jack', // TODO: Add backend to change dragon name
         favoriteItem: dragon.favoriteItem,
         favoriteEnvironment: dragon.preferredEnvironment,
-        isPlayUnlocked: dragonDisplayData['isPlayUnlocked'],
+        isPlayUnlocked: isUnlocked,
         onTapPlayButton: () {
-          navigateToDressUp(dragonId, dragon);
+          navigateToDressUp(dragon.id);
         },
         // TODO: Add backend to change dragon name
         // onNameChanged: (newName) {

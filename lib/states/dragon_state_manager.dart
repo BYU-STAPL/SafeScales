@@ -46,13 +46,36 @@ class DragonStateManager {
     await _dragonService.initialize();
   }
 
+
+  // ==== GET Dragon Functions ====
+
+  Dragon? getDragonById(String dragonId) {
+    final dragon = _dragons[dragonId];
+    if (dragon == null) return null;
+    return dragon;
+  }
+
+  Dragon? getDragonByModuleId(String moduleId) {
+    return _findDragonByModuleId(moduleId);
+  }
+
+  List<Dragon?> getAllDragons() {
+    return _userDragons.keys
+        .map((dragonId) => getDragonById(dragonId))
+        .where((data) => data != null)
+        .toList();
+  }
+
+
+  // ==== GET Dragon Phase Functions ====
+
   /// Normalize phase name (handle legacy names)
   String _normalizePhase(String phase) {
     return PHASE_ALIASES[phase] ?? phase;
   }
 
   /// Get highest unlocked phase for a dragon
-  String getDragonPhase(String dragonId) {
+  String getDragonHighestPhase(String dragonId) {
     final phases = _userDragons[dragonId] ?? [];
 
     // Check phases in reverse order (highest to lowest)
@@ -66,12 +89,56 @@ class DragonStateManager {
     return 'egg';
   }
 
-  /// Get phase based on progress percentage
-  String getPhaseByProgress(double progress) {
-    if (progress >= 80) return 'final';
-    if (progress >= 50) return 'stage2';
-    if (progress >= 30) return 'stage1';
-    return 'egg';
+  /// Get dragon image URL for highest or requested phase
+  String getDragonImageUrl(String dragonId, {String? forPhase}) {
+    final dragon = _dragons[dragonId];
+    if (dragon == null) return '';
+
+    // If not looking for a specific phase use the highest unlocked phase
+    final phase = forPhase ?? getDragonHighestPhase(dragonId);
+
+    String image = dragon.eggImage;
+    switch (phase) {
+      case 'final':
+        image = dragon.finalImage;
+        break;
+      case 'stage2':
+        image = dragon.stage2Image;
+        break;
+
+      case 'stage1':
+        image = dragon.stage1Image;
+        break;
+
+      default:
+        image = dragon.eggImage;
+        break;
+    }
+
+    return image;
+  }
+
+  /// Get dragon image for lesson based on progress
+  String getDragonImageForLesson(String moduleId) {
+
+    // if (progress >= 80) {
+    //   phase = 'final';
+    // }
+    // else if (progress >= 50) {
+    //   phase = 'stage2';
+    // }
+    // else if (progress >= 30) {
+    //   phase = 'stage1';
+    // }
+
+    final dragon = _findDragonByModuleId(moduleId);
+
+    if (dragon != null) {
+      return getDragonImageUrl(dragon.id);
+    }
+
+      // Fallback to default images
+    return getDragonImageUrl('egg');
   }
 
   /// Check if dragon has unlocked a specific phase
@@ -79,35 +146,6 @@ class DragonStateManager {
     final phases = _userDragons[dragonId] ?? [];
     final normalizedPhase = _normalizePhase(phase);
     return phases.any((p) => _normalizePhase(p) == normalizedPhase);
-  }
-
-  /// Get dragon image URL for current phase
-  String getDragonImageUrl(String dragonId, {String? forPhase}) {
-    final dragon = _dragons[dragonId];
-    if (dragon == null) return '';
-
-    final phase = forPhase ?? getDragonPhase(dragonId);
-    return _getImageForPhase(dragon, phase);
-  }
-
-  /// Get dragon image for lesson based on progress
-  String getDragonImageForLesson(String? moduleId, double progress) {
-    final phase = getPhaseByProgress(progress);
-
-    if (moduleId != null) {
-      final dragon = _findDragonByModuleId(moduleId);
-      if (dragon != null) {
-        return _getImageForPhase(dragon, phase);
-      }
-    }
-
-    // Fallback to default images
-    return _getDefaultImageForPhase(phase);
-  }
-
-  /// Get dragon by module ID
-  Dragon? getDragonByModuleId(String moduleId) {
-    return _findDragonByModuleId(moduleId);
   }
 
   /// Get phase display name
@@ -126,49 +164,11 @@ class DragonStateManager {
     return hasPhase(dragonId, 'final');
   }
 
-  /// Get user's preferred phase for display (defaults to current phase)
-  /// TODO: Implement user preference storage
   String getUserPreferredPhase(String dragonId) {
+    /// TODO: Implement user preference storage
     // For now, return the current phase
     // In the future, this could check user preferences from database
-    return getDragonPhase(dragonId);
-  }
-
-
-  /// Build Dragon
-  Dragon? getDragon(String dragonId) {
-    final dragon = _dragons[dragonId];
-    if (dragon == null) return null;
-    return dragon;
-  }
-
-
-  /// Get dragon display data for UI
-  Map<String, dynamic>? getDragonDisplayData(String dragonId) {
-    final dragon = _dragons[dragonId];
-    if (dragon == null) return null;
-
-    return {
-      'id': dragonId,
-      'name': dragon.name,
-      'speciesName': dragon.speciesName,
-      'currentPhase': getDragonPhase(dragonId),
-      'imageUrl': getDragonImageUrl(dragonId),
-      'favoriteItem': dragon.favoriteItem,
-      'favoriteEnvironment': dragon.preferredEnvironment,
-      'isPlayUnlocked': isPlayUnlocked(dragonId),
-      'phases': _userDragons[dragonId] ?? [],
-      'moduleId': dragon.moduleId,
-    };
-  }
-
-  /// Get all dragons for display
-  List<Map<String, dynamic>> getAllDragonsForDisplay() {
-    return _userDragons.keys
-        .map((dragonId) => getDragonDisplayData(dragonId))
-        .where((data) => data != null)
-        .cast<Map<String, dynamic>>()
-        .toList();
+    return getDragonHighestPhase(dragonId);
   }
 
   /// Load user dragons from database
@@ -268,18 +268,18 @@ class DragonStateManager {
     return null;
   }
 
-  String _getImageForPhase(Dragon dragon, String phase) {
-    switch (phase) {
-      case 'final':
-        return dragon.finalImage;
-      case 'stage2':
-        return dragon.stage2Image;
-      case 'stage1':
-        return dragon.stage1Image;
-      default:
-        return dragon.eggImage;
-    }
-  }
+  // String _getImageForPhase(Dragon dragon, String phase) {
+  //   switch (phase) {
+  //     case 'final':
+  //       return dragon.finalImage;
+  //     case 'stage2':
+  //       return dragon.stage2Image;
+  //     case 'stage1':
+  //       return dragon.stage1Image;
+  //     default:
+  //       return dragon.eggImage;
+  //   }
+  // }
 
   String _getDefaultImageForPhase(String phase) {
     switch (phase) {

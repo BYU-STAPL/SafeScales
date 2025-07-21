@@ -4,7 +4,6 @@ import 'package:safe_scales/ui/widgets/sticker_collection_widget.dart';
 
 import 'package:safe_scales/models/sticker_item_model.dart';
 
-import '../../../models/dragon.dart';
 import '../../../services/dragon_service.dart';
 import '../../../services/quiz_service.dart';
 import '../../../services/user_state_service.dart';
@@ -251,7 +250,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     // Use state manager to get the display phase for play page context
     final phase = _stateManager.getUserPreferredPhase(widget.dragonId);
 
-    // final phase = _stateManager.getDisplayPhase(widget.dragonId, 'play_page');
     final index = availablePhases.indexOf(phase);
 
     if (index != -1 && mounted) {

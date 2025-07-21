@@ -12,10 +12,10 @@ import 'package:safe_scales/states/dragon_state_manager.dart';
 import '../../../themes/app_theme.dart';
 
 class LessonPage extends StatefulWidget {
+  final String moduleId;
   final String? topic; // Keep for backward compatibility
-  final String? moduleId;
 
-  const LessonPage({super.key, this.topic, this.moduleId})
+  const LessonPage({super.key, required this.moduleId, this.topic,})
     : assert(
         topic != null || moduleId != null,
         'Either topic or moduleId must be provided',
@@ -701,7 +701,7 @@ class _LessonPageState extends State<LessonPage> {
 
   Widget _getDragonImage(double progress) {
 
-    final imageUrl = DragonStateManager().getDragonImageForLesson(widget.moduleId, progress);
+    final imageUrl = DragonStateManager().getDragonImageForLesson(widget.moduleId);
 
     // Check if the image URL is a network URL or a local asset
     if (imageUrl.startsWith('http')) {
