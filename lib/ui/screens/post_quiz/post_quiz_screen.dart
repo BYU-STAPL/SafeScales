@@ -111,9 +111,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
               totalQuestions: totalQuestions,
               userAnswers: userAnswers,
               passingScore: widget.questionSet.passingScore,
-              //TODO: How do I do this part so that way the shortcut goes to reading
-              // moduleId: ,
-              // topic: ,
             ),
       ),
     );

@@ -10,9 +10,9 @@ import '../../widgets/progress_bar.dart';
 
 class ReadingActivityScreen extends StatefulWidget {
   final String moduleId;
-  final String topic;
+  // final String topic;
 
-  const ReadingActivityScreen({Key? key, required this.moduleId, required this.topic,})
+  const ReadingActivityScreen({Key? key, required this.moduleId,})
     : super(key: key);
 
   @override

@@ -533,7 +533,7 @@ class _LessonPageState extends State<LessonPage> {
                 builder:
                     (context) =>
                     ReadingActivityScreen(
-                      topic: widget.topic ?? _moduleTitle,
+                      // topic: widget.topic ?? _moduleTitle,
                       moduleId: widget.moduleId,
                     ),
               ),
