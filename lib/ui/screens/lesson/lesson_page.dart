@@ -7,7 +7,7 @@ import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
 import 'package:safe_scales/services/class_service.dart';
 
-import 'package:safe_scales/states/dragon_state_manager.dart';
+import 'package:safe_scales/state_management/dragon_state_manager.dart';
 
 import '../../../themes/app_theme.dart';
 import '../../widgets/dragon_image_widget.dart';

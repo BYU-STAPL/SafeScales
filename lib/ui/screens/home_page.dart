@@ -4,8 +4,8 @@ import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/ui/widgets/lesson_card.dart';
+import 'package:safe_scales/state_management/dragon_state_manager.dart';
 
-import '../../states/dragon_state_manager.dart';
 import '../widgets/continue_learning_widget.dart';
 import 'lesson/lesson_page.dart';
 

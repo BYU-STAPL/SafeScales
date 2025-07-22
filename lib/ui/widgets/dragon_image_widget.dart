@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 
 import '../../models/dragon.dart';
-import '../../states/dragon_state_manager.dart';
+import '../../state_management/dragon_state_manager.dart';
 
 class DragonImageWidget extends StatelessWidget {
   final String? dragonId;

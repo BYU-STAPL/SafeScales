@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/ui/widgets/dragon_id_card.dart';
-import 'package:safe_scales/states/dragon_state_manager.dart';
+import 'package:safe_scales/state_management/dragon_state_manager.dart';
 import '../../models/dragon.dart';
 import '../widgets/dragon_image_widget.dart';
 import 'dragon_decoration/dragon_decoration_screen.dart';
