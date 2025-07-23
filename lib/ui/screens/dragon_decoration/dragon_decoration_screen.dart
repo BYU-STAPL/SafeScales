@@ -10,7 +10,6 @@ import '../../../services/dragon_service.dart';
 import '../../../services/quiz_service.dart';
 import '../../../services/user_state_service.dart';
 import '../../../state_management/dragon_provider.dart';
-import '../../../state_management/dragon_state_manager.dart';
 
 class DragonDressUpPage extends StatefulWidget {
   final String dragonId;
