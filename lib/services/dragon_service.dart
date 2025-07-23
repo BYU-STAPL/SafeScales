@@ -39,8 +39,8 @@ class DragonService {
           'id': dragon['id'],
           'preferred_environment': dragon['preferred_environment'],
           'favorite_item': dragon['favorite_item'],
-          'length': dragon['length'],
-          'width': dragon['width'],
+          // 'length': dragon['length'],
+          // 'width': dragon['width'],
         };
       }
 
@@ -52,8 +52,8 @@ class DragonService {
         'id': null,
         'preferred_environment': 'Unknown',
         'favorite_item': 'Unknown',
-        'length': 0.0,
-        'width': 0.0,
+        // 'length': 0.0,
+        // 'width': 0.0,
       };
     } catch (e) {
       print('✗ Error getting dragon for module $moduleIndex: $e');
@@ -65,8 +65,8 @@ class DragonService {
         'id': null,
         'preferred_environment': 'Unknown',
         'favorite_item': 'Unknown',
-        'length': 0.0,
-        'width': 0.0,
+        // 'length': 0.0,
+        // 'width': 0.0,
       };
     }
   }

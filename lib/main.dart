@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
+import 'package:safe_scales/state_management/dragon_provider.dart';
 import 'package:safe_scales/ui/screens/auth_screen.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
@@ -20,7 +22,21 @@ void main() async {
   // Initialize Supabase before running the app
   await SupabaseConfig.initialize();
 
-  runApp(const MyApp());
+  // Create and initialize the dragon provider
+  final dragonProvider = DragonProvider();
+  try {
+    await dragonProvider.initialize();
+    print("Dragon provider initialization successful");
+  } catch (e) {
+    print("Dragon provider initialization failed: $e");
+  }
+
+  runApp(
+    ChangeNotifierProvider.value(
+      value: dragonProvider,
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -74,7 +90,7 @@ class _MyAppState extends State<MyApp> {
             theme: AppTheme.buildLightAppTheme(),
             darkTheme: AppTheme.buildDarkAppTheme(),
             themeMode:
-                _themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            _themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             home: Builder(
               builder: (context) {
                 if (!_supabaseInitialized) {
@@ -92,6 +108,10 @@ class _MyAppState extends State<MyApp> {
                   _userState.loadUserProfile().then((_) {
                     _themeNotifier
                         .loadSettings(); // Reload settings after profile is loaded
+
+                    // Load user dragons after profile is loaded
+                    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+                    dragonProvider.loadUserDragons();
                   });
                   return MainNavigation(initialIndex: 0);
                 }

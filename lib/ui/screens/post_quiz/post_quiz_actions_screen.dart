@@ -5,7 +5,6 @@ import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 
-import '../../../states/dragon_state_manager.dart';
 import '../../widgets/dragon_image_widget.dart';
 import '../main_navigation.dart';
 
@@ -23,11 +22,13 @@ class PostQuizActionsScreen extends StatefulWidget {
     required this.moduleId,
     required this.passingScore,
     required this.score,
+    required this.handleAction,
   });
 
   final String moduleId;
   final int passingScore;
   final int score;
+  final Future<void> Function(QuizAction action) handleAction;
 
   @override
   State<PostQuizActionsScreen> createState() => _PostQuizActionsScreenState();
@@ -84,21 +85,23 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
     }
   }
 
+  //TODO: Adjust so new screens can return to the suggested action
   // Simple action handlers that just return the action type
   void _handleRetakeQuiz() {
-    Navigator.pop(context, QuizAction.retake);
+    // Navigator.pop(context, QuizAction.retake);
+    widget.handleAction(QuizAction.retake);
   }
 
   void _handleReReadLesson() {
-    Navigator.pop(context, QuizAction.reread);
+    widget.handleAction(QuizAction.reread);
   }
 
   void _handleReturnToLesson() {
-    Navigator.pop(context, QuizAction.returnToLesson);
+    widget.handleAction(QuizAction.returnToLesson);
   }
 
   void _handleGoToDragon() {
-    Navigator.pop(context, QuizAction.goToDragon);
+    widget.handleAction(QuizAction.goToDragon);
   }
 
   Widget _buildDragonAction(BuildContext context) {

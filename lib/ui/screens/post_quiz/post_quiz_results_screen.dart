@@ -21,7 +21,7 @@ class PostQuizResultScreen extends StatefulWidget {
     required this.correctAnswers,
     required this.totalQuestions,
     required this.userAnswers,
-    this.topic,
+    // required this.topic,
   }) : super(key: key);
 
   final String moduleId;
@@ -31,7 +31,7 @@ class PostQuizResultScreen extends StatefulWidget {
   final int correctAnswers;
   final int totalQuestions;
   final List<List<int>> userAnswers;
-  final String? topic;
+  // final String topic;
 
   @override
   State<PostQuizResultScreen> createState() => _PostQuizResultScreenState();
@@ -72,19 +72,14 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
   }
 
   Future<void> _reReadLesson() async {
-    if (widget.moduleId != null) {
-      // Navigate back to lesson page for re-reading
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ReadingActivityScreen(topic: widget.topic!, moduleId: widget.moduleId!),
-        ),
-      );
-    } else {
-      // Fallback: just return to previous screen
-      Navigator.pop(context, true);
+    // Navigate back to lesson page for re-reading
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ReadingActivityScreen(moduleId: widget.moduleId),
+      ),
+    );
     }
-  }
 
   void _goToDragon() {
     // Navigate to dragon screen
@@ -214,6 +209,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                             moduleId: widget.moduleId,
                             score: score,
                             passingScore: widget.questionSet.passingScore,
+                            handleAction: _handleQuizAction,
                           ),
                         ),
                       );
