@@ -45,7 +45,7 @@ class SupabaseConfig {
         debug: true, // Enable debug mode for more detailed logs
       );
       _isInitialized = true;
-      debugPrint('Supabase initialized successfully');
+
     } catch (e) {
       debugPrint('❌ Error initializing Supabase: $e');
       rethrow;

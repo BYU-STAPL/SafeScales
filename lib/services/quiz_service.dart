@@ -136,11 +136,8 @@ class QuizService {
               .eq('activity_type', activityType)
               .single();
 
-      print('Database response: $response');
-
       // Parse the questions JSON
       final questionsJson = response['questions'] as List<dynamic>?;
-      print('Questions JSON: $questionsJson');
 
       if (questionsJson == null) {
         print('No questions found in the quiz');
@@ -150,7 +147,6 @@ class QuizService {
       // Convert JSON questions to Question objects
       final questions =
           questionsJson.map((q) {
-            print('Processing question: $q');
             final questionMap = q as Map<String, dynamic>;
             final questionType = questionMap['question_type'] ?? 'single';
 
@@ -190,8 +186,6 @@ class QuizService {
             }
           }).toList();
 
-      print('Converted questions: $questions');
-
       // Convert activity type string to enum
       final activityTypeEnum = ActivityType.values.firstWhere(
         (e) => e.toString().split('.').last == activityType,
@@ -217,8 +211,6 @@ class QuizService {
         questions: questions,
       );
 
-      print('Created QuestionSet with ID: ${questionSet.id}');
-      print('Database quiz ID: ${response['id']}');
       return questionSet;
     } catch (e) {
       print('❌Error fetching quiz by topic and activity type: $e');
@@ -356,8 +348,6 @@ class QuizService {
     required String activityType,
   }) async {
     try {
-      print('Fetching quiz for module: $moduleId, activityType: $activityType');
-
       // Get module details
       final moduleResponse =
           await supabase.from('modules').select().eq('id', moduleId).single();
@@ -366,8 +356,6 @@ class QuizService {
         print('No module found with ID: $moduleId');
         return null;
       }
-
-      print('Module response: $moduleResponse');
 
       // Get quiz data based on activity type
       final quizData =
@@ -446,7 +434,6 @@ class QuizService {
         questions: questions,
       );
 
-      print('Created QuestionSet with ID: ${questionSet.id}');
       return questionSet;
     } catch (e) {
       print('❌Error fetching quiz by module ID: $e');

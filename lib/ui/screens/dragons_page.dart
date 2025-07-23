@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/ui/widgets/dragon_id_card.dart';
-import 'package:safe_scales/state_management/dragon_state_manager.dart';
 import '../../models/dragon.dart';
 import '../../state_management/dragon_provider.dart';
 import '../widgets/dragon_image_widget.dart';
@@ -15,30 +14,18 @@ class DragonsPage extends StatefulWidget {
 }
 
 class _DragonsPageState extends State<DragonsPage> {
-  // late final DragonStateManager _dragonStateManager;
 
   @override
   void initState() {
     super.initState();
-    // _dragonStateManager = DragonStateManager();
 
-    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-    dragonProvider.loadUserDragons();
+    // final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+    // dragonProvider.loadUserDragons();
 
-    _loadDragons();
-  }
-
-  Future<void> _loadDragons() async {
-    // await _dragonStateManager.initialize();
-    // await _dragonStateManager.loadUserDragons();
-    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-    dragonProvider.loadUserDragons();
-    setState(() {});
   }
 
   // Refresh method
   Future<void> _refreshDragons() async {
-    // await _dragonStateManager.loadUserDragons();
     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
     dragonProvider.loadUserDragons();
     setState(() {});
@@ -46,13 +33,15 @@ class _DragonsPageState extends State<DragonsPage> {
 
   // Navigation to dress up page
   void navigateToDressUp(String dragonId) {
+    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+    dragonProvider.loadUserDragons();
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => DragonDressUpPage(
           dragonId: dragonId,
-          // onEnvironmentChanged: _dragonStateManager.saveEnvironmentSelection,
-          onDragonUpdated: (_) => _refreshDragons(),
+          currentPhase: dragonProvider.getUserPreferredPhase(dragonId),
         ),
       ),
     );

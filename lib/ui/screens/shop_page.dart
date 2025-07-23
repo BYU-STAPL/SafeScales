@@ -46,11 +46,7 @@ class _ShopPageState extends State<ShopPage> {
   }
 
   Future<void> _reloadUserProfile() async {
-    print('Reloading user profile in shop page');
     await _userState.loadUserProfile();
-    print(
-      'User profile reloaded. Modules data: ${_userState.currentUser?.modules}',
-    );
     await _loadModuleDetails();
   }
 
@@ -60,14 +56,11 @@ class _ShopPageState extends State<ShopPage> {
       if (completedModules.isEmpty) return;
 
       final moduleIds = completedModules.map((m) => m['id']).toList();
-      print('Loading details for module IDs: $moduleIds');
 
       final response = await SupabaseConfig.client
           .from('modules')
           .select()
           .inFilter('id', moduleIds);
-
-      print('Loaded module details: $response');
 
       setState(() {
         moduleDetails = {for (var module in response) module['id']: module};
@@ -112,8 +105,6 @@ class _ShopPageState extends State<ShopPage> {
 
   List<Map<String, dynamic>> _getCompletedQuizzes() {
     final user = _userState.currentUser;
-    print('Getting completed modules for user: ${user?.id}');
-    print('User modules data: ${user?.modules}');
 
     if (user == null || user.modules == null) {
       print('No user or modules data available');
@@ -121,7 +112,6 @@ class _ShopPageState extends State<ShopPage> {
     }
 
     final Map<String, dynamic> modules = user.modules!;
-    print('Processing modules: $modules');
 
     final completedQuizzes =
         modules.entries
@@ -168,10 +158,6 @@ class _ShopPageState extends State<ShopPage> {
       );
       return;
     }
-
-    print('Showing completed modules popup');
-    print('Current user: ${_userState.currentUser?.id}');
-    print('User quizzes: ${_userState.currentUser?.quizzes}');
 
     // Show completed modules popup first
     setState(() {

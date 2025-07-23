@@ -97,7 +97,6 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
         if (userResponse['acquired_accessories'] != null) {
           final List<dynamic> acquiredAccessories =
           userResponse['acquired_accessories'];
-          // print('📦 Acquired accessories IDs: $acquiredAccessories');
 
           // Get accessories from classes.assets
           final classesResponse = await dragonService.supabase
@@ -129,7 +128,6 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
             userAccessories = foundAccessories;
             isLoadingItems = false;
           });
-          print('✅ Loaded ${userAccessories.length} accessories');
           // _onAccessoriesLoaded();
         } else {
           print('⚠️ No acquired accessories found');
@@ -164,7 +162,6 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
         if (userResponse['acquired_environments'] != null) {
           final List<dynamic> acquiredEnvironments =
           userResponse['acquired_environments'];
-          // print('📦 Acquired accessories IDs: $acquiredAccessories');
 
           // Get accessories from classes.assets
           final classesResponse = await dragonService.supabase
@@ -196,7 +193,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
             userEnvironments = foundEnvironments;
             isLoadingEnvironments = false;
           });
-          print('✅ Loaded ${userEnvironments.length} environments');
+
         } else {
           print('⚠️ No acquired environments found');
           setState(() => isLoadingEnvironments = false);
