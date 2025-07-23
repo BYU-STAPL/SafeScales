@@ -33,6 +33,9 @@ class DragonProvider extends ChangeNotifier {
   Map<String, List<String>> _unlockedDragonPhases = {}; // DragonID to list of phases unlocked for the dragon
   Map<String, Dragon> _dragonsByModuleId = {};
 
+  String? _currentEnvironment;
+  Map<String, String> _preferredPhases = {}; // DragonID to preferred phase string
+
   // === Services ===
   final UserStateService _userState = UserStateService();
   final QuizService _quizService = QuizService();
@@ -53,6 +56,9 @@ class DragonProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   Map<String, Dragon> get dragons => _dragons;
+  Map<String, List<String>> get unlockedDragonPhases => _unlockedDragonPhases;
+  String? get currentEnvironment => _currentEnvironment;
+
 
   Dragon? getDragonById(String dragonId) {
     return _dragons[dragonId];
@@ -138,6 +144,8 @@ class DragonProvider extends ChangeNotifier {
       if (user == null) {
         _unlockedDragonPhases = {};
         _dragons = {};
+        _currentEnvironment = null;
+        _preferredPhases = {};
         _isLoading = false;
         notifyListeners();
         return;
@@ -154,6 +162,8 @@ class DragonProvider extends ChangeNotifier {
       if (dragonsData == null) {
         _unlockedDragonPhases = {};
         _dragons = {};
+        _currentEnvironment = null;
+        _preferredPhases = {};
         _isLoading = false;
         notifyListeners();
         return;
@@ -173,6 +183,8 @@ class DragonProvider extends ChangeNotifier {
       if (classData.isEmpty) {
         _unlockedDragonPhases = {};
         _dragons = {};
+        _currentEnvironment = null;
+        _preferredPhases = {};
         _isLoading = false;
         notifyListeners();
         return;
@@ -182,6 +194,8 @@ class DragonProvider extends ChangeNotifier {
       if (classAssets == null) {
         _unlockedDragonPhases = {};
         _dragons = {};
+        _currentEnvironment = null;
+        _preferredPhases = {};
         _isLoading = false;
         notifyListeners();
         return;
@@ -246,6 +260,12 @@ class DragonProvider extends ChangeNotifier {
           _unlockedDragonPhases[dragonId] = List<String>.from(dragonIdsAndPhases[dragonId]!);
         }
       }
+
+      // Extract environment
+      _currentEnvironment = dragonsData['current_dragon_env'] as String?;
+
+      // TODO: Extract Preferred Phases
+      _preferredPhases = {};
 
       _isLoading = false;
       notifyListeners();
@@ -346,6 +366,42 @@ class DragonProvider extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       print('❌ DragonProvider: Error loading user progress: $e');
+    }
+  }
+
+  // === Load Environment ===
+  Future<void> saveEnvironmentSelection(String dragonId, String environmentId) async {
+    try {
+      final user = _userState.currentUser;
+      if (user == null) return;
+
+      // Prepare updated dragons data
+      final updatedDragons = <String, dynamic>{
+        'current_dragon_env': environmentId,
+      };
+
+      // Add all existing dragon phases
+      _unlockedDragonPhases.forEach((key, phases) {
+        updatedDragons[key] = phases;
+      });
+
+      // Ensure the dragon exists
+      if (!updatedDragons.containsKey(dragonId)) {
+        updatedDragons[dragonId] = <String>[];
+      }
+
+      // Update database
+      await _dragonService.supabase
+          .from('Users')
+          .update({'dragons': updatedDragons})
+          .eq('id', user.id);
+
+      // Update local state
+      _currentEnvironment = environmentId;
+
+      print('✅ Environment selection saved successfully');
+    } catch (e) {
+      print('❌ Error saving environment selection: $e');
     }
   }
 

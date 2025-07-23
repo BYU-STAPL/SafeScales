@@ -25,16 +25,16 @@ class _DragonsPageState extends State<DragonsPage> {
     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
     dragonProvider.loadUserDragons();
 
-    _loadDragons();
+    // _loadDragons();
   }
 
-  Future<void> _loadDragons() async {
-    // await _dragonStateManager.initialize();
-    // await _dragonStateManager.loadUserDragons();
-    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-    dragonProvider.loadUserDragons();
-    setState(() {});
-  }
+  // Future<void> _loadDragons() async {
+  //   // await _dragonStateManager.initialize();
+  //   // await _dragonStateManager.loadUserDragons();
+  //   final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+  //   dragonProvider.loadUserDragons();
+  //   setState(() {});
+  // }
 
   // Refresh method
   Future<void> _refreshDragons() async {
@@ -46,13 +46,15 @@ class _DragonsPageState extends State<DragonsPage> {
 
   // Navigation to dress up page
   void navigateToDressUp(String dragonId) {
+    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+    dragonProvider.loadUserDragons();
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => DragonDressUpPage(
           dragonId: dragonId,
-          // onEnvironmentChanged: _dragonStateManager.saveEnvironmentSelection,
-          onDragonUpdated: (_) => _refreshDragons(),
+          currentPhase: dragonProvider.getUserPreferredPhase(dragonId),
         ),
       ),
     );
