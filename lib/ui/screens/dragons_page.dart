@@ -14,30 +14,18 @@ class DragonsPage extends StatefulWidget {
 }
 
 class _DragonsPageState extends State<DragonsPage> {
-  // late final DragonStateManager _dragonStateManager;
 
   @override
   void initState() {
     super.initState();
-    // _dragonStateManager = DragonStateManager();
 
     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
     dragonProvider.loadUserDragons();
 
-    // _loadDragons();
   }
-
-  // Future<void> _loadDragons() async {
-  //   // await _dragonStateManager.initialize();
-  //   // await _dragonStateManager.loadUserDragons();
-  //   final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-  //   dragonProvider.loadUserDragons();
-  //   setState(() {});
-  // }
 
   // Refresh method
   Future<void> _refreshDragons() async {
-    // await _dragonStateManager.loadUserDragons();
     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
     dragonProvider.loadUserDragons();
     setState(() {});

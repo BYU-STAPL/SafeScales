@@ -48,7 +48,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   @override
   void initState() {
     super.initState();
-    // _stateManager = DragonStateManager();
     _loadUserEnvironments();
     _loadUserAccessories();
     _loadCurrentPhase();
