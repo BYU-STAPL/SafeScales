@@ -351,7 +351,7 @@ class DragonStateManager {
       }
     }
 
-    // Sort by module ID (descending)
+    // Sort by module ID (ascending)
     final sortedEntries = dragons.entries.toList()
       ..sort((a, b) => b.value.moduleId.compareTo(a.value.moduleId));
 

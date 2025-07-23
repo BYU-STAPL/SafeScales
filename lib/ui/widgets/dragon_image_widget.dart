@@ -1,15 +1,14 @@
 import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/dragon.dart';
-import '../../state_management/dragon_state_manager.dart';
+import '../../state_management/dragon_provider.dart';
 
 class DragonImageWidget extends StatelessWidget {
   final String? dragonId;
   final String? moduleId;
   final double size;
-
   final String? phase;
-
 
   const DragonImageWidget({
     Key? key,
@@ -21,42 +20,43 @@ class DragonImageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Consumer<DragonProvider>(
+        builder: (context, dragonProvider, child) {
+          Dragon? dragon;
+          if (moduleId != null) {
+            dragon = dragonProvider.getDragonByModuleId(moduleId!);
+          } else if (dragonId != null) {
+            dragon = dragonProvider.getDragonById(dragonId!);
+          }
 
-    Dragon? dragon;
-    if (moduleId != null) {
-      dragon = DragonStateManager().getDragonByModuleId(moduleId!);
-    }
-    else if (dragonId != null) {
-      dragon = DragonStateManager().getDragonById(dragonId!);
-    }
+          String imageUrl = 'assets/images/other/QuestionMark.png';
+          if (dragon != null) {
+            imageUrl = dragonProvider.getDragonImageUrl(
+                dragon.id,
+                forPhase: phase ??
+                    dragonProvider.getDragonHighestPhase(dragon.id)
+            );
+          }
 
+          Widget imageWidget = Image.asset(imageUrl, width: size, height: size);
 
-    String imageUrl = 'assets/images/other/QuestionMark.png';
-    if (dragon != null) {
-      imageUrl = DragonStateManager().getDragonImageUrl(dragon.id, forPhase: phase ?? DragonStateManager().getDragonHighestPhase(dragon.id));
-    }
+          if (imageUrl.startsWith('http')) {
+            imageWidget = Image.network(
+              imageUrl,
+              width: size,
+              height: size,
+              errorBuilder: (context, error, stackTrace) {
+                return Image.asset(
+                  'assets/images/other/QuestionMark.png',
+                  width: size,
+                  height: size,
+                );
+              },
+            );
+          }
 
-    Widget imageWidget = Image.asset(imageUrl, width: size, height: size);
-
-    if (imageUrl.startsWith('http')) {
-      imageWidget = Image.network(
-        imageUrl,
-        width: size,
-        height: size,
-        errorBuilder: (context, error, stackTrace) {
-          return Image.asset(
-            'assets/images/other/QuestionMark.png',
-            width: size,
-            height: size,
-          );
-        },
-      );
-    }
-
-    return imageWidget;
+          return imageWidget;
+        }
+    );
   }
 }
-
-// Usage in your screens:
-// DragonImageWidget(moduleId: widget.moduleId, phase: 'baby')
-// DragonImageWidget(moduleId: widget.moduleId, phase: 'teen')
