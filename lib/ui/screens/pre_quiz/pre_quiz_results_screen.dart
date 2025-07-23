@@ -56,7 +56,7 @@ class PreQuizResultScreen extends StatelessWidget {
 
               SizedBox(height: 30),
 
-              DragonImageWidget(moduleId: moduleId, size: 300, phase: 'baby',),
+              DragonImageWidget(moduleId: moduleId, size: 300, phase: 'stage1',),
               
               SizedBox(height: 30),
 

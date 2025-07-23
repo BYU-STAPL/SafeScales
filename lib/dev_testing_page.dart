@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
+import 'package:safe_scales/state_management/dragon_provider.dart';
 import 'package:safe_scales/state_management/dragon_state_manager.dart';
 import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_screen.dart';
 import 'package:safe_scales/models/question.dart';
@@ -28,7 +30,6 @@ class DevTestingPage extends StatefulWidget {
 class _DevTestingPageState extends State<DevTestingPage> {
   final QuizService _quizService = QuizService();
   final _userState = UserStateService();
-  final _dragonStateManager = DragonStateManager();
   late final ClassService _classService;
 
   // Class-based variables
@@ -82,8 +83,9 @@ class _DevTestingPageState extends State<DevTestingPage> {
       );
 
       // Initialize dragon state manager and load user dragons
-      await _dragonStateManager.initialize();
-      await _dragonStateManager.loadUserDragons();
+      final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+      await dragonProvider.initialize();
+      await dragonProvider.loadUserDragons();
 
       if (mounted) {
         setState(() {
@@ -128,25 +130,13 @@ class _DevTestingPageState extends State<DevTestingPage> {
       explanation: 'Oranges taste best during the winter',
     );
 
-    Question multipleQ = Question.multipleAnswer(
-      id: 'q3',
-      text: "At your school, there is a security guard named Quinn. You have never met or talked to Quinn, but some of your school mates have."
-          "At your school, there is a security guard named Quinn. At your school, there is a security guard named Quinn."
-          "At your school, there is a security guard named Quinn. At your school, there is a security guard named Quinn. "
-          "At your school, there is a security guard named Quinn. At your school, there is a security guard named Quinn.",
-      questionText: 'What social tag(s) apply to Quinn?',
-      options: ['Acquaintance', 'Community Helper', 'Stranger', 'Work Peer', 'In-Person Friend', 'Family'],
-      correctAnswerIndices: [1, 2,],
-      explanation: 'Quinn serves the community, but don\'t know him', // Apple, Banana, Orange
-    );
-
     QuestionSet questionSet = QuestionSet(
       id: "qset0",
       title: "Test Question Set",
       description: "This is a test",
       activityType: ActivityType.preQuiz,
       subject: "test subject",
-      questions: [singleQ, multipleQ],
+      questions: [singleQ],
     );
 
     QuestionSet questionSet2 = QuestionSet(
@@ -155,7 +145,7 @@ class _DevTestingPageState extends State<DevTestingPage> {
       description: "This is a post-test",
       activityType: ActivityType.postQuiz,
       subject: "test subject",
-      questions: [singleQ, singleQ2, multipleQ,],
+      questions: [singleQ,],
     );
 
     QuestionSet questionSet3 = QuestionSet(
@@ -164,7 +154,7 @@ class _DevTestingPageState extends State<DevTestingPage> {
       description: "This is a review set",
       activityType: ActivityType.review,
       subject: "review subject",
-      questions: [multipleQ,],
+      questions: [singleQ,],
     );
 
 

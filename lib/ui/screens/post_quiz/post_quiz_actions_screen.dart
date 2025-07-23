@@ -116,7 +116,7 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
         ),
         SizedBox(height: 30),
 
-        DragonImageWidget(moduleId: widget.moduleId, size: 300, phase: 'adult',),
+        DragonImageWidget(moduleId: widget.moduleId, size: 300, phase: 'final',),
 
         SizedBox(height: 30),
         Text(
