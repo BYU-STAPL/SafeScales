@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:safe_scales/ui/widgets/dragon_id_card.dart';
 import 'package:safe_scales/state_management/dragon_state_manager.dart';
 import '../../models/dragon.dart';
+import '../../state_management/dragon_provider.dart';
 import '../widgets/dragon_image_widget.dart';
 import 'dragon_decoration/dragon_decoration_screen.dart';
 
@@ -13,24 +15,32 @@ class DragonsPage extends StatefulWidget {
 }
 
 class _DragonsPageState extends State<DragonsPage> {
-  late final DragonStateManager _dragonStateManager;
+  // late final DragonStateManager _dragonStateManager;
 
   @override
   void initState() {
     super.initState();
-    _dragonStateManager = DragonStateManager();
+    // _dragonStateManager = DragonStateManager();
+
+    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+    dragonProvider.loadUserDragons();
+
     _loadDragons();
   }
 
   Future<void> _loadDragons() async {
-    await _dragonStateManager.initialize();
-    await _dragonStateManager.loadUserDragons();
+    // await _dragonStateManager.initialize();
+    // await _dragonStateManager.loadUserDragons();
+    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+    dragonProvider.loadUserDragons();
     setState(() {});
   }
 
   // Refresh method
   Future<void> _refreshDragons() async {
-    await _dragonStateManager.loadUserDragons();
+    // await _dragonStateManager.loadUserDragons();
+    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+    dragonProvider.loadUserDragons();
     setState(() {});
   }
 
@@ -41,7 +51,7 @@ class _DragonsPageState extends State<DragonsPage> {
       MaterialPageRoute(
         builder: (context) => DragonDressUpPage(
           dragonId: dragonId,
-          onEnvironmentChanged: _dragonStateManager.saveEnvironmentSelection,
+          // onEnvironmentChanged: _dragonStateManager.saveEnvironmentSelection,
           onDragonUpdated: (_) => _refreshDragons(),
         ),
       ),
@@ -54,66 +64,72 @@ class _DragonsPageState extends State<DragonsPage> {
     final Color primary = theme.colorScheme.primary;
     final Color cardBg = theme.colorScheme.surface;
 
-    return Scaffold(
-      backgroundColor: cardBg,
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _refreshDragons,
-          child: _dragonStateManager.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_dragonStateManager.userDragons.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32.0),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.egg_outlined,
-                              size: 64,
-                              color: primary.withValues(alpha: 0.5),
+    return Consumer<DragonProvider>(
+        builder: (context, dragonProvider, child) {
+          return Scaffold(
+            backgroundColor: cardBg,
+            body: SafeArea(
+              child: RefreshIndicator(
+                onRefresh: _refreshDragons,
+                child: dragonProvider.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (dragonProvider.dragons.isEmpty)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32.0),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.egg_outlined,
+                                    size: 64,
+                                    color: primary.withValues(alpha: 0.5),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No dragons yet.\nComplete topics to unlock dragons!',
+                                    style: theme.textTheme.labelLarge,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No dragons yet.\nComplete topics to unlock dragons!',
-                              style: theme.textTheme.labelLarge,
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else
-                    ..._buildDragonCards(),
-                ],
+                          )
+                        else
+                          ..._buildDragonCards(),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-      ),
+          );
+        }
     );
+
   }
 
   List<Widget> _buildDragonCards() {
-    // final dragons = _dragonStateManager.getAllDragonsForDisplay();
 
-    final dragons = _dragonStateManager.getAllDragons();
+    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+
+    final dragons = dragonProvider.getAllDragons();
 
     return dragons.map((dragon) {
 
       if (dragon == null) return const SizedBox.shrink();
 
       // Is dragon unlocked for play
-      final isUnlocked = _dragonStateManager.isPlayUnlocked(dragon.id);
+      final isUnlocked = dragonProvider.isPlayUnlocked(dragon.id);
 
 
       // TODO: Eventually use preferred phase for setting up the id card image

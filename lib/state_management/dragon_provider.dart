@@ -26,7 +26,7 @@ class DragonProvider extends ChangeNotifier {
   }
 
   // === Data ===
-  bool _isLoading = true;
+  bool _isLoading = false;
 
   // === Dragon Data ===
   Map<String, Dragon> _dragons = {};
@@ -131,7 +131,7 @@ class DragonProvider extends ChangeNotifier {
       notifyListeners();
 
       await _dragonService.initialize();
-      await _loadUserProgress();
+      await loadUserProgress();
 
       // Get User
       final user = _userState.currentUser;
@@ -257,7 +257,7 @@ class DragonProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _loadUserProgress() async {
+  Future<void> loadUserProgress() async {
     try {
       // Get User
       final user = _userState.currentUser;
@@ -341,8 +341,10 @@ class DragonProvider extends ChangeNotifier {
         _unlockedDragonPhases = currentDatabaseDragonData;
       }
 
+      _isLoading = false;
       notifyListeners();
     } catch (e) {
+      _isLoading = false;
       print('❌ DragonProvider: Error loading user progress: $e');
     }
   }

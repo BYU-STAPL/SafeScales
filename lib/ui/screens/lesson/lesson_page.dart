@@ -57,36 +57,6 @@ class _LessonPageState extends State<LessonPage> {
     await dragonProvider.initialize();
     await dragonProvider.loadUserDragons();
     await _loadQuizzes();
-    await _loadModuleProgress();
-  }
-
-  Future<void> _loadModuleProgress() async {
-    try {
-      if (widget.moduleId != null) {
-        final user = _userState.currentUser;
-        if (user != null) {
-          print('📊 Loading module progress for module: ${widget.moduleId}');
-          final progressMap = await _quizService.getModuleProgress(
-            userId: user.id,
-            moduleIds: [widget.moduleId!],
-          );
-
-          print('📊 Progress map: $progressMap');
-
-          if (mounted && progressMap.containsKey(widget.moduleId!)) {
-            final progress = progressMap[widget.moduleId!] ?? 0.0;
-            print('📊 Setting module progress to: $progress');
-            setState(() {
-              _moduleProgress = progress;
-            });
-          } else {
-            print('📊 No progress found for module: ${widget.moduleId}');
-          }
-        }
-      }
-    } catch (e) {
-      print('❌ Error loading module progress: $e');
-    }
   }
 
   Future<void> _loadQuizzes() async {
@@ -530,7 +500,11 @@ class _LessonPageState extends State<LessonPage> {
               if (completed == true) {
                 setState(() {
                   readingCompleted = true;
-                  _loadModuleProgress();
+
+                  // TODO: Move load module progress into a different provider
+                  // TODO: Currently loadUser dragons also updates module progress
+                  final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+                  dragonProvider.loadUserProgress();
                 });
               }
             });
@@ -712,7 +686,8 @@ class _LessonPageState extends State<LessonPage> {
           }
         });
         _loadQuizzes(); // Reload quizzes to update scores
-        _loadModuleProgress(); // Update dragon
+        // _loadModuleProgress(); // Update dragon
+
 
         // Reload dragon data after quiz completion
         final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
