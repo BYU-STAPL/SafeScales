@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
-import 'package:safe_scales/states/dragon_state_manager.dart';
+import 'package:safe_scales/state_management/dragon_state_manager.dart';
 
 import 'dragon_image_widget.dart';
 

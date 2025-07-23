@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/models/question.dart';
+import 'package:safe_scales/ui/widgets/dragon_image_widget.dart';
 
 class ReadingResultScreen extends StatelessWidget {
-
   const ReadingResultScreen({
     Key? key,
+    required this.modeuleId,
   }) : super(key: key);
+
+  final String modeuleId;
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +44,7 @@ class ReadingResultScreen extends StatelessWidget {
 
               SizedBox(height: 30),
 
-              // TODO: Replace later with dragon
-              Image.asset("assets/images/other/QuestionMark.png"),
+              DragonImageWidget(moduleId: modeuleId, phase: 'teen', size: 300),
 
               SizedBox(height: 30),
 

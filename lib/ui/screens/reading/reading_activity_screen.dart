@@ -9,10 +9,10 @@ import 'package:safe_scales/ui/screens/reading/reading_results_screen.dart';
 import '../../widgets/progress_bar.dart';
 
 class ReadingActivityScreen extends StatefulWidget {
-  final String topic;
-  final String? moduleId;
+  final String moduleId;
+  // final String topic;
 
-  const ReadingActivityScreen({Key? key, required this.topic, this.moduleId})
+  const ReadingActivityScreen({Key? key, required this.moduleId,})
     : super(key: key);
 
   @override
@@ -204,7 +204,9 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
       final shouldPopReading = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ReadingResultScreen(),
+          builder: (context) => ReadingResultScreen(
+            modeuleId: widget.moduleId,
+          ),
         ),
       );
 
