@@ -41,14 +41,12 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                 .trim();
 
         // Debug print the code being searched
-        print('Searching for class code: "$cleanClassCode"');
 
         // Get class ID from class code (case-insensitive)
         final classResponseList = await SupabaseConfig.client
             .from('classes')
             .select('id, code')
             .ilike('code', cleanClassCode);
-        print('Classes found: ' + classResponseList.toString());
 
         if (classResponseList == null || classResponseList.isEmpty) {
           throw Exception('Invalid class code');

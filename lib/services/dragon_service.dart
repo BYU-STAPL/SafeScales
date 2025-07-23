@@ -33,8 +33,8 @@ class DragonService {
         final dragon = _dragons[moduleIndex];
         return {
           'egg': dragon['egg_image'],
-          'baby': dragon['baby_image'],
-          'teen': dragon['teen_image'],
+          'stage1': dragon['baby_image'],
+          'stage2': dragon['teen_image'],
           'final': dragon['final_stage_image'],
           'id': dragon['id'],
           'preferred_environment': dragon['preferred_environment'],
@@ -46,8 +46,8 @@ class DragonService {
 
       return {
         'egg': 'assets/images/other/egg.png',
-        'baby': 'assets/images/other/young.png',
-        'teen': 'assets/images/other/teen.png',
+        'stage1': 'assets/images/other/young.png',
+        'stage2': 'assets/images/other/teen.png',
         'final': 'assets/images/other/adult.png',
         'id': null,
         'preferred_environment': 'Unknown',
@@ -59,8 +59,8 @@ class DragonService {
       print('✗ Error getting dragon for module $moduleIndex: $e');
       return {
         'egg': 'assets/images/other/egg.png',
-        'baby': 'assets/images/other/young.png',
-        'teen': 'assets/images/other/teen.png',
+        'stage1': 'assets/images/other/young.png',
+        'stage2': 'assets/images/other/teen.png',
         'final': 'assets/images/other/adult.png',
         'id': null,
         'preferred_environment': 'Unknown',

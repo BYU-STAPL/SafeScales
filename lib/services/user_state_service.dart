@@ -18,7 +18,6 @@ class UserStateService {
   String? get userId => _userId;
 
   void setUser(supabase.User? user) {
-    print('Setting user: ${user?.id}');
     _supabaseUser = user;
     _currentUser = user != null ? User.fromSupabaseUser(user) : null;
     _userId = user?.id;
@@ -30,15 +29,11 @@ class UserStateService {
   }
 
   void setUserProfile(Map<String, dynamic>? profile) {
-    print('Setting user profile: $profile');
     _userProfile = profile;
   }
 
   bool get isLoggedIn {
     final isLoggedIn = _currentUser != null && _userId != null;
-    print(
-      'Checking login status: $isLoggedIn (User: ${_currentUser?.id}, ID: $_userId)',
-    );
     return isLoggedIn;
   }
 
@@ -49,7 +44,6 @@ class UserStateService {
     }
 
     try {
-      print('Loading profile for user: $_userId');
       final response =
           await SupabaseConfig.client
               .from('Users')
@@ -57,18 +51,15 @@ class UserStateService {
               .eq('id', _userId!)
               .single();
 
-      print('Loaded user profile: $response');
-      print('Modules data from response: ${response['modules']}');
       _userProfile = response;
 
       // Update current user with modules data
       if (_supabaseUser != null) {
-        print('Creating user with modules data: ${response['modules']}');
         _currentUser = User.fromSupabaseUser(
           _supabaseUser!,
           modules: response['modules'],
         );
-        print('Updated current user modules: ${_currentUser?.modules}');
+
       }
     } catch (e) {
       print('❌ Error loading user profile: $e');
@@ -78,12 +69,11 @@ class UserStateService {
 
   Future<String?> getUserName() async {
     if (_userId == null) {
-      print('Cannot get username: No user ID available');
+      print('❌ Error: Cannot get username: No user ID available');
       return null;
     }
 
     try {
-      print('Getting username for user: $_userId');
       final response =
           await SupabaseConfig.client
               .from('Users')
@@ -91,10 +81,11 @@ class UserStateService {
               .eq('id', _userId!)
               .single();
 
-      print('Got username response: $response');
       final username = response['Username'] as String?;
       print('Extracted username: $username');
+
       return username;
+
     } catch (e) {
       print('❌ Error getting username: $e');
       return null;
@@ -110,7 +101,7 @@ class UserStateService {
     required List<List<int>> userAnswers,
   }) async {
     if (_userId == null) {
-      print('No user logged in, skipping quiz progress save');
+      print('❌ Error: UserStateService saveQuizProgress No user logged in, skipping quiz progress save');
       return;
     }
 
@@ -156,7 +147,7 @@ class UserStateService {
   // Get user's theme and font size settings from the Users table
   Future<Map<String, dynamic>> getUserSettings() async {
     if (_userId == null) {
-      print('Cannot get settings: No user ID available');
+      print('❌ Error UserStateService getUserSettings Cannot get settings: No user ID available');
       return {};
     }
     try {
@@ -171,7 +162,7 @@ class UserStateService {
       }
       return {};
     } catch (e) {
-      print('❌ Error getting user settings: $e');
+      print('❌ Error: UserStateService getUserSettings getting user settings: $e');
       return {};
     }
   }
@@ -182,7 +173,7 @@ class UserStateService {
     required double fontSize,
   }) async {
     if (_userId == null) {
-      print('Cannot save settings: No user ID available');
+      print('❌ Error: UserStateService saveUserSettings() Cannot save settings: No user ID available');
       return;
     }
     try {
@@ -203,7 +194,7 @@ class UserStateService {
           .from('Users')
           .update({'settings': settings})
           .eq('id', _userId!);
-      print('Saved user settings: $settings');
+
     } catch (e) {
       print('❌ Error saving user settings: $e');
     }

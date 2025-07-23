@@ -59,7 +59,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   }
 
   void _finishPostQuiz() async {
-    print('=== Starting Post-Quiz Completion ===');
     int correctAnswers = 0;
     for (int i = 0; i < widget.questionSet.questions.length; i++) {
       if (_isAnswerCorrect(i)) correctAnswers++;
@@ -79,7 +78,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     try {
       final user = _userState.currentUser;
       if (user != null) {
-        print('Saving post-quiz progress for user: ${user.id}');
         await QuizService().saveQuizProgress(
           userId: user.id,
           quizId: widget.questionSet.id,
@@ -87,7 +85,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
           correctAnswers: correctAnswers,
           totalQuestions: totalQuestions,
         );
-        print('Successfully saved quiz progress');
       } else {
         print('No user logged in, skipping post-quiz progress save');
       }

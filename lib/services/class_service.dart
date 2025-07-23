@@ -23,7 +23,6 @@ class ClassService {
 
       // Get the first class ID from the array
       final classId = (userResponse['joined_classes'] as List).first;
-      print('Found class ID: $classId');
 
       // Get class details
       final classResponse =
@@ -56,7 +55,6 @@ class ClassService {
 
       // Get module IDs from the course_modules array
       final moduleIds = List<String>.from(classResponse['course_modules']);
-      print('Module IDs: $moduleIds');
 
       // Get module details for each module ID
       final modulesResponse = await supabase
@@ -66,7 +64,6 @@ class ClassService {
           .order('created_at', ascending: true);
 
       final modules = List<Map<String, dynamic>>.from(modulesResponse);
-      print('Found ${modules.length} modules');
 
       return modules;
     } catch (e) {

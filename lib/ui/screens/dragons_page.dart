@@ -19,8 +19,8 @@ class _DragonsPageState extends State<DragonsPage> {
   void initState() {
     super.initState();
 
-    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-    dragonProvider.loadUserDragons();
+    // final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+    // dragonProvider.loadUserDragons();
 
   }
 

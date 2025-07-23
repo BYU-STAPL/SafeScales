@@ -45,52 +45,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   void _finishReview() async {
-    print('=== Starting Review Set Completion ===');
-    // int correctAnswers = 0;
-    // for (int i = 0; i < widget.questionSet.questions.length; i++) {
-    //   if (_isAnswerCorrect(i)) correctAnswers++;
-    // }
-    //
-    // int totalQuestions = widget.questionSet.questions.length;
-    //
-    // print('Review completed:');
-    // print('Quiz ID: ${widget.questionSet.id}');
-    // print('Total questions: $totalQuestions');
-    // print('User answers: $userAnswers');
-    //
-    // // Save quiz progress
-    // try {
-    //   final user = _userState.currentUser;
-    //   if (user != null) {
-    //     print('Saving pre-quiz progress for user: ${user.id}');
-    //     await ReviewService().saveQuizProgress(
-    //       userId: user.id,
-    //       quizId: widget.questionSet.id,
-    //       answers: userAnswers,
-    //       correctAnswers: correctAnswers,
-    //       totalQuestions: totalQuestions,
-    //     );
-    //     print('Successfully saved review progress');
-    //   } else {
-    //     print('No user logged in, skipping review progress save');
-    //   }
-    // } catch (e) {
-    //   print('❌Error saving review progress: $e');
-    //   // Continue to show results even if saving fails
-    // }
-    //
-    // if (!mounted) return;
-
-    // Show results screen and then return to previous screen
-    // await Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder:
-    //         (context) => ReviewResultScreen(
-    //
-    //     ),
-    //   ),
-    // );
 
     if (!mounted) return;
 
@@ -284,7 +238,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    print('Starting review set...');
                     _startReview();
                   },
                   child: Text(

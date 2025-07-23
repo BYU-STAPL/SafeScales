@@ -210,6 +210,7 @@ class DragonProvider extends ChangeNotifier {
         }
         else {
           final dragonId = asset['id'];
+          print("DragonID: ${dragonId}");
 
           if (dragonIdsAndPhases.containsKey(dragonId)) {
             final phaseOrder = ['egg', 'stage1', 'stage2', 'final'];
@@ -232,7 +233,6 @@ class DragonProvider extends ChangeNotifier {
               name: asset['name'] ?? 'Unknown Dragon',
             );
 
-
             tempDragons[dragonId] = tempDragon;
 
             if (asset['moduleId'] != null) {
@@ -244,7 +244,7 @@ class DragonProvider extends ChangeNotifier {
 
       // Sort the tempDragon list by module id
       final sortedDragons = tempDragons.entries.toList()
-        ..sort((a, b) => a.value.moduleId.compareTo(b.value.moduleId));
+        ..sort((b, a) => a.value.moduleId.compareTo(b.value.moduleId));
 
       // Assign dragons to sortedDragons
       _dragons = Map.fromEntries(sortedDragons);
@@ -267,8 +267,16 @@ class DragonProvider extends ChangeNotifier {
       // TODO: Extract Preferred Phases
       _preferredPhases = {};
 
+
       _isLoading = false;
       notifyListeners();
+
+
+      // print("=== Dragon Data ===");
+      // print("Dragons: ${_dragons}");
+      // print("Unlocked Phases: ${_unlockedDragonPhases}");
+      // print("Modules: ${_dragonsByModuleId}");
+
 
     } catch (e) {
       print('❌ DragonProvider: Error loading user dragons: $e');

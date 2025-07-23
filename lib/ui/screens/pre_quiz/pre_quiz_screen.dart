@@ -45,7 +45,6 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   }
 
   void _finishPreQuiz() async {
-    print('=== Starting Pre-Quiz Completion ===');
     int correctAnswers = 0;
     for (int i = 0; i < widget.questionSet.questions.length; i++) {
       if (_isAnswerCorrect(i)) correctAnswers++;
@@ -54,18 +53,10 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
     int totalQuestions = widget.questionSet.questions.length;
     int scorePercentage = ((correctAnswers / totalQuestions) * 100).round();
 
-    print('Pre-quiz completed:');
-    print('Quiz ID: ${widget.questionSet.id}');
-    print('Total questions: $totalQuestions');
-    print('Correct answers: $correctAnswers');
-    print('Score percentage: $scorePercentage');
-    print('User answers: $userAnswers');
-
     // Save quiz progress
     try {
       final user = _userState.currentUser;
       if (user != null) {
-        print('Saving pre-quiz progress for user: ${user.id}');
         await QuizService().saveQuizProgress(
           userId: user.id,
           quizId: widget.questionSet.id,
@@ -73,7 +64,6 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
           correctAnswers: correctAnswers,
           totalQuestions: totalQuestions,
         );
-        print('Successfully saved quiz progress');
       } else {
         print('No user logged in, skipping pre-quiz progress save');
       }
@@ -238,7 +228,6 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    print('Starting pre-quiz...');
                     _startPreQuiz();
                   },
                   child: Text(

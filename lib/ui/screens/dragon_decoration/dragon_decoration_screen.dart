@@ -518,7 +518,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
           userEnvironments.length,
               (i) => SimpleDialogOption(
             onPressed: () {
-              print('✅ User selected environment: ${userEnvironments[i]}');
               Navigator.pop(context, i);
             },
             child: Text(userEnvironments[i]),
@@ -705,20 +704,21 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
             };
           }
 
+          // Overwrote the database with sticker data and removed phase progress information
           // Save the updated dragons data
-          await dragonService.supabase
-              .from('Users')
-              .update({'dragons': dragonsData})
-              .eq('id', user.id);
-
-          print('✅ Stickers saved: ${stickersData.length} stickers');
+          // await dragonService.supabase
+          //     .from('Users')
+          //     .update({'dragons': dragonsData})
+          //     .eq('id', user.id);
 
           // Notify parent that dragon was updated
           // if (widget.onDragonUpdated != null) {
           //   widget.onDragonUpdated!(widget.dragonId);
           // }
-          final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-          dragonProvider.loadUserDragons();
+          // final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+          // dragonProvider.loadUserDragons();
+
+
           setState(() {});
         }
       }
@@ -774,7 +774,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                     );
                   }).toList();
             });
-            print('✅ Loaded ${placedStickers.length} stickers');
           }
         }
       }

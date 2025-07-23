@@ -26,7 +26,6 @@ void main() async {
   final dragonProvider = DragonProvider();
   try {
     await dragonProvider.initialize();
-    print("Dragon provider initialization successful");
   } catch (e) {
     print("Dragon provider initialization failed: $e");
   }
