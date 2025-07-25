@@ -210,7 +210,6 @@ class DragonProvider extends ChangeNotifier {
         }
         else {
           final dragonId = asset['id'];
-          print("DragonID: ${dragonId}");
 
           if (dragonIdsAndPhases.containsKey(dragonId)) {
             final phaseOrder = ['egg', 'stage1', 'stage2', 'final'];
@@ -270,13 +269,6 @@ class DragonProvider extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
-
-
-      // print("=== Dragon Data ===");
-      // print("Dragons: ${_dragons}");
-      // print("Unlocked Phases: ${_unlockedDragonPhases}");
-      // print("Modules: ${_dragonsByModuleId}");
-
 
     } catch (e) {
       print('❌ DragonProvider: Error loading user dragons: $e');

@@ -7,6 +7,7 @@ import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/ui/widgets/lesson_card.dart';
 import 'package:safe_scales/state_management/dragon_provider.dart';
 
+import '../../state_management/course_provider.dart';
 import '../widgets/continue_learning_widget.dart';
 import 'lesson/lesson_page.dart';
 
@@ -33,13 +34,12 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _classService = ClassService(_quizService.supabase);
-    _loadClassData();
-  }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Reload data when returning to this page
+    // Load course provider data once when the widget initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
+    });
+
     _loadClassData();
   }
 
@@ -100,90 +100,12 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // /// Update dragon phases based on module progress
-  // Future<void> _updateDragonPhases() async {
-  //   try {
-  //     final user = _userState.currentUser;
-  //     if (user == null) return;
-  //
-  //     // Get current dragons data from database
-  //     final response = await _quizService.supabase
-  //         .from('Users')
-  //         .select('dragons')
-  //         .eq('id', user.id)
-  //         .single();
-  //
-  //     Map<String, dynamic> dragons = {};
-  //     if (response['dragons'] != null) {
-  //       dragons = Map<String, dynamic>.from(response['dragons']);
-  //     }
-  //
-  //     bool hasChanges = false;
-  //     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-  //
-  //     // Update phases for each module
-  //     for (var module in _modules) {
-  //       final moduleId = module['id'] as String;
-  //       final progress = _moduleProgress[moduleId] ?? 0.0;
-  //
-  //       // Find the dragon for this module
-  //       final dragon = dragonProvider.getDragonByModuleId(moduleId);
-  //       if (dragon == null) continue;
-  //
-  //       // Calculate phases based on progress
-  //       List<String> phases = ['egg']; // Always start with egg
-  //
-  //       if (progress >= 30) {
-  //         phases.add('baby'); // Add baby phase
-  //       }
-  //       if (progress >= 50) {
-  //         phases.add('teen'); // Add teen phase
-  //       }
-  //       if (progress >= 80) {
-  //         phases.add('adult'); // Add final phase
-  //       }
-  //
-  //       // Check if phases have changed
-  //       final currentPhases = dragons[dragon.id] as List<dynamic>?;
-  //       if (currentPhases == null ||
-  //           !_areListsEqual(currentPhases.cast<String>(), phases)) {
-  //         dragons[dragon.id] = phases;
-  //         hasChanges = true;
-  //       }
-  //     }
-  //
-  //     // Save updated dragons data if there are changes
-  //     if (hasChanges) {
-  //       await _quizService.supabase
-  //           .from('Users')
-  //           .update({'dragons': dragons})
-  //           .eq('id', user.id);
-  //
-  //       // Reload dragon state to reflect changes
-  //       await dragonProvider.loadUserDragons();
-  //
-  //       print('✅ Successfully updated dragon phases');
-  //     }
-  //   } catch (e) {
-  //     print('❌ Error updating dragon phases: $e');
-  //   }
-  // }
-  //
-  // /// Helper method to compare two lists
-  // bool _areListsEqual<T>(List<T> list1, List<T> list2) {
-  //   if (list1.length != list2.length) return false;
-  //   for (int i = 0; i < list1.length; i++) {
-  //     if (list1[i] != list2[i]) return false;
-  //   }
-  //   return true;
-  // }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Consumer<DragonProvider>(
-      builder: (context, dragonProvider, child) {
+    return Consumer2<DragonProvider, CourseProvider>(
+      builder: (context, dragonProvider, courseProvider, child) {
         return Scaffold(
           body: SafeArea(
             child: SingleChildScrollView(
@@ -230,7 +152,11 @@ class _HomePageState extends State<HomePage> {
                             MaterialPageRoute(
                               builder: (context) => LessonPage(moduleId: targetModule!['id']),
                             ),
-                          );
+                          ).then((_) {
+                            // Reload data when returning from lesson
+                            Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
+                            _loadClassData();
+                          });
                         },
                         child: ContinueLearningWidget(modules: _modules, moduleProgress: _moduleProgress),
                       ),
@@ -327,6 +253,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ).then((_) {
                                   // Reload data when returning from the lesson page
+                                  Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
                                   _loadClassData();
                                 });
                               }
