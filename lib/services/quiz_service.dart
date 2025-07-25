@@ -1,9 +1,26 @@
+import 'package:safe_scales/models/lesson_progress.dart';
+import 'package:safe_scales/services/class_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/models/question.dart';
 
 class QuizService {
   final supabase = SupabaseConfig.client;
+
+  // === Helpers ===
+  List<List<int>> _parseResponses(List<dynamic> answers) {
+    List<List<int>> responses = [];
+
+    for (final answer in answers) {
+      if (answer is List) {
+        responses.add(List<int>.from(answer));
+      } else {
+        responses.add([]); // Empty response for null/invalid answers
+      }
+    }
+
+    return responses;
+  }
 
   // Get all quizzes
   Future<List<Map<String, dynamic>>> getAllQuizzes() async {
@@ -216,13 +233,7 @@ class QuizService {
   }
 
   // Save quiz progress for a user
-  Future<void> saveQuizProgress({
-    required String userId,
-    required String quizId,
-    required List<List<int>> answers,
-    required int correctAnswers,
-    required int totalQuestions,
-  }) async {
+  Future<void> saveQuizProgress({required String userId, required String quizId, required List<List<int>> answers, required int correctAnswers, required int totalQuestions,}) async {
     try {
       // Calculate score percentage
       final score = ((correctAnswers / totalQuestions) * 100).round();
@@ -339,20 +350,107 @@ class QuizService {
     }
   }
 
-  Future<Map<String, List<List<int>>>> loadQuizScores(String userId) async {
+  Future<Map<String, LessonProgress>> loadLessonProgress(String userId) async {
+
+    ClassService _classService = ClassService(supabase);
+    final classData = await _classService.getUserClass(userId);
+    if (classData.isEmpty) {
+      print("Error: No class data");
+      return {};
+    }
+    final lessonsInClass = await _classService.getLessonOrder(classData['id']);
+
+
     try {
       final response = await supabase
           .from('Users')
-          .select('quizzes, modules')
+          .select('modules')
           .eq('id', userId)
           .single();
 
-      print("QUIZ RESPONSE");
-      print(response);
+      Map<String, LessonProgress> progress = {};
 
+      final moduleMap = response['modules'];
 
+      // For each lesson get all quizzes for it
+      for (var key in moduleMap.keys) {
+        final lessonId = key;
 
-      return {};
+        // Don't look at legacy
+        if (lessonId == 'legacy') continue;
+
+        // Don't look at progress if lesson is not in the current class
+        if (!lessonsInClass.contains(lessonId)) continue;
+
+        final quizMap = moduleMap[lessonId];
+
+        QuizAttempt? preQuizAttempt = null;
+        List<QuizAttempt> postQuizAttempts = [];
+        bool isReadingComplete = false;
+
+        // For each quiz build the attempt
+        for (var type in quizMap.keys) {
+          // Get Type
+          ActivityType activityType;
+
+          switch (type) {
+            case 'preQuiz':
+              activityType = ActivityType.preQuiz;
+              break;
+            case 'postQuiz':
+              activityType = ActivityType.postQuiz;
+              break;
+            case 'review':
+              activityType = ActivityType.review;
+              break;
+            case 'reading':
+              activityType = ActivityType.reading;
+              break;
+            default:
+              activityType = ActivityType.reading;
+              break;
+          }
+
+          // Get Data
+          final activityData = quizMap[type] as Map<String, dynamic>;
+
+          if (activityType == ActivityType.reading) {
+            isReadingComplete = activityData['completed'];
+          }
+          else {
+            // Either preQuiz, postQuiz, or reviewQuiz
+            QuizAttempt attempt = QuizAttempt(
+              id: '',
+              quizId: '${key}_${type}',
+              lessonId: lessonId,
+              type: activityType,
+              score: activityData['score'] ?? 0, // Access from activityData
+              correctAnswers: activityData['correct_answers'] ?? 0,
+              totalQuestions: activityData['total_questions'] ?? 0,
+              responses: _parseResponses(activityData['answers'] ?? []),
+              completedAt: DateTime.parse(activityData['completed_at']),
+              // attemptNumber: attemptNumber,
+              // passed: passed
+            );
+
+            if (activityType == ActivityType.postQuiz) {
+              postQuizAttempts.add(attempt);
+            }
+            else if (activityType == ActivityType.preQuiz) {
+              preQuizAttempt = attempt;
+            }
+          }
+        }
+
+        progress[lessonId] = LessonProgress(
+            lessonId: lessonId,
+            isReadingComplete: isReadingComplete,
+            preQuizAttempt: preQuizAttempt,
+            postQuizAttempts: postQuizAttempts,
+        );
+      }
+
+      return progress;
 
     } catch (e) {
       print('❌ Error loading quiz scores: $e');

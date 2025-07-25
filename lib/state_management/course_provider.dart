@@ -2,6 +2,7 @@
 import 'package:flutter/cupertino.dart';
 
 import '../models/lesson.dart';
+import '../models/lesson_progress.dart';
 import '../services/class_service.dart';
 import '../services/quiz_service.dart';
 import '../services/user_state_service.dart';
@@ -12,7 +13,7 @@ class CourseProvider extends ChangeNotifier {
   bool _isLoading = false;
 
   List<String> _unlockedLessons = []; // lessonIds
-  Map<String, double> _lessonProgress = {}; // lessonIds -> progress percentage (0-100)
+  Map<String, LessonProgress> _lessonProgress = {};
   Map<String, Map<String, dynamic>> _quizScores = {}; // lessonId -> quizId: int or double
 
   Map<String, Lesson> _lessons = {}; // Map for quick access to a lesson
@@ -74,13 +75,13 @@ class CourseProvider extends ChangeNotifier {
       _lessonOrder = await _classService.getLessonOrder(classData['id']);
 
       // Get User's Progress for each lesson
-      _lessonProgress = await _quizService.getModuleProgress(
-        userId: user.id,
-        moduleIds: _lessonOrder,
-      );
+      // _lessonProgress = await _quizService.getModuleProgress(
+      //   userId: user.id,
+      //   moduleIds: _lessonOrder,
+      // );
 
+      _lessonProgress = await _quizService.loadLessonProgress(user.id);
 
-      Map<String, List<List<int>>> tempQuizProgress = await _quizService.loadQuizScores(user.id);
 
       // print(tempQuizProgress);
       // // Load quiz scores
