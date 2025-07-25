@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:safe_scales/state_management/course_provider.dart';
 import 'package:safe_scales/state_management/dragon_provider.dart';
-import 'package:safe_scales/ui/screens/auth_screen.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/services/user_state_service.dart';
@@ -22,6 +22,16 @@ void main() async {
   // Initialize Supabase before running the app
   await SupabaseConfig.initialize();
 
+
+  // Create and initialize the Course provider
+  final courseProvider = CourseProvider();
+  try {
+    await courseProvider.initialize();
+  } catch (e) {
+    print("Course provider initialization failed: $e");
+  }
+
+
   // Create and initialize the dragon provider
   final dragonProvider = DragonProvider();
   try {
@@ -31,10 +41,13 @@ void main() async {
   }
 
   runApp(
-    ChangeNotifierProvider.value(
-      value: dragonProvider,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: courseProvider),
+        ChangeNotifierProvider.value(value: dragonProvider),
+      ],
       child: const MyApp(),
-    ),
+    )
   );
 }
 

@@ -40,7 +40,7 @@ class _MainNavigationState extends State<MainNavigation> {
       DragonsPage(),
       ToyBoxPage(),
       ShopPage(),
-      DevTestingPage(), //TODO: Remove later
+      // DevTestingPage(), //TODO: Remove later
     ];
   }
 
@@ -161,10 +161,10 @@ class _MainNavigationState extends State<MainNavigation> {
             ),
 
             //TODO: Remove later
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.device_hub),
-              label: 'Dev',
-            ),
+            // const BottomNavigationBarItem(
+            //   icon: Icon(Icons.device_hub),
+            //   label: 'Dev',
+            // ),
           ],
         ),
       ),

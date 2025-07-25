@@ -120,10 +120,7 @@ class QuizService {
   }
 
   // New method to get quiz by topic and activity type from single table structure
-  Future<QuestionSet?> getQuizByTopicAndActivityType({
-    required String topic,
-    required String activityType,
-  }) async {
+  Future<QuestionSet?> getQuizByTopicAndActivityType({required String topic, required String activityType,}) async {
     try {
       print('Fetching quiz for topic: $topic, activityType: $activityType');
 
@@ -342,11 +339,29 @@ class QuizService {
     }
   }
 
+  Future<Map<String, List<List<int>>>> loadQuizScores(String userId) async {
+    try {
+      final response = await supabase
+          .from('Users')
+          .select('quizzes, modules')
+          .eq('id', userId)
+          .single();
+
+      print("QUIZ RESPONSE");
+      print(response);
+
+
+
+      return {};
+
+    } catch (e) {
+      print('❌ Error loading quiz scores: $e');
+      return {};
+    }
+  }
+
   // New method to get quiz by module ID
-  Future<QuestionSet?> getQuizByModuleId({
-    required String moduleId,
-    required String activityType,
-  }) async {
+  Future<QuestionSet?> getQuizByModuleId({required String moduleId, required String activityType,}) async {
     try {
       // Get module details
       final moduleResponse =

@@ -9,6 +9,7 @@ import 'package:safe_scales/models/sticker_item_model.dart';
 import '../../../services/dragon_service.dart';
 import '../../../services/quiz_service.dart';
 import '../../../services/user_state_service.dart';
+import '../../../state_management/course_provider.dart';
 import '../../../state_management/dragon_provider.dart';
 
 class DragonDressUpPage extends StatefulWidget {
@@ -288,8 +289,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
     final stickerEnvironmentSize = (width: environmentSize.width - 10, height: environmentSize.height - 10);
 
-    return Consumer<DragonProvider>(
-        builder: (context, dragonProvider, child) {
+    return Consumer2<DragonProvider, CourseProvider>(
+        builder: (context, dragonProvider, courseProvider, child) {
           return Scaffold(
             appBar: AppBar(
               title: Text(
@@ -711,13 +712,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
           //     .update({'dragons': dragonsData})
           //     .eq('id', user.id);
 
-          // Notify parent that dragon was updated
-          // if (widget.onDragonUpdated != null) {
-          //   widget.onDragonUpdated!(widget.dragonId);
-          // }
-          // final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-          // dragonProvider.loadUserDragons();
-
+          // Notify provider that dragon was updated
 
           setState(() {});
         }

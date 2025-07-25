@@ -8,6 +8,7 @@ import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
 import 'package:safe_scales/services/class_service.dart';
 
+import '../../../state_management/course_provider.dart';
 import '../../../state_management/dragon_provider.dart';
 import '../../../themes/app_theme.dart';
 import '../../widgets/dragon_image_widget.dart';
@@ -241,8 +242,8 @@ class _LessonPageState extends State<LessonPage> {
     ThemeData theme = Theme.of(context);
     final screenSize = MediaQuery.of(context).size;
 
-    return Consumer<DragonProvider>(
-      builder: (context, dragonProvider, child) {
+    return Consumer2<DragonProvider, CourseProvider>(
+      builder: (context, dragonProvider, courseProvider, child) {
         // Use the loaded module progress for module-based lessons
         double topicProgress = _moduleProgress;
 
