@@ -12,11 +12,11 @@ class CourseProvider extends ChangeNotifier {
   // === Data ===
   bool _isLoading = false;
 
+  String _className = '';
+  String _description = '';
   List<String> _unlockedLessons = []; // lessonIds
-  Map<String, LessonProgress> _lessonProgress = {};
-  Map<String, Map<String, dynamic>> _quizScores = {}; // lessonId -> quizId: int or double
-
-  Map<String, Lesson> _lessons = {}; // Map for quick access to a lesson
+  Map<String, LessonProgress> _lessonProgress = {}; //Map for access to lesson progress
+  Map<String, Lesson> _lessons = {}; // Map for quick access to lesson content
   List<String> _lessonOrder = []; // All lessonId's in order
 
   // === Services ===
@@ -35,16 +35,28 @@ class CourseProvider extends ChangeNotifier {
 
 
   // === GETTERS ===
+  bool get isLoading => _isLoading;
+
+  String get className => _className;
+  String get description => _description;
+
+  List<String> get unlockedLessons => _unlockedLessons;
+  Map<String, LessonProgress> get lessonProgress => _lessonProgress;
+  Map<String, Lesson> get lessons => _lessons;
+  List<String> get lessonOrder => _lessonOrder;
 
 
   // === Helper Methods ===
   void _clearData() {
+    _className = '';
     _lessonProgress = {};
-    _quizScores = {};
     _unlockedLessons = [];
     _lessons = {};
     _lessonOrder = [];
   }
+
+  // === Load Class Content
+
 
   // === Load Progress ===
   Future<void> loadUserProgress() async {
@@ -68,6 +80,10 @@ class CourseProvider extends ChangeNotifier {
         notifyListeners();
         return;
       }
+
+
+      _className = classData['name'];
+      _description = classData['description'];
 
       // Get class lessons
       _lessons = await _classService.getLessons(classData['id']);
@@ -99,5 +115,10 @@ class CourseProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // === Load individual lesson Progress
+
+  // === Save individual lesson Progress
+
 
 }
