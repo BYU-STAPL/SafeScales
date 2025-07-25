@@ -12,6 +12,7 @@ class LessonProgress {
   bool get isPreQuizComplete => preQuizAttempt != null;
   bool get isPostQuizComplete => postQuizAttempts.isNotEmpty;
 
+
   // TODO: Consider implementing later
   // List<QuizResult> reviewAttempts;
 
@@ -22,6 +23,27 @@ class LessonProgress {
     this.preQuizAttempt,
   });
 
+
+  double getProgressPercent() {
+
+    double progress = 0;
+
+    if (isPreQuizComplete) {
+      progress = progress + (1/3);
+    }
+
+    if (isReadingComplete) {
+      progress = progress + (1/3);
+    }
+
+    if (isPostQuizComplete) {
+      progress = progress + (1/3);
+    }
+
+    progress = progress * 100;
+
+    return progress;
+  }
 }
 
 

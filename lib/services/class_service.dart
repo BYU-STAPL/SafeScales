@@ -93,6 +93,7 @@ class ClassService {
   Lesson _createLessonFromMap(Map<String, dynamic> lessonMap) {
     return Lesson(
       lessonId: lessonMap['id'].toString(),
+      title: lessonMap['title'].toString(),
       preQuiz: _createPreQuiz(lessonMap),
       reading: _createReadingSlides(lessonMap),
       postQuiz: _createPostQuiz(lessonMap),
