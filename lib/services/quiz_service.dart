@@ -23,49 +23,49 @@ class QuizService {
   // }
 
   // Get all quizzes
-  Future<List<Map<String, dynamic>>> getAllQuizzes() async {
-    try {
-      final response = await supabase
-          .from('quizzes')
-          .select()
-          .order('created_at', ascending: false);
-
-      // Group quizzes by topic
-      final Map<String, List<Map<String, dynamic>>> groupedByTopic = {};
-
-      for (var quiz in response) {
-        final topic = quiz['topic'] ?? 'Unknown Topic';
-        if (!groupedByTopic.containsKey(topic)) {
-          groupedByTopic[topic] = [];
-        }
-        groupedByTopic[topic]!.add(quiz);
-      }
-
-      // Convert to a flat list with topic information
-      final List<Map<String, dynamic>> result = [];
-
-      groupedByTopic.forEach((topic, quizzes) {
-        // Add a single entry for each topic
-        if (quizzes.isNotEmpty) {
-          result.add({
-            'topic': topic,
-            'id': quizzes[0]['id'],
-            'title': quizzes[0]['title'] ?? topic,
-            'description': quizzes[0]['description'] ?? 'Learn about $topic',
-            'has_pre_quiz': quizzes.any((q) => q['activity_type'] == 'preQuiz'),
-            'has_post_quiz': quizzes.any(
-              (q) => q['activity_type'] == 'postQuiz',
-            ),
-            'created_at': quizzes[0]['created_at'],
-          });
-        }
-      });
-
-      return result;
-    } catch (e) {
-      throw Exception('Failed to fetch quizzes: $e');
-    }
-  }
+  // Future<List<Map<String, dynamic>>> getAllQuizzes() async {
+  //   try {
+  //     final response = await supabase
+  //         .from('quizzes')
+  //         .select()
+  //         .order('created_at', ascending: false);
+  //
+  //     // Group quizzes by topic
+  //     final Map<String, List<Map<String, dynamic>>> groupedByTopic = {};
+  //
+  //     for (var quiz in response) {
+  //       final topic = quiz['topic'] ?? 'Unknown Topic';
+  //       if (!groupedByTopic.containsKey(topic)) {
+  //         groupedByTopic[topic] = [];
+  //       }
+  //       groupedByTopic[topic]!.add(quiz);
+  //     }
+  //
+  //     // Convert to a flat list with topic information
+  //     final List<Map<String, dynamic>> result = [];
+  //
+  //     groupedByTopic.forEach((topic, quizzes) {
+  //       // Add a single entry for each topic
+  //       if (quizzes.isNotEmpty) {
+  //         result.add({
+  //           'topic': topic,
+  //           'id': quizzes[0]['id'],
+  //           'title': quizzes[0]['title'] ?? topic,
+  //           'description': quizzes[0]['description'] ?? 'Learn about $topic',
+  //           'has_pre_quiz': quizzes.any((q) => q['activity_type'] == 'preQuiz'),
+  //           'has_post_quiz': quizzes.any(
+  //             (q) => q['activity_type'] == 'postQuiz',
+  //           ),
+  //           'created_at': quizzes[0]['created_at'],
+  //         });
+  //       }
+  //     });
+  //
+  //     return result;
+  //   } catch (e) {
+  //     throw Exception('Failed to fetch quizzes: $e');
+  //   }
+  // }
 
   // Get quiz by ID with questions
   Future<QuestionSet?> getQuizWithQuestions(String quizId) async {
@@ -231,232 +231,6 @@ class QuizService {
       return null;
     }
   }
-
-  // Save quiz progress for a user
-  // Future<void> saveQuizProgress({required String userId, required String quizId, required List<List<int>> answers, required int correctAnswers, required int totalQuestions,}) async {
-  //   try {
-  //     // Calculate score percentage
-  //     final score = ((correctAnswers / totalQuestions) * 100).round();
-  //
-  //     // Get current user data
-  //     final response =
-  //         await supabase
-  //             .from('Users')
-  //             .select('quizzes, modules')
-  //             .eq('id', userId)
-  //             .single();
-  //
-  //     // Update existing quizzes column (for backward compatibility)
-  //     Map<String, dynamic> quizzes = {};
-  //     if (response['quizzes'] != null) {
-  //       quizzes = Map<String, dynamic>.from(response['quizzes']);
-  //     }
-  //
-  //     // Update quiz data in quizzes column
-  //     quizzes[quizId] = {
-  //       'score': score,
-  //       'answers': answers,
-  //       'completed_at': DateTime.now().toIso8601String(),
-  //       'correct_answers': correctAnswers,
-  //       'total_questions': totalQuestions,
-  //     };
-  //
-  //     // Update new modules column
-  //     Map<String, dynamic> modules = {};
-  //     if (response['modules'] != null) {
-  //       modules = Map<String, dynamic>.from(response['modules']);
-  //     }
-  //
-  //     // Extract module ID and quiz type from quiz ID
-  //     // Quiz ID format: "{moduleId}_{quizType}" (e.g., "module1_preQuiz")
-  //     String moduleId;
-  //     String quizType;
-  //
-  //     if (quizId.contains('_')) {
-  //       final parts = quizId.split('_');
-  //       moduleId = parts[0];
-  //       quizType = parts.length > 1 ? parts[1] : 'quiz';
-  //     } else {
-  //       // Fallback for old quiz IDs that don't follow the module format
-  //       moduleId = 'legacy';
-  //       quizType = quizId;
-  //     }
-  //
-  //     // Initialize module entry if it doesn't exist
-  //     if (!modules.containsKey(moduleId)) {
-  //       modules[moduleId] = {};
-  //     }
-  //
-  //     // Save quiz data in modules format: module_id -> quiz_type -> data
-  //     modules[moduleId][quizType] = {
-  //       'answers': answers,
-  //       'score': score,
-  //       'completed_at': DateTime.now().toIso8601String(),
-  //       'correct_answers': correctAnswers,
-  //       'total_questions': totalQuestions,
-  //     };
-  //
-  //     // Save updated data to both columns
-  //     await supabase
-  //         .from('Users')
-  //         .update({'quizzes': quizzes, 'modules': modules})
-  //         .eq('id', userId);
-  //
-  //     print('Successfully saved quiz progress for quiz $quizId');
-  //     print(
-  //       'Saved to modules[$moduleId][$quizType]: ${modules[moduleId][quizType]}',
-  //     );
-  //   } catch (e) {
-  //     print('❌Error saving quiz progress: $e');
-  //     throw Exception('Failed to save quiz progress: $e');
-  //   }
-  // }
-
-  // Get quiz progress for a user
-  // Future<Map<String, List<List<int>>>> getQuizProgress(String userId) async {
-  //   try {
-  //     print('Getting quiz progress for user: $userId');
-  //
-  //     final response =
-  //         await supabase
-  //             .from('users')
-  //             .select('quizzes')
-  //             .eq('id', userId)
-  //             .single();
-  //
-  //     print('Raw quiz progress data: ${response['quizzes']}');
-  //
-  //     if (response['quizzes'] == null) {
-  //       print('No quiz progress found for user');
-  //       return {};
-  //     }
-  //
-  //     // Convert the JSONB data to a Map<String, List<List<int>>>
-  //     final Map<String, dynamic> quizzesData = response['quizzes'];
-  //     final result = quizzesData.map((key, value) {
-  //       final List<dynamic> outerList = value as List;
-  //       final List<List<int>> convertedList =
-  //           outerList.map((innerList) {
-  //             return List<int>.from(innerList as List);
-  //           }).toList();
-  //       return MapEntry(key, convertedList);
-  //     });
-  //
-  //     print('Converted quiz progress: $result');
-  //     return result;
-  //   } catch (e) {
-  //     print('❌Error getting quiz progress: $e');
-  //     throw Exception('Failed to get quiz progress: $e');
-  //   }
-  // }
-
-  // Future<Map<String, LessonProgress>> loadLessonProgress(String userId) async {
-  //
-  //   ClassService _classService = ClassService(supabase);
-  //   final classData = await _classService.getUserClass(userId);
-  //   if (classData.isEmpty) {
-  //     print("Error: No class data");
-  //     return {};
-  //   }
-  //   final lessonsInClass = await _classService.getLessonOrder(classData['id']);
-  //
-  //
-  //   try {
-  //     final response = await supabase
-  //         .from('Users')
-  //         .select('modules')
-  //         .eq('id', userId)
-  //         .single();
-  //
-  //     Map<String, LessonProgress> progress = {};
-  //
-  //     final moduleMap = response['modules'];
-  //
-  //     // For each lesson get all quizzes for it
-  //     for (var key in moduleMap.keys) {
-  //       final lessonId = key;
-  //
-  //       // Don't look at legacy
-  //       if (lessonId == 'legacy') continue;
-  //
-  //       // Don't look at progress if lesson is not in the current class
-  //       if (!lessonsInClass.contains(lessonId)) continue;
-  //
-  //       final quizMap = moduleMap[lessonId];
-  //
-  //       QuizAttempt? preQuizAttempt = null;
-  //       List<QuizAttempt> postQuizAttempts = [];
-  //       bool isReadingComplete = false;
-  //
-  //       // For each quiz build the attempt
-  //       for (var type in quizMap.keys) {
-  //         // Get Type
-  //         ActivityType activityType;
-  //
-  //         switch (type) {
-  //           case 'preQuiz':
-  //             activityType = ActivityType.preQuiz;
-  //             break;
-  //           case 'postQuiz':
-  //             activityType = ActivityType.postQuiz;
-  //             break;
-  //           case 'review':
-  //             activityType = ActivityType.review;
-  //             break;
-  //           case 'reading':
-  //             activityType = ActivityType.reading;
-  //             break;
-  //           default:
-  //             activityType = ActivityType.reading;
-  //             break;
-  //         }
-  //
-  //         // Get Data
-  //         final activityData = quizMap[type] as Map<String, dynamic>;
-  //
-  //         if (activityType == ActivityType.reading) {
-  //           isReadingComplete = activityData['completed'];
-  //         }
-  //         else {
-  //           // Either preQuiz, postQuiz, or reviewQuiz
-  //           QuizAttempt attempt = QuizAttempt(
-  //             id: '',
-  //             quizId: '${key}_${type}',
-  //             lessonId: lessonId,
-  //             type: activityType,
-  //             score: activityData['score'] ?? 0, // Access from activityData
-  //             correctAnswers: activityData['correct_answers'] ?? 0,
-  //             totalQuestions: activityData['total_questions'] ?? 0,
-  //             responses: _parseResponses(activityData['answers'] ?? []),
-  //             completedAt: DateTime.parse(activityData['completed_at']),
-  //             // attemptNumber: attemptNumber,
-  //             // passed: passed
-  //           );
-  //
-  //           if (activityType == ActivityType.postQuiz) {
-  //             postQuizAttempts.add(attempt);
-  //           }
-  //           else if (activityType == ActivityType.preQuiz) {
-  //             preQuizAttempt = attempt;
-  //           }
-  //         }
-  //       }
-  //
-  //       progress[lessonId] = LessonProgress(
-  //           lessonId: lessonId,
-  //           isReadingComplete: isReadingComplete,
-  //           preQuizAttempt: preQuizAttempt,
-  //           postQuizAttempts: postQuizAttempts,
-  //       );
-  //     }
-  //
-  //     return progress;
-  //
-  //   } catch (e) {
-  //     print('❌ Error loading quiz scores: $e');
-  //     return {};
-  //   }
-  // }
 
   // New method to get quiz by module ID
   Future<QuestionSet?> getQuizByModuleId({required String moduleId, required String activityType,}) async {

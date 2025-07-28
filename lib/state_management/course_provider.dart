@@ -6,7 +6,6 @@ import '../models/lesson.dart';
 import '../models/lesson_progress.dart';
 import '../models/user.dart';
 import '../services/class_service.dart';
-import '../services/quiz_service.dart';
 import '../services/user_state_service.dart';
 
 class CourseProvider extends ChangeNotifier {

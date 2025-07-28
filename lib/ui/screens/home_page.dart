@@ -228,7 +228,6 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ).then((_) {
                                   // Reload data when returning from the lesson page
-                                  // TODO: Create function that reloads a single lesson
                                   Provider.of<CourseProvider>(context, listen: false).loadSingleLessonProgress(lessonId);
                                   // _loadClassData();
                                 });
