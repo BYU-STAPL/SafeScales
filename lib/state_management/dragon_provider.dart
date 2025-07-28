@@ -50,6 +50,7 @@ class DragonProvider extends ChangeNotifier {
 
   Future<void> initialize() async {
     await _dragonService.initialize();
+    await loadUserDragons();
   }
 
   // === GETTERS ===

@@ -56,7 +56,7 @@ class _LessonPageState extends State<LessonPage> {
   Future<void> _initializeData() async {
     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
     await dragonProvider.initialize();
-    await dragonProvider.loadUserDragons();
+    // await dragonProvider.loadUserDragons();
     await _loadQuizzes();
   }
 

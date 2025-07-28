@@ -35,72 +35,35 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // _classService = ClassService(_quizService.supabase);
-
-    // Load course provider data once when the widget initializes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
-    });
-
-    // _loadClassData();
+    _initializeData();
   }
 
-  // Future<void> _loadClassData() async {
-  //   try {
-  //     final user = _userState.currentUser;
-  //     if (user == null) {
-  //       setState(() {
-  //         _isLoading = false;
-  //         _currentClass = null;
-  //         _modules = [];
-  //       });
-  //       return;
-  //     }
-  //
-  //     // Get user's class
-  //     final classData = await _classService.getUserClass(user.id);
-  //
-  //     if (classData.isEmpty) {
-  //       setState(() {
-  //         _isLoading = false;
-  //         _currentClass = null;
-  //         _modules = [];
-  //       });
-  //       return;
-  //     }
-  //
-  //     // Get class modules
-  //     final modules = await _classService.getClassModules(classData['id']);
-  //
-  //     // Get module progress
-  //     final moduleIds = modules.map((m) => m['id'] as String).toList();
-  //     final moduleProgress = await _quizService.getModuleProgress(
-  //       userId: user.id,
-  //       moduleIds: moduleIds,
-  //     );
-  //
-  //     // Load user dragons using the provider
-  //     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-  //     await dragonProvider.loadUserDragons();
-  //
-  //     if (mounted) {
-  //       setState(() {
-  //         _currentClass = classData;
-  //         _modules = modules;
-  //         _moduleProgress = moduleProgress;
-  //         _isLoading = false;
-  //       });
-  //
-  //       // Update dragon phases based on current progress
-  //       // await _updateDragonPhases();
-  //     }
-  //   } catch (e) {
-  //     print('❌ Error loading class data: $e');
-  //     setState(() {
-  //       _isLoading = false;
-  //     });
-  //   }
-  // }
+  Future<void> _initializeData() async {
+    final courseProvider = Provider.of<CourseProvider>(context, listen: false);
+    courseProvider.initialize();
+
+    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+    await dragonProvider.initialize();
+  }
+
+  Lesson? getTargetLesson() {
+
+    CourseProvider courseProvider = Provider.of<CourseProvider>(context, listen: false);
+
+    final lessons = courseProvider.lessons;
+    final lessonProgressMap = courseProvider.lessonProgress;
+
+    Lesson? targetModule;
+    for (var lessonId in lessonProgressMap.keys) {
+      final progress = lessonProgressMap[lessonId]?.getProgressPercent() ?? 0.0;
+      if (progress < 100) {
+        targetModule = lessons[lessonId];
+        break;
+      }
+    }
+
+    return targetModule;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,20 +80,6 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Class Header
-                    // if (_currentClass != null) ...[
-                    //   Text(
-                    //     _currentClass!['name'] ?? 'Class',
-                    //     style: theme.textTheme.headlineLarge,
-                    //   ),
-                    //   if (_currentClass!['description'] != null) ...[
-                    //     const SizedBox(height: 8),
-                    //     Text(
-                    //       _currentClass!['description'],
-                    //       style: theme.textTheme.labelMedium,
-                    //     ),
-                    //   ],
-                    //   const SizedBox(height: 24),
-                    // ],
                     Text(
                       courseProvider.className,
                       style: theme.textTheme.headlineLarge,
@@ -141,38 +90,33 @@ class _HomePageState extends State<HomePage> {
                         ? Text(courseProvider.description, style: theme.textTheme.labelMedium,)
                         : SizedBox.shrink(),
 
+
                     const SizedBox(height: 20),
 
+
                     // Continue Learning Card
-                    // if (_modules.isNotEmpty)
-                    //   GestureDetector(
-                    //     onTap: () {
-                    //       // Find the latest incomplete module
-                    //       Map<String, dynamic>? targetModule;
-                    //       for (var module in _modules) {
-                    //         final progress = _moduleProgress[module['id']] ?? 0.0;
-                    //         if (progress < 100) {
-                    //           targetModule = module;
-                    //           break;
-                    //         }
-                    //       }
-                    //
-                    //       // If all modules are complete, go to the last module
-                    //       targetModule ??= _modules.last;
-                    //
-                    //       Navigator.push(
-                    //         context,
-                    //         MaterialPageRoute(
-                    //           builder: (context) => LessonPage(moduleId: targetModule!['id']),
-                    //         ),
-                    //       ).then((_) {
-                    //         // Reload data when returning from lesson
-                    //         Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
-                    //         _loadClassData();
-                    //       });
-                    //     },
-                    //     child: ContinueLearningWidget(modules: _modules, moduleProgress: _moduleProgress),
-                    //   ),
+                    if (courseProvider.lessonOrder.isNotEmpty)
+                      GestureDetector(
+                        onTap: () {
+                          // Find the latest incomplete module
+
+                          Lesson? targetModule = getTargetLesson();
+
+                          // If all modules are complete, go to the last module
+                          targetModule ??= courseProvider.lessons[courseProvider.lessonOrder[-1]];
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => LessonPage(moduleId: targetModule?.lessonId ?? ''),
+                            ),
+                          ).then((_) {
+                            // Reload data when returning from lesson
+                            Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
+                          });
+                        },
+                        child: ContinueLearningWidget(title: getTargetLesson()?.title ?? 'Module', progress: courseProvider.lessonProgress[getTargetLesson()?.lessonId]?.getProgressPercent() ?? 0.0),
+                      ),
 
 
                     const SizedBox(height: 30),
@@ -258,13 +202,10 @@ class _HomePageState extends State<HomePage> {
                           shouldBeUnlocked = previousProgress.round() >= 100;
 
                           if (!shouldBeUnlocked) {
-
-
                             newUnlockRequirement =
                             'Complete ${previousLesson?.title ?? 'previous module'} (${previousProgress.toStringAsFixed(0)}%)';
                           }
                         }
-
 
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 30),
@@ -287,8 +228,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ).then((_) {
                                   // Reload data when returning from the lesson page
-                                  // TODO: Create function that reloads a single lesson
-                                  Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
+                                  Provider.of<CourseProvider>(context, listen: false).loadSingleLessonProgress(lessonId);
                                   // _loadClassData();
                                 });
                               }
@@ -296,61 +236,6 @@ class _HomePageState extends State<HomePage> {
                           ),
                         );
                       }).toList(),
-
-                    // Dynamic modules list
-                    //   ..._modules.asMap().entries.map((entry) {
-                    //
-                    //     final index = entry.key;
-                    //     final module = entry.value;
-                    //     final moduleId = module['id'] as String;
-                    //     final title = module['title'] ?? 'Module ${index + 1}';
-                    //     final actualProgress = _moduleProgress[moduleId] ?? 0.0;
-                    //
-                    //     // Calculate unlock status
-                    //     bool shouldBeUnlocked = false;
-                    //     String? newUnlockRequirement;
-                    //
-                    //     if (index == 0) {
-                    //       shouldBeUnlocked = true;
-                    //     } else if (index > 0) {
-                    //       final previousModule = _modules[index - 1];
-                    //       final previousProgress = _moduleProgress[previousModule['id']] ?? 0.0;
-                    //       shouldBeUnlocked = previousProgress.round() >= 100;
-                    //       if (!shouldBeUnlocked) {
-                    //         newUnlockRequirement =
-                    //         'Complete ${previousModule['title'] ?? 'previous module'} (${previousProgress.toStringAsFixed(0)}%)';
-                    //       }
-                    //     }
-                    //
-                    //     return Padding(
-                    //       padding: const EdgeInsets.only(bottom: 30),
-                    //       child: LessonCard(
-                    //         moduleId: moduleId,
-                    //         title: title,
-                    //         description: 'Learn about $title',
-                    //         actualProgress: actualProgress,
-                    //         shouldBeUnlocked: shouldBeUnlocked,
-                    //         newUnlockRequirement: newUnlockRequirement,
-                    //         unlockRequirement: index > 0
-                    //             ? 'Complete ${_modules[index - 1]['title'] ?? 'previous module'}'
-                    //             : null,
-                    //         onTapCard: () {
-                    //           if (shouldBeUnlocked) {
-                    //             Navigator.push(
-                    //               context,
-                    //               MaterialPageRoute(
-                    //                 builder: (context) => LessonPage(moduleId: moduleId),
-                    //               ),
-                    //             ).then((_) {
-                    //               // Reload data when returning from the lesson page
-                    //               Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
-                    //               _loadClassData();
-                    //             });
-                    //           }
-                    //         },
-                    //       ),
-                    //     );
-                    //   }).toList(),
 
                     const SizedBox(height: 20),
                   ],

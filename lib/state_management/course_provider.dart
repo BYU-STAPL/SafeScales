@@ -1,16 +1,18 @@
 
 import 'package:flutter/cupertino.dart';
+import 'package:safe_scales/services/user_progress_service.dart';
 
 import '../models/lesson.dart';
 import '../models/lesson_progress.dart';
+import '../models/user.dart';
 import '../services/class_service.dart';
-import '../services/quiz_service.dart';
 import '../services/user_state_service.dart';
 
 class CourseProvider extends ChangeNotifier {
 
   // === Data ===
   bool _isLoading = false;
+
 
   String _className = '';
   String _description = '';
@@ -21,15 +23,23 @@ class CourseProvider extends ChangeNotifier {
 
   // === Services ===
   final UserStateService _userState = UserStateService();
-  final QuizService _quizService = QuizService();
+  final UserProgressService _userProgressService = UserProgressService();
+  // final QuizService _quizService = QuizService();
   late final ClassService _classService;
 
+  // === User ===
+  late User _user;
 
   CourseProvider() {
-    _classService = ClassService(_quizService.supabase);
+    _classService = ClassService(_userProgressService.supabase);
+    if (_userState.currentUser != null) {
+      _user = _userState.currentUser!;
+    }
   }
 
   Future<void> initialize() async {
+    await loadUser();
+    await loadClassContent();
     await loadUserProgress();
   }
 
@@ -55,32 +65,33 @@ class CourseProvider extends ChangeNotifier {
     _lessonOrder = [];
   }
 
+  // === Load User ===
+  Future<void> loadUser() async {
+    if (_userState.currentUser == null) {
+      _clearData();
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    _user = _userState.currentUser!;
+  }
+
+
   // === Load Class Content
-
-
-  // === Load Progress ===
-  Future<void> loadUserProgress() async {
+  Future<void> loadClassContent() async {
     try {
       _isLoading = true;
       notifyListeners();
 
-      final user = _userState.currentUser;
-      if (user == null) {
-        _clearData();
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
-
       // Get user's class
-      final classData = await _classService.getUserClass(user.id);
+      final classData = await _classService.getUserClass(_user.id);
       if (classData.isEmpty) {
         _clearData();
         _isLoading = false;
         notifyListeners();
         return;
       }
-
 
       _className = classData['name'];
       _description = classData['description'];
@@ -90,26 +101,33 @@ class CourseProvider extends ChangeNotifier {
 
       _lessonOrder = await _classService.getLessonOrder(classData['id']);
 
-      // Get User's Progress for each lesson
-      // _lessonProgress = await _quizService.getModuleProgress(
-      //   userId: user.id,
-      //   moduleIds: _lessonOrder,
-      // );
+      _isLoading = false;
+      notifyListeners();
 
-      _lessonProgress = await _quizService.loadLessonProgress(user.id);
+    } catch (e) {
+      print('❌ CourseProgressProvider: Error loading lesson content: $e');
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
 
-      // print(tempQuizProgress);
-      // // Load quiz scores
-      // await _loadQuizScores(user.id);
-      //
+  // === Load Progress ===
+  Future<void> loadUserProgress() async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      _lessonProgress = await _userProgressService.loadLessonProgress(_user.id);
+
       // // Calculate unlocked content based on progress
       // _calculateUnlockedContent();
 
       _isLoading = false;
       notifyListeners();
 
-    } catch (e) {
+    }
+    catch (e) {
       print('❌ CourseProgressProvider: Error loading user progress: $e');
       _isLoading = false;
       notifyListeners();
@@ -117,6 +135,33 @@ class CourseProvider extends ChangeNotifier {
   }
 
   // === Load individual lesson Progress
+  Future<void> loadSingleLessonProgress(String lessonId) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      LessonProgress? updatedLesson = await _userProgressService.loadSingleLessonProgress(_user.id, lessonId);
+
+      if (updatedLesson != null) {
+        _lessonProgress[lessonId] = updatedLesson;
+        print(updatedLesson.lessonId);
+        print(updatedLesson.preQuizAttempt);
+        print(updatedLesson.isReadingComplete);
+        print(updatedLesson.postQuizAttempts[0].correctAnswers);
+      }
+
+      _isLoading = false;
+      notifyListeners();
+
+    }
+    catch (e) {
+      print('❌ CourseProgressProvider: Error loading progress for $lessonId: $e');
+      _isLoading = false;
+      notifyListeners();
+    }
+
+  }
+
 
   // === Save individual lesson Progress
 

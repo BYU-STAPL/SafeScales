@@ -35,54 +35,10 @@ class PostQuizActionsScreen extends StatefulWidget {
 }
 
 class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
-  final ClassService _classService = ClassService(QuizService().supabase);
-  final UserStateService _userState = UserStateService();
-  final QuizService _quizService = QuizService();
-
-  Map<String, dynamic>? _currentClass;
-  List<Map<String, dynamic>> _modules = [];
-  Map<String, double> _moduleProgress = {};
 
   @override
   void initState() {
     super.initState();
-    _loadClassAndModuleData();
-  }
-
-  Future<void> _loadClassAndModuleData() async {
-    try {
-      final user = _userState.currentUser;
-      if (user == null) return;
-
-      // Get current class
-      final classResponse = await _classService.getUserClass(user.id);
-      if (classResponse.isNotEmpty) {
-        setState(() {
-          _currentClass = classResponse;
-        });
-
-        // Get modules for this class
-        final classId = classResponse['id'];
-        if (classId != null) {
-          final modules = await _classService.getClassModules(classId);
-          setState(() {
-            _modules = modules;
-          });
-
-          // Get module progress
-          final moduleIds = modules.map((m) => m['id'] as String).toList();
-          final progress = await _quizService.getModuleProgress(
-            userId: user.id,
-            moduleIds: moduleIds,
-          );
-          setState(() {
-            _moduleProgress = progress;
-          });
-        }
-      }
-    } catch (e) {
-      print('❌ Error loading class and module data: $e');
-    }
   }
 
   //TODO: Adjust so new screens can return to the suggested action

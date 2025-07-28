@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/lesson.dart';
 import '../models/question.dart';
 
+/// Class Service gets Class Content (note: not user progress)
 class ClassService {
   final SupabaseClient supabase;
 
