@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:safe_scales/services/user_progress_service.dart';
 import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_results_screen.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_results_screen.dart';
@@ -78,13 +79,20 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     try {
       final user = _userState.currentUser;
       if (user != null) {
-        await QuizService().saveQuizProgress(
-          userId: user.id,
-          quizId: widget.questionSet.id,
-          answers: userAnswers,
-          correctAnswers: correctAnswers,
-          totalQuestions: totalQuestions,
+        await UserProgressService().saveQuizProgress(
+            userId: user.id,
+            quizId: widget.questionSet.id,
+            answers: userAnswers,
+            correctAnswers: correctAnswers,
+            totalQuestions: totalQuestions
         );
+        // await QuizService().saveQuizProgress(
+        //   userId: user.id,
+        //   quizId: widget.questionSet.id,
+        //   answers: userAnswers,
+        //   correctAnswers: correctAnswers,
+        //   totalQuestions: totalQuestions,
+        // );
       } else {
         print('No user logged in, skipping post-quiz progress save');
       }

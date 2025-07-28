@@ -35,19 +35,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Load course provider data once when the widget initializes
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
-    // });
-    //
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   Provider.of<DragonProvider>(context, listen: false).initialize();
-    //   Provider.of<DragonProvider>(context, listen: false).loadUserDragons();
-    //
-    // });
-
-    // _loadClassData();
-
     _initializeData();
   }
 
@@ -57,7 +44,6 @@ class _HomePageState extends State<HomePage> {
 
     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
     await dragonProvider.initialize();
-    // await dragonProvider.loadUserDragons();
   }
 
   Lesson? getTargetLesson() {
@@ -221,7 +207,6 @@ class _HomePageState extends State<HomePage> {
                           }
                         }
 
-
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 30),
                           child: LessonCard(
@@ -244,7 +229,7 @@ class _HomePageState extends State<HomePage> {
                                 ).then((_) {
                                   // Reload data when returning from the lesson page
                                   // TODO: Create function that reloads a single lesson
-                                  Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
+                                  Provider.of<CourseProvider>(context, listen: false).loadSingleLessonProgress(lessonId);
                                   // _loadClassData();
                                 });
                               }

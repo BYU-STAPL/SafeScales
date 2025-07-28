@@ -3,6 +3,7 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:safe_scales/services/user_progress_service.dart';
 import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_results_screen.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/services/quiz_service.dart';
@@ -57,7 +58,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
     try {
       final user = _userState.currentUser;
       if (user != null) {
-        await QuizService().saveQuizProgress(
+        await UserProgressService().saveQuizProgress(
           userId: user.id,
           quizId: widget.questionSet.id,
           answers: userAnswers,
