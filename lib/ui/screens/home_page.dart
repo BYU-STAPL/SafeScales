@@ -36,15 +36,28 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     // Load course provider data once when the widget initializes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<DragonProvider>(context, listen: false).loadUserProgress();
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
+    // });
+    //
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   Provider.of<DragonProvider>(context, listen: false).initialize();
+    //   Provider.of<DragonProvider>(context, listen: false).loadUserDragons();
+    //
+    // });
 
     // _loadClassData();
+
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    final courseProvider = Provider.of<CourseProvider>(context, listen: false);
+    courseProvider.initialize();
+
+    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+    await dragonProvider.initialize();
+    // await dragonProvider.loadUserDragons();
   }
 
   Lesson? getTargetLesson() {

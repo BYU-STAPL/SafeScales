@@ -86,7 +86,7 @@ class CourseProvider extends ChangeNotifier {
       _description = classData['description'];
 
       // Get class lessons
-      _lessons = await _classService.getLessons(classData['id']);
+          _lessons = await _classService.getLessons(classData['id']);
 
       _lessonOrder = await _classService.getLessonOrder(classData['id']);
 

@@ -258,7 +258,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   Future<void> _loadCurrentPhase() async {
     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
     await dragonProvider.initialize();
-    await dragonProvider.loadUserDragons();
+    // await dragonProvider.loadUserDragons();
 
     final phase = dragonProvider.getUserPreferredPhase(widget.dragonId);
 
