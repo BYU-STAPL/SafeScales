@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:safe_scales/models/lesson_progress.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_screen.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_screen.dart';
-import 'package:safe_scales/services/quiz_service.dart';
-import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
-import 'package:safe_scales/services/class_service.dart';
 
+import '../../../models/lesson.dart';
 import '../../../state_management/course_provider.dart';
 import '../../../state_management/dragon_provider.dart';
 import '../../../themes/app_theme.dart';
@@ -28,214 +27,29 @@ class LessonPage extends StatefulWidget {
 }
 
 class _LessonPageState extends State<LessonPage> {
-  bool preQuizCompleted = false;
-  bool readingCompleted = false;
-  bool postQuizCompleted = false;
-  double? preQuizScore;
-  double? postQuizScore;
-
-  final QuizService _quizService = QuizService();
-  final UserStateService _userState = UserStateService();
-  late final ClassService _classService;
-
-  QuestionSet? _preQuiz;
-  QuestionSet? _postQuiz;
-  bool _isLoading = true;
-  Map<String, dynamic>? _dragonData;
-  Map<String, dynamic>? _moduleData;
-  String _moduleTitle = '';
-  double _moduleProgress = 0.0;
+  Lesson? _lesson; // Make nullable
+  LessonProgress? _lessonProgress; // Make nullable
+  bool _isLoading = true; // Add loading state
 
   @override
   void initState() {
     super.initState();
-    _classService = ClassService(_quizService.supabase);
     _initializeData();
   }
 
   Future<void> _initializeData() async {
-    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-    await dragonProvider.initialize();
-    // await dragonProvider.loadUserDragons();
-    await _loadQuizzes();
-  }
+    final courseProvider = Provider.of<CourseProvider>(context, listen: false);
+    _lesson = (await courseProvider.lessons[widget.moduleId])!;
+    _lessonProgress = (await courseProvider.lessonProgress[widget.moduleId])!;
 
-  Future<void> _loadQuizzes() async {
-    try {
-      QuestionSet? preQuiz;
-      QuestionSet? postQuiz;
-
-      if (widget.moduleId != null) {
-        // Load module data
-        _moduleData = await _classService.getModuleById(widget.moduleId!);
-        if (_moduleData != null) {
-          _moduleTitle = _moduleData!['title'] ?? 'Module';
-        }
-
-        // Get module-based quizzes
-        preQuiz = await _quizService.getQuizByModuleId(
-          moduleId: widget.moduleId!,
-          activityType: 'preQuiz',
-        );
-
-        postQuiz = await _quizService.getQuizByModuleId(
-          moduleId: widget.moduleId!,
-          activityType: 'postQuiz',
-        );
-
-        // If quizzes have no questions, mark them as complete with 100% score
-        if (preQuiz != null && preQuiz.questions.isEmpty) {
-          setState(() {
-            preQuizCompleted = true;
-            preQuizScore = 100.0;
-          });
-        }
-
-        if (postQuiz != null && postQuiz.questions.isEmpty) {
-          setState(() {
-            postQuizCompleted = true;
-            postQuizScore = 100.0;
-          });
-        }
-      } else if (widget.topic != null) {
-        // Fallback to topic-based system for backward compatibility
-        _moduleTitle = widget.topic!;
-
-        preQuiz = await _quizService.getQuizByTopicAndActivityType(
-          topic: widget.topic!,
-          activityType: 'preQuiz',
-        );
-
-        postQuiz = await _quizService.getQuizByTopicAndActivityType(
-          topic: widget.topic!,
-          activityType: 'postQuiz',
-        );
-
-        // If quizzes have no questions, mark them as complete with 100% score
-        if (preQuiz != null && preQuiz.questions.isEmpty) {
-          setState(() {
-            preQuizCompleted = true;
-            preQuizScore = 100.0;
-          });
-        }
-
-        if (postQuiz != null && postQuiz.questions.isEmpty) {
-          setState(() {
-            postQuizCompleted = true;
-            postQuizScore = 100.0;
-          });
-        }
-      }
-
-      // Get user's quiz progress
-      final user = _userState.currentUser;
-      if (user != null) {
-        final response =
-        await _quizService.supabase
-            .from('Users')
-            .select('quizzes, modules')
-            .eq('id', user.id)
-            .single();
-
-        // Check new modules column first
-        if (response['modules'] != null && widget.moduleId != null) {
-          final modulesData = Map<String, dynamic>.from(response['modules']);
-
-          if (modulesData.containsKey(widget.moduleId!)) {
-            final moduleData = Map<String, dynamic>.from(
-              modulesData[widget.moduleId!],
-            );
-
-            // Check for pre-quiz completion
-            if (moduleData.containsKey('preQuiz')) {
-              final preQuizData = moduleData['preQuiz'];
-              setState(() {
-                preQuizCompleted = true;
-                preQuizScore = preQuizData['score'].toDouble();
-              });
-            }
-
-            // Check for reading completion
-            if (moduleData.containsKey('reading')) {
-              final readingData = moduleData['reading'];
-              setState(() {
-                readingCompleted = readingData['completed'] == true;
-              });
-            }
-
-            // Check for post-quiz completion
-            if (moduleData.containsKey('postQuiz')) {
-              final postQuizData = moduleData['postQuiz'];
-              setState(() {
-                postQuizCompleted = true;
-                postQuizScore = postQuizData['score'].toDouble();
-              });
-            }
-          }
-        }
-
-        // Fallback to old quizzes column if not found in modules
-        if (response['quizzes'] != null) {
-          final quizzesData = Map<String, dynamic>.from(response['quizzes']);
-
-          // Check for module-based quiz IDs first (if not already found in modules column)
-          if (widget.moduleId != null &&
-              !preQuizCompleted &&
-              !postQuizCompleted) {
-            final preQuizId = '${widget.moduleId}_preQuiz';
-            final postQuizId = '${widget.moduleId}_postQuiz';
-
-            if (quizzesData.containsKey(preQuizId)) {
-              final preQuizData = quizzesData[preQuizId];
-              setState(() {
-                preQuizCompleted = true;
-                preQuizScore = preQuizData['score'].toDouble();
-              });
-            }
-
-            if (quizzesData.containsKey(postQuizId)) {
-              final postQuizData = quizzesData[postQuizId];
-              setState(() {
-                postQuizCompleted = true;
-                postQuizScore = postQuizData['score'].toDouble();
-              });
-            }
-          }
-
-          // Fallback to old quiz IDs (for backward compatibility)
-          if (preQuiz != null &&
-              quizzesData.containsKey(preQuiz.id) &&
-              !preQuizCompleted) {
-            final preQuizData = quizzesData[preQuiz.id];
-            setState(() {
-              preQuizCompleted = true;
-              preQuizScore = preQuizData['score'].toDouble();
-            });
-          }
-
-          if (postQuiz != null &&
-              quizzesData.containsKey(postQuiz.id) &&
-              !postQuizCompleted) {
-            final postQuizData = quizzesData[postQuiz.id];
-            setState(() {
-              postQuizCompleted = true;
-              postQuizScore = postQuizData['score'].toDouble();
-            });
-          }
-        }
-      }
-
-      setState(() {
-        _preQuiz = preQuiz;
-        _postQuiz = postQuiz;
-        _isLoading = false;
-      });
-    } catch (e) {
+    if (mounted) {
       setState(() {
         _isLoading = false;
       });
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -244,29 +58,23 @@ class _LessonPageState extends State<LessonPage> {
 
     return Consumer2<DragonProvider, CourseProvider>(
       builder: (context, dragonProvider, courseProvider, child) {
-        // Use the loaded module progress for module-based lessons
-        double topicProgress = _moduleProgress;
-
-        // Fallback to quiz-based calculation for backward compatibility (topic-based lessons)
-        if (widget.moduleId == null) {
-          if (preQuizCompleted &&
-              postQuizCompleted &&
-              preQuizScore != null &&
-              postQuizScore != null) {
-            topicProgress = (preQuizScore! / 2) + (postQuizScore! / 2);
-          } else if (preQuizCompleted && preQuizScore != null) {
-            topicProgress = preQuizScore! / 2;
-          } else if (postQuizCompleted && postQuizScore != null) {
-            topicProgress = postQuizScore! / 2;
-          }
+        // Show loading if data is not ready
+        if (_isLoading || _lesson == null || _lessonProgress == null) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(widget.topic ?? 'Loading...'),
+              centerTitle: true,
+            ),
+            body: const Center(child: CircularProgressIndicator()),
+          );
         }
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(widget.topic ?? _moduleTitle),
+            title: Text(widget.topic ?? _lesson!.title),
             centerTitle: true,
           ),
-          body: _isLoading
+          body: courseProvider.isLoading
               ? const Center(child: CircularProgressIndicator())
               : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -303,32 +111,32 @@ class _LessonPageState extends State<LessonPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (_preQuiz != null) ...[
+                      ...[
                         _buildQuizCard(
                           title: 'Pre-Quiz',
                           description: 'Test your knowledge before starting',
-                          onTap: () => _startQuiz(_preQuiz!),
+                          onTap: () => _startQuiz(_lesson!.preQuiz),
                           icon: Icons.quiz,
                           color: theme.colorScheme.primary,
-                          isCompleted: preQuizCompleted,
-                          score: preQuizScore,
-                          isUnlocked: !preQuizCompleted, // Only unlock when the pre-quiz is not completed, lock after
+                          isCompleted: _lessonProgress!.isPreQuizComplete,
+                          score: _lessonProgress!.preQuizAttempt?.score ?? 0,
+                          isUnlocked: !_lessonProgress!.isPreQuizComplete, // Only unlock when the pre-quiz is not completed, lock after
                         ),
                         const SizedBox(height: 20),
                       ],
-                      _buildReadingCard(isUnlocked: preQuizCompleted),
-                      if (_postQuiz != null) ...[
+                      _buildReadingCard(isUnlocked: _lessonProgress!.isPreQuizComplete),
+                      ...[
                         const SizedBox(height: 20),
                         _buildQuizCard(
                           title: 'Post-Quiz',
                           description: 'Test what you\'ve learned',
-                          onTap: () => _startQuiz(_postQuiz!),
+                          onTap: () => _startQuiz(_lesson!.postQuiz),
                           icon: Icons.assignment,
                           color: theme.colorScheme.primary,
-                          isCompleted: postQuizCompleted &&
-                              (postQuizScore! >= _postQuiz!.passingScore),
-                          score: postQuizScore,
-                          isUnlocked: readingCompleted,
+                          isCompleted: _lessonProgress!.isPostQuizComplete &&
+                              (_lessonProgress!.postQuizAttempts.first.score >= _lesson!.postQuiz.passingScore),
+                          score: _lessonProgress!.postQuizAttempts.last.score,
+                          isUnlocked: _lessonProgress!.isReadingComplete,
                         ),
                       ],
                     ],
@@ -350,7 +158,7 @@ class _LessonPageState extends State<LessonPage> {
     required Color color,
     required bool isCompleted,
     required bool isUnlocked,
-    double? score,
+    int? score,
   }) {
     ThemeData theme = Theme.of(context);
 
@@ -461,13 +269,13 @@ class _LessonPageState extends State<LessonPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color:
-        readingCompleted
+        _lessonProgress!.isReadingComplete
             ? theme.colorScheme.green.withValues(alpha: 0.1)
             : cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color:
-          readingCompleted
+          _lessonProgress!.isReadingComplete
               ? theme.colorScheme.green
               : primary.withValues(alpha: 0.5),
           width: 2,
@@ -484,7 +292,7 @@ class _LessonPageState extends State<LessonPage> {
         color: Colors.transparent,
         child: InkWell(
           onTap:
-          preQuizCompleted
+          _lessonProgress!.isPreQuizComplete
               ? () {
             // Navigate to reading activity screen
             Navigator.push(
@@ -497,16 +305,16 @@ class _LessonPageState extends State<LessonPage> {
                       moduleId: widget.moduleId,
                     ),
               ),
-            ).then((completed) {
+            ).then((completed) async {
               if (completed == true) {
-                setState(() {
-                  readingCompleted = true;
+                final courseProvider = Provider.of<CourseProvider>(context, listen: false);
+                await courseProvider.loadSingleLessonProgress(widget.moduleId);
 
-                  // TODO: Move load module progress into a different provider
-                  // TODO: Currently loadUser dragons also updates module progress
-                  final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-                  dragonProvider.loadUserProgress();
-                });
+                if (mounted) {
+                  setState(() {
+                    _lessonProgress = courseProvider.lessonProgress[widget.moduleId];
+                  });
+                }
               }
             });
           }
@@ -556,7 +364,7 @@ class _LessonPageState extends State<LessonPage> {
                                 fontSize: 18,
                               ),
                             ),
-                            if (readingCompleted) ...[
+                            if (_lessonProgress!.isReadingComplete) ...[
                               const SizedBox(width: 10),
                               Icon(
                                 Icons.check_circle,
@@ -568,7 +376,7 @@ class _LessonPageState extends State<LessonPage> {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          'Learn about ${widget.topic ?? _moduleTitle}',
+                          'Learn about ${widget.topic ?? _lesson!.title}',
                           style: theme.textTheme.labelSmall,
                         ),
                       ],
@@ -621,7 +429,7 @@ class _LessonPageState extends State<LessonPage> {
     }
 
     // Check if pre-quiz has already been completed
-    if (quiz.activityType == ActivityType.preQuiz && preQuizCompleted) {
+    if (quiz.activityType == ActivityType.preQuiz && _lessonProgress!.isPreQuizComplete) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -643,7 +451,7 @@ class _LessonPageState extends State<LessonPage> {
     }
 
     // Check if post-quiz is being attempted before reading is completed
-    if (quiz.activityType == ActivityType.postQuiz && !readingCompleted) {
+    if (quiz.activityType == ActivityType.postQuiz && !_lessonProgress!.isReadingComplete) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -674,25 +482,17 @@ class _LessonPageState extends State<LessonPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => quizScreen),
-    ).then((completed) {
+    ).then((completed) async {
       if (completed == true) {
-        setState(() {
-          if (quiz.activityType == ActivityType.preQuiz) {
-            preQuizCompleted = true;
-          } else if (quiz.activityType == ActivityType.postQuiz &&
-              postQuizScore != null &&
-              _postQuiz != null &&
-              postQuizScore! >= _postQuiz!.passingScore) {
-            postQuizCompleted = true;
-          }
-        });
-        _loadQuizzes(); // Reload quizzes to update scores
-        // _loadModuleProgress(); // Update dragon
+        final courseProvider = Provider.of<CourseProvider>(context, listen: false);
+        await courseProvider.loadSingleLessonProgress(widget.moduleId);
 
-
-        // Reload dragon data after quiz completion
-        final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-        dragonProvider.loadUserDragons();
+        if (mounted) {
+          setState(() {
+            // Update local lesson progress variable
+            _lessonProgress = courseProvider.lessonProgress[widget.moduleId];
+          });
+        }
       }
     });
   }

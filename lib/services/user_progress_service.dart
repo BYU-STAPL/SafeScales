@@ -96,7 +96,7 @@ class UserProgressService {
               quizId: '${key}_${type}',
               lessonId: lessonId,
               type: activityType,
-              score: activityData['score'] ?? 0, // Access from activityData
+              score: activityData['score'] ?? 0.0, // Access from activityData
               correctAnswers: activityData['correct_answers'] ?? 0,
               totalQuestions: activityData['total_questions'] ?? 0,
               responses: _parseResponses(activityData['answers'] ?? []),
@@ -143,6 +143,7 @@ class UserProgressService {
 
     final lessonsInClass = await _classService.getLessonOrder(classData['id']);
     if (!lessonsInClass.contains(lessonId)) {
+      print("Lesson is not in current class");
       return null; // Lesson not in current class
     }
 
@@ -150,11 +151,14 @@ class UserProgressService {
       // Query only the specific lesson's progress using JSON path
       final response = await supabase
           .from('Users')
-          .select('modules->$lessonId')
+          .select('modules')
+          // .eq('moduleId', lessonId) TODO: Add something to just get one lesson from database
           .eq('id', userId)
           .single();
 
+
       final lessonData = response['modules'];
+
       if (lessonData == null || lessonData[lessonId] == null) {
         return null; // No progress data for this lesson
       }
@@ -265,6 +269,7 @@ class UserProgressService {
       String moduleId;
       String quizType;
 
+      print('QUIZ ID: $quizId');
       if (quizId.contains('_')) {
         final parts = quizId.split('_');
         moduleId = parts[0];
