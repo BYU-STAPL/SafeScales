@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
-import 'package:safe_scales/services/quiz_service.dart';
-import 'package:safe_scales/services/user_state_service.dart';
-import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/ui/widgets/lesson_card.dart';
 import 'package:safe_scales/state_management/dragon_provider.dart';
 
@@ -21,16 +18,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // final QuizService _quizService = QuizService();
-  // final _userState = UserStateService();
-  // late final ClassService _classService;
-
-  // Class-based variables
-  // Map<String, dynamic>? _currentClass;
-  // List<Map<String, dynamic>> _modules = [];
-  // Map<String, double> _moduleProgress = {};
-  //
-  // bool _isLoading = true;
 
   @override
   void initState() {

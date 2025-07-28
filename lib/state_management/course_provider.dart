@@ -137,6 +137,7 @@ class CourseProvider extends ChangeNotifier {
   // === Load individual lesson Progress
   Future<void> loadSingleLessonProgress(String lessonId) async {
     try {
+      print("LOAD SINGLE LESSON PROGRESS");
       _isLoading = true;
       notifyListeners();
 
@@ -145,9 +146,7 @@ class CourseProvider extends ChangeNotifier {
       if (updatedLesson != null) {
         _lessonProgress[lessonId] = updatedLesson;
         print(updatedLesson.lessonId);
-        print(updatedLesson.preQuizAttempt);
-        print(updatedLesson.isReadingComplete);
-        print(updatedLesson.postQuizAttempts[0].correctAnswers);
+        print(updatedLesson.postQuizAttempts[0].score);
       }
 
       _isLoading = false;
@@ -162,8 +161,28 @@ class CourseProvider extends ChangeNotifier {
 
   }
 
-
   // === Save individual lesson Progress
+  Future<void> saveQuizProgress({required String userId, required String quizId, required List<List<int>> userAnswers, required int correctAnswers, required int totalQuestions}) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
 
+      await UserProgressService().saveQuizProgress(
+          userId: userId,
+          quizId: quizId,
+          answers: userAnswers,
+          correctAnswers: correctAnswers,
+          totalQuestions: totalQuestions
+      );
+
+      _isLoading = false;
+      notifyListeners();
+    }
+    catch (e) {
+      print('❌ CourseProgressProvider: Error saving quiz progress for $quizId: $e');
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
 }

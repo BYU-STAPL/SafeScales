@@ -5,7 +5,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:safe_scales/services/user_progress_service.dart';
+import 'package:safe_scales/state_management/course_provider.dart';
 import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_results_screen.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_results_screen.dart';
@@ -68,31 +70,25 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     int totalQuestions = widget.questionSet.questions.length;
     int scorePercentage = ((correctAnswers / totalQuestions) * 100).round();
 
-    // print('Post-quiz completed:');
-    // print('Quiz ID: ${widget.questionSet.id}');
-    // print('Total questions: $totalQuestions');
-    // print('Correct answers: $correctAnswers');
-    // print('Score percentage: $scorePercentage');
-    // print('User answers: $userAnswers');
+    print('Post-quiz completed:');
+    print('Quiz ID: ${widget.questionSet.id}');
+    print('Total questions: $totalQuestions');
+    print('Correct answers: $correctAnswers');
+    print('Score percentage: $scorePercentage');
+    print('User answers: $userAnswers');
 
     // Save quiz progress
     try {
       final user = _userState.currentUser;
       if (user != null) {
-        await UserProgressService().saveQuizProgress(
+        await Provider.of<CourseProvider>(context, listen: false).saveQuizProgress(
             userId: user.id,
             quizId: widget.questionSet.id,
-            answers: userAnswers,
+            userAnswers: userAnswers,
             correctAnswers: correctAnswers,
             totalQuestions: totalQuestions
         );
-        // await QuizService().saveQuizProgress(
-        //   userId: user.id,
-        //   quizId: widget.questionSet.id,
-        //   answers: userAnswers,
-        //   correctAnswers: correctAnswers,
-        //   totalQuestions: totalQuestions,
-        // );
+
       } else {
         print('No user logged in, skipping post-quiz progress save');
       }
