@@ -90,16 +90,9 @@ class CourseProvider extends ChangeNotifier {
 
       _lessonOrder = await _classService.getLessonOrder(classData['id']);
 
-      // Get User's Progress for each lesson
-      // _lessonProgress = await _quizService.getModuleProgress(
-      //   userId: user.id,
-      //   moduleIds: _lessonOrder,
-      // );
-
       _lessonProgress = await _quizService.loadLessonProgress(user.id);
 
 
-      // print(tempQuizProgress);
       // // Load quiz scores
       // await _loadQuizScores(user.id);
       //

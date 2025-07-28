@@ -4,12 +4,12 @@ import 'package:safe_scales/extensions/string_extensions.dart';
 class ContinueLearningWidget extends StatelessWidget {
   const ContinueLearningWidget({
     super.key,
-    required List<Map<String, dynamic>> modules,
-    required Map<String, double> moduleProgress,
-  }) : _modules = modules, _moduleProgress = moduleProgress;
+    required this.title,
+    required this.progress,
+  });
 
-  final List<Map<String, dynamic>> _modules;
-  final Map<String, double> _moduleProgress;
+  final String title;
+  final double progress;
 
   @override
   Widget build(BuildContext context) {
@@ -49,19 +49,8 @@ class ContinueLearningWidget extends StatelessWidget {
               const SizedBox(height: 4),
               Builder(
                 builder: (context) {
-                  // Find the target module
-                  Map<String, dynamic>? targetModule;
-                  for (var module in _modules) {
-                    final progress = _moduleProgress[module['id']] ?? 0.0;
-                    if (progress < 100) {
-                      targetModule = module;
-                      break;
-                    }
-                  }
-                  targetModule ??= _modules.last;
-
                   return Text(
-                    (targetModule['title'] ?? 'Module').toUpperCase(),
+                    (title).toUpperCase(),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: Colors.white.withValues(alpha: 0.9),
                       letterSpacing: 1.2,
@@ -72,22 +61,6 @@ class ContinueLearningWidget extends StatelessWidget {
               const SizedBox(height: 8),
               Builder(
                 builder: (context) {
-                  // Find the target module and its progress
-                  Map<String, dynamic>? targetModule;
-                  double progress = 0;
-                  for (var module in _modules) {
-                    final moduleProgress = _moduleProgress[module['id']] ?? 0.0;
-                    if (moduleProgress < 100) {
-                      targetModule = module;
-                      progress = moduleProgress;
-                      break;
-                    }
-                  }
-                  if (targetModule == null && _modules.isNotEmpty) {
-                    targetModule = _modules.last;
-                    progress = _moduleProgress[targetModule['id']] ?? 0.0;
-                  }
-
                   return Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
