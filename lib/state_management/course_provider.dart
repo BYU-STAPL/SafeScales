@@ -137,7 +137,6 @@ class CourseProvider extends ChangeNotifier {
   // === Load individual lesson Progress
   Future<void> loadSingleLessonProgress(String lessonId) async {
     try {
-      print("LOAD SINGLE LESSON PROGRESS");
       _isLoading = true;
       notifyListeners();
 
@@ -145,8 +144,6 @@ class CourseProvider extends ChangeNotifier {
 
       if (updatedLesson != null) {
         _lessonProgress[lessonId] = updatedLesson;
-        print(updatedLesson.lessonId);
-        print(updatedLesson.postQuizAttempts[0].score);
       }
 
       _isLoading = false;

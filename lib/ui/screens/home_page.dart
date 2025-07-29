@@ -27,7 +27,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _initializeData() async {
     final courseProvider = Provider.of<CourseProvider>(context, listen: false);
-    courseProvider.initialize();
+    await courseProvider.initialize();
 
     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
     await dragonProvider.initialize();
