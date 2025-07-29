@@ -310,4 +310,42 @@ class UserProgressService {
     }
   }
 
+
+  /// Save Reading Progress
+  Future<void> saveReadingProgress({required String userId, required String lessonId, required Set<int> bookmarks}) async {
+    try {
+      ClassService _classService = ClassService(supabase);
+
+      final response = await _classService.supabase
+          .from('Users')
+          .select('modules')
+          .eq('id', userId)
+          .single();
+
+      Map<String, dynamic> modulesData = {};
+      if (response['modules'] != null) {
+        modulesData = Map<String, dynamic>.from(response['modules']);
+      }
+
+      if (!modulesData.containsKey(lessonId)) {
+        modulesData[lessonId] = {};
+      }
+
+      modulesData[lessonId]['reading'] = {
+        'completed': true,
+        'completed_at': DateTime.now().toIso8601String(),
+        'bookmarks': bookmarks.toList(),
+      };
+
+      await _classService.supabase
+          .from('Users')
+          .update({'modules': modulesData})
+          .eq('id', userId);
+
+    } catch (e) {
+      print('❌CourseProgressProvider: Error saving reading progress: $e');
+      rethrow; // Re-throw to be caught by _markAsCompleted
+    }
+  }
+
 }

@@ -49,8 +49,6 @@ class _LessonPageState extends State<LessonPage> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
@@ -307,6 +305,9 @@ class _LessonPageState extends State<LessonPage> {
               ),
             ).then((completed) async {
               if (completed == true) {
+
+
+
                 final courseProvider = Provider.of<CourseProvider>(context, listen: false);
                 await courseProvider.loadSingleLessonProgress(widget.moduleId);
 
