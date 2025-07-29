@@ -137,7 +137,6 @@ class CourseProvider extends ChangeNotifier {
   // === Load individual lesson Progress
   Future<void> loadSingleLessonProgress(String lessonId) async {
     try {
-      print("LOAD SINGLE LESSON PROGRESS");
       _isLoading = true;
       notifyListeners();
 
@@ -145,8 +144,6 @@ class CourseProvider extends ChangeNotifier {
 
       if (updatedLesson != null) {
         _lessonProgress[lessonId] = updatedLesson;
-        print(updatedLesson.lessonId);
-        print(updatedLesson.postQuizAttempts[0].score);
       }
 
       _isLoading = false;
@@ -167,7 +164,7 @@ class CourseProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      await UserProgressService().saveQuizProgress(
+      await _userProgressService.saveQuizProgress(
           userId: userId,
           quizId: quizId,
           answers: userAnswers,
@@ -184,5 +181,67 @@ class CourseProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> saveReadingProgress(String userId, String lessonId, Set<int> bookmarks) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await _userProgressService.saveReadingProgress(
+          userId: userId,
+          lessonId: lessonId,
+          bookmarks: bookmarks
+      );
+
+
+      _isLoading = false;
+      notifyListeners();
+    }
+    catch (e) {
+      print('❌ CourseProgressProvider: Error saving read progress for user $userId: $e');
+      _isLoading = false;
+      notifyListeners();
+
+    }
+  }
+
+  // Future<void> markReadingAsCompleted() async {
+  //   try {
+  //     final user = _userState.currentUser;
+  //     if (user == null || widget.moduleId == null) return;
+  //
+  //     // Save progress immediately when reading is completed
+  //     await _saveReadingProgress();
+  //
+  //     // Save isComplete flag.
+  //     _isCompleted = true;
+  //
+  //     // Navigate to results screen and wait for it to return
+  //     final shouldPopReading = await Navigator.push(
+  //       context,
+  //       MaterialPageRoute(
+  //         builder: (context) => ReadingResultScreen(
+  //           modeuleId: widget.moduleId,
+  //         ),
+  //       ),
+  //     );
+  //
+  //     // Only pop the reading screen if the results screen returned true
+  //     // (meaning the user wants to go back to the lesson)
+  //     if (mounted && shouldPopReading == true) {
+  //       Navigator.pop(context, true);
+  //     }
+  //   } catch (e) {
+  //     print('❌Error marking reading as completed: $e');
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Error saving progress: $e'),
+  //           backgroundColor: Colors.red,
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
 
 }

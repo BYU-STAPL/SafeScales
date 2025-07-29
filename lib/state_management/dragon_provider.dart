@@ -51,6 +51,9 @@ class DragonProvider extends ChangeNotifier {
   Future<void> initialize() async {
     await _dragonService.initialize();
     await loadUserDragons();
+
+    print('DragonProvider finished loading');
+    print(_dragons);
   }
 
   // === GETTERS ===
@@ -137,8 +140,9 @@ class DragonProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
+      print('LOAD USER DRAGONS');
+
       await _dragonService.initialize();
-      await loadUserProgress();
 
       // Get User
       final user = _userState.currentUser;
@@ -152,34 +156,6 @@ class DragonProvider extends ChangeNotifier {
         return;
       }
 
-      // Get user's dragons data
-      final response = await _dragonService.supabase
-          .from('Users')
-          .select('dragons')
-          .eq('id', user.id)
-          .single();
-
-      final dragonsData = response['dragons'] as Map<String, dynamic>?;
-      if (dragonsData == null) {
-        _unlockedDragonPhases = {};
-        _dragons = {};
-        _currentEnvironment = null;
-        _preferredPhases = {};
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
-
-      // Get the dragons the user has and unlocked phases
-      final Map<String, dynamic> dragonIdsAndPhases = {};
-      dragonsData.forEach((key, phases) {
-        if (key != 'current_dragon_env' && phases is List) {
-          dragonIdsAndPhases[key] = phases;
-        }
-      });
-
-      // Only get the user dragons that belong to this class
-
       final classData = await _classService.getUserClass(user.id);
       if (classData.isEmpty) {
         _unlockedDragonPhases = {};
@@ -191,82 +167,19 @@ class DragonProvider extends ChangeNotifier {
         return;
       }
 
-      final classAssets = await _classService.getClassAssets(classData['id']);
-      if (classAssets == null) {
-        _unlockedDragonPhases = {};
-        _dragons = {};
-        _currentEnvironment = null;
-        _preferredPhases = {};
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
-
-      // Add dragons to temp list
-      final tempDragons = <String, Dragon>{};
-      final tempDragonModuleId = <String, Dragon>{};
-      for (var asset in classAssets) {
-        if (asset['type'] != 'dragon') {
-          continue;
-        }
-        else {
-          final dragonId = asset['id'];
-
-          if (dragonIdsAndPhases.containsKey(dragonId)) {
-            final phaseOrder = ['egg', 'stage1', 'stage2', 'final'];
-
-            final Map<String, String> images = {
-              phaseOrder[0]: asset['stages']['egg'] ?? '',
-              phaseOrder[1]: asset['stages']['baby'] ?? '',
-              phaseOrder[2]: asset['stages']['teen'] ?? '',
-              phaseOrder[3]: asset['stages']['adult'] ?? '',
-            };
-
-            final tempDragon = Dragon(
-              id: dragonId,
-              speciesName: asset['name'] ?? 'Unknown Dragon',
-              moduleId: asset['moduleId'] ?? '',
-              phaseImages: images,
-              phaseOrder: phaseOrder,
-              preferredEnvironment: 'Mountain', // Default value
-              favoriteItem: asset['favorite_item'] ?? 'Unknown',
-              name: asset['name'] ?? 'Unknown Dragon',
-            );
-
-            tempDragons[dragonId] = tempDragon;
-
-            if (asset['moduleId'] != null) {
-              tempDragonModuleId[asset['moduleId']] = tempDragon;
-            }
-          }
-        }
-      }
-
-      // Sort the tempDragon list by module id
-      final sortedDragons = tempDragons.entries.toList()
-        ..sort((b, a) => a.value.moduleId.compareTo(b.value.moduleId));
-
-      // Assign dragons to sortedDragons
-      _dragons = Map.fromEntries(sortedDragons);
+      _dragons = await _dragonService.getUserDragons(user.id, classData['id']);
 
       // Rebuild Dragons by module id
-      _dragonsByModuleId = tempDragonModuleId;
+      _dragonsByModuleId = await _dragonService.getUserDragonsWithLessonId(user.id, classData['id']);
 
       // Rebuild _unlockedDragonPhases in sorted order
-      _unlockedDragonPhases = {};
-      for (final dragon in sortedDragons) {
-        final dragonId = dragon.key;
-        if (dragonIdsAndPhases.containsKey(dragonId)) {
-          _unlockedDragonPhases[dragonId] = List<String>.from(dragonIdsAndPhases[dragonId]!);
-        }
-      }
+      _unlockedDragonPhases = await _dragonService.getUnlockedPhases(user.id, classData['id']);
 
       // Extract environment
-      _currentEnvironment = dragonsData['current_dragon_env'] as String?;
+      _currentEnvironment = await _dragonService.getCurrentEnvironment(user.id);
 
       // TODO: Extract Preferred Phases
       _preferredPhases = {};
-
 
       _isLoading = false;
       notifyListeners();
@@ -276,6 +189,13 @@ class DragonProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> updateDragon(String lessonId) async {
+    // Get dragon associated with this lesson
+
+    // Calculate the new unlocked phases
+
   }
 
   Future<void> loadUserProgress() async {

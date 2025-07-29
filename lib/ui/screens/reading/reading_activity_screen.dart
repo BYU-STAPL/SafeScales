@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
+import 'package:safe_scales/state_management/course_provider.dart';
 import 'package:safe_scales/ui/screens/reading/reading_results_screen.dart';
 
 import '../../widgets/progress_bar.dart';
@@ -152,50 +154,50 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
     }
   }
 
-  Future<void> _saveReadingProgress() async {
-    try {
-      final user = _userState.currentUser;
-      if (user == null || widget.moduleId == null) return;
-
-      final response =
-      await _classService.supabase
-          .from('Users')
-          .select('modules')
-          .eq('id', user.id)
-          .single();
-
-      Map<String, dynamic> modulesData = {};
-      if (response['modules'] != null) {
-        modulesData = Map<String, dynamic>.from(response['modules']);
-      }
-
-      if (!modulesData.containsKey(widget.moduleId!)) {
-        modulesData[widget.moduleId!] = {};
-      }
-
-      modulesData[widget.moduleId!]['reading'] = {
-        'completed': true,
-        'completed_at': DateTime.now().toIso8601String(),
-        'bookmarks': _bookmarkedPages.toList(),
-      };
-
-      await _classService.supabase
-          .from('Users')
-          .update({'modules': modulesData})
-          .eq('id', user.id);
-    } catch (e) {
-      print('❌Error saving reading progress: $e');
-      rethrow; // Re-throw to be caught by _markAsCompleted
-    }
-  }
+  // Future<void> _saveReadingProgress() async {
+  //   try {
+  //     final user = _userState.currentUser;
+  //     if (user == null || widget.moduleId == null) return;
+  //
+  //     final response =
+  //     await _classService.supabase
+  //         .from('Users')
+  //         .select('modules')
+  //         .eq('id', user.id)
+  //         .single();
+  //
+  //     Map<String, dynamic> modulesData = {};
+  //     if (response['modules'] != null) {
+  //       modulesData = Map<String, dynamic>.from(response['modules']);
+  //     }
+  //
+  //     if (!modulesData.containsKey(widget.moduleId!)) {
+  //       modulesData[widget.moduleId!] = {};
+  //     }
+  //
+  //     modulesData[widget.moduleId!]['reading'] = {
+  //       'completed': true,
+  //       'completed_at': DateTime.now().toIso8601String(),
+  //       'bookmarks': _bookmarkedPages.toList(),
+  //     };
+  //
+  //     await _classService.supabase
+  //         .from('Users')
+  //         .update({'modules': modulesData})
+  //         .eq('id', user.id);
+  //   } catch (e) {
+  //     print('❌Error saving reading progress: $e');
+  //     rethrow; // Re-throw to be caught by _markAsCompleted
+  //   }
+  // }
 
   Future<void> _markAsCompleted() async {
     try {
       final user = _userState.currentUser;
-      if (user == null || widget.moduleId == null) return;
+      if (user == null) return;
 
       // Save progress immediately when reading is completed
-      await _saveReadingProgress();
+      await Provider.of<CourseProvider>(context, listen: false).saveReadingProgress(user.id, widget.moduleId, _bookmarkedPages);
 
       // Save isComplete flag.
       _isCompleted = true;
