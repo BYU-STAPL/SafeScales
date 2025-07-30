@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:safe_scales/ui/screens/main_navigation.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_actions_screen.dart';
 import 'package:safe_scales/ui/widgets/post_quiz_summary.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_screen.dart';
-import 'package:safe_scales/ui/screens/lesson/lesson_page.dart';
 import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
 import 'package:safe_scales/themes/app_theme.dart';
-import 'package:safe_scales/themes/theme_notifier.dart';
-import 'package:safe_scales/themes/theme_provider.dart';
 
 class PostQuizResultScreen extends StatefulWidget {
   const PostQuizResultScreen({

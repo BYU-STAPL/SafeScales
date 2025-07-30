@@ -198,7 +198,7 @@ class DragonProvider extends ChangeNotifier {
 
   }
 
-  Future<void> loadUserProgress() async {
+  Future<void> updateDragonProgress() async {
     try {
       // Get User
       final user = _userState.currentUser;
@@ -249,38 +249,41 @@ class DragonProvider extends ChangeNotifier {
           phases.add('final'); // Add final phase
         }
 
-        // Check current dragon data
-        final response = await _quizService.supabase
-            .from('Users')
-            .select('dragons')
-            .eq('id', user.id)
-            .single();
+        await _dragonService.updateUnlockedPhasesForDragon(user.id, dragonId, phases);
 
-        Map<String, List<String>> currentDatabaseDragonData = {};
-        if (response['dragons'] != null) {
-          final dragonsMap = Map<String, dynamic>.from(response['dragons']);
-          dragonsMap.forEach((key, value) {
-            if (value is List) {
-              currentDatabaseDragonData[key] = List<String>.from(value);
-            }
-          });
-        }
+        // // Check current dragon data
+        // final response = await _quizService.supabase
+        //     .from('Users')
+        //     .select('dragons')
+        //     .eq('id', user.id)
+        //     .single();
+        //
+        // Map<String, List<String>> currentDatabaseDragonData = {};
+        // if (response['dragons'] != null) {
+        //   final dragonsMap = Map<String, dynamic>.from(response['dragons']);
+        //   dragonsMap.forEach((key, value) {
+        //     if (value is List) {
+        //       currentDatabaseDragonData[key] = List<String>.from(value);
+        //     }
+        //   });
+        // }
+        //
+        // // Did the current and new change?
+        // final currentPhases = currentDatabaseDragonData[dragonId];
+        // if (currentPhases == null || !_areListsEqual(currentPhases, phases)) {
+        //   currentDatabaseDragonData[dragonId] = phases;
+        //
+        //   // Update database
+        //   await _quizService.supabase
+        //       .from('Users')
+        //       .update({'dragons': currentDatabaseDragonData})
+        //       .eq('id', user.id);
+        // }
 
-        // Did the current and new change?
-        final currentPhases = currentDatabaseDragonData[dragonId];
-        if (currentPhases == null || !_areListsEqual(currentPhases, phases)) {
-          currentDatabaseDragonData[dragonId] = phases;
-
-          // Update database
-          await _quizService.supabase
-              .from('Users')
-              .update({'dragons': currentDatabaseDragonData})
-              .eq('id', user.id);
-        }
-
-        // Update provider's unlocked dragon phase data
-        _unlockedDragonPhases = currentDatabaseDragonData;
       }
+
+      // Update provider's unlocked dragon phase data
+      _unlockedDragonPhases = await _dragonService.getUnlockedPhases(user.id, classData['id']);
 
       _isLoading = false;
       notifyListeners();
@@ -324,14 +327,5 @@ class DragonProvider extends ChangeNotifier {
     } catch (e) {
       print('❌ Error saving environment selection: $e');
     }
-  }
-
-  // === Helper ===
-  bool _areListsEqual<T>(List<T> list1, List<T> list2) {
-    if (list1.length != list2.length) return false;
-    for (int i = 0; i < list1.length; i++) {
-      if (list1[i] != list2[i]) return false;
-    }
-    return true;
   }
 }

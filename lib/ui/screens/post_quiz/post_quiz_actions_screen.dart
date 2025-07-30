@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:safe_scales/themes/app_theme.dart';
-import 'package:safe_scales/services/class_service.dart';
-import 'package:safe_scales/services/quiz_service.dart';
-import 'package:safe_scales/services/user_state_service.dart';
-
 import '../../widgets/dragon_image_widget.dart';
-import '../main_navigation.dart';
 
 // Define action types for better type safety
 enum QuizAction {

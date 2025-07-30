@@ -114,9 +114,13 @@ class UserProgressService {
           }
         }
 
+        // Get lessons to get required passing score
+        final lessons = await _classService.getLessons(classData['id']);
+
         progress[lessonId] = LessonProgress(
           lessonId: lessonId,
           isReadingComplete: isReadingComplete,
+          requiredPassingScore: lessons[lessonId]?.postQuiz.passingScore ?? 80,
           preQuizAttempt: preQuizAttempt,
           postQuizAttempts: postQuizAttempts,
         );
@@ -216,9 +220,13 @@ class UserProgressService {
         }
       }
 
+      // Get lessons to get required passing score
+      final lessons = await _classService.getLessons(classData['id']);
+
       return LessonProgress(
         lessonId: lessonId,
         isReadingComplete: isReadingComplete,
+        requiredPassingScore: lessons[lessonId]?.postQuiz.passingScore ?? 80,
         preQuizAttempt: preQuizAttempt,
         postQuizAttempts: postQuizAttempts,
       );

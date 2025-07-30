@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:safe_scales/ui/screens/home_page.dart';
 import 'package:safe_scales/services/auth_service.dart';
-import '../../main.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'login/class_selection_screen.dart';
-import 'package:safe_scales/config/supabase_config.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
-
-import 'main_navigation.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});

@@ -48,7 +48,7 @@ class AuthService {
           .select()
           .eq('Email', email);
 
-      if (response == null || response.isEmpty) {
+      if (response.isEmpty) {
         print('No user found with email: $email');
         return false;
       }

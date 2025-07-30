@@ -25,6 +25,8 @@ class DragonService {
     }
   }
 
+  // === Getters ===
+
   /// Return Dragons with dragon id as key
   Future<Map<String, Dragon>> getUserDragons(String userId, String classId) async {
     try {
@@ -140,16 +142,6 @@ class DragonService {
           .eq('id', userId)
           .single();
 
-
-      /*
-      Response
-
-      {dragons: [
-        'long id for dragon': ['egg', 'stage1', 'stage2'],
-        'long id for dragon': ['egg', 'stage1', 'stage2', 'final]
-      ]}
-       */
-
       // Get the dragons the user has and unlocked phases
       final Map<String, dynamic> dragonIdsAndPhases = {};
       response['dragons'].forEach((key, phases) {
@@ -163,27 +155,6 @@ class DragonService {
           .select('assets')
           .eq('id', classId)
           .single();
-
-      /*
-      Response
-
-      {assets: [
-        { 'id': 'long id',
-          'name': 'Boskaris',
-          'type': '',
-          'stages': {'egg': 'image url', 'baby': 'image url', 'teen': 'image url', 'adult': 'image url',
-          'imageURL': '',
-          'moduleId': 'module id'
-        },
-        { 'id': 'long id',
-          'name': 'Nivallis',
-          'type': '',
-          'stages': {'egg': 'image url', 'baby': 'image url', 'teen': 'image url', 'adult': 'image url',
-          'imageURL': '',
-          'moduleId': 'module id'
-        },
-      ]}
-       */
 
       // final tempDragons = <String, Dragon>{};
       final dragons = <String, Dragon>{};
@@ -305,6 +276,43 @@ class DragonService {
       return '';
     }
   }
+
+
+  // === Update ===
+  Future<void> updateUnlockedPhasesForDragon(String userId, String dragonId, List<String> newPhases) async {
+    try {
+      // Get Current DB Dragon info
+      final response = await supabase
+          .from('Users')
+          .select('dragons')
+          .eq('id', userId)
+          .single();
+
+      final dragons = response['dragons'];
+
+      final Map<String, List<String>> unlockedPhases = {};
+      dragons.forEach((key, phases) {
+        unlockedPhases[key] = phases.cast<String>();
+      });
+
+      // Only want to update a dragon not create a new one
+      if (!unlockedPhases.containsKey(dragonId)) {
+        throw("Dragon Id does not exist");
+      }
+      else {
+        unlockedPhases[dragonId] = newPhases;
+
+        await supabase
+            .from('Users')
+            .update({'dragons': unlockedPhases})
+            .eq('id', userId);
+      }
+    }
+    catch (e) {
+      print('❌ DragonService: Error updating phases for dragon $dragonId for user $userId: $e');
+    }
+  }
+
 
 
 

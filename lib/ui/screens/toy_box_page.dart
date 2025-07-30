@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/ui/widgets/toy_box_item_card.dart';
-import 'package:safe_scales/ui/widgets/settings_drawer.dart';
 import 'package:safe_scales/services/shop_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 

@@ -1,5 +1,4 @@
 import 'package:safe_scales/models/question.dart';
-import 'package:safe_scales/models/reading_slide.dart';
 
 class LessonProgress {
   final String lessonId;
@@ -9,8 +8,10 @@ class LessonProgress {
   QuizAttempt? preQuizAttempt;
   List<QuizAttempt> postQuizAttempts = [];
 
+  final int requiredPassingScore;
+
   bool get isPreQuizComplete => preQuizAttempt != null;
-  bool get isPostQuizComplete => postQuizAttempts.isNotEmpty;
+  bool get isPostQuizComplete => postQuizAttempts.first.score >= requiredPassingScore;
 
 
   // TODO: Consider implementing later
@@ -19,6 +20,7 @@ class LessonProgress {
   LessonProgress({
     required this.lessonId,
     required this.isReadingComplete,
+    required this.requiredPassingScore,
     required this.postQuizAttempts,
     this.preQuizAttempt,
   });

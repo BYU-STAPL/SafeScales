@@ -1,71 +1,8 @@
-import 'package:safe_scales/models/lesson_progress.dart';
-import 'package:safe_scales/services/class_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/models/question.dart';
 
 class QuizService {
   final supabase = SupabaseConfig.client;
-
-  // // === Helpers ===
-  // List<List<int>> _parseResponses(List<dynamic> answers) {
-  //   List<List<int>> responses = [];
-  //
-  //   for (final answer in answers) {
-  //     if (answer is List) {
-  //       responses.add(List<int>.from(answer));
-  //     } else {
-  //       responses.add([]); // Empty response for null/invalid answers
-  //     }
-  //   }
-  //
-  //   return responses;
-  // }
-
-  // Get all quizzes
-  // Future<List<Map<String, dynamic>>> getAllQuizzes() async {
-  //   try {
-  //     final response = await supabase
-  //         .from('quizzes')
-  //         .select()
-  //         .order('created_at', ascending: false);
-  //
-  //     // Group quizzes by topic
-  //     final Map<String, List<Map<String, dynamic>>> groupedByTopic = {};
-  //
-  //     for (var quiz in response) {
-  //       final topic = quiz['topic'] ?? 'Unknown Topic';
-  //       if (!groupedByTopic.containsKey(topic)) {
-  //         groupedByTopic[topic] = [];
-  //       }
-  //       groupedByTopic[topic]!.add(quiz);
-  //     }
-  //
-  //     // Convert to a flat list with topic information
-  //     final List<Map<String, dynamic>> result = [];
-  //
-  //     groupedByTopic.forEach((topic, quizzes) {
-  //       // Add a single entry for each topic
-  //       if (quizzes.isNotEmpty) {
-  //         result.add({
-  //           'topic': topic,
-  //           'id': quizzes[0]['id'],
-  //           'title': quizzes[0]['title'] ?? topic,
-  //           'description': quizzes[0]['description'] ?? 'Learn about $topic',
-  //           'has_pre_quiz': quizzes.any((q) => q['activity_type'] == 'preQuiz'),
-  //           'has_post_quiz': quizzes.any(
-  //             (q) => q['activity_type'] == 'postQuiz',
-  //           ),
-  //           'created_at': quizzes[0]['created_at'],
-  //         });
-  //       }
-  //     });
-  //
-  //     return result;
-  //   } catch (e) {
-  //     throw Exception('Failed to fetch quizzes: $e');
-  //   }
-  // }
 
   // Get quiz by ID with questions
   Future<QuestionSet?> getQuizWithQuestions(String quizId) async {
@@ -239,11 +176,6 @@ class QuizService {
       final moduleResponse =
           await supabase.from('modules').select().eq('id', moduleId).single();
 
-      if (moduleResponse == null) {
-        print('No module found with ID: $moduleId');
-        return null;
-      }
-
       // Get quiz data based on activity type
       final quizData =
           activityType == 'preQuiz'
@@ -354,15 +286,13 @@ class QuizService {
             .select('id, minimum_passing_grade')
             .inFilter('id', moduleIds);
         final Map<String, int> modulePassingScores = {};
-        if (moduleDetailsResponse is List) {
-          for (final mod in moduleDetailsResponse) {
-            if (mod['id'] != null) {
-              modulePassingScores[mod['id'].toString()] =
-                  mod['minimum_passing_grade'] != null
-                      ? int.tryParse(mod['minimum_passing_grade'].toString()) ??
-                          80
-                      : 80;
-            }
+        for (final mod in moduleDetailsResponse) {
+          if (mod['id'] != null) {
+            modulePassingScores[mod['id'].toString()] =
+                mod['minimum_passing_grade'] != null
+                    ? int.tryParse(mod['minimum_passing_grade'].toString()) ??
+                        80
+                    : 80;
           }
         }
 
