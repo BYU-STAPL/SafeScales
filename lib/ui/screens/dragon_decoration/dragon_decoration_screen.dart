@@ -6,11 +6,12 @@ import 'package:safe_scales/ui/widgets/sticker_collection_widget.dart';
 
 import 'package:safe_scales/models/sticker_item_model.dart';
 
-import '../../../services/dragon_service.dart';
+import '../../../services/old_dragon_service.dart';
 import '../../../services/quiz_service.dart';
 import '../../../services/user_state_service.dart';
 import '../../../state_management/course_provider.dart';
 import '../../../state_management/dragon_provider.dart';
+import '../../../state_management/old_dragon_provider.dart';
 
 class DragonDressUpPage extends StatefulWidget {
   final String dragonId;
@@ -65,7 +66,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final dragonService = DragonService(QuizService().supabase);
+        final dragonService = OldDragonService(QuizService().supabase);
 
         // First, get the user's acquired environment IDs
         final userResponse =
@@ -197,7 +198,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final dragonService = DragonService(QuizService().supabase);
+        final dragonService = OldDragonService(QuizService().supabase);
         final userResponse =
         await dragonService.supabase
             .from('Users')
@@ -669,7 +670,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
       if (user != null) {
 
-        final dragonService = DragonService(QuizService().supabase);
+        final dragonService = OldDragonService(QuizService().supabase);
 
         // Get current dragons data
         final userResponse = await dragonService.supabase
@@ -728,7 +729,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final dragonService = DragonService(QuizService().supabase);
+        final dragonService = OldDragonService(QuizService().supabase);
 
         // Get current dragons data
         final userResponse =

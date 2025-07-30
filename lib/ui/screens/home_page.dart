@@ -3,10 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
 import 'package:safe_scales/ui/widgets/lesson_card.dart';
-import 'package:safe_scales/state_management/dragon_provider.dart';
+import 'package:safe_scales/state_management/old_dragon_provider.dart';
 
 import '../../models/lesson.dart';
 import '../../state_management/course_provider.dart';
+import '../../state_management/dragon_provider.dart';
 import '../widgets/continue_learning_widget.dart';
 import 'lesson/lesson_page.dart';
 
@@ -101,7 +102,7 @@ class _HomePageState extends State<HomePage> {
                             // Reload data when returning from lesson
                             // Provider.of<CourseProvider>(context, listen: false).loadSingleLessonProgress(lessonId);
                             Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
-                            Provider.of<DragonProvider>(context, listen: false).updateDragonProgress();
+                            Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
                           });
                         },
                         child: ContinueLearningWidget(title: getTargetLesson()?.title ?? 'Module', progress: courseProvider.lessonProgress[getTargetLesson()?.lessonId]?.getProgressPercent() ?? 0.0),
@@ -218,7 +219,7 @@ class _HomePageState extends State<HomePage> {
                                 ).then((_) {
                                   // Reload data when returning from the lesson page
                                   Provider.of<CourseProvider>(context, listen: false).loadSingleLessonProgress(lessonId);
-                                  Provider.of<DragonProvider>(context, listen: false).updateDragonProgress();
+                                  Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
                                   // _loadClassData();
                                 });
                               }

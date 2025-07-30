@@ -9,6 +9,7 @@ import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
 import '../../../models/lesson.dart';
 import '../../../state_management/course_provider.dart';
 import '../../../state_management/dragon_provider.dart';
+import '../../../state_management/old_dragon_provider.dart';
 import '../../../themes/app_theme.dart';
 import '../../widgets/dragon_image_widget.dart';
 
@@ -307,7 +308,7 @@ class _LessonPageState extends State<LessonPage> {
                 final courseProvider = Provider.of<CourseProvider>(context, listen: false);
                 await courseProvider.loadSingleLessonProgress(widget.moduleId);
 
-                await Provider.of<DragonProvider>(context, listen: false).updateDragonProgress();
+                await Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
 
 
                 if (mounted) {
@@ -486,7 +487,7 @@ class _LessonPageState extends State<LessonPage> {
       if (completed == true) {
         final courseProvider = Provider.of<CourseProvider>(context, listen: false);
         await courseProvider.loadSingleLessonProgress(widget.moduleId);
-        await Provider.of<DragonProvider>(context, listen: false).updateDragonProgress();
+        await Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
 
         if (mounted) {
           setState(() {

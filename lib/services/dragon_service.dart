@@ -1,415 +1,278 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../models/dragon.dart';
+import '../models/lesson_progress.dart';
+import '../repositories/dragon_repository.dart';
 
+/// Service that handles all dragon-related business logic
+/// This layer processes data from repository and applies business rules
 class DragonService {
-  final SupabaseClient supabase;
-  List<Map<String, dynamic>> _dragons = [];
-  bool _isInitialized = false;
+  final DragonRepository _repository;
 
-  DragonService(this.supabase);
+  // Phase constants and mappings
+  static const List<String> phaseOrder = ['egg', 'stage1', 'stage2', 'final'];
 
-  Future<void> initialize() async {
-    if (!_isInitialized) {
-      try {
-        final response = await supabase
-            .from('dragons')
-            .select()
-            .order('id', ascending: true);
+  static const Map<String, String> phaseAliases = {
+    'baby': 'stage1',
+    'teen': 'stage2',
+    'adult': 'final',
+  };
 
-        _dragons = List<Map<String, dynamic>>.from(response);
-        _isInitialized = true;
-      } catch (e) {
-        _dragons = [];
-      }
-    }
+  static const Map<String, String> phaseDisplayNames = {
+    'egg': 'Egg',
+    'stage1': 'Baby',
+    'stage2': 'Teen',
+    'final': 'Adult',
+  };
+
+  // Progress thresholds for dragon phase unlocking
+  static const Map<String, double> phaseThresholds = {
+    'egg': 0.0,
+    'stage1': 0.3,
+    'stage2': 0.5,
+    'final': 0.8,
+  };
+
+  DragonService(this._repository);
+
+  // === Phase Utilities ===
+
+  /// Normalize phase names (handle legacy names)
+  String normalizePhase(String phase) {
+    return phaseAliases[phase] ?? phase;
   }
 
-  // === Getters ===
+  /// Get display name for a phase
+  String getPhaseDisplayName(String phase) {
+    return phaseDisplayNames[normalizePhase(phase)] ?? 'Unknown';
+  }
 
-  /// Return Dragons with dragon id as key
-  Future<Map<String, Dragon>> getUserDragons(String userId, String classId) async {
+  /// Calculate unlocked phases based on progress percentage
+  List<String> calculateUnlockedPhases(double progressPercent) {
+    final unlockedPhases = <String>[];
+
+    for (final phase in phaseOrder) {
+      final threshold = phaseThresholds[phase] ?? 1.0;
+      if (progressPercent >= threshold) {
+        unlockedPhases.add(phase);
+      }
+    }
+
+    return unlockedPhases;
+  }
+
+  /// Get the highest unlocked phase for given phases list
+  String getHighestUnlockedPhase(List<String> unlockedPhases) {
+    for (int i = phaseOrder.length - 1; i >= 0; i--) {
+      final phase = phaseOrder[i];
+      if (unlockedPhases.any((p) => normalizePhase(p) == normalizePhase(phase))) {
+        return phase;
+      }
+    }
+    return 'egg'; // Default to egg if nothing unlocked
+  }
+
+  /// Check if a specific phase is unlocked
+  bool isPhaseUnlocked(List<String> unlockedPhases, String phase) {
+    final normalizedPhase = normalizePhase(phase);
+    return unlockedPhases.any((p) => normalizePhase(p) == normalizedPhase);
+  }
+
+  /// Check if play mode is unlocked (final phase reached)
+  bool isPlayUnlocked(List<String> unlockedPhases) {
+    return isPhaseUnlocked(unlockedPhases, 'final');
+  }
+
+  // === Data Processing ===
+
+  /// Process raw user dragons data and class assets into Dragon objects
+  Map<String, Dragon> processUserDragons(
+      Map<String, dynamic> userDragonsData,
+      List<Map<String, dynamic>> classAssets,
+      ) {
+    final dragons = <String, Dragon>{};
+
+    // Extract dragon IDs and phases (excluding environment setting)
+    final dragonIdsAndPhases = <String, List<String>>{};
+    userDragonsData.forEach((key, phases) {
+      if (key != 'current_dragon_env' && phases is List) {
+        dragonIdsAndPhases[key] = phases.cast<String>();
+      }
+    });
+
+    // Process each dragon asset
+    for (final asset in classAssets) {
+      if (asset['type'] != 'dragon') continue;
+
+      final dragonId = asset['id'] as String?;
+      if (dragonId == null || !dragonIdsAndPhases.containsKey(dragonId)) {
+        continue;
+      }
+
+      final dragon = _createDragonFromAsset(asset, dragonId);
+      if (dragon != null) {
+        dragons[dragonId] = dragon;
+      }
+    }
+
+    return dragons;
+  }
+
+  /// Create Dragon object from asset data
+  Dragon? _createDragonFromAsset(Map<String, dynamic> asset, String dragonId) {
     try {
+      final stages = asset['stages'] as Map<String, dynamic>?;
+      if (stages == null) return null;
 
-      final response = await supabase
-          .from('Users')
-          .select('dragons')
-          .eq('id', userId)
-          .single();
+      final images = <String, String>{
+        'egg': stages['egg']?.toString() ?? '',
+        'stage1': stages['baby']?.toString() ?? '',
+        'stage2': stages['teen']?.toString() ?? '',
+        'final': stages['adult']?.toString() ?? '',
+      };
 
-
-      /*
-      Response
-
-      {dragons: [
-        'long id for dragon': ['egg', 'stage1', 'stage2'],
-        'long id for dragon': ['egg', 'stage1', 'stage2', 'final]
-      ]}
-       */
-
-      // Get the dragons the user has and unlocked phases
-      final Map<String, dynamic> dragonIdsAndPhases = {};
-      response['dragons'].forEach((key, phases) {
-        if (key != 'current_dragon_env' && phases is List) {
-          dragonIdsAndPhases[key] = phases;
-        }
-      });
-
-      final classResponse = await supabase
-          .from('classes')
-          .select('assets')
-          .eq('id', classId)
-          .single();
-
-      /*
-      Response
-
-      {assets: [
-        { 'id': 'long id',
-          'name': 'Boskaris',
-          'type': '',
-          'stages': {'egg': 'image url', 'baby': 'image url', 'teen': 'image url', 'adult': 'image url',
-          'imageURL': '',
-          'moduleId': 'module id'
-        },
-        { 'id': 'long id',
-          'name': 'Nivallis',
-          'type': '',
-          'stages': {'egg': 'image url', 'baby': 'image url', 'teen': 'image url', 'adult': 'image url',
-          'imageURL': '',
-          'moduleId': 'module id'
-        },
-      ]}
-       */
-
-      final tempDragons = <String, Dragon>{};
-
-      for (var asset in classResponse['assets']) {
-        if (asset['type'] != 'dragon') {
-          continue;
-        }
-        else {
-          final dragonId = asset['id'];
-
-          if (dragonIdsAndPhases.containsKey(dragonId)) {
-            final phaseOrder = ['egg', 'stage1', 'stage2', 'final'];
-
-            final Map<String, String> images = {
-              phaseOrder[0]: asset['stages']['egg'] ?? '',
-              phaseOrder[1]: asset['stages']['baby'] ?? '',
-              phaseOrder[2]: asset['stages']['teen'] ?? '',
-              phaseOrder[3]: asset['stages']['adult'] ?? '',
-            };
-
-            final tempDragon = Dragon(
-              id: dragonId,
-              speciesName: asset['name'] ?? 'Unnamed Dragon',
-              moduleId: asset['moduleId'] ?? '',
-              phaseImages: images,
-              phaseOrder: phaseOrder,
-              preferredEnvironment: 'Mountain', // Default value
-              favoriteItem: asset['favorite_item'] ?? 'Ice Cream',
-              name: asset['name'] ?? 'Unnamed Dragon',
-            );
-
-            tempDragons[dragonId] = tempDragon;
-          }
-        }
-      }
-
-
-      final sortedDragons = tempDragons.entries.toList()
-        ..sort((b, a) => a.value.moduleId.compareTo(b.value.moduleId));
-
-      Map<String, Dragon> dragons = Map.fromEntries(sortedDragons);
-
-
-      return dragons;
-    }
-    catch (e) {
-      print('❌ DragonService: Error loading user dragons for user $userId: $e');
-      return {};
+      return Dragon(
+        id: dragonId,
+        speciesName: asset['name']?.toString() ?? 'Unnamed Dragon',
+        moduleId: asset['moduleId']?.toString() ?? '',
+        phaseImages: images,
+        phaseOrder: phaseOrder,
+        preferredEnvironment: 'Mountain', // Default value
+        favoriteItem: asset['favorite_item']?.toString() ?? 'Ice Cream',
+        name: asset['name']?.toString() ?? 'Unnamed Dragon',
+      );
+    } catch (e) {
+      print('❌ Error creating dragon from asset: $e');
+      return null;
     }
   }
 
-  /// Return Dragons with lesson id as the key
-  Future<Map<String, Dragon>> getUserDragonsWithLessonId(String userId, String classId) async {
-    try {
+  /// Create dragons map indexed by module ID
+  Map<String, Dragon> createDragonsByModuleMap(Map<String, Dragon> dragons) {
+    final dragonsByModule = <String, Dragon>{};
 
-      final response = await supabase
-          .from('Users')
-          .select('dragons')
-          .eq('id', userId)
-          .single();
-
-      // Get the dragons the user has and unlocked phases
-      final Map<String, dynamic> dragonIdsAndPhases = {};
-      response['dragons'].forEach((key, phases) {
-        if (key != 'current_dragon_env' && phases is List) {
-          dragonIdsAndPhases[key] = phases;
-        }
-      });
-
-      final classResponse = await supabase
-          .from('classes')
-          .select('assets')
-          .eq('id', classId)
-          .single();
-
-      // final tempDragons = <String, Dragon>{};
-      final dragons = <String, Dragon>{};
-
-      for (var asset in classResponse['assets']) {
-        if (asset['type'] != 'dragon') {
-          continue;
-        }
-        else {
-          final dragonId = asset['id'];
-
-          if (dragonIdsAndPhases.containsKey(dragonId)) {
-            final phaseOrder = ['egg', 'stage1', 'stage2', 'final'];
-
-            final Map<String, String> images = {
-              phaseOrder[0]: asset['stages']['egg'] ?? '',
-              phaseOrder[1]: asset['stages']['baby'] ?? '',
-              phaseOrder[2]: asset['stages']['teen'] ?? '',
-              phaseOrder[3]: asset['stages']['adult'] ?? '',
-            };
-
-            final tempDragon = Dragon(
-              id: dragonId,
-              speciesName: asset['name'] ?? 'Unnamed Dragon',
-              moduleId: asset['moduleId'] ?? '',
-              phaseImages: images,
-              phaseOrder: phaseOrder,
-              preferredEnvironment: 'Mountain', // Default value
-              favoriteItem: asset['favorite_item'] ?? 'Ice Cream',
-              name: asset['name'] ?? 'Unnamed Dragon',
-            );
-
-            if (asset['moduleId'] != null) {
-              dragons[asset['moduleId']] = tempDragon;
-            }
-          }
-        }
+    for (final dragon in dragons.values) {
+      if (dragon.moduleId.isNotEmpty) {
+        dragonsByModule[dragon.moduleId] = dragon;
       }
-
-      return dragons;
     }
-    catch (e) {
-      print('❌ DragonService: Error loading user dragons with lesson id for user $userId: $e');
-      return {};
+
+    return dragonsByModule;
+  }
+
+  /// Sort dragons by module ID
+  Map<String, Dragon> sortDragonsByModuleId(Map<String, Dragon> dragons) {
+    final sortedEntries = dragons.entries.toList()
+      ..sort((a, b) => b.value.moduleId.compareTo(a.value.moduleId));
+
+    return Map.fromEntries(sortedEntries);
+  }
+
+  /// Extract only unlocked phases for dragons in a specific class
+  Map<String, List<String>> extractClassDragonPhases(
+      Map<String, dynamic> userDragonsData,
+      List<Map<String, dynamic>> classAssets,
+      ) {
+    final classUnlockedPhases = <String, List<String>>{};
+
+    // Get dragon IDs that exist in this class
+    final classDragonIds = <String>{};
+    for (final asset in classAssets) {
+      if (asset['type'] == 'dragon' && asset['id'] != null) {
+        classDragonIds.add(asset['id'] as String);
+      }
+    }
+
+    // Filter user dragons to only include those in this class
+    userDragonsData.forEach((key, phases) {
+      if (key != 'current_dragon_env' &&
+          phases is List &&
+          classDragonIds.contains(key)) {
+        classUnlockedPhases[key] = phases.cast<String>();
+      }
+    });
+
+    return classUnlockedPhases;
+  }
+
+  // === Business Logic Methods ===
+
+  /// Update dragon phases based on lesson progress
+  Future<void> updateDragonProgressForLesson(
+      String userId,
+      String dragonId,
+      LessonProgress lessonProgress,
+      ) async {
+    final progressPercent = lessonProgress.getProgressPercent();
+    final newPhases = calculateUnlockedPhases(progressPercent);
+
+    await _repository.updateUserDragonPhases(userId, dragonId, newPhases);
+  }
+
+  /// Validate that a dragon exists before updating
+  void validateDragonExists(String dragonId, Map<String, List<String>> existingPhases) {
+    if (!existingPhases.containsKey(dragonId)) {
+      throw DragonServiceException('Dragon with ID $dragonId does not exist');
     }
   }
 
-  /// Return DragonId and unlocked phases for that dragon
-  Future<Map<String, List<String>>> getUnlockedPhases(String userId, String classId) async {
-    try {
-      final classResponse = await supabase
-          .from('classes')
-          .select('assets')
-          .eq('id', classId)
-          .single();
+  /// Get image URL for dragon at specific or highest unlocked phase
+  String getDragonImageUrl(
+      Dragon dragon,
+      List<String> unlockedPhases,
+      {String? forPhase}
+      ) {
+    String phase;
 
-      final Map<String, int> dragonsInClass = {};
-      for (var asset in classResponse['assets']) {
-        if (asset['type'] != 'dragon') {
-          continue;
-        }
-        else {
-          final dragonId = asset['id'];
-
-          dragonsInClass[dragonId] = 0;
-        }
-      }
-
-
-      final response = await supabase
-          .from('Users')
-          .select('dragons')
-          .eq('id', userId)
-          .single();
-
-      /*
-      Response
-
-      {dragons: [
-        'long id for dragon': ['egg', 'stage1', 'stage2'],
-        'long id for dragon': ['egg', 'stage1', 'stage2', 'final]
-      ]}
-       */
-
-      // Get the dragons the user has that in this class and add the unlocked phases
-      final Map<String, List<String>> unlockedPhases = {};
-      response['dragons'].forEach((key, phases) {
-        if ((key != 'current_dragon_env' && phases is List) && dragonsInClass.containsKey(key)) {
-          unlockedPhases[key] = phases.cast<String>();
-        }
-      });
-
-      return unlockedPhases;
-
+    if (forPhase != null) {
+      phase = normalizePhase(forPhase);
+    } else {
+      phase = getHighestUnlockedPhase(unlockedPhases);
     }
-    catch (e) {
-      print('❌ DragonService: Error loading unlocked dragon phases for user $userId: $e');
-      return {};
-    }
+
+    return dragon.phaseImages[phase] ?? dragon.phaseImages['egg'] ?? '';
   }
 
-  /// Get Dragon current env
+  // === Repository Delegates ===
+
+  /// Get all dragons from database
+  Future<List<Map<String, dynamic>>> getAllDragons() async {
+    return await _repository.fetchAllDragons();
+  }
+
+  /// Get user's dragons data
+  Future<Map<String, dynamic>> getUserDragonsData(String userId) async {
+    return await _repository.fetchUserDragons(userId);
+  }
+
+  /// Get class assets
+  Future<List<Map<String, dynamic>>> getClassAssets(String classId) async {
+    return await _repository.fetchClassAssets(classId);
+  }
+
+  /// Get current environment
   Future<String?> getCurrentEnvironment(String userId) async {
-    // TODO: Update function to return a map of strings of dragon id and the selected environments for each
-    try {
-      final response = await supabase
-          .from('Users')
-          .select('dragons')
-          .eq('id', userId)
-          .single();
-
-      final env = response['dragons']['current_dragon_env'];
-
-      return env;
-
-    }
-    catch (e) {
-      print('❌ DragonService: Error loading current environments for user $userId: $e');
-      return '';
-    }
+    return await _repository.fetchCurrentEnvironment(userId);
   }
 
-
-  // === Update ===
-  Future<void> updateUnlockedPhasesForDragon(String userId, String dragonId, List<String> newPhases) async {
-    try {
-      // Get Current DB Dragon info
-      final response = await supabase
-          .from('Users')
-          .select('dragons')
-          .eq('id', userId)
-          .single();
-
-      final dragons = response['dragons'];
-
-      final Map<String, List<String>> unlockedPhases = {};
-      dragons.forEach((key, phases) {
-        unlockedPhases[key] = phases.cast<String>();
-      });
-
-      // Only want to update a dragon not create a new one
-      if (!unlockedPhases.containsKey(dragonId)) {
-        throw("Dragon Id does not exist");
-      }
-      else {
-        unlockedPhases[dragonId] = newPhases;
-
-        await supabase
-            .from('Users')
-            .update({'dragons': unlockedPhases})
-            .eq('id', userId);
-      }
-    }
-    catch (e) {
-      print('❌ DragonService: Error updating phases for dragon $dragonId for user $userId: $e');
-    }
+  /// Update dragon phases
+  Future<void> updateDragonPhases(String userId, String dragonId, List<String> phases) async {
+    await _repository.updateUserDragonPhases(userId, dragonId, phases);
   }
 
-
-
-
-
-  Future<Map<String, dynamic>> getDragonImagesForModule(int moduleIndex) async {
-    if (!_isInitialized) {
-      await initialize();
-    }
-
-    try {
-      if (_dragons.isNotEmpty && moduleIndex < _dragons.length) {
-        final dragon = _dragons[moduleIndex];
-        return {
-          'egg': dragon['egg_image'],
-          'stage1': dragon['baby_image'],
-          'stage2': dragon['teen_image'],
-          'final': dragon['final_stage_image'],
-          'id': dragon['id'],
-          'preferred_environment': dragon['preferred_environment'],
-          'favorite_item': dragon['favorite_item'],
-          // 'length': dragon['length'],
-          // 'width': dragon['width'],
-        };
-      }
-
-      return {
-        'egg': 'assets/images/other/egg.png',
-        'stage1': 'assets/images/other/young.png',
-        'stage2': 'assets/images/other/teen.png',
-        'final': 'assets/images/other/adult.png',
-        'id': null,
-        'preferred_environment': 'Unknown',
-        'favorite_item': 'Unknown',
-        // 'length': 0.0,
-        // 'width': 0.0,
-      };
-    } catch (e) {
-      print('✗ Error getting dragon for module $moduleIndex: $e');
-      return {
-        'egg': 'assets/images/other/egg.png',
-        'stage1': 'assets/images/other/young.png',
-        'stage2': 'assets/images/other/teen.png',
-        'final': 'assets/images/other/adult.png',
-        'id': null,
-        'preferred_environment': 'Unknown',
-        'favorite_item': 'Unknown',
-        // 'length': 0.0,
-        // 'width': 0.0,
-      };
-    }
+  /// Save environment selection
+  Future<void> saveEnvironmentSelection(
+      String userId,
+      String environmentId,
+      Map<String, List<String>> existingPhases,
+      ) async {
+    await _repository.updateUserEnvironment(userId, environmentId, existingPhases);
   }
+}
 
-  List<Map<String, dynamic>> getAllDragons() {
-    return _dragons;
-  }
+/// Custom exception for service operations
+class DragonServiceException implements Exception {
+  final String message;
+  DragonServiceException(this.message);
 
-  Future<void> saveDragonPhases(
-    String userId,
-    String dragonId,
-    List<String> phases,
-  ) async {
-    try {
-      final response =
-          await supabase
-              .from('Users')
-              .select('dragons')
-              .eq('id', userId)
-              .single();
-
-      Map<String, dynamic> dragons = {};
-      if (response['dragons'] != null) {
-        dragons = Map<String, dynamic>.from(response['dragons']);
-      }
-
-      dragons[dragonId] = phases;
-
-      await supabase
-          .from('Users')
-          .update({'dragons': dragons})
-          .eq('id', userId);
-    } catch (e) {
-      throw Exception('Failed to save dragon phases: $e');
-    }
-  }
-
-
-  // Future<void> updateDragonProgress(String userId, String dragonId, String newPhase) async {
-  //   // Get current progress
-  //   final currentProgress = await getUserDragonProgress(userId, dragonId);
-  //
-  //   // Add new phase if not already unlocked
-  //   if (!currentProgress.unlockedPhases.contains(newPhase)) {
-  //     currentProgress.unlockedPhases.add(newPhase);
-  //     await saveUserDragonProgress(userId, dragonId, currentProgress);
-  //
-  //     // Trigger celebration UI
-  //     _showPhaseUnlockedCelebration(dragonId, newPhase);
-  //   }
-  // }
+  @override
+  String toString() => 'DragonServiceException: $message';
 }

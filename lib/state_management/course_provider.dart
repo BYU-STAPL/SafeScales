@@ -13,7 +13,6 @@ class CourseProvider extends ChangeNotifier {
   // === Data ===
   bool _isLoading = false;
 
-
   String _className = '';
   String _description = '';
   List<String> _unlockedLessons = []; // lessonIds
@@ -42,7 +41,6 @@ class CourseProvider extends ChangeNotifier {
     await loadClassContent();
     await loadUserProgress();
   }
-
 
   // === GETTERS ===
   bool get isLoading => _isLoading;

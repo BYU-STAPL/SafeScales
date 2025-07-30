@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:safe_scales/services/class_service.dart';
+import 'package:safe_scales/services/quiz_service.dart';
+import 'package:safe_scales/services/user_progress_service.dart';
 import 'package:safe_scales/state_management/course_provider.dart';
 import 'package:safe_scales/state_management/dragon_provider.dart';
+import 'package:safe_scales/state_management/old_dragon_provider.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/services/user_state_service.dart';
@@ -10,7 +14,9 @@ import 'package:safe_scales/themes/theme_notifier.dart';
 import 'package:safe_scales/themes/theme_provider.dart';
 import 'package:safe_scales/ui/health_check.dart';
 import 'package:safe_scales/ui/screens/login/selection_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'dependencies/dragon_dependencies.dart';
 import 'ui/screens/main_navigation.dart';
 
 void main() async {
@@ -33,9 +39,26 @@ void main() async {
 
 
   // Create and initialize the dragon provider
-  final dragonProvider = DragonProvider();
+  // final dragonProvider = DragonProvider();
+
+  final supabaseClient = Supabase.instance.client;
+
+  final userStateService = UserStateService();
+  final userProgressService = UserProgressService();
+  final quizService = QuizService(); // Assuming this has supabase internally
+  final classService = ClassService(supabaseClient);
+
+  final dragonDeps = createDragonDependencies(
+    supabase: Supabase.instance.client,
+    userStateService: userStateService,
+    userProgressService: userProgressService,
+    classService: classService,
+    quizService: quizService,
+  );
+
   try {
-    await dragonProvider.initialize();
+    await dragonDeps.provider.initialize();
+
   } catch (e) {
     print("Dragon provider initialization failed: $e");
   }
@@ -44,7 +67,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: courseProvider),
-        ChangeNotifierProvider.value(value: dragonProvider),
+        ChangeNotifierProvider<DragonProvider>.value(value: dragonDeps.provider,),
       ],
       child: const MyApp(),
     )
