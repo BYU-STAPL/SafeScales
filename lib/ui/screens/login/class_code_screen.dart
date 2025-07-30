@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/ui/screens/main_navigation.dart';
@@ -48,7 +47,7 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
             .select('id, code')
             .ilike('code', cleanClassCode);
 
-        if (classResponseList == null || classResponseList.isEmpty) {
+        if (classResponseList.isEmpty) {
           throw Exception('Invalid class code');
         }
 
@@ -133,10 +132,6 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                   })
                   .select()
                   .single();
-
-          if (newUserResponse == null) {
-            throw Exception('Failed to create user');
-          }
 
           // Set the new user as current user
           final supabaseUser = supabase.User(

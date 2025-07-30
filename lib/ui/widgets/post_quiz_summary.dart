@@ -7,10 +7,10 @@ class PostQuizSummary extends StatefulWidget {
   final List<List<int>> userAnswers;
 
   const PostQuizSummary({
-    Key? key,
+    super.key,
     required this.questionSet,
     required this.userAnswers,
-  }) : super(key: key);
+  });
 
   @override
   State<PostQuizSummary> createState() => _PostQuizSummaryState();

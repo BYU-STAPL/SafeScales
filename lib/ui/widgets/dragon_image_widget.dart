@@ -12,12 +12,12 @@ class DragonImageWidget extends StatelessWidget {
   final String? phase;
 
   const DragonImageWidget({
-    Key? key,
+    super.key,
     this.dragonId,
     this.moduleId,
     required this.size,
     this.phase,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

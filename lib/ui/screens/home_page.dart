@@ -90,7 +90,7 @@ class _HomePageState extends State<HomePage> {
                           Lesson? targetModule = getTargetLesson();
 
                           // If all modules are complete, go to the last module
-                          targetModule ??= courseProvider.lessons[courseProvider.lessonOrder[-1]];
+                          targetModule ??= courseProvider.lessons[courseProvider.lessonOrder.last];
 
                           Navigator.push(
                             context,
@@ -99,7 +99,9 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ).then((_) {
                             // Reload data when returning from lesson
+                            // Provider.of<CourseProvider>(context, listen: false).loadSingleLessonProgress(lessonId);
                             Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
+                            Provider.of<DragonProvider>(context, listen: false).updateDragonProgress();
                           });
                         },
                         child: ContinueLearningWidget(title: getTargetLesson()?.title ?? 'Module', progress: courseProvider.lessonProgress[getTargetLesson()?.lessonId]?.getProgressPercent() ?? 0.0),
@@ -216,13 +218,14 @@ class _HomePageState extends State<HomePage> {
                                 ).then((_) {
                                   // Reload data when returning from the lesson page
                                   Provider.of<CourseProvider>(context, listen: false).loadSingleLessonProgress(lessonId);
+                                  Provider.of<DragonProvider>(context, listen: false).updateDragonProgress();
                                   // _loadClassData();
                                 });
                               }
                             },
                           ),
                         );
-                      }).toList(),
+                      }),
 
                     const SizedBox(height: 20),
                   ],

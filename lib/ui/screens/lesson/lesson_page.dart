@@ -16,11 +16,7 @@ class LessonPage extends StatefulWidget {
   final String moduleId;
   final String? topic; // Keep for backward compatibility
 
-  const LessonPage({super.key, required this.moduleId, this.topic,})
-      : assert(
-  topic != null || moduleId != null,
-  'Either topic or moduleId must be provided',
-  );
+  const LessonPage({super.key, required this.moduleId, this.topic,});
 
   @override
   State<LessonPage> createState() => _LessonPageState();
@@ -39,8 +35,8 @@ class _LessonPageState extends State<LessonPage> {
 
   Future<void> _initializeData() async {
     final courseProvider = Provider.of<CourseProvider>(context, listen: false);
-    _lesson = (await courseProvider.lessons[widget.moduleId])!;
-    _lessonProgress = (await courseProvider.lessonProgress[widget.moduleId])!;
+    _lesson = (courseProvider.lessons[widget.moduleId])!;
+    _lessonProgress = (courseProvider.lessonProgress[widget.moduleId])!;
 
     if (mounted) {
       setState(() {
@@ -311,6 +307,9 @@ class _LessonPageState extends State<LessonPage> {
                 final courseProvider = Provider.of<CourseProvider>(context, listen: false);
                 await courseProvider.loadSingleLessonProgress(widget.moduleId);
 
+                await Provider.of<DragonProvider>(context, listen: false).updateDragonProgress();
+
+
                 if (mounted) {
                   setState(() {
                     _lessonProgress = courseProvider.lessonProgress[widget.moduleId];
@@ -349,7 +348,7 @@ class _LessonPageState extends State<LessonPage> {
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: primary.withOpacity(0.1),
+                    backgroundColor: primary.withValues(alpha: 0.1),
                     child: Icon(Icons.menu_book, size: 24, color: primary),
                   ),
                   const SizedBox(width: 16),
@@ -487,6 +486,7 @@ class _LessonPageState extends State<LessonPage> {
       if (completed == true) {
         final courseProvider = Provider.of<CourseProvider>(context, listen: false);
         await courseProvider.loadSingleLessonProgress(widget.moduleId);
+        await Provider.of<DragonProvider>(context, listen: false).updateDragonProgress();
 
         if (mounted) {
           setState(() {

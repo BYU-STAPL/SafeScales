@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/themes/app_theme.dart';
-import 'package:safe_scales/ui/widgets/settings_drawer.dart';
 import 'package:safe_scales/services/shop_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
@@ -447,7 +445,7 @@ class _ShopPageState extends State<ShopPage> {
             child: GestureDetector(
               onTap: () => setState(() => showLessonDialog = false),
               child: Container(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 child: Center(
                   child: Container(
                     width: 320,
@@ -457,7 +455,7 @@ class _ShopPageState extends State<ShopPage> {
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 16,
                           offset: const Offset(0, 8),
                         ),
@@ -499,7 +497,7 @@ class _ShopPageState extends State<ShopPage> {
                                       decoration: BoxDecoration(
                                         color:
                                             selectedLessonIndex == module['id']
-                                                ? primary.withOpacity(0.12)
+                                                ? primary.withValues(alpha: 0.12)
                                                 : Colors.grey[100],
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(

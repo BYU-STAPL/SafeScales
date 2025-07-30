@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/widgets/dragon_image_widget.dart';
 
 class ReadingResultScreen extends StatelessWidget {

@@ -11,14 +11,14 @@ class DragonIdCard extends StatefulWidget {
   final String favoriteItem;
   final String favoriteEnvironment;
 
-  bool isPlayUnlocked;
+  final bool isPlayUnlocked;
 
   final VoidCallback? onTapPlayButton;
   final Function(String)? onNameChanged; // Add this callback
 
 
-  DragonIdCard({
-    Key? key,
+  const DragonIdCard({
+    super.key,
     required this.dragonImage,
     required this.species,
     required this.name,
@@ -27,7 +27,7 @@ class DragonIdCard extends StatefulWidget {
     required this.isPlayUnlocked,
     this.onTapPlayButton,
     this.onNameChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<DragonIdCard> createState() => _DragonIdCardState();
@@ -36,10 +36,19 @@ class DragonIdCard extends StatefulWidget {
 
 class _DragonIdCardState extends State<DragonIdCard> {
 
+  bool _isPlayUnlocked = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _isPlayUnlocked = widget.isPlayUnlocked;
+  }
+
   void openEditNameDialog() {
     // TODO: Add Backend to saving dragon name
 
-    final TextEditingController _controller = TextEditingController(text: widget.name);
+    final TextEditingController controller = TextEditingController(text: widget.name);
 
     showDialog(
       context: context,
@@ -47,7 +56,7 @@ class _DragonIdCardState extends State<DragonIdCard> {
         return AlertDialog(
           title: const Text("Edit Name"),
           content: TextField(
-            controller: _controller,
+            controller: controller,
             style: Theme.of(context).textTheme.bodyLarge,
             decoration: InputDecoration(
               hintText: 'Enter Dragon\'s name',
@@ -67,7 +76,7 @@ class _DragonIdCardState extends State<DragonIdCard> {
                 // setState(() {
                 //   widget.name = _controller.text;
                 // });
-                widget.onNameChanged?.call(_controller.text);
+                widget.onNameChanged?.call(controller.text);
                 Navigator.of(context).pop(); // Close dialog
               },
               child: const Text("Save"),
@@ -275,7 +284,7 @@ class _DragonIdCardState extends State<DragonIdCard> {
               Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 child: ElevatedButton(
-                    onPressed: widget.isPlayUnlocked ? widget.onTapPlayButton : null,
+                    onPressed: _isPlayUnlocked ? widget.onTapPlayButton : null,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

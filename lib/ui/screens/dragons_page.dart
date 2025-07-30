@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/ui/widgets/dragon_id_card.dart';
-import '../../models/dragon.dart';
 import '../../state_management/course_provider.dart';
 import '../../state_management/dragon_provider.dart';
 import '../widgets/dragon_image_widget.dart';
@@ -112,9 +111,6 @@ class _DragonsPageState extends State<DragonsPage> {
 
     return dragons.map((dragon) {
 
-      if (dragon == null) return const SizedBox.shrink();
-
-      // Is dragon unlocked for play
       final isUnlocked = dragonProvider.isPlayUnlocked(dragon.id);
 
 
