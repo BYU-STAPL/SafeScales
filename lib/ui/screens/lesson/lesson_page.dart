@@ -7,7 +7,7 @@ import 'package:safe_scales/ui/screens/post_quiz/post_quiz_screen.dart';
 import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
 
 import '../../../models/lesson.dart';
-import '../../../state_management/course_provider.dart';
+import '../../../state_management/old_course_provider.dart';
 import '../../../state_management/dragon_provider.dart';
 import '../../../state_management/old_dragon_provider.dart';
 import '../../../themes/app_theme.dart';
@@ -35,7 +35,7 @@ class _LessonPageState extends State<LessonPage> {
   }
 
   Future<void> _initializeData() async {
-    final courseProvider = Provider.of<CourseProvider>(context, listen: false);
+    final courseProvider = Provider.of<OldCourseProvider>(context, listen: false);
     _lesson = (courseProvider.lessons[widget.moduleId])!;
     _lessonProgress = (courseProvider.lessonProgress[widget.moduleId])!;
 
@@ -51,7 +51,7 @@ class _LessonPageState extends State<LessonPage> {
     ThemeData theme = Theme.of(context);
     final screenSize = MediaQuery.of(context).size;
 
-    return Consumer2<DragonProvider, CourseProvider>(
+    return Consumer2<DragonProvider, OldCourseProvider>(
       builder: (context, dragonProvider, courseProvider, child) {
         // Show loading if data is not ready
         if (_isLoading || _lesson == null || _lessonProgress == null) {
@@ -303,7 +303,7 @@ class _LessonPageState extends State<LessonPage> {
             ).then((completed) async {
               if (completed == true) {
 
-                final courseProvider = Provider.of<CourseProvider>(context, listen: false);
+                final courseProvider = Provider.of<OldCourseProvider>(context, listen: false);
                 await courseProvider.loadSingleLessonProgress(widget.moduleId);
 
                 await Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
@@ -483,7 +483,7 @@ class _LessonPageState extends State<LessonPage> {
       MaterialPageRoute(builder: (context) => quizScreen),
     ).then((completed) async {
       if (completed == true) {
-        final courseProvider = Provider.of<CourseProvider>(context, listen: false);
+        final courseProvider = Provider.of<OldCourseProvider>(context, listen: false);
         await courseProvider.loadSingleLessonProgress(widget.moduleId);
         await Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
 

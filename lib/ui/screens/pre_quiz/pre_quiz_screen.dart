@@ -8,7 +8,7 @@ import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_results_screen.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 
-import '../../../state_management/course_provider.dart';
+import '../../../state_management/old_course_provider.dart';
 import '../../widgets/progress_bar.dart';
 import '../../widgets/question_widget.dart';
 
@@ -57,7 +57,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
     try {
       final user = _userState.currentUser;
       if (user != null) {
-        await Provider.of<CourseProvider>(context, listen: false).saveQuizProgress(
+        await Provider.of<OldCourseProvider>(context, listen: false).saveQuizProgress(
             userId: user.id,
             quizId: widget.questionSet.id,
             userAnswers: userAnswers,

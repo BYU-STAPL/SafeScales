@@ -6,7 +6,7 @@ import 'package:safe_scales/ui/widgets/lesson_card.dart';
 import 'package:safe_scales/state_management/old_dragon_provider.dart';
 
 import '../../models/lesson.dart';
-import '../../state_management/course_provider.dart';
+import '../../state_management/old_course_provider.dart';
 import '../../state_management/dragon_provider.dart';
 import '../widgets/continue_learning_widget.dart';
 import 'lesson/lesson_page.dart';
@@ -27,7 +27,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _initializeData() async {
-    final courseProvider = Provider.of<CourseProvider>(context, listen: false);
+    final courseProvider = Provider.of<OldCourseProvider>(context, listen: false);
     await courseProvider.initialize();
 
     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> {
 
   Lesson? getTargetLesson() {
 
-    CourseProvider courseProvider = Provider.of<CourseProvider>(context, listen: false);
+    OldCourseProvider courseProvider = Provider.of<OldCourseProvider>(context, listen: false);
 
     final lessons = courseProvider.lessons;
     final lessonProgressMap = courseProvider.lessonProgress;
@@ -57,7 +57,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Consumer2<DragonProvider, CourseProvider>(
+    return Consumer2<DragonProvider, OldCourseProvider>(
       builder: (context, dragonProvider, courseProvider, child) {
         return Scaffold(
           body: SafeArea(
@@ -101,7 +101,7 @@ class _HomePageState extends State<HomePage> {
                           ).then((_) {
                             // Reload data when returning from lesson
                             // Provider.of<CourseProvider>(context, listen: false).loadSingleLessonProgress(lessonId);
-                            Provider.of<CourseProvider>(context, listen: false).loadUserProgress();
+                            Provider.of<OldCourseProvider>(context, listen: false).loadUserProgress();
                             Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
                           });
                         },
@@ -218,7 +218,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ).then((_) {
                                   // Reload data when returning from the lesson page
-                                  Provider.of<CourseProvider>(context, listen: false).loadSingleLessonProgress(lessonId);
+                                  Provider.of<OldCourseProvider>(context, listen: false).loadSingleLessonProgress(lessonId);
                                   Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
                                   // _loadClassData();
                                 });

@@ -1,10 +1,28 @@
-class Course {
+import 'lesson.dart';
+
+// class Course {
+//   final String courseId;
+//   final List<String> lessons; // List of lesson ids
+//
+//   Course({
+//     required this.courseId,
+//     required this.lessons,
+//
+//   });
+// }
+
+class CourseData {
   final String courseId;
-  final List<String> lessons; // List of lesson ids
+  final String className;
+  final String description;
+  final Map<String, Lesson> lessons;
+  final List<String> lessonOrder;
 
-  Course({
+  CourseData({
     required this.courseId,
+    required this.className,
+    required this.description,
     required this.lessons,
-
+    required this.lessonOrder,
   });
 }

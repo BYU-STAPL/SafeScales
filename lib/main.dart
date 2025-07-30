@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/services/quiz_service.dart';
 import 'package:safe_scales/services/user_progress_service.dart';
-import 'package:safe_scales/state_management/course_provider.dart';
+import 'package:safe_scales/state_management/old_course_provider.dart';
 import 'package:safe_scales/state_management/dragon_provider.dart';
 import 'package:safe_scales/state_management/old_dragon_provider.dart';
 import 'package:safe_scales/themes/app_theme.dart';
@@ -30,7 +30,7 @@ void main() async {
 
 
   // Create and initialize the Course provider
-  final courseProvider = CourseProvider();
+  final courseProvider = OldCourseProvider();
   try {
     await courseProvider.initialize();
   } catch (e) {
