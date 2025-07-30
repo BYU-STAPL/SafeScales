@@ -133,10 +133,6 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                   .select()
                   .single();
 
-          if (newUserResponse == null) {
-            throw Exception('Failed to create user');
-          }
-
           // Set the new user as current user
           final supabaseUser = supabase.User(
             id: newUserResponse['id'],

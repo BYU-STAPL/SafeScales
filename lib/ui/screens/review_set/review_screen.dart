@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
-import 'package:safe_scales/themes/app_theme.dart';
 
 import '../../widgets/progress_bar.dart';
 import '../../../models/question.dart';
 import '../../widgets/question_widget.dart';
-import '../../../services/user_state_service.dart';
 
 class ReviewScreen extends StatefulWidget {
   final QuestionSet questionSet;
@@ -23,7 +20,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
   int currentQuestionIndex = 0;
   List<List<int>> userAnswers = [];
   bool isStarted = false;
-  final _userState = UserStateService();
 
   bool isCurrentQuestionCorrect = false;
   // bool showAnswerMessage = false;

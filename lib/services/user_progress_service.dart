@@ -56,7 +56,7 @@ class UserProgressService {
 
         final quizMap = moduleMap[lessonId];
 
-        QuizAttempt? preQuizAttempt = null;
+        QuizAttempt? preQuizAttempt;
         List<QuizAttempt> postQuizAttempts = [];
         bool isReadingComplete = false;
 
@@ -93,7 +93,7 @@ class UserProgressService {
             // Either preQuiz, postQuiz, or reviewQuiz
             QuizAttempt attempt = QuizAttempt(
               id: '',
-              quizId: '${key}_${type}',
+              quizId: '${key}_$type',
               lessonId: lessonId,
               type: activityType,
               score: activityData['score'] ?? 0.0, // Access from activityData

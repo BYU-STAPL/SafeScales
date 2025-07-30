@@ -392,14 +392,14 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                               decoration: BoxDecoration(
                                 color:
                                 candidateData.isNotEmpty
-                                    ? colorScheme.primary.withOpacity(0.1)
+                                    ? colorScheme.primary.withValues(alpha: 0.1)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color:
                                   candidateData.isNotEmpty
                                       ? colorScheme.primary
-                                      : colorScheme.primary.withOpacity(0.2),
+                                      : colorScheme.primary.withValues(alpha: 0.2),
                                   width: candidateData.isNotEmpty ? 3 : 2,
                                 ),
                               ),
@@ -413,7 +413,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                                       final isSelected = selectedStickerId == sticker.id;
 
                                       return _buildSticker(sticker, isSelected, stickerEnvironmentSize,);
-                                    }).toList(),
+                                    }),
                                   ],
                                 ),
                               ),

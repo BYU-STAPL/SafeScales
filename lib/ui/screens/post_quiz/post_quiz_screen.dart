@@ -4,15 +4,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:safe_scales/services/user_progress_service.dart';
 import 'package:safe_scales/state_management/course_provider.dart';
-import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_results_screen.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_results_screen.dart';
-import 'package:safe_scales/services/quiz_service.dart';
-import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 
@@ -21,10 +16,10 @@ import '../../widgets/question_widget.dart';
 
 class PostQuizScreen extends StatefulWidget {
   const PostQuizScreen({
-    Key? key,
+    super.key,
     required this.moduleId,
     required this.questionSet
-  }) : super(key: key);
+  });
 
   final String moduleId;
   final QuestionSet questionSet;

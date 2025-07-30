@@ -9,6 +9,7 @@ class ToyBoxItemCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const ToyBoxItemCard({
+    super.key,
     this.image,
     required this.name,
     required this.onTap,

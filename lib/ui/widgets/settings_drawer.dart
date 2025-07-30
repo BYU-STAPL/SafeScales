@@ -157,7 +157,7 @@ class SettingsDrawer extends StatelessWidget {
                       activeColor: colorScheme.primary,
                       activeTrackColor: colorScheme.primaryContainer,
                       inactiveThumbColor: colorScheme.outline,
-                      inactiveTrackColor: colorScheme.surfaceVariant,
+                      inactiveTrackColor: colorScheme.surfaceContainerHigh,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ],

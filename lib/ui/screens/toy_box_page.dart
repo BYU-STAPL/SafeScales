@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/ui/widgets/toy_box_item_card.dart';
-import 'package:safe_scales/services/shop_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 
 import '../../services/dragon_service.dart';
@@ -15,8 +14,6 @@ class ToyBoxPage extends StatefulWidget {
 
 class _ToyBoxPageState extends State<ToyBoxPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final ShopService _shopService = ShopService();
-  final UserStateService _userState = UserStateService();
   int selectedTab = 0; // 0 = Accessories, 1 = Environments
   List<Map<String, dynamic>> userAccessories = [];
   List<Map<String, dynamic>> userEnvironments = [];
@@ -28,52 +25,6 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
     super.initState();
     // _loadUserItems();
     _loadUserAccessories();
-  }
-
-  Future<void> _loadUserItems() async {
-    setState(() {
-      isLoadingItems = true;
-    });
-
-    try {
-      final userId = _userState.currentUser?.id;
-      if (userId != null) {
-        // Get user's acquired items
-        final acquiredAccessories = await _shopService
-            .getUserAcquiredAccessories(userId);
-        final acquiredEnvironments = await _shopService
-            .getUserAcquiredEnvironments(userId);
-
-        // Get details for each acquired item
-        final accessories = await _shopService.getAccessories();
-        final environments = await _shopService.getEnvironments();
-
-        userAccessories =
-            accessories
-                .where(
-                  (accessory) =>
-                      acquiredAccessories.contains(accessory['id'].toString()),
-                )
-                .toList();
-        userEnvironments =
-            environments
-                .where(
-                  (environment) => acquiredEnvironments.contains(
-                    environment['id'].toString(),
-                  ),
-                )
-                .toList();
-      }
-
-      setState(() {
-        isLoadingItems = false;
-      });
-    } catch (e) {
-      print('❌ Error loading user items: $e');
-      setState(() {
-        isLoadingItems = false;
-      });
-    }
   }
 
   Future<void> _loadUserAccessories() async {
@@ -141,75 +92,9 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
     }
   }
 
-  Future<void> _loadUserEnvironments() async {
-    try {
-      setState(() => isLoadingEnvironments = true);
-
-      final userState = UserStateService();
-      final user = userState.currentUser;
-
-      if (user != null) {
-        final dragonService = DragonService(QuizService().supabase);
-        final userResponse =
-        await dragonService.supabase
-            .from('Users')
-            .select('acquired_environments')
-            .eq('id', user.id)
-            .single();
-
-        if (userResponse['acquired_environments'] != null) {
-          final List<dynamic> acquiredEnvironments =
-          userResponse['acquired_environments'];
-
-          // Get accessories from classes.assets
-          final classesResponse = await dragonService.supabase
-              .from('classes')
-              .select('assets');
-
-          List<Map<String, dynamic>> foundEnvironments = [];
-
-          for (var classData in classesResponse) {
-            if (classData['assets'] != null) {
-              final assets = List<dynamic>.from(classData['assets']);
-
-              // Find accessories with matching IDs
-              for (var asset in assets) {
-                if (asset['type'] == 'environment' &&
-                    acquiredEnvironments.contains(asset['id'])) {
-                  foundEnvironments.add({
-                    'id': asset['id'],
-                    'name': asset['name'],
-                    'image':
-                    asset['imageUrl'], // Note: imageUrl not image in new structure
-                  });
-                }
-              }
-            }
-          }
-
-          setState(() {
-            userEnvironments = foundEnvironments;
-            isLoadingEnvironments = false;
-          });
-
-        } else {
-          print('⚠️ No acquired environments found');
-          setState(() => isLoadingEnvironments = false);
-        }
-      } else {
-        print('⚠️ No user found');
-        setState(() => isLoadingEnvironments = false);
-      }
-    } catch (e) {
-      print('❌ Error loading environments: $e');
-      setState(() => isLoadingEnvironments = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final Color primary = Theme.of(context).colorScheme.primary;
-    final Color secondary = Colors.blue[100]!;
     final Color selected = primary;
     final Color unselected = Colors.blue[100]!;
     final Color selectedText = Colors.white;
@@ -304,7 +189,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                                   Icon(
                                     Icons.shopping_bag_outlined,
                                     size: 64,
-                                    color: primary.withOpacity(0.5),
+                                    color: primary.withValues(alpha: 0.5),
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
@@ -340,7 +225,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
                               Icon(
                                 Icons.landscape_outlined,
                                 size: 64,
-                                color: primary.withOpacity(0.5),
+                                color: primary.withValues(alpha: 0.5),
                               ),
                               const SizedBox(height: 16),
                               Text(

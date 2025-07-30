@@ -106,7 +106,7 @@ class ClassService {
     final preQuizMap = lessonMap['pre_quiz'];
     final questions = _createQuestionsFromList(preQuizMap['questions']);
 
-    final String quizId = lessonMap['id'].toString() + '_' + 'preQuiz';
+    final String quizId = '${lessonMap['id']}_preQuiz';
 
     return QuestionSet(
       id: quizId,
@@ -123,7 +123,7 @@ class ClassService {
     final postQuizMap = lessonMap['post_quiz'];
     final questions = _createQuestionsFromList(postQuizMap['questions']);
 
-    final String quizId = lessonMap['id'].toString() + '_' + 'postQuiz';
+    final String quizId = '${lessonMap['id']}_postQuiz';
 
     return QuestionSet(
       id: quizId,

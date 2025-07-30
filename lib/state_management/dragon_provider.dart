@@ -12,9 +12,9 @@ import '../services/quiz_service.dart';
 
 class DragonProvider extends ChangeNotifier {
   // === For tracking growth phases ===
-  static const List<String> PHASE_ORDER = ['egg', 'stage1', 'stage2', 'final'];
+  static const List<String> phaseOrder = ['egg', 'stage1', 'stage2', 'final'];
 
-  static const Map<String, String> PHASE_ALIASES = {
+  static const Map<String, String> phaseAliases = {
     'baby': 'stage1',
     'teen': 'stage2',
     'adult': 'final',
@@ -22,7 +22,7 @@ class DragonProvider extends ChangeNotifier {
 
   /// Normalize phase name (handle legacy names)
   String _normalizePhase(String phase) {
-    return PHASE_ALIASES[phase] ?? phase;
+    return phaseAliases[phase] ?? phase;
   }
 
   // === Data ===
@@ -95,8 +95,8 @@ class DragonProvider extends ChangeNotifier {
   /// Get highest unlocked phase for a dragon
   String getDragonHighestPhase(String dragonId) {
     // Check phases in reverse order (highest to lowest)
-    for (int i = PHASE_ORDER.length - 1; i >= 0; i--) {
-      final phase = PHASE_ORDER[i];
+    for (int i = phaseOrder.length - 1; i >= 0; i--) {
+      final phase = phaseOrder[i];
       if(hasPhase(dragonId, phase)) {
         return phase;
       }

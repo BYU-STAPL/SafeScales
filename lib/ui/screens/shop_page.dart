@@ -445,7 +445,7 @@ class _ShopPageState extends State<ShopPage> {
             child: GestureDetector(
               onTap: () => setState(() => showLessonDialog = false),
               child: Container(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 child: Center(
                   child: Container(
                     width: 320,
@@ -455,7 +455,7 @@ class _ShopPageState extends State<ShopPage> {
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 16,
                           offset: const Offset(0, 8),
                         ),
@@ -497,7 +497,7 @@ class _ShopPageState extends State<ShopPage> {
                                       decoration: BoxDecoration(
                                         color:
                                             selectedLessonIndex == module['id']
-                                                ? primary.withOpacity(0.12)
+                                                ? primary.withValues(alpha: 0.12)
                                                 : Colors.grey[100],
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(

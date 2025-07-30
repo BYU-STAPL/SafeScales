@@ -46,7 +46,7 @@ class LessonCard extends StatelessWidget {
           shouldBeUnlocked
               ? null
               : Border.all(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
             width: 1,
           ),
           boxShadow:

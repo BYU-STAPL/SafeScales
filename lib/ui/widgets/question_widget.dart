@@ -10,14 +10,14 @@ class QuestionWidget extends StatefulWidget {
   final bool isResponseLocked;
 
   const QuestionWidget({
-    Key? key,
+    super.key,
     required this.question,
     required this.selectedAnswers,
     required this.onAnswerChanged,
     required this.showCorrectAnswer,
     required this.isResponseLocked,
     this.showExplanation = false,
-  }) : super(key: key);
+  });
 
   @override
   _QuestionWidgetState createState() => _QuestionWidgetState();
@@ -29,7 +29,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
     ThemeData theme = Theme.of(context);
 
     Question question = widget.question;
-    List<int> selectedAnswers = widget.selectedAnswers;
+    // List<int> selectedAnswers = widget.selectedAnswers;
 
     Text instructionText = Text(
       'Choose one option:',

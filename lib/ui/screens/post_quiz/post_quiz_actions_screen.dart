@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import '../../widgets/dragon_image_widget.dart';
 
@@ -78,19 +77,20 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
 
         SizedBox(height: 30),
 
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: _handleGoToDragon,
-            icon: FaIcon(FontAwesomeIcons.dragon),
-            label: Text("GO TO DRAGON".toUpperCase()),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              padding: EdgeInsets.symmetric(vertical: 12),
-            ),
-          ),
-        ),
+        // TODO: Need to update quiz progress here if this button is clicked and user doesn't return to lesson
+        // SizedBox(
+        //   width: double.infinity,
+        //   child: ElevatedButton.icon(
+        //     onPressed: _handleGoToDragon,
+        //     icon: FaIcon(FontAwesomeIcons.dragon),
+        //     label: Text("GO TO DRAGON".toUpperCase()),
+        //     style: ElevatedButton.styleFrom(
+        //       backgroundColor: theme.colorScheme.primary,
+        //       foregroundColor: theme.colorScheme.onPrimary,
+        //       padding: EdgeInsets.symmetric(vertical: 12),
+        //     ),
+        //   ),
+        // ),
 
         SizedBox(height: 30),
       ],
@@ -103,22 +103,20 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
     return Column(
       children: [
         SizedBox(height: 30),
-        Container(
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Text('Quiz Score'),
-                Text(
-                  '${widget.score}%',
-                  style: TextStyle(
-                    fontSize: 40 * AppTheme.fontSizeScale,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.orange,
-                  ),
+        Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Text('Quiz Score'),
+              Text(
+                '${widget.score}%',
+                style: TextStyle(
+                  fontSize: 40 * AppTheme.fontSizeScale,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.orange,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
         SizedBox(height: 30),
