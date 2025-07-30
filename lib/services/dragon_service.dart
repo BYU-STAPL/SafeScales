@@ -24,11 +24,12 @@ class DragonService {
   };
 
   // Progress thresholds for dragon phase unlocking
+  // Note: Progress uses full percent not decimals
   static const Map<String, double> phaseThresholds = {
     'egg': 0.0,
-    'stage1': 0.3,
-    'stage2': 0.5,
-    'final': 0.8,
+    'stage1': 30.0,
+    'stage2': 50.0,
+    'final': 80.0,
   };
 
   DragonService(this._repository);
@@ -50,7 +51,7 @@ class DragonService {
     final unlockedPhases = <String>[];
 
     for (final phase in phaseOrder) {
-      final threshold = phaseThresholds[phase] ?? 1.0;
+      final threshold = phaseThresholds[phase] ?? 100.0;
       if (progressPercent >= threshold) {
         unlockedPhases.add(phase);
       }
