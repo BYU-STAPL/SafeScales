@@ -30,7 +30,7 @@ class ItemRepository {
   // === User Item Data ===
 
   /// Get user's items and environments
-  Future<Map<String, Item>> fetchUserItems(String userId, String classId) async {
+  Future<List<dynamic>> fetchUserItems(String userId) async {
     try {
       final response = await _supabase
           .from('Users')
@@ -42,35 +42,73 @@ class ItemRepository {
         throw ItemRepositoryException('User $userId has no items');
       }
 
-      final List<dynamic> acquiredItems = response['acquired_accessories'];
-
-
-      final assets = await fetchClassAssets(classId);
-
-      Map<String, Item> foundItems = {};
-
-      // Find accessories with matching IDs
-      for (var asset in assets) {
-        if (asset['type'] == 'accessory' && acquiredItems.contains(asset['id'])) {
-
-          final item = Item(
-            id: asset['id'],
-            name: asset['name'],
-            imageUrl: asset['imageUrl'],
-          );
-
-          foundItems[item.id] = item;
-
-        }
-      }
-
-      return foundItems;
+      // Returns a list with a string of ids ['long-id', 'long-id']
+      return response['acquired_accessories'];
     }
     catch (e) {
-      // throw ItemRepositoryException('Failed to fetch user items for user $userId for class $classId: $e');
-      return {};
+      throw ItemRepositoryException('Error fetching user items: $e');
     }
   }
+
+
+
+  Future<Map<String, Item>> fetchUserAllItems(String userId, String classId) async {
+  try {
+    final response = await _supabase
+        .from('Users')
+        .select('acquired_accessories')
+        .eq('id', userId)
+        .single();
+
+    if (response['acquired_accessories'] == null) {
+      throw ItemRepositoryException('User $userId has no items');
+    }
+
+    final List<dynamic> acquiredItems = response['acquired_accessories'];
+
+
+    final List<Map<String, dynamic>> assets = await fetchClassAssets(classId);
+
+    Map<String, Item> foundItems = {};
+
+    // Find accessories with matching IDs
+    for (var asset in assets) {
+      if (asset['type'] == 'accessory' && acquiredItems.contains(asset['id'])) {
+
+        ItemType type;
+        switch (asset['type']) {
+          case 'accessory':
+            type = ItemType.item;
+            break;
+
+          case 'environment':
+            type = ItemType.environment;
+            break;
+
+          default:
+            type = ItemType.item;
+            break;
+        }
+
+        final item = Item(
+          id: asset['id'],
+          name: asset['name'],
+          type: type,
+          imageUrl: asset['imageUrl'],
+        );
+
+        foundItems[item.id] = item;
+
+      }
+    }
+
+    return foundItems;
+  }
+  catch (e) {
+    // throw ItemRepositoryException('Failed to fetch user items for user $userId for class $classId: $e');
+    return {};
+  }
+}
 
   /// Get class item assets
   Future<List<Map<String, dynamic>>> fetchClassAssets(String classId) async {
