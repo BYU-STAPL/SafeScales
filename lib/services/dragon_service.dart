@@ -91,10 +91,7 @@ class DragonService {
   // === Data Processing ===
 
   /// Process raw user dragons data and class assets into Dragon objects
-  Map<String, Dragon> processUserDragons(
-      Map<String, dynamic> userDragonsData,
-      List<Map<String, dynamic>> classAssets,
-      ) {
+  Map<String, Dragon> processUserDragons(Map<String, dynamic> userDragonsData, List<Map<String, dynamic>> classAssets,) {
     final dragons = <String, Dragon>{};
 
     // Extract dragon IDs and phases (excluding environment setting)
@@ -197,14 +194,12 @@ class DragonService {
     return classUnlockedPhases;
   }
 
+
+
   // === Business Logic Methods ===
 
   /// Update dragon phases based on lesson progress
-  Future<void> updateDragonProgressForLesson(
-      String userId,
-      String dragonId,
-      String lessonId,
-      ) async {
+  Future<void> updateDragonProgressForLesson(String userId, String dragonId, String lessonId,) async {
 
     // Ask Course Service for lesson progress
     LessonProgress? lessonProgress = await _courseService.getSingleLessonProgress(userId, lessonId);
@@ -239,6 +234,8 @@ class DragonService {
     return dragon.phaseImages[phase] ?? dragon.phaseImages['egg'] ?? '';
   }
 
+
+
   // === Repository Delegates ===
 
   /// Get all dragons from database
@@ -261,17 +258,8 @@ class DragonService {
     return await _repository.fetchCurrentEnvironment(userId);
   }
 
-  // /// Update dragon phases
-  // Future<void> updateDragonPhases(String userId, String dragonId, List<String> phases) async {
-  //   await _repository.updateUserDragonPhases(userId, dragonId, phases);
-  // }
-
   /// Save environment selection
-  Future<void> saveEnvironmentSelection(
-      String userId,
-      String environmentId,
-      Map<String, List<String>> existingPhases,
-      ) async {
+  Future<void> saveEnvironmentSelection(String userId, String environmentId, Map<String, List<String>> existingPhases,) async {
     await _repository.updateUserEnvironment(userId, environmentId, existingPhases);
   }
 }

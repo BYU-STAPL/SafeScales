@@ -1,11 +1,9 @@
 import 'dart:core';
 import 'package:flutter/cupertino.dart';
 import 'package:safe_scales/services/class_service.dart';
-import 'package:safe_scales/services/user_progress_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/models/dragon.dart';
 import '../services/dragon_service.dart';
-import '../services/quiz_service.dart';
 
 /// Provider that manages dragon state for the UI
 /// This layer handles UI state, loading states, and coordinates between UI and service layer
@@ -153,22 +151,6 @@ class DragonProvider extends ChangeNotifier {
 
       final user = _userState.currentUser;
       if (user == null) throw Exception('User is null');
-
-      // final classData = await _classService.getUserClass(user.id);
-      // if (classData.isEmpty) {
-      //   throw Exception('Class data is missing for user ${user.id}');
-      // }
-
-      // final modules = await _classService.getClassModules(classData['id']);
-      // final moduleIds = modules.map((m) => m['id'] as String).toList();
-      // // final moduleProgress = await _quizService.getModuleProgress(
-      // //   userId: user.id,
-      // //   moduleIds: moduleIds,
-      // // );
-      //
-      // // Get all module ids
-      // _dragonsByModuleId
-
 
       // Update progress for each module
       for (final lessonId in _dragonsByModuleId.keys) {

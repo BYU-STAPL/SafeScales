@@ -1,6 +1,20 @@
 // Model class for placed stickers
 import 'dart:ui';
 
+class Item {
+  final String id;
+  final String name;
+  final String imageUrl;
+
+  // TODO: Later add a cost parameter for the shop
+
+  Item({
+    required this.id,
+    required this.name,
+    required this.imageUrl,
+  });
+}
+
 class StickerItem {
   final String id;
   final String imageUrl;
