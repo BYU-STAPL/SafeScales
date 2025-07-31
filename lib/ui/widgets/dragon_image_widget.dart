@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../models/dragon.dart';
 import '../../state_management/course_provider.dart';
+import '../../state_management/old_course_provider.dart';
 import '../../state_management/dragon_provider.dart';
+import '../../state_management/old_dragon_provider.dart';
 
 class DragonImageWidget extends StatelessWidget {
   final String? dragonId;

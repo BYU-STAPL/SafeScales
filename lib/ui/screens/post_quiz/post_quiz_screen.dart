@@ -5,12 +5,13 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:safe_scales/state_management/course_provider.dart';
+import 'package:safe_scales/state_management/old_course_provider.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_results_screen.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 
+import '../../../state_management/course_provider.dart';
 import '../../widgets/progress_bar.dart';
 import '../../widgets/question_widget.dart';
 
@@ -77,7 +78,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
       final user = _userState.currentUser;
       if (user != null) {
         await Provider.of<CourseProvider>(context, listen: false).saveQuizProgress(
-            userId: user.id,
             quizId: widget.questionSet.id,
             userAnswers: userAnswers,
             correctAnswers: correctAnswers,

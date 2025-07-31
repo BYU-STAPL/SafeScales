@@ -58,7 +58,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
       final user = _userState.currentUser;
       if (user != null) {
         await Provider.of<CourseProvider>(context, listen: false).saveQuizProgress(
-            userId: user.id,
+            // userId: user.id,
             quizId: widget.questionSet.id,
             userAnswers: userAnswers,
             correctAnswers: correctAnswers,

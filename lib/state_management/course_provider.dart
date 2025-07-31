@@ -1,247 +1,312 @@
-
-import 'package:flutter/cupertino.dart';
-import 'package:safe_scales/services/user_progress_service.dart';
-
+import 'package:flutter/foundation.dart';
 import '../models/lesson.dart';
 import '../models/lesson_progress.dart';
 import '../models/user.dart';
-import '../services/class_service.dart';
+import '../services/course_service.dart';
 import '../services/user_state_service.dart';
 
+/// Provider that manages course-related UI state
+/// This is the only layer that should be used by UI components
 class CourseProvider extends ChangeNotifier {
+  final CourseService _courseService;
+  final UserStateService _userStateService;
 
-  // === Data ===
+  // === UI State ===
   bool _isLoading = false;
+  String? _error;
 
-
+  // === Course Data ===
+  String _courseId = '';
   String _className = '';
   String _description = '';
-  List<String> _unlockedLessons = []; // lessonIds
-  Map<String, LessonProgress> _lessonProgress = {}; //Map for access to lesson progress
-  Map<String, Lesson> _lessons = {}; // Map for quick access to lesson content
-  List<String> _lessonOrder = []; // All lessonId's in order
+  Map<String, Lesson> _lessons = {};
+  List<String> _lessonOrder = [];
 
-  // === Services ===
-  final UserStateService _userState = UserStateService();
-  final UserProgressService _userProgressService = UserProgressService();
-  // final QuizService _quizService = QuizService();
-  late final ClassService _classService;
+  // === Progress Data ===
+  Map<String, LessonProgress> _lessonProgress = {};
 
-  // === User ===
-  late User _user;
+  // === Constructor ===
+  CourseProvider({
+    CourseService? courseService,
+    UserStateService? userStateService,
+  }) : _courseService = courseService ?? CourseService(),
+        _userStateService = userStateService ?? UserStateService();
 
-  CourseProvider() {
-    _classService = ClassService(_userProgressService.supabase);
-    if (_userState.currentUser != null) {
-      _user = _userState.currentUser!;
-    }
-  }
-
-  Future<void> initialize() async {
-    await loadUser();
-    await loadClassContent();
-    await loadUserProgress();
-  }
-
-
-  // === GETTERS ===
+  // === Getters ===
   bool get isLoading => _isLoading;
+  String? get error => _error;
 
+  String get courseId => _courseId;
   String get className => _className;
   String get description => _description;
+  Map<String, Lesson> get lessons => Map.unmodifiable(_lessons);
+  List<String> get lessonOrder => List.unmodifiable(_lessonOrder);
+  Map<String, LessonProgress> get lessonProgress => Map.unmodifiable(_lessonProgress);
 
-  List<String> get unlockedLessons => _unlockedLessons;
-  Map<String, LessonProgress> get lessonProgress => _lessonProgress;
-  Map<String, Lesson> get lessons => _lessons;
-  List<String> get lessonOrder => _lessonOrder;
+  /// Get the current user
+  User? get currentUser => _userStateService.currentUser;
 
+  /// Check if user is logged in
+  bool get isUserLoggedIn => _userStateService.currentUser != null;
 
-  // === Helper Methods ===
-  void _clearData() {
-    _className = '';
-    _lessonProgress = {};
-    _unlockedLessons = [];
-    _lessons = {};
-    _lessonOrder = [];
+  /// Initialized check
+  bool _isInitialized = false;
+
+  bool get isInitialized => _isInitialized;
+
+  // === Public Methods ===
+
+  /// Initialize the provider - call this when the provider is first created
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+
+    if (!isUserLoggedIn) {
+      _clearData();
+      return;
+    }
+
+    await _executeWithErrorHandling(() async {
+      await _loadCourseData();
+      await loadUserProgress();
+      _isInitialized = true;
+    });
   }
 
-  // === Load User ===
-  Future<void> loadUser() async {
-    if (_userState.currentUser == null) {
+  /// Refresh all course data
+  Future<void> refresh() async {
+    await initialize();
+  }
+
+  /// Load course content for the current user
+  Future<void> loadCourseContent() async {
+    if (!isUserLoggedIn) {
       _clearData();
-      _isLoading = false;
+      return;
+    }
+
+    await _executeWithErrorHandling(() async {
+      await _loadCourseData();
+    });
+  }
+
+  /// Load user progress for all lessons
+  Future<void> loadUserProgress() async {
+    if (!isUserLoggedIn) {
+      _lessonProgress.clear();
       notifyListeners();
       return;
     }
 
-    _user = _userState.currentUser!;
+    await _executeWithErrorHandling(() async {
+      final progress = await _courseService.getUserProgress(currentUser!.id);
+      _lessonProgress = progress;
+    });
   }
 
-
-  // === Load Class Content
-  Future<void> loadClassContent() async {
-    try {
-      _isLoading = true;
-      notifyListeners();
-
-      // Get user's class
-      final classData = await _classService.getUserClass(_user.id);
-      if (classData.isEmpty) {
-        _clearData();
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
-
-      _className = classData['name'];
-      _description = classData['description'];
-
-      // Get class lessons
-      _lessons = await _classService.getLessons(classData['id']);
-
-      _lessonOrder = await _classService.getLessonOrder(classData['id']);
-
-      _isLoading = false;
-      notifyListeners();
-
-    } catch (e) {
-      print('❌ CourseProgressProvider: Error loading lesson content: $e');
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-
-  // === Load Progress ===
-  Future<void> loadUserProgress() async {
-    try {
-      _isLoading = true;
-      notifyListeners();
-
-      _lessonProgress = await _userProgressService.loadLessonProgress(_user.id);
-
-      // // Calculate unlocked content based on progress
-      // _calculateUnlockedContent();
-
-      _isLoading = false;
-      notifyListeners();
-
-    }
-    catch (e) {
-      print('❌ CourseProgressProvider: Error loading user progress: $e');
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // === Load individual lesson Progress
+  /// Load progress for a specific lesson
   Future<void> loadSingleLessonProgress(String lessonId) async {
-    try {
-      _isLoading = true;
-      notifyListeners();
+    if (!isUserLoggedIn) return;
 
-      LessonProgress? updatedLesson = await _userProgressService.loadSingleLessonProgress(_user.id, lessonId);
+    await _executeWithErrorHandling(() async {
+      final progress = await _courseService.getSingleLessonProgress(
+          currentUser!.id,
+          lessonId
+      );
 
-      if (updatedLesson != null) {
-        _lessonProgress[lessonId] = updatedLesson;
+      if (progress != null) {
+        _lessonProgress[lessonId] = progress;
       }
-
-      _isLoading = false;
-      notifyListeners();
-
-    }
-    catch (e) {
-      print('❌ CourseProgressProvider: Error loading progress for $lessonId: $e');
-      _isLoading = false;
-      notifyListeners();
-    }
-
+    });
   }
 
-  // === Save individual lesson Progress
-  Future<void> saveQuizProgress({required String userId, required String quizId, required List<List<int>> userAnswers, required int correctAnswers, required int totalQuestions}) async {
-    try {
-      _isLoading = true;
-      notifyListeners();
+  /// Save quiz progress
+  Future<bool> saveQuizProgress({
+    required String quizId,
+    required List<List<int>> userAnswers,
+    required int correctAnswers,
+    required int totalQuestions,
+  }) async {
+    if (!isUserLoggedIn) return false;
 
-      await _userProgressService.saveQuizProgress(
-          userId: userId,
-          quizId: quizId,
-          answers: userAnswers,
-          correctAnswers: correctAnswers,
-          totalQuestions: totalQuestions
+    return await _executeWithErrorHandling(() async {
+      await _courseService.saveQuizProgress(
+        userId: currentUser!.id,
+        quizId: quizId,
+        userAnswers: userAnswers,
+        correctAnswers: correctAnswers,
+        totalQuestions: totalQuestions,
       );
 
-      _isLoading = false;
-      notifyListeners();
-    }
-    catch (e) {
-      print('❌ CourseProgressProvider: Error saving quiz progress for $quizId: $e');
-      _isLoading = false;
-      notifyListeners();
-    }
+      // Reload progress for the affected lesson
+      final lessonId = quizId.split('_')[0];
+      await loadSingleLessonProgress(lessonId);
+
+      return true;
+    }, defaultValue: false);
   }
 
-  Future<void> saveReadingProgress(String userId, String lessonId, Set<int> bookmarks) async {
-    try {
-      _isLoading = true;
-      notifyListeners();
+  /// Save reading progress
+  Future<bool> saveReadingProgress({
+    required String lessonId,
+    required Set<int> bookmarks,
+  }) async {
+    if (!isUserLoggedIn) return false;
 
-      await _userProgressService.saveReadingProgress(
-          userId: userId,
-          lessonId: lessonId,
-          bookmarks: bookmarks
+    return await _executeWithErrorHandling(() async {
+      await _courseService.saveReadingProgress(
+        userId: currentUser!.id,
+        lessonId: lessonId,
+        bookmarks: bookmarks,
       );
 
+      // Reload progress for the lesson
+      await loadSingleLessonProgress(lessonId);
 
-      _isLoading = false;
-      notifyListeners();
-    }
-    catch (e) {
-      print('❌ CourseProgressProvider: Error saving read progress for user $userId: $e');
-      _isLoading = false;
-      notifyListeners();
+      return true;
+    }, defaultValue: false);
+  }
 
+  /// Clear all error states
+  void clearError() {
+    _error = null;
+    notifyListeners();
+  }
+
+  // === Helper Methods ===
+
+  /// Execute an operation with proper error handling and loading states
+  Future<T> _executeWithErrorHandling<T>(
+      Future<T> Function() operation, {
+        T? defaultValue,
+      }) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      final result = await operation();
+
+      return result;
+    } catch (e) {
+      _setError(e.toString());
+      debugPrint('❌ CourseProvider Error: $e');
+
+      if (defaultValue != null) {
+        return defaultValue;
+      }
+      rethrow;
+    } finally {
+      _setLoading(false);
     }
   }
 
-  // Future<void> markReadingAsCompleted() async {
-  //   try {
-  //     final user = _userState.currentUser;
-  //     if (user == null || widget.moduleId == null) return;
-  //
-  //     // Save progress immediately when reading is completed
-  //     await _saveReadingProgress();
-  //
-  //     // Save isComplete flag.
-  //     _isCompleted = true;
-  //
-  //     // Navigate to results screen and wait for it to return
-  //     final shouldPopReading = await Navigator.push(
-  //       context,
-  //       MaterialPageRoute(
-  //         builder: (context) => ReadingResultScreen(
-  //           modeuleId: widget.moduleId,
-  //         ),
-  //       ),
-  //     );
-  //
-  //     // Only pop the reading screen if the results screen returned true
-  //     // (meaning the user wants to go back to the lesson)
-  //     if (mounted && shouldPopReading == true) {
-  //       Navigator.pop(context, true);
-  //     }
-  //   } catch (e) {
-  //     print('❌Error marking reading as completed: $e');
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text('Error saving progress: $e'),
-  //           backgroundColor: Colors.red,
-  //         ),
-  //       );
-  //     }
-  //   }
-  // }
+  /// Load complete course data
+  Future<void> _loadCourseData() async {
+    final courseData = await _courseService.getUserCourseData(currentUser!.id);
 
+    if (courseData != null) {
+      _courseId = courseData.courseId;
+      _className = courseData.className;
+      _description = courseData.description;
+      _lessons = courseData.lessons;
+      _lessonOrder = courseData.lessonOrder;
+    } else {
+      _clearData();
+    }
+  }
+
+  /// Set loading state and notify listeners
+  void _setLoading(bool loading) {
+    if (_isLoading != loading) {
+      _isLoading = loading;
+      notifyListeners();
+    }
+  }
+
+  /// Set error state and notify listeners
+  void _setError(String error) {
+    _error = error;
+    notifyListeners();
+  }
+
+  /// Clear error state
+  void _clearError() {
+    if (_error != null) {
+      _error = null;
+      notifyListeners();
+    }
+  }
+
+  /// Clear all data when user logs out or has no class
+  void _clearData() {
+    _className = '';
+    _description = '';
+    _lessons.clear();
+    _lessonOrder.clear();
+    _lessonProgress.clear();
+    _clearError();
+    _isInitialized = false;
+    notifyListeners();
+  }
+
+  // === Convenience Getters for UI ===
+
+  /// Get a specific lesson by ID
+  Lesson? getLesson(String lessonId) {
+    return _lessons[lessonId];
+  }
+
+  /// Get progress for a specific lesson
+  LessonProgress? getLessonProgress(String lessonId) {
+    return _lessonProgress[lessonId];
+  }
+
+  /// Check if a lesson is completed
+  bool isLessonCompleted(String lessonId) {
+    final progress = _lessonProgress[lessonId];
+    if (progress == null) return false;
+
+    return progress.isReadingComplete &&
+        progress.isPostQuizComplete;
+  }
+
+  /// Get completion percentage for the entire course
+  double getCourseCompletionPercentage() {
+    if (_lessonOrder.isEmpty) return 0.0;
+
+    int completedLessons = 0;
+    for (final lessonId in _lessonOrder) {
+      if (isLessonCompleted(lessonId)) {
+        completedLessons++;
+      }
+    }
+
+    return (completedLessons / _lessonOrder.length) * 100;
+  }
+
+  /// Get the next available lesson (for navigation)
+  String? getNextAvailableLesson() {
+    for (final lessonId in _lessonOrder) {
+      if (!isLessonCompleted(lessonId)) {
+        return lessonId;
+      }
+    }
+    return null; // All lessons completed
+  }
+
+  /// Check if a lesson is unlocked (can be accessed)
+  bool isLessonUnlocked(String lessonId) {
+    final index = _lessonOrder.indexOf(lessonId);
+    if (index == -1) return false;
+    if (index == 0) return true; // First lesson is always unlocked
+
+    // Check if previous lesson is completed
+    final previousLessonId = _lessonOrder[index - 1];
+    return isLessonCompleted(previousLessonId);
+  }
+
+  @override
+  void dispose() {
+    // Clean up any resources if needed
+    super.dispose();
+  }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:safe_scales/ui/widgets/toy_box_item_card.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 
-import '../../services/dragon_service.dart';
+import '../../services/old_dragon_service.dart';
 import '../../services/quiz_service.dart';
 
 class ToyBoxPage extends StatefulWidget {
@@ -35,7 +35,7 @@ class _ToyBoxPageState extends State<ToyBoxPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final dragonService = DragonService(QuizService().supabase);
+        final dragonService = OldDragonService(QuizService().supabase);
         final userResponse =
         await dragonService.supabase
             .from('Users')

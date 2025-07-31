@@ -56,7 +56,7 @@ class QuizAttempt {
   final ActivityType type; // preQuiz, postQuiz, practice, assessment
 
   // Results
-  int score; // percentage (0-100)
+  double score; // percentage (0-100)
   final int correctAnswers; // Number of correct answers
   final int totalQuestions;
   final List<List<int>> responses;

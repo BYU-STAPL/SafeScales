@@ -8,7 +8,9 @@ import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
 
 import '../../../models/lesson.dart';
 import '../../../state_management/course_provider.dart';
+import '../../../state_management/old_course_provider.dart';
 import '../../../state_management/dragon_provider.dart';
+import '../../../state_management/old_dragon_provider.dart';
 import '../../../themes/app_theme.dart';
 import '../../widgets/dragon_image_widget.dart';
 
@@ -113,7 +115,7 @@ class _LessonPageState extends State<LessonPage> {
                           icon: Icons.quiz,
                           color: theme.colorScheme.primary,
                           isCompleted: _lessonProgress!.isPreQuizComplete,
-                          score: _lessonProgress!.preQuizAttempt?.score ?? 0,
+                          score: _lessonProgress!.preQuizAttempt?.score ?? 0.0,
                           isUnlocked: !_lessonProgress!.isPreQuizComplete, // Only unlock when the pre-quiz is not completed, lock after
                         ),
                         const SizedBox(height: 20),
@@ -152,7 +154,7 @@ class _LessonPageState extends State<LessonPage> {
     required Color color,
     required bool isCompleted,
     required bool isUnlocked,
-    int? score,
+    double? score,
   }) {
     ThemeData theme = Theme.of(context);
 
@@ -302,12 +304,10 @@ class _LessonPageState extends State<LessonPage> {
             ).then((completed) async {
               if (completed == true) {
 
-
-
                 final courseProvider = Provider.of<CourseProvider>(context, listen: false);
                 await courseProvider.loadSingleLessonProgress(widget.moduleId);
 
-                await Provider.of<DragonProvider>(context, listen: false).updateDragonProgress();
+                await Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
 
 
                 if (mounted) {
@@ -486,7 +486,7 @@ class _LessonPageState extends State<LessonPage> {
       if (completed == true) {
         final courseProvider = Provider.of<CourseProvider>(context, listen: false);
         await courseProvider.loadSingleLessonProgress(widget.moduleId);
-        await Provider.of<DragonProvider>(context, listen: false).updateDragonProgress();
+        await Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
 
         if (mounted) {
           setState(() {
