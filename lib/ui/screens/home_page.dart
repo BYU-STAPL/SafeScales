@@ -3,10 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
 import 'package:safe_scales/ui/widgets/lesson_card.dart';
-import 'package:safe_scales/state_management/old_dragon_provider.dart';
 
 import '../../models/lesson.dart';
-import '../../state_management/old_course_provider.dart';
+import '../../state_management/course_provider.dart';
 import '../../state_management/dragon_provider.dart';
 import '../widgets/continue_learning_widget.dart';
 import 'lesson/lesson_page.dart';
@@ -19,24 +18,47 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeData();
+    // Use addPostFrameCallback to ensure initialization happens after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeData();
+    });
   }
 
   Future<void> _initializeData() async {
-    final courseProvider = Provider.of<OldCourseProvider>(context, listen: false);
-    await courseProvider.initialize();
+    if (_isInitialized) return;
 
+    final courseProvider = Provider.of<CourseProvider>(context, listen: false);
     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-    await dragonProvider.initialize();
+
+    try {
+      // Only initialize if not already initialized
+      // Since AppDependencies already calls initialize(), we might not need this
+      if (!courseProvider.isLoading && courseProvider.lessons.isEmpty) {
+        await courseProvider.initialize();
+      }
+
+      // Same for dragon provider
+      if (!dragonProvider.isLoading) {
+        await dragonProvider.initialize();
+      }
+
+      _isInitialized = true;
+    } catch (e) {
+      debugPrint('Initialization error: $e');
+    }
+
+    await courseProvider.loadCourseContent();
+    await courseProvider.loadUserProgress();
+    await dragonProvider.loadUserDragons();
   }
 
   Lesson? getTargetLesson() {
-
-    OldCourseProvider courseProvider = Provider.of<OldCourseProvider>(context, listen: false);
+    final courseProvider = Provider.of<CourseProvider>(context, listen: false);
 
     final lessons = courseProvider.lessons;
     final lessonProgressMap = courseProvider.lessonProgress;
@@ -57,7 +79,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Consumer2<DragonProvider, OldCourseProvider>(
+    return Consumer2<DragonProvider, CourseProvider>(
       builder: (context, dragonProvider, courseProvider, child) {
         return Scaffold(
           body: SafeArea(
@@ -76,18 +98,15 @@ class _HomePageState extends State<HomePage> {
 
                     courseProvider.description.isNotEmpty
                         ? Text(courseProvider.description, style: theme.textTheme.labelMedium,)
-                        : SizedBox.shrink(),
-
+                        : const SizedBox.shrink(),
 
                     const SizedBox(height: 20),
-
 
                     // Continue Learning Card
                     if (courseProvider.lessonOrder.isNotEmpty)
                       GestureDetector(
                         onTap: () {
                           // Find the latest incomplete module
-
                           Lesson? targetModule = getTargetLesson();
 
                           // If all modules are complete, go to the last module
@@ -100,14 +119,15 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ).then((_) {
                             // Reload data when returning from lesson
-                            // Provider.of<CourseProvider>(context, listen: false).loadSingleLessonProgress(lessonId);
-                            Provider.of<OldCourseProvider>(context, listen: false).loadUserProgress();
-                            Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
+                            courseProvider.loadUserProgress();
+                            dragonProvider.updateAllDragonProgress();
                           });
                         },
-                        child: ContinueLearningWidget(title: getTargetLesson()?.title ?? 'Module', progress: courseProvider.lessonProgress[getTargetLesson()?.lessonId]?.getProgressPercent() ?? 0.0),
+                        child: ContinueLearningWidget(
+                            title: getTargetLesson()?.title ?? 'Module',
+                            progress: courseProvider.lessonProgress[getTargetLesson()?.lessonId]?.getProgressPercent() ?? 0.0
+                        ),
                       ),
-
 
                     const SizedBox(height: 30),
 
@@ -156,27 +176,32 @@ class _HomePageState extends State<HomePage> {
                         ),
                       )
                     else
-                      // Lesson Card List
+                    // Lesson Card List
                       ...courseProvider.lessonOrder.asMap().entries.map((entry) {
 
                         int index = entry.key;
                         String lessonId = entry.value;
 
+                        print("DEBUG: $lessonId");
+
+                        print("DEBUG: ${courseProvider.lessonProgress}");
+
+
                         Lesson? lesson = courseProvider.lessons[lessonId];
                         LessonProgress? lessonProgress = courseProvider.lessonProgress[lessonId];
 
+
                         if (lesson == null) {
-                          return SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
 
                         if (lessonProgress == null) {
-                          return SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
 
                         // Calculate unlock status
                         bool shouldBeUnlocked = false;
                         String? newUnlockRequirement;
-
 
                         if (index == 0) {
                           shouldBeUnlocked = true;
@@ -184,11 +209,9 @@ class _HomePageState extends State<HomePage> {
                         else if (index > 0) {
                           String previousLessonId = courseProvider.lessonOrder[index - 1];
                           Lesson? previousLesson = courseProvider.lessons[previousLessonId];
-
                           LessonProgress? previousModule = courseProvider.lessonProgress[previousLessonId];
 
                           final previousProgress = previousModule?.getProgressPercent() ?? 0.0;
-
                           shouldBeUnlocked = previousProgress.round() >= 100;
 
                           if (!shouldBeUnlocked) {
@@ -218,9 +241,8 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ).then((_) {
                                   // Reload data when returning from the lesson page
-                                  Provider.of<OldCourseProvider>(context, listen: false).loadSingleLessonProgress(lessonId);
-                                  Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
-                                  // _loadClassData();
+                                  courseProvider.loadSingleLessonProgress(lessonId);
+                                  dragonProvider.updateAllDragonProgress();
                                 });
                               }
                             },

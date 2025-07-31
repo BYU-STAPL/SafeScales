@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:safe_scales/state_management/course_provider.dart';
 import 'package:safe_scales/ui/widgets/dragon_id_card.dart';
 import '../../state_management/old_course_provider.dart';
 import '../../state_management/dragon_provider.dart';
@@ -50,7 +51,7 @@ class _DragonsPageState extends State<DragonsPage> {
     final Color primary = theme.colorScheme.primary;
     final Color cardBg = theme.colorScheme.surface;
 
-    return Consumer2<DragonProvider, OldCourseProvider>(
+    return Consumer2<DragonProvider, CourseProvider>(
         builder: (context, dragonProvider, courseProvider, child) {
           return Scaffold(
             backgroundColor: cardBg,

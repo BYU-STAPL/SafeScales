@@ -9,6 +9,7 @@ import 'package:safe_scales/models/sticker_item_model.dart';
 import '../../../services/old_dragon_service.dart';
 import '../../../services/quiz_service.dart';
 import '../../../services/user_state_service.dart';
+import '../../../state_management/course_provider.dart';
 import '../../../state_management/old_course_provider.dart';
 import '../../../state_management/dragon_provider.dart';
 import '../../../state_management/old_dragon_provider.dart';
@@ -290,7 +291,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
     final stickerEnvironmentSize = (width: environmentSize.width - 10, height: environmentSize.height - 10);
 
-    return Consumer2<DragonProvider, OldCourseProvider>(
+    return Consumer2<DragonProvider, CourseProvider>(
         builder: (context, dragonProvider, courseProvider, child) {
           return Scaffold(
             appBar: AppBar(

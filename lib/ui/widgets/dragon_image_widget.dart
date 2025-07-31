@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/dragon.dart';
+import '../../state_management/course_provider.dart';
 import '../../state_management/old_course_provider.dart';
 import '../../state_management/dragon_provider.dart';
 import '../../state_management/old_dragon_provider.dart';
@@ -22,7 +23,7 @@ class DragonImageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<DragonProvider, OldCourseProvider>(
+    return Consumer2<DragonProvider, CourseProvider>(
         builder: (context, dragonProvider, courseProvider, child) {
           Dragon? dragon;
           if (moduleId != null) {

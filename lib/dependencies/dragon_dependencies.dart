@@ -53,6 +53,11 @@ class DragonDependencies {
   DragonRepository get repository => _repository;
   DragonService get service => _service;
   DragonProvider get provider => _provider;
+
+  /// Dispose method to clean up resources
+  void dispose() {
+    _provider.dispose();
+  }
 }
 
 /// Factory method for creating DragonDependencies

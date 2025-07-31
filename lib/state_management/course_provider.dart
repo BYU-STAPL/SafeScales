@@ -49,10 +49,17 @@ class CourseProvider extends ChangeNotifier {
   /// Check if user is logged in
   bool get isUserLoggedIn => _userStateService.currentUser != null;
 
+  /// Initialized check
+  bool _isInitialized = false;
+
+  bool get isInitialized => _isInitialized;
+
   // === Public Methods ===
 
   /// Initialize the provider - call this when the provider is first created
   Future<void> initialize() async {
+    if (_isInitialized) return;
+
     if (!isUserLoggedIn) {
       _clearData();
       return;
@@ -61,6 +68,7 @@ class CourseProvider extends ChangeNotifier {
     await _executeWithErrorHandling(() async {
       await _loadCourseData();
       await loadUserProgress();
+      _isInitialized = true;
     });
   }
 
@@ -236,6 +244,7 @@ class CourseProvider extends ChangeNotifier {
     _lessonOrder.clear();
     _lessonProgress.clear();
     _clearError();
+    _isInitialized = false;
     notifyListeners();
   }
 

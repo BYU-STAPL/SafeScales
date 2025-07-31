@@ -11,6 +11,7 @@ import 'package:safe_scales/ui/screens/post_quiz/post_quiz_results_screen.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 
+import '../../../state_management/course_provider.dart';
 import '../../widgets/progress_bar.dart';
 import '../../widgets/question_widget.dart';
 
@@ -76,8 +77,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     try {
       final user = _userState.currentUser;
       if (user != null) {
-        await Provider.of<OldCourseProvider>(context, listen: false).saveQuizProgress(
-            userId: user.id,
+        await Provider.of<CourseProvider>(context, listen: false).saveQuizProgress(
             quizId: widget.questionSet.id,
             userAnswers: userAnswers,
             correctAnswers: correctAnswers,
