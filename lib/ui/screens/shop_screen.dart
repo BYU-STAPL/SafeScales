@@ -5,14 +5,14 @@ import 'package:safe_scales/services/shop_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 
-class ShopPage extends StatefulWidget {
-  const ShopPage({super.key});
+class ShopScreen extends StatefulWidget {
+  const ShopScreen({super.key});
 
   @override
-  State<ShopPage> createState() => _ShopPageState();
+  State<ShopScreen> createState() => _ShopScreenState();
 }
 
-class _ShopPageState extends State<ShopPage> {
+class _ShopScreenState extends State<ShopScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ShopService _shopService = ShopService();
   final UserStateService _userState = UserStateService();

@@ -8,14 +8,14 @@ import '../../state_management/old_dragon_provider.dart';
 import '../widgets/dragon_image_widget.dart';
 import 'dragon_decoration/dragon_decoration_screen.dart';
 
-class DragonsPage extends StatefulWidget {
-  const DragonsPage({super.key});
+class DragonsScreen extends StatefulWidget {
+  const DragonsScreen({super.key});
 
   @override
-  State<DragonsPage> createState() => _DragonsPageState();
+  State<DragonsScreen> createState() => _DragonsScreenState();
 }
 
-class _DragonsPageState extends State<DragonsPage> {
+class _DragonsScreenState extends State<DragonsScreen> {
 
   @override
   void initState() {

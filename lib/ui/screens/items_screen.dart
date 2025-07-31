@@ -5,14 +5,14 @@ import 'package:safe_scales/services/user_state_service.dart';
 import '../../services/old_dragon_service.dart';
 import '../../services/quiz_service.dart';
 
-class ToyBoxPage extends StatefulWidget {
-  const ToyBoxPage({super.key});
+class ItemsScreen extends StatefulWidget {
+  const ItemsScreen({super.key});
 
   @override
-  State<ToyBoxPage> createState() => _ToyBoxPageState();
+  State<ItemsScreen> createState() => _ItemsScreenState();
 }
 
-class _ToyBoxPageState extends State<ToyBoxPage> {
+class _ItemsScreenState extends State<ItemsScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int selectedTab = 0; // 0 = Accessories, 1 = Environments
   List<Map<String, dynamic>> userAccessories = [];
