@@ -1,9 +1,9 @@
 import 'package:provider/provider.dart';
+import 'package:safe_scales/services/course_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/class_service.dart';
 import '../services/quiz_service.dart';
-import '../services/user_progress_service.dart';
 import '../services/user_state_service.dart';
 import '../state_management/course_provider.dart';
 import '../state_management/dragon_provider.dart';
@@ -16,9 +16,8 @@ class AppDependencies {
   // === Shared Services ===
   final SupabaseClient supabase;
   final UserStateService userStateService;
-  final UserProgressService userProgressService;
+  final CourseService courseService;
   final ClassService classService;
-  final QuizService quizService;
 
   // === Feature Dependencies ===
   late final CourseDependencies course;
@@ -33,9 +32,8 @@ class AppDependencies {
   AppDependencies({
     required this.supabase,
     required this.userStateService,
-    required this.userProgressService,
+    required this.courseService,
     required this.classService,
-    required this.quizService,
   }) {
     _initializeAllDependencies();
   }
@@ -52,9 +50,8 @@ class AppDependencies {
     dragon = DragonDependencies(
       supabase: supabase,
       userStateService: userStateService,
-      userProgressService: userProgressService,
+      courseService: courseService,
       classService: classService,
-      quizService: quizService,
     );
 
     // Initialize future feature dependencies here
@@ -146,16 +143,15 @@ class AppDependencies {
 AppDependencies createAppDependencies({
   required SupabaseClient supabase,
   UserStateService? userStateService,
-  UserProgressService? userProgressService,
+  CourseService? courseService,
   ClassService? classService,
   QuizService? quizService,
 }) {
   return AppDependencies(
     supabase: supabase,
     userStateService: userStateService ?? UserStateService(),
-    userProgressService: userProgressService ?? UserProgressService(),
+    courseService: courseService ?? CourseService(),
     classService: classService ?? ClassService(supabase),
-    quizService: quizService ?? QuizService(),
   );
 }
 
@@ -164,15 +160,13 @@ AppDependencies createAppDependencies({
 AppDependencies createAppDependenciesFromSupabase(SupabaseClient supabase) {
   // Create all shared services
   final userStateService = UserStateService();
-  final userProgressService = UserProgressService();
+  final courseService = CourseService();
   final classService = ClassService(supabase);
-  final quizService = QuizService();
 
   return AppDependencies(
     supabase: supabase,
     userStateService: userStateService,
-    userProgressService: userProgressService,
+    courseService: courseService,
     classService: classService,
-    quizService: quizService,
   );
 }

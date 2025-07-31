@@ -66,12 +66,12 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     int totalQuestions = widget.questionSet.questions.length;
     int scorePercentage = ((correctAnswers / totalQuestions) * 100).round();
 
-    print('Post-quiz completed:');
-    print('Quiz ID: ${widget.questionSet.id}');
-    print('Total questions: $totalQuestions');
-    print('Correct answers: $correctAnswers');
-    print('Score percentage: $scorePercentage');
-    print('User answers: $userAnswers');
+    // print('Post-quiz completed:');
+    // print('Quiz ID: ${widget.questionSet.id}');
+    // print('Total questions: $totalQuestions');
+    // print('Correct answers: $correctAnswers');
+    // print('Score percentage: $scorePercentage');
+    // print('User answers: $userAnswers');
 
     // Save quiz progress
     try {

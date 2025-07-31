@@ -1,11 +1,19 @@
 import '../models/dragon.dart';
 import '../models/lesson_progress.dart';
 import '../repositories/dragon_repository.dart';
+import 'course_service.dart';
 
 /// Service that handles all dragon-related business logic
 /// This layer processes data from repository and applies business rules
 class DragonService {
   final DragonRepository _repository;
+  final CourseService _courseService;
+
+  // DragonService(this._repository);
+
+  DragonService({required courseService, DragonRepository? repository})
+      : _repository = repository ?? DragonRepository(),
+        _courseService = courseService;
 
   // Phase constants and mappings
   static const List<String> phaseOrder = ['egg', 'stage1', 'stage2', 'final'];
@@ -31,8 +39,6 @@ class DragonService {
     'stage2': 50.0,
     'final': 80.0,
   };
-
-  DragonService(this._repository);
 
   // === Phase Utilities ===
 
@@ -168,10 +174,7 @@ class DragonService {
   }
 
   /// Extract only unlocked phases for dragons in a specific class
-  Map<String, List<String>> extractClassDragonPhases(
-      Map<String, dynamic> userDragonsData,
-      List<Map<String, dynamic>> classAssets,
-      ) {
+  Map<String, List<String>> extractClassDragonPhases(Map<String, dynamic> userDragonsData, List<Map<String, dynamic>> classAssets,) {
     final classUnlockedPhases = <String, List<String>>{};
 
     // Get dragon IDs that exist in this class
@@ -200,8 +203,16 @@ class DragonService {
   Future<void> updateDragonProgressForLesson(
       String userId,
       String dragonId,
-      LessonProgress lessonProgress,
+      String lessonId,
       ) async {
+
+    // Ask Course Service for lesson progress
+    LessonProgress? lessonProgress = await _courseService.getSingleLessonProgress(userId, lessonId);
+
+    if (lessonProgress == null) {
+      throw DragonServiceException('Progress for module "$lessonId" is missing.');
+    }
+
     final progressPercent = lessonProgress.getProgressPercent();
     final newPhases = calculateUnlockedPhases(progressPercent);
 
@@ -216,11 +227,7 @@ class DragonService {
   }
 
   /// Get image URL for dragon at specific or highest unlocked phase
-  String getDragonImageUrl(
-      Dragon dragon,
-      List<String> unlockedPhases,
-      {String? forPhase}
-      ) {
+  String getDragonImageUrl(Dragon dragon, List<String> unlockedPhases, {String? forPhase}) {
     String phase;
 
     if (forPhase != null) {
@@ -254,10 +261,10 @@ class DragonService {
     return await _repository.fetchCurrentEnvironment(userId);
   }
 
-  /// Update dragon phases
-  Future<void> updateDragonPhases(String userId, String dragonId, List<String> phases) async {
-    await _repository.updateUserDragonPhases(userId, dragonId, phases);
-  }
+  // /// Update dragon phases
+  // Future<void> updateDragonPhases(String userId, String dragonId, List<String> phases) async {
+  //   await _repository.updateUserDragonPhases(userId, dragonId, phases);
+  // }
 
   /// Save environment selection
   Future<void> saveEnvironmentSelection(

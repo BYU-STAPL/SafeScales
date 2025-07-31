@@ -182,11 +182,6 @@ class _HomePageState extends State<HomePage> {
                         int index = entry.key;
                         String lessonId = entry.value;
 
-                        print("DEBUG: $lessonId");
-
-                        print("DEBUG: ${courseProvider.lessonProgress}");
-
-
                         Lesson? lesson = courseProvider.lessons[lessonId];
                         LessonProgress? lessonProgress = courseProvider.lessonProgress[lessonId];
 

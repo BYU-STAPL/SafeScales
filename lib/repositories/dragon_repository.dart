@@ -1,11 +1,16 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../config/supabase_config.dart';
+
 /// Repository responsible for all dragon-related database operations
 /// This layer only handles data access - no business logic
 class DragonRepository {
   final SupabaseClient _supabase;
 
-  DragonRepository(this._supabase);
+  // DragonRepository(this._supabase);
+
+  DragonRepository({SupabaseClient? supabase})
+      : _supabase = supabase ?? SupabaseConfig.client;
 
   // === Raw Dragon Data ===
 
@@ -73,11 +78,7 @@ class DragonRepository {
   // === Update Operations ===
 
   /// Update user's dragon phases
-  Future<void> updateUserDragonPhases(
-      String userId,
-      String dragonId,
-      List<String> phases
-      ) async {
+  Future<void> updateUserDragonPhases(String userId, String dragonId, List<String> phases) async {
     try {
       // Get current dragon data
       final currentData = await fetchUserDragons(userId);
@@ -96,11 +97,7 @@ class DragonRepository {
   }
 
   /// Update user's dragon environment
-  Future<void> updateUserEnvironment(
-      String userId,
-      String environmentId,
-      Map<String, List<String>> existingDragonPhases
-      ) async {
+  Future<void> updateUserEnvironment(String userId, String environmentId, Map<String, List<String>> existingDragonPhases) async {
     try {
       final updatedData = <String, dynamic>{
         'current_dragon_env': environmentId,
@@ -117,11 +114,7 @@ class DragonRepository {
   }
 
   /// Save multiple dragon phases at once
-  Future<void> saveAllUserDragonPhases(
-      String userId,
-      Map<String, List<String>> dragonPhases,
-      {String? environment}
-      ) async {
+  Future<void> saveAllUserDragonPhases(String userId, Map<String, List<String>> dragonPhases, {String? environment}) async {
     try {
       final data = <String, dynamic>{...dragonPhases};
 

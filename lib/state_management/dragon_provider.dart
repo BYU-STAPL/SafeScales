@@ -13,9 +13,7 @@ class DragonProvider extends ChangeNotifier {
   // === Services ===
   final DragonService _dragonService;
   final UserStateService _userState;
-  final UserProgressService _userProgressService;
   final ClassService _classService;
-  final QuizService _quizService;
 
   // === State ===
   bool _isLoading = false;
@@ -30,15 +28,11 @@ class DragonProvider extends ChangeNotifier {
   // === Constructor ===
   DragonProvider({
     required DragonService dragonService,
-    required UserStateService userState,
-    required UserProgressService userProgressService,
+    UserStateService? userState,
     required ClassService classService,
-    required QuizService quizService,
   }) : _dragonService = dragonService,
-        _userState = userState,
-        _userProgressService = userProgressService,
-        _classService = classService,
-        _quizService = quizService;
+        _userState = userState ?? UserStateService(),
+        _classService = classService;
 
   // === Getters ===
   bool get isLoading => _isLoading;
@@ -140,12 +134,7 @@ class DragonProvider extends ChangeNotifier {
       final user = _userState.currentUser;
       if (user == null) return;
 
-      final lessonProgress = await _userProgressService.loadSingleLessonProgress(user.id, lessonId);
-      if (lessonProgress == null) {
-        throw Exception('Progress for module "$lessonId" is missing.');
-      }
-
-      await _dragonService.updateDragonProgressForLesson(user.id, dragon.id, lessonProgress);
+      await _dragonService.updateDragonProgressForLesson(user.id, dragon.id, lessonId);
 
       // Refresh local data
       await _refreshUnlockedPhases(user.id);
@@ -165,20 +154,24 @@ class DragonProvider extends ChangeNotifier {
       final user = _userState.currentUser;
       if (user == null) throw Exception('User is null');
 
-      final classData = await _classService.getUserClass(user.id);
-      if (classData.isEmpty) {
-        throw Exception('Class data is missing for user ${user.id}');
-      }
+      // final classData = await _classService.getUserClass(user.id);
+      // if (classData.isEmpty) {
+      //   throw Exception('Class data is missing for user ${user.id}');
+      // }
 
-      final modules = await _classService.getClassModules(classData['id']);
-      final moduleIds = modules.map((m) => m['id'] as String).toList();
-      final moduleProgress = await _quizService.getModuleProgress(
-        userId: user.id,
-        moduleIds: moduleIds,
-      );
+      // final modules = await _classService.getClassModules(classData['id']);
+      // final moduleIds = modules.map((m) => m['id'] as String).toList();
+      // // final moduleProgress = await _quizService.getModuleProgress(
+      // //   userId: user.id,
+      // //   moduleIds: moduleIds,
+      // // );
+      //
+      // // Get all module ids
+      // _dragonsByModuleId
+
 
       // Update progress for each module
-      for (final lessonId in moduleProgress.keys) {
+      for (final lessonId in _dragonsByModuleId.keys) {
         await updateDragonPhases(lessonId);
       }
 
