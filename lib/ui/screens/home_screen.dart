@@ -10,14 +10,14 @@ import '../../state_management/dragon_provider.dart';
 import '../widgets/continue_learning_widget.dart';
 import 'lesson/lesson_page.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomeScreenState extends State<HomeScreen> {
   bool _isInitialized = false;
 
   @override
@@ -181,11 +181,6 @@ class _HomePageState extends State<HomePage> {
 
                         int index = entry.key;
                         String lessonId = entry.value;
-
-                        print("DEBUG: $lessonId");
-
-                        print("DEBUG: ${courseProvider.lessonProgress}");
-
 
                         Lesson? lesson = courseProvider.lessons[lessonId];
                         LessonProgress? lessonProgress = courseProvider.lessonProgress[lessonId];

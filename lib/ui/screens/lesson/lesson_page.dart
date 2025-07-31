@@ -486,7 +486,9 @@ class _LessonPageState extends State<LessonPage> {
       if (completed == true) {
         final courseProvider = Provider.of<CourseProvider>(context, listen: false);
         await courseProvider.loadSingleLessonProgress(widget.moduleId);
-        await Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
+
+        await Provider.of<DragonProvider>(context, listen: false).updateDragonPhases(widget.moduleId);
+        // await Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
 
         if (mounted) {
           setState(() {

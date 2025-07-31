@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:safe_scales/ui/screens/dragons_page.dart';
-import 'package:safe_scales/ui/widgets/settings_drawer.dart';
-import 'package:safe_scales/ui/screens/shop_page.dart';
+
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/services/auth_service.dart';
 import 'package:safe_scales/ui/screens/login/selection_screen.dart';
 
-import 'toy_box_page.dart';
-import 'home_page.dart';
+import 'package:safe_scales/ui/widgets/settings_drawer.dart';
+
+import 'package:safe_scales/ui/screens/home_screen.dart';
+import 'package:safe_scales/ui/screens/dragons_screen.dart';
+import 'package:safe_scales/ui/screens/items_screen.dart';
+import 'package:safe_scales/ui/screens/shop_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   final int initialIndex;
@@ -35,10 +37,10 @@ class _MainNavigationState extends State<MainNavigation> {
     _selectedIndex = widget.initialIndex;
 
     _pages = <Widget>[
-      HomePage(),
-      DragonsPage(),
-      ToyBoxPage(),
-      ShopPage(),
+      HomeScreen(),
+      DragonsScreen(),
+      ItemsScreen(),
+      ShopScreen(),
       // DevTestingPage(), //TODO: Remove later
     ];
   }

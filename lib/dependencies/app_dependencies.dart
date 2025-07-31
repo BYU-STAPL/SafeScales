@@ -1,14 +1,16 @@
 import 'package:provider/provider.dart';
+import 'package:safe_scales/services/course_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/class_service.dart';
 import '../services/quiz_service.dart';
-import '../services/user_progress_service.dart';
 import '../services/user_state_service.dart';
 import '../state_management/course_provider.dart';
 import '../state_management/dragon_provider.dart';
+import '../state_management/item_provider.dart';
 import 'course_dependencies.dart';
 import 'dragon_dependencies.dart';
+import 'item_dependencies.dart';
 
 /// Global app-level dependencies manager
 /// Centralizes all feature dependencies and shared services
@@ -16,13 +18,13 @@ class AppDependencies {
   // === Shared Services ===
   final SupabaseClient supabase;
   final UserStateService userStateService;
-  final UserProgressService userProgressService;
+  final CourseService courseService;
   final ClassService classService;
-  final QuizService quizService;
 
   // === Feature Dependencies ===
   late final CourseDependencies course;
   late final DragonDependencies dragon;
+  late final ItemDependencies item;
 
   // === Future Feature Dependencies ===
   // Add more feature dependencies here as your app grows
@@ -33,9 +35,8 @@ class AppDependencies {
   AppDependencies({
     required this.supabase,
     required this.userStateService,
-    required this.userProgressService,
+    required this.courseService,
     required this.classService,
-    required this.quizService,
   }) {
     _initializeAllDependencies();
   }
@@ -47,14 +48,18 @@ class AppDependencies {
       userStateService: userStateService,
     );
 
-
     // Initialize dragon dependencies
     dragon = DragonDependencies(
       supabase: supabase,
       userStateService: userStateService,
-      userProgressService: userProgressService,
+      courseService: courseService,
       classService: classService,
-      quizService: quizService,
+    );
+
+    // Initialize item dependencies
+    item = ItemDependencies(
+      supabase: supabase,
+      userStateService: userStateService,
     );
 
     // Initialize future feature dependencies here
@@ -77,6 +82,17 @@ class AppDependencies {
       initializationTasks.add(dragon.provider.initialize());
       dragon.provider.loadUserDragons();
 
+      // Initialize item provider (if user context is available)
+      final user = userStateService.currentUser;
+      if (user != null) {
+        // You'll need to determine how to get the classId
+        // This might come from the user's current class or course
+        final classId = await _getCurrentClassId();
+        if (classId != null) {
+          initializationTasks.add(item.provider.initialize());
+        }
+      }
+
       // You can add other provider initializations here
       // initializationTasks.add(userProfile.provider.initialize());
 
@@ -87,9 +103,43 @@ class AppDependencies {
       print("📚 Course Provider - Lessons: ${course.provider.lessons.length}");
       print("📚 Course Provider - Class: ${course.provider.className}");
       print("🐉 Dragon Provider initialized");
+      print("🎒 Item Provider - Accessories: ${item.provider.accessories.length}, Environments: ${item.provider.environments.length}");
     } catch (e) {
       print("❌ Provider initialization failed: $e");
       rethrow; // Re-throw to handle in main.dart if needed
+    }
+  }
+
+  /// Helper method to get current class ID
+  /// You'll need to implement this based on your app's logic
+  Future<String?> _getCurrentClassId() async {
+    try {
+      // Option 1: Get from user's current course/class
+      final user = userStateService.currentUser;
+      if (user != null) {
+        // You might have this information in the user object
+        // or need to fetch it from the database
+
+        // Example: If you store classId in user data
+        // return user.classId;
+
+        // Example: If you need to get it from current course
+        // final currentCourse = course.provider.currentCourse;
+        // return currentCourse?.classId;
+
+        // Example: If you need to fetch from database
+        // final response = await supabase
+        //     .from('Users')
+        //     .select('class_id')
+        //     .eq('id', user.id)
+        //     .single();
+        // return response['class_id'];
+      }
+
+      return null;
+    } catch (e) {
+      print("❌ Error getting current class ID: $e");
+      return null;
     }
   }
 
@@ -101,6 +151,9 @@ class AppDependencies {
       ),
       ChangeNotifierProvider<DragonProvider>.value(
         value: dragon.provider,
+      ),
+      ChangeNotifierProvider<ItemProvider>.value(
+        value: item.provider,
       ),
       // Add future providers here
       // ChangeNotifierProvider<UserProfileProvider>.value(
@@ -116,6 +169,7 @@ class AppDependencies {
   void dispose() {
     course.dispose();
     dragon.dispose();
+    item.dispose();
     // Dispose future dependencies
     // userProfile.dispose();
     // analytics.dispose();
@@ -130,6 +184,7 @@ class AppDependencies {
         supabase.auth.currentUser != null || supabase.auth.currentSession == null, // Auth is in valid state
         course.provider != null,
         dragon.provider != null,
+        item.provider != null,
         // Add more health checks as needed
       ];
 
@@ -146,16 +201,15 @@ class AppDependencies {
 AppDependencies createAppDependencies({
   required SupabaseClient supabase,
   UserStateService? userStateService,
-  UserProgressService? userProgressService,
+  CourseService? courseService,
   ClassService? classService,
   QuizService? quizService,
 }) {
   return AppDependencies(
     supabase: supabase,
     userStateService: userStateService ?? UserStateService(),
-    userProgressService: userProgressService ?? UserProgressService(),
+    courseService: courseService ?? CourseService(),
     classService: classService ?? ClassService(supabase),
-    quizService: quizService ?? QuizService(),
   );
 }
 
@@ -164,15 +218,13 @@ AppDependencies createAppDependencies({
 AppDependencies createAppDependenciesFromSupabase(SupabaseClient supabase) {
   // Create all shared services
   final userStateService = UserStateService();
-  final userProgressService = UserProgressService();
+  final courseService = CourseService();
   final classService = ClassService(supabase);
-  final quizService = QuizService();
 
   return AppDependencies(
     supabase: supabase,
     userStateService: userStateService,
-    userProgressService: userProgressService,
+    courseService: courseService,
     classService: classService,
-    quizService: quizService,
   );
 }

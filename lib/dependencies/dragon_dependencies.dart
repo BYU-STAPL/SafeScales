@@ -1,12 +1,11 @@
+import 'package:safe_scales/services/course_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../repositories/dragon_repository.dart';
 import '../services/dragon_service.dart';
 import '../state_management/dragon_provider.dart';
 import '../services/class_service.dart';
-import '../services/user_progress_service.dart';
 import '../services/user_state_service.dart';
-import '../services/quiz_service.dart';
 
 /// Dependency injection container for dragon-related classes
 /// This ensures proper dependency injection and makes testing easier
@@ -18,34 +17,30 @@ class DragonDependencies {
   // External services (injected)
   final SupabaseClient supabase;
   final UserStateService userStateService;
-  final UserProgressService userProgressService;
+  final CourseService courseService;
   final ClassService classService;
-  final QuizService quizService;
 
   DragonDependencies({
     required this.supabase,
     required this.userStateService,
-    required this.userProgressService,
+    required this.courseService,
     required this.classService,
-    required this.quizService,
   }) {
     _initializeDependencies();
   }
 
   void _initializeDependencies() {
     // Repository layer - handles database access
-    _repository = DragonRepository(supabase);
+    _repository = DragonRepository(supabase: supabase);
 
     // Service layer - handles business logic
-    _service = DragonService(_repository);
+    _service = DragonService(courseService: courseService, repository: _repository);
 
     // Provider layer - handles UI state management
     _provider = DragonProvider(
       dragonService: _service,
       userState: userStateService,
-      userProgressService: userProgressService,
       classService: classService,
-      quizService: quizService,
     );
   }
 
@@ -81,15 +76,13 @@ class DragonDependencies {
 DragonDependencies createDragonDependencies({
   required SupabaseClient supabase,
   required UserStateService userStateService,
-  required UserProgressService userProgressService,
+  required CourseService courseService,
   required ClassService classService,
-  required QuizService quizService,
 }) {
   return DragonDependencies(
     supabase: supabase,
     userStateService: userStateService,
-    userProgressService: userProgressService,
+    courseService: courseService,
     classService: classService,
-    quizService: quizService,
   );
 }
