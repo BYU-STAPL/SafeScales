@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:safe_scales/themes/app_theme.dart';
-import 'package:safe_scales/themes/theme_provider.dart'; // Add this import
+import 'package:safe_scales/themes/theme_provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
 
 class SettingsDrawer extends StatelessWidget {
-  final String username;
-  final String email;
-  final VoidCallback onTutorial;
-  final VoidCallback onHelp;
-  final VoidCallback onLogout;
-
-  const SettingsDrawer({
+  SettingsDrawer({
     super.key,
     required this.username,
     required this.email,
@@ -19,11 +15,24 @@ class SettingsDrawer extends StatelessWidget {
     required this.onLogout,
   });
 
+  final String username;
+  final String email;
+  final VoidCallback onTutorial;
+  final VoidCallback onHelp;
+  final VoidCallback onLogout;
+
+  String _version = '';
+
+  _getVersionInfo() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    _version = 'v${packageInfo.version} (${packageInfo.buildNumber})';
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final themeNotifier = ThemeProvider.of(context);
+    final themeProvider = ThemeProvider.of(context);
 
     return Drawer(
       elevation: 16,
@@ -45,7 +54,7 @@ class SettingsDrawer extends StatelessWidget {
                 username,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 20,
+                  fontSize: 25,
                   letterSpacing: 1.1,
                   color: colorScheme.onSurface,
                 ),
@@ -55,7 +64,7 @@ class SettingsDrawer extends StatelessWidget {
                 email,
                 style: TextStyle(
                   color: colorScheme.onSurfaceVariant,
-                  fontSize: 16,
+                  fontSize: 20,
                 ),
               ),
               Divider(height: 32, color: colorScheme.outlineVariant),
@@ -86,13 +95,13 @@ class SettingsDrawer extends StatelessWidget {
                         ),
                         Expanded(
                           child: Slider(
-                            value: themeNotifier.fontSize,
+                            value: themeProvider.fontSize,
                             min: 0.8,
                             max: 1.4,
                             divisions: 6,
                             onChanged: (value) {
                               AppTheme.setFontSizeScale(value);
-                              themeNotifier.updateFontSize(value);
+                              themeProvider.updateFontSize(value);
                             },
                             activeColor: colorScheme.primary,
                           ),
@@ -122,7 +131,7 @@ class SettingsDrawer extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
-                        themeNotifier.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                        themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
                         color: colorScheme.primary,
                         size: 20,
                       ),
@@ -142,7 +151,7 @@ class SettingsDrawer extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            themeNotifier.isDarkMode ? 'Dark theme enabled' : 'Light theme enabled',
+                            themeProvider.isDarkMode ? 'Dark theme enabled' : 'Light theme enabled',
                             style: TextStyle(
                               fontSize: 12,
                               color: colorScheme.onSurfaceVariant,
@@ -152,8 +161,8 @@ class SettingsDrawer extends StatelessWidget {
                       ),
                     ),
                     Switch.adaptive(
-                      value: themeNotifier.isDarkMode,
-                      onChanged: (value) => themeNotifier.updateTheme(value),
+                      value: themeProvider.isDarkMode,
+                      onChanged: (value) => themeProvider.updateTheme(value),
                       activeColor: colorScheme.primary,
                       activeTrackColor: colorScheme.primaryContainer,
                       inactiveThumbColor: colorScheme.outline,
@@ -193,6 +202,22 @@ class SettingsDrawer extends StatelessWidget {
               ),
               const Spacer(),
 
+              FutureBuilder<PackageInfo>(
+                future: PackageInfo.fromPlatform(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+                      child: Text(
+                        'App Version: ${snapshot.data!.version} + ${snapshot.data!.buildNumber}',
+                        style: Theme.of(context).textTheme.labelLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
+                  return SizedBox.shrink();
+                },
+              ),
 
               // Logout
               ListTile(
