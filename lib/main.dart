@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:safe_scales/state_management/dragon_provider.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
-import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/themes/theme_notifier.dart';
 import 'package:safe_scales/themes/theme_provider.dart';
 import 'package:safe_scales/ui/health_check.dart';
@@ -17,15 +16,19 @@ import 'ui/screens/main_navigation.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
-  await dotenv.load();
+  try {
+    await dotenv.load();
+    await SupabaseConfig.initialize();
 
-  await SupabaseConfig.initialize();
+    final appDeps = createAppDependenciesFromSupabase(Supabase.instance.client);
+    await appDeps.initializeProviders();
 
-  final appDeps = createAppDependenciesFromSupabase(Supabase.instance.client);
-  await appDeps.initializeProviders();
-
-  runApp(MyApp(appDeps: appDeps));
+    runApp(MyApp(appDeps: appDeps));
+  } catch (e, stackTrace) {
+    print("❌ App initialization failed: $e");
+    print("Stack trace: $stackTrace");
+    // You might want to show an error screen or retry logic here
+  }
 }
 
 class MyApp extends StatefulWidget {

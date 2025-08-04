@@ -75,29 +75,28 @@ class AppDependencies {
     try {
       // Initialize course provider
       initializationTasks.add(course.provider.initialize());
-      course.provider.loadCourseContent();
-      course.provider.loadUserProgress();
 
       // Initialize dragon provider
       initializationTasks.add(dragon.provider.initialize());
-      dragon.provider.loadUserDragons();
 
-      // Initialize item provider (if user context is available)
+      // Initialize item provider only if we can get a class ID
       final user = userStateService.currentUser;
       if (user != null) {
-        // You'll need to determine how to get the classId
-        // This might come from the user's current class or course
         final classId = await _getCurrentClassId();
         if (classId != null) {
           initializationTasks.add(item.provider.initialize());
+        } else {
+          print("⚠️ No class ID found - skipping item provider initialization");
         }
+      } else {
+        print("⚠️ No user found - skipping item provider initialization");
       }
-
-      // You can add other provider initializations here
-      // initializationTasks.add(userProfile.provider.initialize());
 
       // Wait for all initializations to complete
       await Future.wait(initializationTasks);
+
+      // Load data after initialization
+      await _loadProviderData();
 
       print("✅ All providers initialized successfully");
       print("📚 Course Provider - Lessons: ${course.provider.lessons.length}");
@@ -110,33 +109,52 @@ class AppDependencies {
     }
   }
 
+  /// Load data for all providers after initialization
+  Future<void> _loadProviderData() async {
+    try {
+      // Load course data
+      await course.provider.loadCourseContent();
+      await course.provider.loadUserProgress();
+
+      // Load dragon data
+      await dragon.provider.loadUserDragons();
+
+      print("✅ All provider data loaded successfully");
+    } catch (e) {
+      print("❌ Provider data loading failed: $e");
+      // Don't rethrow here - allow app to continue with empty data
+    }
+  }
+
   /// Helper method to get current class ID
-  /// You'll need to implement this based on your app's logic
+  /// FIXED: Properly implemented with error handling
   Future<String?> _getCurrentClassId() async {
     try {
-      // Option 1: Get from user's current course/class
       final user = userStateService.currentUser;
-      if (user != null) {
-        // You might have this information in the user object
-        // or need to fetch it from the database
-
-        // Example: If you store classId in user data
-        // return user.classId;
-
-        // Example: If you need to get it from current course
-        // final currentCourse = course.provider.currentCourse;
-        // return currentCourse?.classId;
-
-        // Example: If you need to fetch from database
-        // final response = await supabase
-        //     .from('Users')
-        //     .select('class_id')
-        //     .eq('id', user.id)
-        //     .single();
-        // return response['class_id'];
+      if (user == null) {
+        print("⚠️ No current user for class ID lookup");
+        return null;
       }
 
-      return null;
+      // Option 1: Get from user's metadata if stored there
+      final userMetadata = user.userMetadata;
+      if (userMetadata != null && userMetadata.containsKey('class_id')) {
+        return userMetadata['class_id'] as String?;
+      }
+
+      // Option 2: Query from database
+      try {
+        final response = await supabase
+            .from('Users')
+            .select('class_id')
+            .eq('id', user.id)
+            .maybeSingle(); // Use maybeSingle() instead of single() to avoid errors
+
+        return response?['class_id'] as String?;
+      } catch (dbError) {
+        print("⚠️ Database query for class_id failed: $dbError");
+        return null;
+      }
     } catch (e) {
       print("❌ Error getting current class ID: $e");
       return null;

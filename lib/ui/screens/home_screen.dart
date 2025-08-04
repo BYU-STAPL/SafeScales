@@ -102,26 +102,31 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     const SizedBox(height: 20),
 
-                    // Continue Learning Card
+                    // Continue Learning Card - FIXED
                     if (courseProvider.lessonOrder.isNotEmpty)
                       GestureDetector(
                         onTap: () {
                           // Find the latest incomplete module
                           Lesson? targetModule = getTargetLesson();
 
-                          // If all modules are complete, go to the last module
-                          targetModule ??= courseProvider.lessons[courseProvider.lessonOrder.last];
+                          // FIXED: Check if lessonOrder is not empty before accessing .last
+                          if (targetModule == null && courseProvider.lessonOrder.isNotEmpty) {
+                            targetModule = courseProvider.lessons[courseProvider.lessonOrder.last];
+                          }
 
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => LessonPage(moduleId: targetModule?.lessonId ?? ''),
-                            ),
-                          ).then((_) {
-                            // Reload data when returning from lesson
-                            courseProvider.loadUserProgress();
-                            dragonProvider.updateAllDragonProgress();
-                          });
+                          // Only navigate if we have a valid target module
+                          if (targetModule != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => LessonPage(moduleId: targetModule!.lessonId),
+                              ),
+                            ).then((_) {
+                              // Reload data when returning from lesson
+                              courseProvider.loadUserProgress();
+                              dragonProvider.updateAllDragonProgress();
+                            });
+                          }
                         },
                         child: ContinueLearningWidget(
                             title: getTargetLesson()?.title ?? 'Module',
