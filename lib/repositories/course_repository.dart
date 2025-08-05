@@ -1,9 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
-import '../models/lesson.dart';
-import '../models/lesson_progress.dart';
-import '../models/question.dart';
-import '../models/reading_slide.dart';
 
 /// Repository responsible for all course-related database operations
 /// Follows the Repository pattern to separate data access from business logic
@@ -148,13 +144,7 @@ class CourseRepository {
   }
 
   /// Save quiz progress to database
-  Future<void> saveQuizProgress({
-    required String userId,
-    required String quizId,
-    required List<List<int>> answers,
-    required int correctAnswers,
-    required int totalQuestions,
-  }) async {
+  Future<void> saveQuizProgress({required String userId, required String quizId, required List<List<int>> answers, required int correctAnswers, required int totalQuestions,}) async {
     try {
       final score = ((correctAnswers / totalQuestions) * 100).round();
 
@@ -222,11 +212,7 @@ class CourseRepository {
   }
 
   /// Save reading progress to database
-  Future<void> saveReadingProgress({
-    required String userId,
-    required String lessonId,
-    required Set<int> bookmarks,
-  }) async {
+  Future<void> saveReadingProgress({required String userId, required String lessonId, required Set<int> bookmarks,}) async {
     try {
       final response = await _supabase
           .from('Users')

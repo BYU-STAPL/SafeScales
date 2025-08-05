@@ -1,4 +1,5 @@
 import 'package:provider/provider.dart';
+import 'package:safe_scales/dependencies/theme_dependencies.dart';
 import 'package:safe_scales/services/course_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,6 +9,7 @@ import '../services/user_state_service.dart';
 import '../state_management/course_provider.dart';
 import '../state_management/dragon_provider.dart';
 import '../state_management/item_provider.dart';
+import '../themes/theme_notifier.dart';
 import 'course_dependencies.dart';
 import 'dragon_dependencies.dart';
 import 'item_dependencies.dart';
@@ -25,12 +27,8 @@ class AppDependencies {
   late final CourseDependencies course;
   late final DragonDependencies dragon;
   late final ItemDependencies item;
+  late final ThemeDependencies theme; // Add theme dependencies
 
-  // === Future Feature Dependencies ===
-  // Add more feature dependencies here as your app grows
-  // late final UserProfileDependencies userProfile;
-  // late final AnalyticsDependencies analytics;
-  // late final NotificationDependencies notifications;
 
   AppDependencies({
     required this.supabase,
@@ -62,81 +60,83 @@ class AppDependencies {
       userStateService: userStateService,
     );
 
-    // Initialize future feature dependencies here
-    // userProfile = UserProfileDependencies(...);
-    // analytics = AnalyticsDependencies(...);
-    // notifications = NotificationDependencies(...);
+    // Initialize theme dependencies
+    theme = ThemeDependencies(
+      supabase: supabase,
+      userStateService: userStateService,
+    );
   }
 
-  /// Initialize all providers that need async initialization
+  /// Initialize all providers - but DON'T load data yet
+  /// Data loading will happen in AppInitializationScreen after authentication
   Future<void> initializeProviders() async {
-    final List<Future<void>> initializationTasks = [];
-
     try {
-      // Initialize course provider
-      initializationTasks.add(course.provider.initialize());
-      course.provider.loadCourseContent();
-      course.provider.loadUserProgress();
+      print("🚀 Initializing providers (without data loading)...");
 
-      // Initialize dragon provider
-      initializationTasks.add(dragon.provider.initialize());
-      dragon.provider.loadUserDragons();
-
-      // Initialize item provider (if user context is available)
-      final user = userStateService.currentUser;
-      if (user != null) {
-        // You'll need to determine how to get the classId
-        // This might come from the user's current class or course
-        final classId = await _getCurrentClassId();
-        if (classId != null) {
-          initializationTasks.add(item.provider.initialize());
-        }
-      }
-
-      // You can add other provider initializations here
-      // initializationTasks.add(userProfile.provider.initialize());
-
-      // Wait for all initializations to complete
-      await Future.wait(initializationTasks);
+      // Just initialize the providers, don't load data
+      await course.provider.initialize();
+      await dragon.provider.initialize();
+      await item.provider.initialize();
 
       print("✅ All providers initialized successfully");
-      print("📚 Course Provider - Lessons: ${course.provider.lessons.length}");
-      print("📚 Course Provider - Class: ${course.provider.className}");
-      print("🐉 Dragon Provider initialized");
-      print("🎒 Item Provider - Accessories: ${item.provider.accessories.length}, Environments: ${item.provider.environments.length}");
+      print("📚 Course Provider ready");
+      print("🐉 Dragon Provider ready");
+      print("🎒 Item Provider ready");
     } catch (e) {
       print("❌ Provider initialization failed: $e");
-      rethrow; // Re-throw to handle in main.dart if needed
+      rethrow;
+    }
+  }
+
+  /// Load all provider data - called from AppInitializationScreen
+  Future<void> loadAllData() async {
+    try {
+      print("📊 Loading all provider data...");
+
+      // Load course data
+      await course.provider.loadCourseContent();
+      await course.provider.loadUserProgress();
+
+      // Load dragon data
+      await dragon.provider.loadUserDragons();
+
+      // Item provider data will be loaded if needed by the initialization screen
+
+      print("✅ All provider data loaded successfully");
+    } catch (e) {
+      print("❌ Provider data loading failed: $e");
+      rethrow;
     }
   }
 
   /// Helper method to get current class ID
-  /// You'll need to implement this based on your app's logic
   Future<String?> _getCurrentClassId() async {
     try {
-      // Option 1: Get from user's current course/class
       final user = userStateService.currentUser;
-      if (user != null) {
-        // You might have this information in the user object
-        // or need to fetch it from the database
-
-        // Example: If you store classId in user data
-        // return user.classId;
-
-        // Example: If you need to get it from current course
-        // final currentCourse = course.provider.currentCourse;
-        // return currentCourse?.classId;
-
-        // Example: If you need to fetch from database
-        // final response = await supabase
-        //     .from('Users')
-        //     .select('class_id')
-        //     .eq('id', user.id)
-        //     .single();
-        // return response['class_id'];
+      if (user == null) {
+        print("⚠️ No current user for class ID lookup");
+        return null;
       }
 
-      return null;
+      // Option 1: Get from user's metadata if stored there
+      final userMetadata = user.userMetadata;
+      if (userMetadata != null && userMetadata.containsKey('class_id')) {
+        return userMetadata['class_id'] as String?;
+      }
+
+      // Option 2: Query from database
+      try {
+        final response = await supabase
+            .from('Users')
+            .select('class_id')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        return response?['class_id'] as String?;
+      } catch (dbError) {
+        print("⚠️ Database query for class_id failed: $dbError");
+        return null;
+      }
     } catch (e) {
       print("❌ Error getting current class ID: $e");
       return null;
@@ -146,6 +146,9 @@ class AppDependencies {
   /// Get all providers for MultiProvider setup
   List<ChangeNotifierProvider> getProviders() {
     return [
+      ChangeNotifierProvider<ThemeNotifier>.value(
+        value: theme.notifier,
+      ),
       ChangeNotifierProvider<CourseProvider>.value(
         value: course.provider,
       ),
@@ -156,24 +159,15 @@ class AppDependencies {
         value: item.provider,
       ),
       // Add future providers here
-      // ChangeNotifierProvider<UserProfileProvider>.value(
-      //   value: userProfile.provider,
-      // ),
-      // ChangeNotifierProvider<AnalyticsProvider>.value(
-      //   value: analytics.provider,
-      // ),
     ];
   }
 
   /// Dispose all dependencies
   void dispose() {
+    theme.dispose();
     course.dispose();
     dragon.dispose();
     item.dispose();
-    // Dispose future dependencies
-    // userProfile.dispose();
-    // analytics.dispose();
-    // notifications.dispose();
   }
 
   /// Health check - verify all dependencies are properly initialized
@@ -181,11 +175,11 @@ class AppDependencies {
     try {
       // Check if all core dependencies are available
       final checks = [
-        supabase.auth.currentUser != null || supabase.auth.currentSession == null, // Auth is in valid state
+        supabase.auth.currentUser != null || supabase.auth.currentSession == null,
+        theme.isHealthy,
         course.provider != null,
         dragon.provider != null,
         item.provider != null,
-        // Add more health checks as needed
       ];
 
       return checks.every((check) => check == true);
@@ -197,7 +191,6 @@ class AppDependencies {
 }
 
 /// Factory for creating app-wide dependencies
-/// This replaces your manual dependency creation in main.dart
 AppDependencies createAppDependencies({
   required SupabaseClient supabase,
   UserStateService? userStateService,
@@ -214,9 +207,7 @@ AppDependencies createAppDependencies({
 }
 
 /// Simplified factory that creates all services automatically
-/// Use this for the cleanest main.dart setup
 AppDependencies createAppDependenciesFromSupabase(SupabaseClient supabase) {
-  // Create all shared services
   final userStateService = UserStateService();
   final courseService = CourseService();
   final classService = ClassService(supabase);

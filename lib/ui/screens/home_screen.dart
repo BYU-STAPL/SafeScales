@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
+import 'package:safe_scales/themes/theme_notifier.dart';
 import 'package:safe_scales/ui/widgets/lesson_card.dart';
 
 import '../../models/lesson.dart';
@@ -18,69 +19,56 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool _isInitialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Use addPostFrameCallback to ensure initialization happens after build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeData();
-    });
-  }
-
-  Future<void> _initializeData() async {
-    if (_isInitialized) return;
-
-    final courseProvider = Provider.of<CourseProvider>(context, listen: false);
-    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-
-    try {
-      // Only initialize if not already initialized
-      // Since AppDependencies already calls initialize(), we might not need this
-      if (!courseProvider.isLoading && courseProvider.lessons.isEmpty) {
-        await courseProvider.initialize();
-      }
-
-      // Same for dragon provider
-      if (!dragonProvider.isLoading) {
-        await dragonProvider.initialize();
-      }
-
-      _isInitialized = true;
-    } catch (e) {
-      debugPrint('Initialization error: $e');
-    }
-
-    await courseProvider.loadCourseContent();
-    await courseProvider.loadUserProgress();
-    await dragonProvider.loadUserDragons();
-  }
-
   Lesson? getTargetLesson() {
     final courseProvider = Provider.of<CourseProvider>(context, listen: false);
 
     final lessons = courseProvider.lessons;
     final lessonProgressMap = courseProvider.lessonProgress;
 
-    Lesson? targetModule;
-    for (var lessonId in lessonProgressMap.keys) {
+    // Find first incomplete lesson
+    for (var lessonId in courseProvider.lessonOrder) {
       final progress = lessonProgressMap[lessonId]?.getProgressPercent() ?? 0.0;
       if (progress < 100) {
-        targetModule = lessons[lessonId];
-        break;
+        return lessons[lessonId];
       }
     }
 
-    return targetModule;
+    // If all lessons are complete, return the last one
+    if (courseProvider.lessonOrder.isNotEmpty) {
+      return lessons[courseProvider.lessonOrder.last];
+    }
+
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Consumer2<DragonProvider, CourseProvider>(
-      builder: (context, dragonProvider, courseProvider, child) {
+    // Now you can access ThemeNotifier if needed for settings/preferences
+    return Consumer3<DragonProvider, CourseProvider, ThemeNotifier>(
+      builder: (context, dragonProvider, courseProvider, themeNotifier, child) {
+        // Show loading if data is still being loaded
+        if (courseProvider.isLoading) {
+          return Scaffold(
+            body: SafeArea(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Loading your content...',
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
         return Scaffold(
           body: SafeArea(
             child: SingleChildScrollView(
@@ -89,47 +77,53 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Class Header
-                    Text(
-                      courseProvider.className,
-                      style: theme.textTheme.headlineLarge,
+                    // Class Header with optional theme settings access
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            courseProvider.className,
+                            style: theme.textTheme.headlineMedium,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 10),
 
-                    courseProvider.description.isNotEmpty
-                        ? Text(courseProvider.description, style: theme.textTheme.labelMedium,)
-                        : const SizedBox.shrink(),
+                    if (courseProvider.description.isNotEmpty)
+                      Text(
+                        courseProvider.description,
+                        style: theme.textTheme.labelMedium,
+                      ),
 
                     const SizedBox(height: 20),
 
                     // Continue Learning Card
-                    if (courseProvider.lessonOrder.isNotEmpty)
+                    if (courseProvider.lessonOrder.isNotEmpty) ...[
                       GestureDetector(
                         onTap: () {
-                          // Find the latest incomplete module
-                          Lesson? targetModule = getTargetLesson();
-
-                          // If all modules are complete, go to the last module
-                          targetModule ??= courseProvider.lessons[courseProvider.lessonOrder.last];
-
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => LessonPage(moduleId: targetModule?.lessonId ?? ''),
-                            ),
-                          ).then((_) {
-                            // Reload data when returning from lesson
-                            courseProvider.loadUserProgress();
-                            dragonProvider.updateAllDragonProgress();
-                          });
+                          final targetModule = getTargetLesson();
+                          if (targetModule != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => LessonPage(moduleId: targetModule.lessonId),
+                              ),
+                            ).then((_) {
+                              // Reload data when returning from lesson
+                              courseProvider.loadUserProgress();
+                              dragonProvider.updateAllDragonProgress();
+                            });
+                          }
                         },
                         child: ContinueLearningWidget(
-                            title: getTargetLesson()?.title ?? 'Module',
-                            progress: courseProvider.lessonProgress[getTargetLesson()?.lessonId]?.getProgressPercent() ?? 0.0
+                          title: getTargetLesson()?.title ?? 'Module',
+                          progress: courseProvider.lessonProgress[getTargetLesson()?.lessonId]?.getProgressPercent() ?? 0.0,
                         ),
                       ),
-
-                    const SizedBox(height: 30),
+                      const SizedBox(height: 30),
+                    ],
 
                     // Lesson Heading
                     Row(
@@ -157,40 +151,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     const SizedBox(height: 30),
 
-                    // Show loading or lesson List
-                    if (courseProvider.isLoading)
-                      const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(32.0),
-                          child: CircularProgressIndicator(),
-                        ),
-                      )
-                    else if (courseProvider.lessonOrder.isEmpty)
+                    // Show empty state or lesson list
+                    if (courseProvider.lessonOrder.isEmpty)
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.all(32.0),
-                          child: Text(
-                            courseProvider.lessons.isEmpty ? 'No class assigned' : 'No modules available',
-                            style: theme.textTheme.labelLarge,
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.school_outlined,
+                                size: 64,
+                                color: theme.colorScheme.outline,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                courseProvider.lessons.isEmpty ? 'No class assigned' : 'No modules available',
+                                style: theme.textTheme.labelLarge,
+                              ),
+                            ],
                           ),
                         ),
                       )
                     else
                     // Lesson Card List
                       ...courseProvider.lessonOrder.asMap().entries.map((entry) {
-
                         int index = entry.key;
                         String lessonId = entry.value;
 
                         Lesson? lesson = courseProvider.lessons[lessonId];
                         LessonProgress? lessonProgress = courseProvider.lessonProgress[lessonId];
 
-
-                        if (lesson == null) {
-                          return const SizedBox.shrink();
-                        }
-
-                        if (lessonProgress == null) {
+                        if (lesson == null || lessonProgress == null) {
                           return const SizedBox.shrink();
                         }
 
@@ -200,8 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         if (index == 0) {
                           shouldBeUnlocked = true;
-                        }
-                        else if (index > 0) {
+                        } else if (index > 0) {
                           String previousLessonId = courseProvider.lessonOrder[index - 1];
                           Lesson? previousLesson = courseProvider.lessons[previousLessonId];
                           LessonProgress? previousModule = courseProvider.lessonProgress[previousLessonId];
@@ -224,9 +214,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             actualProgress: lessonProgress.getProgressPercent(),
                             shouldBeUnlocked: shouldBeUnlocked,
                             newUnlockRequirement: newUnlockRequirement,
-                            unlockRequirement: index > 0
-                                ? 'Complete previous module'
-                                : null,
+                            unlockRequirement: index > 0 ? 'Complete previous module' : null,
                             onTapCard: () {
                               if (shouldBeUnlocked) {
                                 Navigator.push(

@@ -14,8 +14,10 @@ class ItemProvider extends ChangeNotifier {
   // State variables
   List<Item> _accessories = [];
   List<Item> _environments = [];
+
   bool _isLoading = false;
   String? _error;
+  bool _isInitialized = false;
 
   // Current user context
   String? _currentUserId;
@@ -29,8 +31,11 @@ class ItemProvider extends ChangeNotifier {
 
   List<Item> get accessories => List.unmodifiable(_accessories);
   List<Item> get environments => List.unmodifiable(_environments);
+
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get isInitialized => _isInitialized;
+
   bool get hasAccessories => _accessories.isNotEmpty;
   bool get hasEnvironments => _environments.isNotEmpty;
 
@@ -45,16 +50,35 @@ class ItemProvider extends ChangeNotifier {
   Future<void> initialize() async {
     _currentUserId = currentUser?.id;
 
+    if (currentUser == null) {
+      _clearData();
+      print('Item Provider initialized');
+      _isInitialized = true;
+      return;
+    }
+
     final courseData = await CourseService().getUserCourseData(currentUser!.id);
     _currentCourseId = courseData?.courseId;
 
     await loadUserItems();
+
+    print('Item Provider initialized with Data');
+
+    _isInitialized = true;
+  }
+
+  void _clearData() {
+    _accessories = [];
+    _environments = [];
+    notifyListeners();
   }
 
   /// Load all user items (accessories and environments)
   Future<void> loadUserItems() async {
     if (_currentUserId == null || _currentCourseId == null) {
-      _setError('User context not initialized');
+      // _setError('User context not initialized');
+      // _setLoading(false);
+      _clearData();
       return;
     }
 
@@ -83,9 +107,11 @@ class ItemProvider extends ChangeNotifier {
   /// Load only accessories
   Future<void> loadAccessories() async {
     if (_currentUserId == null || _currentCourseId == null) {
-      _setError('User context not initialized');
+      // _setError('User context not initialized');
       return;
     }
+
+
 
     _setLoading(true);
     _clearError();

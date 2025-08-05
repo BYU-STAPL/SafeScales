@@ -339,10 +339,19 @@ class CourseService {
   }
 
   Question _createSingleQuestion(Map<String, dynamic> questionData) {
+
+    final List<String> choices = List<String>.from(questionData['choices']);
+
+    List<String> filteredList = choices.where((s) => s.isNotEmpty).toList();
+
+    if (filteredList.isEmpty) {
+      filteredList.add("Option");
+    }
+
     return Question.singleAnswer(
       id: '',
       questionText: questionData['question'],
-      options: List<String>.from(questionData['choices']),
+      options: filteredList,
       correctAnswerIndex: int.parse(questionData['answer']),
       explanation: '',
     );

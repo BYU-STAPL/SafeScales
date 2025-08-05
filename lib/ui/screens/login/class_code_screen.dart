@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
-import 'package:safe_scales/ui/screens/main_navigation.dart';
+import 'package:safe_scales/ui/screens/app_initialization_screen.dart'; // Import the new screen
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
@@ -35,11 +35,9 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
       try {
         // Clean the class code of any ANSI color codes and trim whitespace
         final cleanClassCode =
-            _classCodeController.text
-                .replaceAll(RegExp(r'\x1B\[[0-9;]*[a-zA-Z]'), '')
-                .trim();
-
-        // Debug print the code being searched
+        _classCodeController.text
+            .replaceAll(RegExp(r'\x1B\[[0-9;]*[a-zA-Z]'), '')
+            .trim();
 
         // Get class ID from class code (case-insensitive)
         final classResponseList = await SupabaseConfig.client
@@ -55,11 +53,11 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
 
         // Check if user with same username exists in the class
         final existingUserResponse =
-            await SupabaseConfig.client
-                .from('Users')
-                .select()
-                .eq('Username', _usernameController.text.trim())
-                .maybeSingle();
+        await SupabaseConfig.client
+            .from('Users')
+            .select()
+            .eq('Username', _usernameController.text.trim())
+            .maybeSingle();
 
         if (existingUserResponse != null) {
           // User exists, check if they're already in the class
@@ -68,7 +66,6 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
           );
           if (joinedClasses.contains(classId)) {
             // User has already joined this class - treat as sign-in
-            // Create a simple supabase user object with the necessary data
             final supabaseUser = supabase.User(
               id: existingUserResponse['id'],
               email: existingUserResponse['email'],
@@ -91,9 +88,10 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                 ),
               );
 
+              // Navigate to initialization screen instead of MainNavigation
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
-                  builder: (context) => MainNavigation(initialIndex: 0),
+                  builder: (context) => const AppInitializationScreen(),
                 ),
                     (route) => false, // Remove all previous routes
               );
@@ -124,14 +122,14 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
         } else {
           // Create new user
           final newUserResponse =
-              await SupabaseConfig.client
-                  .from('Users')
-                  .insert({
-                    'Username': _usernameController.text.trim(),
-                    'joined_classes': [classId],
-                  })
-                  .select()
-                  .single();
+          await SupabaseConfig.client
+              .from('Users')
+              .insert({
+            'Username': _usernameController.text.trim(),
+            'joined_classes': [classId],
+          })
+              .select()
+              .single();
 
           // Set the new user as current user
           final supabaseUser = supabase.User(
@@ -156,10 +154,10 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
             ),
           );
 
-          // Navigate to main navigation
+          // Navigate to initialization screen instead of MainNavigation
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
-              builder: (context) => MainNavigation(initialIndex: 0),
+              builder: (context) => const AppInitializationScreen(),
             ),
                 (route) => false, // Remove all previous routes
           );
@@ -185,14 +183,6 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
     ThemeData theme = Theme.of(context);
 
     return Scaffold(
-      // appBar: AppBar(
-      //   backgroundColor: Colors.transparent,
-      //   elevation: 0,
-      //   leading: IconButton(
-      //     icon: const Icon(Icons.arrow_back),
-      //     onPressed: () => Navigator.of(context).pop(),
-      //   ),
-      // ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -208,7 +198,6 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
           child: Stack(
             children: [
               // Add back button at the top
-              // Not using app bar, so that the linear gradient takes up whole screen, more aesthetic
               Align(
                 alignment: Alignment.topLeft,
                 child: Padding(
