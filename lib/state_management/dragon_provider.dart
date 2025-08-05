@@ -16,6 +16,7 @@ class DragonProvider extends ChangeNotifier {
   // === State ===
   bool _isLoading = false;
   String? _error;
+  bool _isInitialized = false;
 
   // === Dragon Data ===
   Map<String, Dragon> _dragons = {};
@@ -35,6 +36,9 @@ class DragonProvider extends ChangeNotifier {
   // === Getters ===
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get isInitialized => _isInitialized;
+
+
   Map<String, Dragon> get dragons => _dragons;
   Map<String, List<String>> get unlockedDragonPhases => _unlockedDragonPhases;
   Map<String, Dragon> get dragonsByModuleId => _dragonsByModuleId;
@@ -93,6 +97,7 @@ class DragonProvider extends ChangeNotifier {
   Future<void> initialize() async {
     await loadUserDragons();
     print('DragonProvider initialized');
+    _isInitialized = true;
   }
 
   /// Load user dragons and related data
@@ -103,12 +108,14 @@ class DragonProvider extends ChangeNotifier {
 
       final user = _userState.currentUser;
       if (user == null) {
+        // _setLoading(false);
         _clearData();
         return;
       }
 
       final classData = await _classService.getUserClass(user.id);
       if (classData.isEmpty) {
+        // _setLoading(false);
         _clearData();
         return;
       }

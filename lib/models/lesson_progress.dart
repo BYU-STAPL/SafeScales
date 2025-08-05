@@ -11,7 +11,9 @@ class LessonProgress {
   final int requiredPassingScore;
 
   bool get isPreQuizComplete => preQuizAttempt != null;
-  bool get isPostQuizComplete => postQuizAttempts.first.score >= requiredPassingScore;
+  bool get isPostQuizComplete =>
+      postQuizAttempts.isNotEmpty &&
+          postQuizAttempts.first.score >= requiredPassingScore;
 
 
   // TODO: Consider implementing later

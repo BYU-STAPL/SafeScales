@@ -26,12 +26,6 @@ class AppDependencies {
   late final DragonDependencies dragon;
   late final ItemDependencies item;
 
-  // === Future Feature Dependencies ===
-  // Add more feature dependencies here as your app grows
-  // late final UserProfileDependencies userProfile;
-  // late final AnalyticsDependencies analytics;
-  // late final NotificationDependencies notifications;
-
   AppDependencies({
     required this.supabase,
     required this.userStateService,
@@ -61,57 +55,34 @@ class AppDependencies {
       supabase: supabase,
       userStateService: userStateService,
     );
-
-    // Initialize future feature dependencies here
-    // userProfile = UserProfileDependencies(...);
-    // analytics = AnalyticsDependencies(...);
-    // notifications = NotificationDependencies(...);
   }
 
-  /// Initialize all providers that need async initialization
+  /// Initialize all providers - but DON'T load data yet
+  /// Data loading will happen in AppInitializationScreen after authentication
   Future<void> initializeProviders() async {
-    final List<Future<void>> initializationTasks = [];
-
     try {
-      // Initialize course provider
-      initializationTasks.add(course.provider.initialize());
+      print("🚀 Initializing providers (without data loading)...");
 
-      // Initialize dragon provider
-      initializationTasks.add(dragon.provider.initialize());
-
-      // Initialize item provider only if we can get a class ID
-      final user = userStateService.currentUser;
-      if (user != null) {
-        final classId = await _getCurrentClassId();
-        if (classId != null) {
-          initializationTasks.add(item.provider.initialize());
-        } else {
-          print("⚠️ No class ID found - skipping item provider initialization");
-        }
-      } else {
-        print("⚠️ No user found - skipping item provider initialization");
-      }
-
-      // Wait for all initializations to complete
-      await Future.wait(initializationTasks);
-
-      // Load data after initialization
-      await _loadProviderData();
+      // Just initialize the providers, don't load data
+      await course.provider.initialize();
+      await dragon.provider.initialize();
+      await item.provider.initialize();
 
       print("✅ All providers initialized successfully");
-      print("📚 Course Provider - Lessons: ${course.provider.lessons.length}");
-      print("📚 Course Provider - Class: ${course.provider.className}");
-      print("🐉 Dragon Provider initialized");
-      print("🎒 Item Provider - Accessories: ${item.provider.accessories.length}, Environments: ${item.provider.environments.length}");
+      print("📚 Course Provider ready");
+      print("🐉 Dragon Provider ready");
+      print("🎒 Item Provider ready");
     } catch (e) {
       print("❌ Provider initialization failed: $e");
-      rethrow; // Re-throw to handle in main.dart if needed
+      rethrow;
     }
   }
 
-  /// Load data for all providers after initialization
-  Future<void> _loadProviderData() async {
+  /// Load all provider data - called from AppInitializationScreen
+  Future<void> loadAllData() async {
     try {
+      print("📊 Loading all provider data...");
+
       // Load course data
       await course.provider.loadCourseContent();
       await course.provider.loadUserProgress();
@@ -119,15 +90,16 @@ class AppDependencies {
       // Load dragon data
       await dragon.provider.loadUserDragons();
 
+      // Item provider data will be loaded if needed by the initialization screen
+
       print("✅ All provider data loaded successfully");
     } catch (e) {
       print("❌ Provider data loading failed: $e");
-      // Don't rethrow here - allow app to continue with empty data
+      rethrow;
     }
   }
 
   /// Helper method to get current class ID
-  /// FIXED: Properly implemented with error handling
   Future<String?> _getCurrentClassId() async {
     try {
       final user = userStateService.currentUser;
@@ -148,7 +120,7 @@ class AppDependencies {
             .from('Users')
             .select('class_id')
             .eq('id', user.id)
-            .maybeSingle(); // Use maybeSingle() instead of single() to avoid errors
+            .maybeSingle();
 
         return response?['class_id'] as String?;
       } catch (dbError) {
@@ -174,12 +146,6 @@ class AppDependencies {
         value: item.provider,
       ),
       // Add future providers here
-      // ChangeNotifierProvider<UserProfileProvider>.value(
-      //   value: userProfile.provider,
-      // ),
-      // ChangeNotifierProvider<AnalyticsProvider>.value(
-      //   value: analytics.provider,
-      // ),
     ];
   }
 
@@ -188,10 +154,6 @@ class AppDependencies {
     course.dispose();
     dragon.dispose();
     item.dispose();
-    // Dispose future dependencies
-    // userProfile.dispose();
-    // analytics.dispose();
-    // notifications.dispose();
   }
 
   /// Health check - verify all dependencies are properly initialized
@@ -199,11 +161,10 @@ class AppDependencies {
     try {
       // Check if all core dependencies are available
       final checks = [
-        supabase.auth.currentUser != null || supabase.auth.currentSession == null, // Auth is in valid state
+        supabase.auth.currentUser != null || supabase.auth.currentSession == null,
         course.provider != null,
         dragon.provider != null,
         item.provider != null,
-        // Add more health checks as needed
       ];
 
       return checks.every((check) => check == true);
@@ -215,7 +176,6 @@ class AppDependencies {
 }
 
 /// Factory for creating app-wide dependencies
-/// This replaces your manual dependency creation in main.dart
 AppDependencies createAppDependencies({
   required SupabaseClient supabase,
   UserStateService? userStateService,
@@ -232,9 +192,7 @@ AppDependencies createAppDependencies({
 }
 
 /// Simplified factory that creates all services automatically
-/// Use this for the cleanest main.dart setup
 AppDependencies createAppDependenciesFromSupabase(SupabaseClient supabase) {
-  // Create all shared services
   final userStateService = UserStateService();
   final courseService = CourseService();
   final classService = ClassService(supabase);
