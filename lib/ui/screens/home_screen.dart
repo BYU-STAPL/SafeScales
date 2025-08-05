@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
+import 'package:safe_scales/themes/theme_notifier.dart';
 import 'package:safe_scales/ui/widgets/lesson_card.dart';
 
 import '../../models/lesson.dart';
@@ -44,8 +45,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Consumer2<DragonProvider, CourseProvider>(
-      builder: (context, dragonProvider, courseProvider, child) {
+    // Now you can access ThemeNotifier if needed for settings/preferences
+    return Consumer3<DragonProvider, CourseProvider, ThemeNotifier>(
+      builder: (context, dragonProvider, courseProvider, themeNotifier, child) {
         // Show loading if data is still being loaded
         if (courseProvider.isLoading) {
           return Scaffold(
@@ -75,10 +77,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Class Header
-                    Text(
-                      courseProvider.className,
-                      style: theme.textTheme.headlineLarge,
+                    // Class Header with optional theme settings access
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            courseProvider.className,
+                            style: theme.textTheme.headlineMedium,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 10),
 

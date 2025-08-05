@@ -135,7 +135,7 @@ class _AppInitializationScreenState extends State<AppInitializationScreen> {
             end: Alignment.bottomRight,
             colors: [
               theme.colorScheme.primary,
-              theme.colorScheme.primary.withOpacity(0.7),
+              theme.colorScheme.primary.withValues(alpha: 0.7),
             ],
           ),
         ),

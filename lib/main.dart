@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/themes/theme_notifier.dart';
-import 'package:safe_scales/themes/theme_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:safe_scales/config/supabase_config.dart';
@@ -29,11 +28,10 @@ void main() async {
     runApp(MyApp(appDeps: appDeps));
 
   } catch (e, stackTrace) {
-
     print("❌ App initialization failed: $e");
     print("Stack trace: $stackTrace");
 
-    // Run app with error state - you could create an error screen here
+    // Run app with error state
     runApp(MaterialApp(
       home: Scaffold(
         body: Center(
@@ -63,57 +61,27 @@ void main() async {
   }
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   final AppDependencies appDeps;
 
   const MyApp({Key? key, required this.appDeps}) : super(key: key);
 
   @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  late ThemeNotifier _themeNotifier;
-
-  @override
-  void initState() {
-    super.initState();
-    _themeNotifier = ThemeNotifier();
-    // _themeNotifier.loadSettings(); // Load saved settings
-  }
-
-  @override
-  void dispose() {
-    _themeNotifier.dispose();
-    widget.appDeps.dispose(); // Clean up app dependencies
-
-    _themeNotifier = ThemeNotifier();
-    _themeNotifier.loadSettings(); // Load saved settings
-
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: widget.appDeps.getProviders(),
-      child: ThemeProvider(
-        themeNotifier: _themeNotifier,
-        child: AnimatedBuilder(
-          animation: _themeNotifier,
-          builder: (context, child) {
-            return MaterialApp(
-              title: 'SafeScales',
-              theme: AppTheme.buildLightAppTheme(),
-              darkTheme: AppTheme.buildDarkAppTheme(),
-              themeMode: _themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-              home: const SelectionScreen(), // Start with selection screen
-              debugShowCheckedModeBanner: false,
-            );
-          }
-        ),
+      providers: appDeps.getProviders(),
+      child: Consumer<ThemeNotifier>(
+        builder: (context, themeNotifier, child) {
+          return MaterialApp(
+            title: 'SafeScales',
+            theme: AppTheme.buildLightAppTheme(),
+            darkTheme: AppTheme.buildDarkAppTheme(),
+            themeMode: themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            home: const SelectionScreen(),
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }
-
 }

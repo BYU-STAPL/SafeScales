@@ -1,4 +1,5 @@
 import 'package:provider/provider.dart';
+import 'package:safe_scales/dependencies/theme_dependencies.dart';
 import 'package:safe_scales/services/course_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,6 +9,7 @@ import '../services/user_state_service.dart';
 import '../state_management/course_provider.dart';
 import '../state_management/dragon_provider.dart';
 import '../state_management/item_provider.dart';
+import '../themes/theme_notifier.dart';
 import 'course_dependencies.dart';
 import 'dragon_dependencies.dart';
 import 'item_dependencies.dart';
@@ -25,6 +27,8 @@ class AppDependencies {
   late final CourseDependencies course;
   late final DragonDependencies dragon;
   late final ItemDependencies item;
+  late final ThemeDependencies theme; // Add theme dependencies
+
 
   AppDependencies({
     required this.supabase,
@@ -52,6 +56,12 @@ class AppDependencies {
 
     // Initialize item dependencies
     item = ItemDependencies(
+      supabase: supabase,
+      userStateService: userStateService,
+    );
+
+    // Initialize theme dependencies
+    theme = ThemeDependencies(
       supabase: supabase,
       userStateService: userStateService,
     );
@@ -136,6 +146,9 @@ class AppDependencies {
   /// Get all providers for MultiProvider setup
   List<ChangeNotifierProvider> getProviders() {
     return [
+      ChangeNotifierProvider<ThemeNotifier>.value(
+        value: theme.notifier,
+      ),
       ChangeNotifierProvider<CourseProvider>.value(
         value: course.provider,
       ),
@@ -151,6 +164,7 @@ class AppDependencies {
 
   /// Dispose all dependencies
   void dispose() {
+    theme.dispose();
     course.dispose();
     dragon.dispose();
     item.dispose();
@@ -162,6 +176,7 @@ class AppDependencies {
       // Check if all core dependencies are available
       final checks = [
         supabase.auth.currentUser != null || supabase.auth.currentSession == null,
+        theme.isHealthy,
         course.provider != null,
         dragon.provider != null,
         item.provider != null,
