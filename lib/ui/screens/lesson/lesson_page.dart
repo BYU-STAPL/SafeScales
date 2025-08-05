@@ -129,9 +129,9 @@ class _LessonPageState extends State<LessonPage> {
                           onTap: () => _startQuiz(_lesson!.postQuiz),
                           icon: Icons.assignment,
                           color: theme.colorScheme.primary,
-                          isCompleted: _lessonProgress!.isPostQuizComplete &&
+                          isCompleted: _lessonProgress!.isPostQuizComplete && _lessonProgress!.postQuizAttempts.isNotEmpty &&
                               (_lessonProgress!.postQuizAttempts.first.score >= _lesson!.postQuiz.passingScore),
-                          score: _lessonProgress!.postQuizAttempts.last.score,
+                          score: _lessonProgress!.postQuizAttempts.isNotEmpty ? _lessonProgress!.postQuizAttempts.last.score : null,
                           isUnlocked: _lessonProgress!.isReadingComplete,
                         ),
                       ],
