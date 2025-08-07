@@ -7,10 +7,8 @@ import 'package:safe_scales/ui/screens/post_quiz/post_quiz_screen.dart';
 import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
 
 import '../../../models/lesson.dart';
-import '../../../state_management/course_provider.dart';
-import '../../../state_management/old_course_provider.dart';
-import '../../../state_management/dragon_provider.dart';
-import '../../../state_management/old_dragon_provider.dart';
+import '../../../providers/course_provider.dart';
+import '../../../providers/dragon_provider.dart';
 import '../../../themes/app_theme.dart';
 import '../../widgets/dragon_image_widget.dart';
 

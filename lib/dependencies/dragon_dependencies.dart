@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../repositories/dragon_repository.dart';
 import '../services/dragon_service.dart';
-import '../state_management/dragon_provider.dart';
+import '../providers/dragon_provider.dart';
 import '../services/class_service.dart';
 import '../services/user_state_service.dart';
 

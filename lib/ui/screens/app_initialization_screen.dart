@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/services/user_state_service.dart';
-import 'package:safe_scales/state_management/course_provider.dart';
-import 'package:safe_scales/state_management/dragon_provider.dart';
-import 'package:safe_scales/state_management/item_provider.dart';
+import 'package:safe_scales/providers/course_provider.dart';
+import 'package:safe_scales/providers/dragon_provider.dart';
+import 'package:safe_scales/providers/item_provider.dart';
 import 'package:safe_scales/ui/screens/main_navigation.dart';
 import 'package:safe_scales/ui/screens/login/selection_screen.dart';
 

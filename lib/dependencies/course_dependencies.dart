@@ -2,7 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../repositories/course_repository.dart';
 import '../services/course_service.dart';
 import '../services/user_state_service.dart';
-import '../state_management/course_provider.dart';
+import '../providers/course_provider.dart';
 
 /// Dependency injection container for course-related classes
 /// This ensures proper dependency injection and makes testing easier
