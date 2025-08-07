@@ -370,15 +370,24 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                   child: Column(
                     children: [
                       SizedBox(height: 10),
-
-                      Text(
-                        '${widget.questionSet.passingScore}% or higher is required to pass',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: theme.colorScheme.secondary,
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                              child: Text(
+                                '${widget.questionSet.passingScore}% or higher is required to pass this quiz',
+                                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold,),
+                              )
+                          ),
+                        ],
                       ),
 
-                      SizedBox(height: 10),
+                      SizedBox(height: 20),
+
                       Row(
                         children: [
                           Icon(
@@ -392,16 +401,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                         ],
                       ),
                       SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: theme.colorScheme.secondary,
-                          ),
-                          SizedBox(width: 10),
-                          Expanded(child: Text(widget.questionSet.description)),
-                        ],
-                      ),
                     ],
                   ),
                 ),
