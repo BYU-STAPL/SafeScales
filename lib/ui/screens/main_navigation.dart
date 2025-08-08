@@ -37,7 +37,8 @@ class _MainNavigationState extends State<MainNavigation> {
     _selectedIndex = widget.initialIndex;
 
     _pages = <Widget>[
-      HomeScreen(),
+      // Hard code shop index here, that way this information doesn't need to be shared across files
+      HomeScreen(onNavigateToShop: () {_navigateToTab(3);}),
       DragonsScreen(),
       ItemsScreen(),
       ShopScreen(),
@@ -58,6 +59,12 @@ class _MainNavigationState extends State<MainNavigation> {
       default:
         return '';
     }
+  }
+
+  void _navigateToTab(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   Future<void> _handleLogout() async {
