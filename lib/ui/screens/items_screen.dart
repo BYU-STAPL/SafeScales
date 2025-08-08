@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/ui/widgets/toy_box_item_card.dart';
-import 'package:safe_scales/state_management/item_provider.dart';
+import 'package:safe_scales/providers/item_provider.dart';
 
 class ItemsScreen extends StatefulWidget {
   const ItemsScreen({super.key});

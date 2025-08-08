@@ -8,7 +8,7 @@ import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_results_screen.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 
-import '../../../state_management/course_provider.dart';
+import '../../../providers/course_provider.dart';
 import '../../widgets/progress_bar.dart';
 import '../../widgets/question_widget.dart';
 

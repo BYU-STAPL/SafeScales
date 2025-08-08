@@ -4,10 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
-import 'package:safe_scales/state_management/old_course_provider.dart';
+import 'package:safe_scales/providers/old_course_provider.dart';
 import 'package:safe_scales/ui/screens/reading/reading_results_screen.dart';
 
-import '../../../state_management/course_provider.dart';
+import '../../../providers/course_provider.dart';
 import '../../widgets/progress_bar.dart';
 
 class ReadingActivityScreen extends StatefulWidget {

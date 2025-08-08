@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:safe_scales/state_management/course_provider.dart';
+import 'package:safe_scales/providers/course_provider.dart';
 import 'package:safe_scales/ui/widgets/dragon_id_card.dart';
-import '../../state_management/old_course_provider.dart';
-import '../../state_management/dragon_provider.dart';
-import '../../state_management/old_dragon_provider.dart';
+import '../../providers/dragon_provider.dart';
 import '../widgets/dragon_image_widget.dart';
 import 'dragon_decoration/dragon_decoration_screen.dart';
 

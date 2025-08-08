@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../repositories/item_repository.dart';
 import '../services/item_service.dart';
 import '../services/user_state_service.dart';
-import '../state_management/item_provider.dart';
+import '../providers/item_provider.dart';
 
 /// Dependency injection container for item-related classes
 /// This ensures proper dependency injection and makes testing easier

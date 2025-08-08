@@ -6,8 +6,8 @@ import 'package:safe_scales/themes/theme_notifier.dart';
 import 'package:safe_scales/ui/widgets/lesson_card.dart';
 
 import '../../models/lesson.dart';
-import '../../state_management/course_provider.dart';
-import '../../state_management/dragon_provider.dart';
+import '../../providers/course_provider.dart';
+import '../../providers/dragon_provider.dart';
 import '../widgets/continue_learning_widget.dart';
 import 'lesson/lesson_page.dart';
 
