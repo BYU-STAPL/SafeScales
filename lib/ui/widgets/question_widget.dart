@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/models/question.dart';
 
+import '../../themes/app_theme.dart';
+
 class QuestionWidget extends StatefulWidget {
   final Question question;
   final List<int> selectedAnswers;
@@ -24,6 +26,11 @@ class QuestionWidget extends StatefulWidget {
 }
 
 class _QuestionWidgetState extends State<QuestionWidget> {
+
+  final double optionPadding = 15;
+  final double optionMargin = 10;
+
+
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
@@ -52,30 +59,6 @@ class _QuestionWidgetState extends State<QuestionWidget> {
     return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // if (question.text != null) ...[
-            //   SizedBox(height: 15),
-            //   Container(
-            //     decoration: BoxDecoration(
-            //       borderRadius: BorderRadius.all(Radius.circular(15)),
-            //       border: Border.all(
-            //         color: Colors.black,
-            //         width: 3,
-            //         style: BorderStyle.solid,
-            //       ),
-            //     ),
-            //     child: Padding(
-            //       padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-            //       child: Text(
-            //         question.text!,
-            //         style: theme.textTheme.bodyMedium,
-            //       ),
-            //     ),
-            //   ),
-            //
-            //   SizedBox(height: 20),
-            // ],
-
-            buildSmartScrollableQuestionText(),
 
             Spacer(),
 
@@ -86,29 +69,17 @@ class _QuestionWidgetState extends State<QuestionWidget> {
               ),
             ),
 
-            SizedBox(height: 5,),
+            SizedBox(height: 20,),
 
             instructionText,
 
-            buildConstrainedScrollableOptions(),
+            buildScrollableOptions(),
+            // buildConstrainedScrollableOptions(),
 
           ],
         );
     //   ),
     // );
-  }
-
-  List<Widget> buildQuestionOptions(
-      List<int> selectedAnswers,
-      Question question,
-      ) {
-    return question.options.asMap().entries.map((entry) {
-      final index = entry.key;
-      final option = entry.value;
-      final isSelected = selectedAnswers.contains(index);
-
-      return buildOption(selectedAnswers, question, isSelected, index, option);
-    }).toList();
   }
 
   GestureDetector buildOption(List<int> selectedAnswers, Question question, bool isSelected, int index, String option) {
@@ -135,8 +106,8 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                 widget.onAnswerChanged(newAnswers);
               },
       child: Container(
-        margin: EdgeInsets.symmetric(vertical: 10),
-        padding: EdgeInsets.all(15),
+        margin: EdgeInsets.symmetric(vertical: optionMargin),
+        padding: EdgeInsets.all(optionPadding),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           color:
@@ -183,23 +154,33 @@ class _QuestionWidgetState extends State<QuestionWidget> {
     );
   }
 
+  Widget buildScrollableOptions() {
+    double optionFontSize = Theme.of(context).textTheme.bodyMedium?.fontSize ?? 18;
 
-  // Option 2: Fixed height with scroll indicators
-  Widget buildConstrainedScrollableOptions() {
-    double maxHeight = MediaQuery.of(context).size.height * 0.35; // 40% of screen
-    double minHeight = 200; // Minimum height to show at least 4 options
+    double fontScale = AppTheme.fontSizeScale;
+    double maxHeight = 250;
+
+
+    // Estimate average option height (you'll need to tune this based on your buildOption implementation)
+    // 30 from the 15 all around padding around the text
+    // 20 for the vertical margin between options
+    double estimatedOptionHeight = (optionFontSize + optionPadding*2 + optionMargin*2) * fontScale; // Adjust this value
+    double estimatedTotalHeight = widget.question.options.length * estimatedOptionHeight;
+
+    bool hasOverflow = estimatedTotalHeight > maxHeight;
 
     return Container(
-      height: widget.question.options.length > 4 ? maxHeight : null,
+      height: hasOverflow ? maxHeight : null,
       constraints: BoxConstraints(
-        minHeight: minHeight,
         maxHeight: maxHeight,
       ),
       child: Stack(
         children: [
           ListView.builder(
-            shrinkWrap: widget.question.options.length <= 3,
-            padding: const EdgeInsets.only(bottom: 10,),
+            shrinkWrap: !hasOverflow,
+            padding: EdgeInsets.only(
+              bottom: hasOverflow ? (25 * fontScale) : (10 * fontScale),
+            ),
             itemCount: widget.question.options.length,
             itemBuilder: (context, index) {
               final option = widget.question.options[index];
@@ -208,14 +189,13 @@ class _QuestionWidgetState extends State<QuestionWidget> {
             },
           ),
 
-          // "More options" indicator at bottom
-          if (widget.question.options.length > 4)
+          if (hasOverflow)
             Positioned(
               bottom: 0,
               left: 0,
               right: 0,
               child: Container(
-                height: 25,
+                height: 25 * fontScale,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
@@ -232,12 +212,10 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                     children: [
                       Icon(
                         Icons.keyboard_arrow_down,
-                        size: 18,
+                        size: 18 * fontScale,
                         color: Theme.of(context).colorScheme.outline,
                       ),
-
-                      SizedBox(width: 5,),
-
+                      SizedBox(width: 5 * fontScale),
                       Text(
                         "Scroll for more",
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -251,73 +229,6 @@ class _QuestionWidgetState extends State<QuestionWidget> {
             ),
         ],
       ),
-    );
-  }
-
-  // Alternative: Auto-detect if scrolling is needed
-  Widget buildSmartScrollableQuestionText() {
-    if (widget.question.text == null) return SizedBox.shrink();
-
-    // Use LayoutBuilder to detect if content overflows
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        double maxHeight = MediaQuery.of(context).size.height * 0.27;
-
-        return Container(
-          constraints: BoxConstraints(maxHeight: maxHeight),
-          child: Column(
-            children: [
-              SizedBox(height: 10),
-              Expanded(
-                child: Stack(
-                  children: [
-                    SingleChildScrollView(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.all(Radius.circular(15)),
-                          border: Border.all(
-                            color: Colors.black,
-                            width: 3,
-                            style: BorderStyle.solid,
-                          ),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                          child: Text(
-                            widget.question.text!,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Scroll indicator (you could make this conditional)
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        height: 20,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [
-                              Theme.of(context).colorScheme.surface,
-                              Theme.of(context).colorScheme.surface.withValues(alpha: 0.0),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
     );
   }
 }
