@@ -298,15 +298,13 @@ class _ShopScreenState extends State<ShopScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   // Subtitle
                   Text(
-                    'Buy new accessories and environments for your dragons! Earn coins by playing and reviewing.',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      height: 1.4,
-                    ),
+                    'Earn new items and environments for your dragons by completing review sets from finished lessons.',
+                    style: theme.textTheme.labelMedium,
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 20),
                   // Toggle Buttons
                   Row(
                     children: [
@@ -326,7 +324,7 @@ class _ShopScreenState extends State<ShopScreen> {
                             ),
                             child: Center(
                               child: Text(
-                                'ACCESSORIES'.toUpperCase(),
+                                'ITEMS'.toUpperCase(),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: selectedTab == 0
                                       ? selectedText
