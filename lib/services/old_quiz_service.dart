@@ -1,7 +1,7 @@
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/models/question.dart';
 
-class QuizService {
+class OldQuizService {
   final supabase = SupabaseConfig.client;
 
   // Get quiz by ID with questions
