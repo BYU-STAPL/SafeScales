@@ -1,9 +1,9 @@
 import 'dart:core';
 import 'package:flutter/cupertino.dart';
-import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/models/dragon.dart';
 import '../services/dragon_service.dart';
+import '../services/old_class_service.dart';
 
 /// Provider that manages dragon state for the UI
 /// This layer handles UI state, loading states, and coordinates between UI and service layer
@@ -11,7 +11,7 @@ class DragonProvider extends ChangeNotifier {
   // === Services ===
   final DragonService _dragonService;
   final UserStateService _userState;
-  final ClassService _classService;
+  final OldClassService _classService;
 
   // === State ===
   bool _isLoading = false;
@@ -28,7 +28,7 @@ class DragonProvider extends ChangeNotifier {
   DragonProvider({
     required DragonService dragonService,
     UserStateService? userState,
-    required ClassService classService,
+    required OldClassService classService,
   }) : _dragonService = dragonService,
         _userState = userState ?? UserStateService(),
         _classService = classService;

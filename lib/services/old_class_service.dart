@@ -5,10 +5,10 @@ import '../models/lesson.dart';
 import '../models/question.dart';
 
 /// Class Service gets Class Content (note: not user progress)
-class ClassService {
+class OldClassService {
   final SupabaseClient supabase;
 
-  ClassService(this.supabase);
+  OldClassService(this.supabase);
 
   Future<Map<String, dynamic>> getUserClass(String userId) async {
     try {

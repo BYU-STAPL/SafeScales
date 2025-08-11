@@ -3,7 +3,7 @@ import 'package:safe_scales/dependencies/theme_dependencies.dart';
 import 'package:safe_scales/services/course_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../services/class_service.dart';
+import '../services/old_class_service.dart';
 import '../services/user_state_service.dart';
 import '../providers/course_provider.dart';
 import '../providers/dragon_provider.dart';
@@ -20,7 +20,7 @@ class AppDependencies {
   final SupabaseClient supabase;
   final UserStateService userStateService;
   final CourseService courseService;
-  final ClassService classService;
+  final OldClassService classService;
 
   // === Feature Dependencies ===
   late final CourseDependencies course;
@@ -194,13 +194,13 @@ AppDependencies createAppDependencies({
   required SupabaseClient supabase,
   UserStateService? userStateService,
   CourseService? courseService,
-  ClassService? classService,
+  OldClassService? classService,
 }) {
   return AppDependencies(
     supabase: supabase,
     userStateService: userStateService ?? UserStateService(),
     courseService: courseService ?? CourseService(),
-    classService: classService ?? ClassService(supabase),
+    classService: classService ?? OldClassService(supabase),
   );
 }
 
@@ -208,7 +208,7 @@ AppDependencies createAppDependencies({
 AppDependencies createAppDependenciesFromSupabase(SupabaseClient supabase) {
   final userStateService = UserStateService();
   final courseService = CourseService();
-  final classService = ClassService(supabase);
+  final classService = OldClassService(supabase);
 
   return AppDependencies(
     supabase: supabase,

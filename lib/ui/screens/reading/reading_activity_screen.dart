@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/ui/screens/reading/reading_results_screen.dart';
 
 import '../../../providers/course_provider.dart';
+import '../../../services/old_class_service.dart';
 import '../../widgets/progress_bar.dart';
 
 class ReadingActivityScreen extends StatefulWidget {
@@ -22,7 +22,7 @@ class ReadingActivityScreen extends StatefulWidget {
 
 class _ReadingActivityScreenState extends State<ReadingActivityScreen>
     with TickerProviderStateMixin {
-  final ClassService _classService = ClassService(SupabaseConfig.client);
+  final OldClassService _classService = OldClassService(SupabaseConfig.client);
   final UserStateService _userState = UserStateService();
 
   List<Map<String, dynamic>> _slides = [];
