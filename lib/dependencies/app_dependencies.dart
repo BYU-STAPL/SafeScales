@@ -4,7 +4,6 @@ import 'package:safe_scales/services/course_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/class_service.dart';
-import '../services/quiz_service.dart';
 import '../services/user_state_service.dart';
 import '../providers/course_provider.dart';
 import '../providers/dragon_provider.dart';
@@ -196,7 +195,6 @@ AppDependencies createAppDependencies({
   UserStateService? userStateService,
   CourseService? courseService,
   ClassService? classService,
-  QuizService? quizService,
 }) {
   return AppDependencies(
     supabase: supabase,

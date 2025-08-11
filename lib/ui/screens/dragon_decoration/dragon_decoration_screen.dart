@@ -7,7 +7,7 @@ import 'package:safe_scales/ui/widgets/sticker_collection_widget.dart';
 import 'package:safe_scales/models/sticker_item_model.dart';
 
 import '../../../services/old_dragon_service.dart';
-import '../../../services/quiz_service.dart';
+import '../../../services/old_quiz_service.dart';
 import '../../../services/user_state_service.dart';
 import '../../../providers/course_provider.dart';
 import '../../../providers/dragon_provider.dart';
@@ -65,7 +65,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final dragonService = OldDragonService(QuizService().supabase);
+        final dragonService = OldDragonService(OldQuizService().supabase);
 
         // First, get the user's acquired environment IDs
         final userResponse =
@@ -197,7 +197,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final dragonService = OldDragonService(QuizService().supabase);
+        final dragonService = OldDragonService(OldQuizService().supabase);
         final userResponse =
         await dragonService.supabase
             .from('Users')
@@ -669,7 +669,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
       if (user != null) {
 
-        final dragonService = OldDragonService(QuizService().supabase);
+        final dragonService = OldDragonService(OldQuizService().supabase);
 
         // Get current dragons data
         final userResponse = await dragonService.supabase
@@ -728,7 +728,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final dragonService = OldDragonService(QuizService().supabase);
+        final dragonService = OldDragonService(OldQuizService().supabase);
 
         // Get current dragons data
         final userResponse =
