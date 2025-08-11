@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:safe_scales/themes/theme_notifier.dart';
+import 'package:safe_scales/providers/theme_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:safe_scales/config/supabase_config.dart';
