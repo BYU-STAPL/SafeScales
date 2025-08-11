@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:safe_scales/ui/screens/dragons_page.dart';
-import 'package:safe_scales/ui/widgets/settings_drawer.dart';
-import 'package:safe_scales/ui/screens/shop_page.dart';
+
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/services/auth_service.dart';
 import 'package:safe_scales/ui/screens/login/selection_screen.dart';
 
-import 'toy_box_page.dart';
-import '../../dev_testing_page.dart';
-import 'home_page.dart';
+import 'package:safe_scales/ui/widgets/settings_drawer.dart';
+
+import 'package:safe_scales/ui/screens/home_screen.dart';
+import 'package:safe_scales/ui/screens/dragons_screen.dart';
+import 'package:safe_scales/ui/screens/items_screen.dart';
+import 'package:safe_scales/ui/screens/shop_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   final int initialIndex;
@@ -36,11 +37,12 @@ class _MainNavigationState extends State<MainNavigation> {
     _selectedIndex = widget.initialIndex;
 
     _pages = <Widget>[
-      HomePage(),
-      DragonsPage(),
-      ToyBoxPage(),
-      ShopPage(),
-      DevTestingPage(), //TODO: Remove later
+      // Hard code shop index here, that way this information doesn't need to be shared across files
+      HomeScreen(onNavigateToShop: () {_navigateToTab(3);}),
+      DragonsScreen(),
+      ItemsScreen(),
+      ShopScreen(),
+      // DevTestingPage(), //TODO: Remove later
     ];
   }
 
@@ -57,6 +59,12 @@ class _MainNavigationState extends State<MainNavigation> {
       default:
         return '';
     }
+  }
+
+  void _navigateToTab(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   Future<void> _handleLogout() async {
@@ -161,10 +169,10 @@ class _MainNavigationState extends State<MainNavigation> {
             ),
 
             //TODO: Remove later
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.device_hub),
-              label: 'Dev',
-            ),
+            // const BottomNavigationBarItem(
+            //   icon: Icon(Icons.device_hub),
+            //   label: 'Dev',
+            // ),
           ],
         ),
       ),

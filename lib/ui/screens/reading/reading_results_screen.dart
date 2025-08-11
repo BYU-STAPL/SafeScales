@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/widgets/dragon_image_widget.dart';
 
 class ReadingResultScreen extends StatelessWidget {
@@ -44,7 +43,7 @@ class ReadingResultScreen extends StatelessWidget {
 
               SizedBox(height: 30),
 
-              DragonImageWidget(moduleId: modeuleId, phase: 'teen', size: 300),
+              DragonImageWidget(moduleId: modeuleId, phase: 'stage2', size: 300),
 
               SizedBox(height: 30),
 

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/ui/screens/auth_screen.dart';
 import 'package:safe_scales/ui/screens/login/class_code_screen.dart';
-import 'package:safe_scales/ui/screens/login/class_selection_screen.dart';
 
 class SelectionScreen extends StatelessWidget {
   const SelectionScreen({super.key});

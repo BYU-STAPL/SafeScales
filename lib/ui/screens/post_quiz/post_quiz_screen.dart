@@ -4,24 +4,23 @@
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_results_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:safe_scales/providers/old_course_provider.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_results_screen.dart';
-import 'package:safe_scales/services/quiz_service.dart';
-import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 
+import '../../../providers/course_provider.dart';
 import '../../widgets/progress_bar.dart';
 import '../../widgets/question_widget.dart';
 
 class PostQuizScreen extends StatefulWidget {
   const PostQuizScreen({
-    Key? key,
+    super.key,
     required this.moduleId,
     required this.questionSet
-  }) : super(key: key);
+  });
 
   final String moduleId;
   final QuestionSet questionSet;
@@ -59,7 +58,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   }
 
   void _finishPostQuiz() async {
-    print('=== Starting Post-Quiz Completion ===');
     int correctAnswers = 0;
     for (int i = 0; i < widget.questionSet.questions.length; i++) {
       if (_isAnswerCorrect(i)) correctAnswers++;
@@ -79,15 +77,13 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     try {
       final user = _userState.currentUser;
       if (user != null) {
-        print('Saving post-quiz progress for user: ${user.id}');
-        await QuizService().saveQuizProgress(
-          userId: user.id,
-          quizId: widget.questionSet.id,
-          answers: userAnswers,
-          correctAnswers: correctAnswers,
-          totalQuestions: totalQuestions,
+        await Provider.of<CourseProvider>(context, listen: false).saveQuizProgress(
+            quizId: widget.questionSet.id,
+            userAnswers: userAnswers,
+            correctAnswers: correctAnswers,
+            totalQuestions: totalQuestions
         );
-        print('Successfully saved quiz progress');
+
       } else {
         print('No user logged in, skipping post-quiz progress save');
       }
@@ -286,11 +282,12 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
         itemBuilder: (context, index) {
           // final isBookmarked = _bookmarkedPages.contains(index);
           return ListTile(
-            // TODO: Add bookmarks for quiz questions
-            // leading: Icon(
-            //   isBookmarked ? FontAwesomeIcons.solidBookmark : FontAwesomeIcons.bookmark,
-            //   color: Theme.of(context).colorScheme.primary,
-            // ),
+            leading: Icon(
+              userAnswers[index].isNotEmpty
+                  ? FontAwesomeIcons.solidCircleCheck
+                  : FontAwesomeIcons.circle,
+              color: Colors.black,
+            ),
             title: Text(
               'Q${index + 1}: ${widget.questionSet.questions[index].questionText}',
               style:
@@ -299,12 +296,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                         context,
                       ).textTheme.headlineSmall?.copyWith(fontSize: 18)
                       : Theme.of(context).textTheme.bodyMedium,
-            ),
-            trailing: Icon(
-              userAnswers[index].isNotEmpty
-                  ? FontAwesomeIcons.solidCircleCheck
-                  : FontAwesomeIcons.circle,
-              color: Theme.of(context).colorScheme.green,
             ),
             onTap: () => _jumpToPage(index),
           );
@@ -379,15 +370,24 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                   child: Column(
                     children: [
                       SizedBox(height: 10),
-
-                      Text(
-                        '${widget.questionSet.passingScore}% or higher is required to pass',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: theme.colorScheme.secondary,
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                              child: Text(
+                                '${widget.questionSet.passingScore}% or higher is required to pass this quiz',
+                                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold,),
+                              )
+                          ),
+                        ],
                       ),
 
-                      SizedBox(height: 10),
+                      SizedBox(height: 20),
+
                       Row(
                         children: [
                           Icon(
@@ -401,16 +401,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                         ],
                       ),
                       SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: theme.colorScheme.secondary,
-                          ),
-                          SizedBox(width: 10),
-                          Expanded(child: Text(widget.questionSet.description)),
-                        ],
-                      ),
                     ],
                   ),
                 ),

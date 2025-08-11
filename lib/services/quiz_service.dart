@@ -1,54 +1,8 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/models/question.dart';
 
 class QuizService {
   final supabase = SupabaseConfig.client;
-
-  // Get all quizzes
-  Future<List<Map<String, dynamic>>> getAllQuizzes() async {
-    try {
-      final response = await supabase
-          .from('quizzes')
-          .select()
-          .order('created_at', ascending: false);
-
-      // Group quizzes by topic
-      final Map<String, List<Map<String, dynamic>>> groupedByTopic = {};
-
-      for (var quiz in response) {
-        final topic = quiz['topic'] ?? 'Unknown Topic';
-        if (!groupedByTopic.containsKey(topic)) {
-          groupedByTopic[topic] = [];
-        }
-        groupedByTopic[topic]!.add(quiz);
-      }
-
-      // Convert to a flat list with topic information
-      final List<Map<String, dynamic>> result = [];
-
-      groupedByTopic.forEach((topic, quizzes) {
-        // Add a single entry for each topic
-        if (quizzes.isNotEmpty) {
-          result.add({
-            'topic': topic,
-            'id': quizzes[0]['id'],
-            'title': quizzes[0]['title'] ?? topic,
-            'description': quizzes[0]['description'] ?? 'Learn about $topic',
-            'has_pre_quiz': quizzes.any((q) => q['activity_type'] == 'preQuiz'),
-            'has_post_quiz': quizzes.any(
-              (q) => q['activity_type'] == 'postQuiz',
-            ),
-            'created_at': quizzes[0]['created_at'],
-          });
-        }
-      });
-
-      return result;
-    } catch (e) {
-      throw Exception('Failed to fetch quizzes: $e');
-    }
-  }
 
   // Get quiz by ID with questions
   Future<QuestionSet?> getQuizWithQuestions(String quizId) async {
@@ -120,10 +74,7 @@ class QuizService {
   }
 
   // New method to get quiz by topic and activity type from single table structure
-  Future<QuestionSet?> getQuizByTopicAndActivityType({
-    required String topic,
-    required String activityType,
-  }) async {
+  Future<QuestionSet?> getQuizByTopicAndActivityType({required String topic, required String activityType,}) async {
     try {
       print('Fetching quiz for topic: $topic, activityType: $activityType');
 
@@ -136,11 +87,8 @@ class QuizService {
               .eq('activity_type', activityType)
               .single();
 
-      print('Database response: $response');
-
       // Parse the questions JSON
       final questionsJson = response['questions'] as List<dynamic>?;
-      print('Questions JSON: $questionsJson');
 
       if (questionsJson == null) {
         print('No questions found in the quiz');
@@ -150,7 +98,6 @@ class QuizService {
       // Convert JSON questions to Question objects
       final questions =
           questionsJson.map((q) {
-            print('Processing question: $q');
             final questionMap = q as Map<String, dynamic>;
             final questionType = questionMap['question_type'] ?? 'single';
 
@@ -190,8 +137,6 @@ class QuizService {
             }
           }).toList();
 
-      print('Converted questions: $questions');
-
       // Convert activity type string to enum
       final activityTypeEnum = ActivityType.values.firstWhere(
         (e) => e.toString().split('.').last == activityType,
@@ -217,8 +162,6 @@ class QuizService {
         questions: questions,
       );
 
-      print('Created QuestionSet with ID: ${questionSet.id}');
-      print('Database quiz ID: ${response['id']}');
       return questionSet;
     } catch (e) {
       print('❌Error fetching quiz by topic and activity type: $e');
@@ -226,148 +169,12 @@ class QuizService {
     }
   }
 
-  // Save quiz progress for a user
-  Future<void> saveQuizProgress({
-    required String userId,
-    required String quizId,
-    required List<List<int>> answers,
-    required int correctAnswers,
-    required int totalQuestions,
-  }) async {
-    try {
-      // Calculate score percentage
-      final score = ((correctAnswers / totalQuestions) * 100).round();
-
-      // Get current user data
-      final response =
-          await supabase
-              .from('Users')
-              .select('quizzes, modules')
-              .eq('id', userId)
-              .single();
-
-      // Update existing quizzes column (for backward compatibility)
-      Map<String, dynamic> quizzes = {};
-      if (response['quizzes'] != null) {
-        quizzes = Map<String, dynamic>.from(response['quizzes']);
-      }
-
-      // Update quiz data in quizzes column
-      quizzes[quizId] = {
-        'score': score,
-        'answers': answers,
-        'completed_at': DateTime.now().toIso8601String(),
-        'correct_answers': correctAnswers,
-        'total_questions': totalQuestions,
-      };
-
-      // Update new modules column
-      Map<String, dynamic> modules = {};
-      if (response['modules'] != null) {
-        modules = Map<String, dynamic>.from(response['modules']);
-      }
-
-      // Extract module ID and quiz type from quiz ID
-      // Quiz ID format: "{moduleId}_{quizType}" (e.g., "module1_preQuiz")
-      String moduleId;
-      String quizType;
-
-      if (quizId.contains('_')) {
-        final parts = quizId.split('_');
-        moduleId = parts[0];
-        quizType = parts.length > 1 ? parts[1] : 'quiz';
-      } else {
-        // Fallback for old quiz IDs that don't follow the module format
-        moduleId = 'legacy';
-        quizType = quizId;
-      }
-
-      // Initialize module entry if it doesn't exist
-      if (!modules.containsKey(moduleId)) {
-        modules[moduleId] = {};
-      }
-
-      // Save quiz data in modules format: module_id -> quiz_type -> data
-      modules[moduleId][quizType] = {
-        'answers': answers,
-        'score': score,
-        'completed_at': DateTime.now().toIso8601String(),
-        'correct_answers': correctAnswers,
-        'total_questions': totalQuestions,
-      };
-
-      // Save updated data to both columns
-      await supabase
-          .from('Users')
-          .update({'quizzes': quizzes, 'modules': modules})
-          .eq('id', userId);
-
-      print('Successfully saved quiz progress for quiz $quizId');
-      print(
-        'Saved to modules[$moduleId][$quizType]: ${modules[moduleId][quizType]}',
-      );
-    } catch (e) {
-      print('❌Error saving quiz progress: $e');
-      throw Exception('Failed to save quiz progress: $e');
-    }
-  }
-
-  // Get quiz progress for a user
-  Future<Map<String, List<List<int>>>> getQuizProgress(String userId) async {
-    try {
-      print('Getting quiz progress for user: $userId');
-
-      final response =
-          await supabase
-              .from('users')
-              .select('quizzes')
-              .eq('id', userId)
-              .single();
-
-      print('Raw quiz progress data: ${response['quizzes']}');
-
-      if (response['quizzes'] == null) {
-        print('No quiz progress found for user');
-        return {};
-      }
-
-      // Convert the JSONB data to a Map<String, List<List<int>>>
-      final Map<String, dynamic> quizzesData = response['quizzes'];
-      final result = quizzesData.map((key, value) {
-        final List<dynamic> outerList = value as List;
-        final List<List<int>> convertedList =
-            outerList.map((innerList) {
-              return List<int>.from(innerList as List);
-            }).toList();
-        return MapEntry(key, convertedList);
-      });
-
-      print('Converted quiz progress: $result');
-      return result;
-    } catch (e) {
-      print('❌Error getting quiz progress: $e');
-      throw Exception('Failed to get quiz progress: $e');
-    }
-  }
-
   // New method to get quiz by module ID
-  Future<QuestionSet?> getQuizByModuleId({
-    required String moduleId,
-    required String activityType,
-  }) async {
+  Future<QuestionSet?> getQuizByModuleId({required String moduleId, required String activityType,}) async {
     try {
-      print('Fetching quiz for module: $moduleId, activityType: $activityType');
-
       // Get module details
       final moduleResponse =
           await supabase.from('modules').select().eq('id', moduleId).single();
-
-      if (moduleResponse == null) {
-        print('No module found with ID: $moduleId');
-        return null;
-      }
-
-      print('Module response: $moduleResponse');
 
       // Get quiz data based on activity type
       final quizData =
@@ -446,7 +253,6 @@ class QuizService {
         questions: questions,
       );
 
-      print('Created QuestionSet with ID: ${questionSet.id}');
       return questionSet;
     } catch (e) {
       print('❌Error fetching quiz by module ID: $e');
@@ -480,15 +286,13 @@ class QuizService {
             .select('id, minimum_passing_grade')
             .inFilter('id', moduleIds);
         final Map<String, int> modulePassingScores = {};
-        if (moduleDetailsResponse is List) {
-          for (final mod in moduleDetailsResponse) {
-            if (mod['id'] != null) {
-              modulePassingScores[mod['id'].toString()] =
-                  mod['minimum_passing_grade'] != null
-                      ? int.tryParse(mod['minimum_passing_grade'].toString()) ??
-                          80
-                      : 80;
-            }
+        for (final mod in moduleDetailsResponse) {
+          if (mod['id'] != null) {
+            modulePassingScores[mod['id'].toString()] =
+                mod['minimum_passing_grade'] != null
+                    ? int.tryParse(mod['minimum_passing_grade'].toString()) ??
+                        80
+                    : 80;
           }
         }
 

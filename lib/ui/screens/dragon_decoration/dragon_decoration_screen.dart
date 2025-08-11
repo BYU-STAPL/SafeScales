@@ -1,25 +1,29 @@
 // --- Dragon Dress Up Page ---
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:safe_scales/ui/widgets/dragon_image_widget.dart';
 import 'package:safe_scales/ui/widgets/sticker_collection_widget.dart';
 
 import 'package:safe_scales/models/sticker_item_model.dart';
 
-import '../../../services/dragon_service.dart';
+import '../../../services/old_dragon_service.dart';
 import '../../../services/quiz_service.dart';
 import '../../../services/user_state_service.dart';
-import '../../../state_management/dragon_state_manager.dart';
+import '../../../providers/course_provider.dart';
+import '../../../providers/dragon_provider.dart';
 
 class DragonDressUpPage extends StatefulWidget {
   final String dragonId;
-  final Function(String dragonId, String environmentId)? onEnvironmentChanged;
-  final Function(String dragonId)? onDragonUpdated;
+  final String currentPhase;
+  // final Function(String dragonId, String environmentId)? onEnvironmentChanged;
+  // final Function(String dragonId)? onDragonUpdated;
 
   const DragonDressUpPage({
     Key? key,
     required this.dragonId,
-    this.onEnvironmentChanged,
-    this.onDragonUpdated,
+    required this.currentPhase,
+    // this.onEnvironmentChanged,
+    // this.onDragonUpdated,
   }) : super(key: key);
 
   @override
@@ -27,7 +31,7 @@ class DragonDressUpPage extends StatefulWidget {
 }
 
 class _DragonDressUpPageState extends State<DragonDressUpPage> {
-  int selectedPhase = 0;
+  String selectedPhase = '';
   int selectedEnvironment = 0;
   List<String> userEnvironments = [];
   List<String> userEnvironmentIds = [];
@@ -40,16 +44,19 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   List<StickerItem> placedStickers = [];
   String? selectedStickerId;
 
-  // State manager instance
-  late final DragonStateManager _stateManager;
+  // List<String> _availablePhases = [];
 
   @override
   void initState() {
     super.initState();
-    _stateManager = DragonStateManager();
     _loadUserEnvironments();
     _loadUserAccessories();
     _loadCurrentPhase();
+
+    // Set selected phase so no waiting
+    setState(() {
+      selectedPhase = widget.currentPhase;
+    });
   }
 
   Future<void> _loadUserEnvironments() async {
@@ -58,7 +65,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final dragonService = DragonService(QuizService().supabase);
+        final dragonService = OldDragonService(QuizService().supabase);
 
         // First, get the user's acquired environment IDs
         final userResponse =
@@ -125,7 +132,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
               });
 
               // Use state manager to get current environment
-              final currentEnvId = _stateManager.currentEnvironment;
+              final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+              final currentEnvId = dragonProvider.currentEnvironment;
               if (currentEnvId != null) {
                 final envIndex = userEnvironmentIds.indexOf(currentEnvId);
                 if (envIndex != -1) {
@@ -189,7 +197,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final dragonService = DragonService(QuizService().supabase);
+        final dragonService = OldDragonService(QuizService().supabase);
         final userResponse =
         await dragonService.supabase
             .from('Users')
@@ -248,14 +256,23 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   }
 
   Future<void> _loadCurrentPhase() async {
-    // Use state manager to get the display phase for play page context
-    final phase = _stateManager.getUserPreferredPhase(widget.dragonId);
+    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+    await dragonProvider.initialize();
+    // await dragonProvider.loadUserDragons();
 
-    final index = availablePhases.indexOf(phase);
+    final phase = dragonProvider.getUserPreferredPhase(widget.dragonId);
 
-    if (index != -1 && mounted) {
-      setState(() => selectedPhase = index);
-      print('✅ Loaded phase from state manager: $phase');
+    try {
+      final availablePhases = dragonProvider.unlockedDragonPhases[widget.dragonId]!;
+
+      final index = availablePhases.indexOf(phase);
+
+      if (index != -1 && mounted) {
+        setState(() => selectedPhase = phase);
+      }
+    }
+    catch (e) {
+      print(e);
     }
   }
 
@@ -272,172 +289,189 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
     final stickerEnvironmentSize = (width: environmentSize.width - 10, height: environmentSize.height - 10);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Play',
-        ),
-        centerTitle: true,
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        iconTheme: IconThemeData(color: colorScheme.primary),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, size: 35,),
-            onSelected: (value) {
-              if (value == 'phase') _showPhaseDialog();
-              if (value == 'env') _showEnvironmentDialog();
-              if (value == 'clear') {
-                setState(() {
-                  placedStickers.clear();
-                });
-              }
-            },
-            itemBuilder:
-                (context) => [
-              PopupMenuItem(
-                value: 'phase',
-                child: Text('Select Dragon Phase'),
+    return Consumer2<DragonProvider, CourseProvider>(
+        builder: (context, dragonProvider, courseProvider, child) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(
+                'Play',
               ),
-              PopupMenuItem(
-                value: 'env',
-                child: Text('Select Environment'),
-              ),
-              PopupMenuDivider(),
-              PopupMenuItem(
-                value: 'clear',
-                child: Text('Clear All Stickers'),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Phase and Environment info
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              children: [
-                Text(
-                  'Phase: ${_stateManager.getPhaseDisplayName(availablePhases[selectedPhase])}',
-                  style: theme.textTheme.bodySmall,
-                ),
-                SizedBox(height: 10,),
-                Text(
-                  'Environment: ${_isLoadingEnvironments ? 'Loading...' : (userEnvironments.isNotEmpty && selectedEnvironment < userEnvironments.length ? userEnvironments[selectedEnvironment] : 'None')}',
-                  style: theme.textTheme.bodySmall,
+              centerTitle: true,
+              backgroundColor: colorScheme.surface,
+              elevation: 0,
+              iconTheme: IconThemeData(color: colorScheme.primary),
+              actions: [
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, size: 35,),
+                  onSelected: (value) {
+                    if (value == 'phase') _showPhaseDialog();
+                    if (value == 'env') _showEnvironmentDialog();
+                    if (value == 'clear') {
+                      setState(() {
+                        placedStickers.clear();
+                      });
+                    }
+                  },
+                  itemBuilder:
+                      (context) => [
+                    PopupMenuItem(
+                      value: 'phase',
+                      child: Text('Select Dragon Phase'),
+                    ),
+                    PopupMenuItem(
+                      value: 'env',
+                      child: Text('Select Environment'),
+                    ),
+                    PopupMenuDivider(),
+                    PopupMenuItem(
+                      value: 'clear',
+                      child: Text('Clear All Stickers'),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ),
-
-          // Dragon area with drop zone
-          Expanded(
-            child: Center(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Environment background
-                  if (userEnvironmentImages.isNotEmpty &&
-                      selectedEnvironment < userEnvironmentImages.length)
-                    Container(
-                      width: environmentSize.width,
-                      height: environmentSize.height,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        image: DecorationImage(
-                          image: NetworkImage(
-                            userEnvironmentImages[selectedEnvironment],
-                          ),
-                          fit: BoxFit.cover,
-                        ),
+            body: Column(
+              children: [
+                // Phase and Environment info
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Phase: ${dragonProvider.getPhaseDisplayName(selectedPhase)}',
+                        style: theme.textTheme.bodySmall,
                       ),
+                      SizedBox(height: 10,),
+                      Text(
+                        'Environment: ${_isLoadingEnvironments ? 'Loading...' : (userEnvironments.isNotEmpty && selectedEnvironment < userEnvironments.length ? userEnvironments[selectedEnvironment] : 'None')}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Dragon area with drop zone
+                Expanded(
+                  child: Center(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Environment background
+                        if (userEnvironmentImages.isNotEmpty &&
+                            selectedEnvironment < userEnvironmentImages.length)
+                          Container(
+                            width: environmentSize.width,
+                            height: environmentSize.height,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(24),
+                              image: DecorationImage(
+                                image: NetworkImage(
+                                  userEnvironmentImages[selectedEnvironment],
+                                ),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+
+
+                        // Dragon Image
+                        DragonImageWidget(
+                          dragonId: widget.dragonId,
+                          size: dragonSize * 0.75,
+                          phase: selectedPhase,
+                        ),
+
+
+                        // Drop zone for dragon
+                        DragTarget<Map<String, dynamic>>(
+                          builder: (context, candidateData, rejectedData) {
+                            return Container(
+                              width: environmentSize.width,
+                              height: environmentSize.height,
+                              decoration: BoxDecoration(
+                                color:
+                                candidateData.isNotEmpty
+                                    ? colorScheme.primary.withValues(alpha: 0.1)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color:
+                                  candidateData.isNotEmpty
+                                      ? colorScheme.primary
+                                      : colorScheme.primary.withValues(alpha: 0.2),
+                                  width: candidateData.isNotEmpty ? 3 : 2,
+                                ),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Stack(
+                                  children: [
+
+                                    // Placed stickers
+                                    ...placedStickers.map((sticker) {
+                                      final isSelected = selectedStickerId == sticker.id;
+
+                                      return _buildSticker(sticker, isSelected, stickerEnvironmentSize,);
+                                    }),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          onAcceptWithDetails: (details) {
+                            setDetails(details, dragonSize, environmentSize);
+                          },
+                        ),
+                      ],
                     ),
-
-
-                  // Dragon Image
-                  DragonImageWidget(
-                    dragonId: widget.dragonId,
-                    size: dragonSize * 0.75,
-                    phase: getCurrentPhasePhase(),
                   ),
+                ),
 
-
-                  // Drop zone for dragon
-                  DragTarget<Map<String, dynamic>>(
-                    builder: (context, candidateData, rejectedData) {
-                      return Container(
-                        width: environmentSize.width,
-                        height: environmentSize.height,
-                        decoration: BoxDecoration(
-                          color:
-                          candidateData.isNotEmpty
-                              ? colorScheme.primary.withOpacity(0.1)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color:
-                            candidateData.isNotEmpty
-                                ? colorScheme.primary
-                                : colorScheme.primary.withOpacity(0.2),
-                            width: candidateData.isNotEmpty ? 3 : 2,
-                          ),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Stack(
-                            children: [
-
-                              // Placed stickers
-                              ...placedStickers.map((sticker) {
-                                final isSelected = selectedStickerId == sticker.id;
-
-                                return _buildSticker(sticker, isSelected, stickerEnvironmentSize,);
-                              }).toList(),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                    onAcceptWithDetails: (details) {
-                      setDetails(details, dragonSize, environmentSize);
-                    },
-                  ),
-                ],
-              ),
+                // Accessory picker
+                StickerCollectionWidget(isLoadingAccessories: _isLoadingAccessories, userAccessories: userAccessories),
+              ],
             ),
-          ),
-
-          // Accessory picker
-          StickerCollectionWidget(isLoadingAccessories: _isLoadingAccessories, userAccessories: userAccessories),
-        ],
-      ),
-      backgroundColor: colorScheme.surface,
+            backgroundColor: colorScheme.surface,
+          );
+        }
     );
+
+
+
+
   }
 
   // Get available phases using state manager
-  List<String> get availablePhases {
-    // Get phases from state manager instead of widget.phases
-    // final userPhases = _stateManager.userDragons;
-
-    List<String> phases = ['egg'];
-
-    // Check if dragon has each phase using state manager
-    if (_stateManager.hasPhase(widget.dragonId, 'stage1')) phases.add('stage1');
-    if (_stateManager.hasPhase(widget.dragonId, 'stage2')) phases.add('stage2');
-    if (_stateManager.hasPhase(widget.dragonId, 'final')) phases.add('final');
-
-    return phases;
-  }
+  // List<String> get availablePhases {
+  //   // Get phases from state manager instead of widget.phases
+  //   // final userPhases = _stateManager.userDragons;
+  //
+  //   List<String> phases = ['egg'];
+  //
+  //   // Check if dragon has each phase using state manager
+  //   if (_stateManager.hasPhase(widget.dragonId, 'stage1')) phases.add('stage1');
+  //   if (_stateManager.hasPhase(widget.dragonId, 'stage2')) phases.add('stage2');
+  //   if (_stateManager.hasPhase(widget.dragonId, 'final')) phases.add('final');
+  //
+  //   return phases;
+  // }
 
   // Get image URL for current phase using state manager
-  String getCurrentPhasePhase() {
-    return availablePhases[selectedPhase];
-  }
+  // String getCurrentPhasePhase() {
+  //   return availablePhases[selectedPhase];
+  // }
 
   void _showPhaseDialog() async {
+
+    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+
+    final availablePhases = dragonProvider.unlockedDragonPhases[widget.dragonId];
+    if (availablePhases == null) {
+      print("Error DragonDecoration showPhaseDialog: No available phases");
+      return;
+    }
+
     int? choice = await showDialog<int>(
       context: context,
       builder:
@@ -447,17 +481,17 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
           availablePhases.length,
               (i) => SimpleDialogOption(
             onPressed: () => Navigator.pop(context, i),
-            child: Text(_stateManager.getPhaseDisplayName(availablePhases[i])),
+            child: Text(dragonProvider.getPhaseDisplayName(availablePhases[i])),
           ),
         ),
       ),
     );
     if (choice != null) {
-      setState(() => selectedPhase = choice);
+      setState(() => selectedPhase = availablePhases[choice]);
       // Note: For now, we're just updating the UI.
-      // When you implement user preference saving in state manager,
+      // When you implement user preference saving,
       // you would call something like:
-      // await _stateManager.saveUserPreferredPhase(widget.dragonId, availablePhases[choice]);
+      // await dragonProvider.saveUserPreferredPhase(widget.dragonId, availablePhases[choice]);
     }
   }
 
@@ -485,7 +519,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
           userEnvironments.length,
               (i) => SimpleDialogOption(
             onPressed: () {
-              print('✅ User selected environment: ${userEnvironments[i]}');
               Navigator.pop(context, i);
             },
             child: Text(userEnvironments[i]),
@@ -498,12 +531,13 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       setState(() => selectedEnvironment = choice);
 
       // Use state manager to save environment selection
-      await _stateManager.saveEnvironmentSelection(widget.dragonId, userEnvironmentIds[choice]);
+      final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+      await dragonProvider.saveEnvironmentSelection(widget.dragonId, userEnvironmentIds[choice]);
 
       // Use the callback for parent notification
-      if (widget.onEnvironmentChanged != null) {
-        widget.onEnvironmentChanged!(widget.dragonId, userEnvironmentIds[choice]);
-      }
+      // if (widget.onEnvironmentChanged != null) {
+      //   widget.onEnvironmentChanged!(widget.dragonId, userEnvironmentIds[choice]);
+      // }
     }
   }
 
@@ -635,7 +669,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
       if (user != null) {
 
-        final dragonService = DragonService(QuizService().supabase);
+        final dragonService = OldDragonService(QuizService().supabase);
 
         // Get current dragons data
         final userResponse = await dragonService.supabase
@@ -671,18 +705,16 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
             };
           }
 
+          // Overwrote the database with sticker data and removed phase progress information
           // Save the updated dragons data
-          await dragonService.supabase
-              .from('Users')
-              .update({'dragons': dragonsData})
-              .eq('id', user.id);
+          // await dragonService.supabase
+          //     .from('Users')
+          //     .update({'dragons': dragonsData})
+          //     .eq('id', user.id);
 
-          print('✅ Stickers saved: ${stickersData.length} stickers');
+          // Notify provider that dragon was updated
 
-          // Notify parent that dragon was updated
-          if (widget.onDragonUpdated != null) {
-            widget.onDragonUpdated!(widget.dragonId);
-          }
+          setState(() {});
         }
       }
     } catch (e) {
@@ -696,7 +728,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final dragonService = DragonService(QuizService().supabase);
+        final dragonService = OldDragonService(QuizService().supabase);
 
         // Get current dragons data
         final userResponse =
@@ -737,7 +769,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                     );
                   }).toList();
             });
-            print('✅ Loaded ${placedStickers.length} stickers');
           }
         }
       }

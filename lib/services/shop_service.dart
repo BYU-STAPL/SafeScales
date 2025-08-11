@@ -1,4 +1,3 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/services/class_service.dart';

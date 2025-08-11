@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/themes/app_theme.dart';
-import 'package:safe_scales/ui/widgets/settings_drawer.dart';
 import 'package:safe_scales/services/shop_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 
-class ShopPage extends StatefulWidget {
-  const ShopPage({super.key});
+class ShopScreen extends StatefulWidget {
+  const ShopScreen({super.key});
 
   @override
-  State<ShopPage> createState() => _ShopPageState();
+  State<ShopScreen> createState() => _ShopScreenState();
 }
 
-class _ShopPageState extends State<ShopPage> {
+class _ShopScreenState extends State<ShopScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ShopService _shopService = ShopService();
   final UserStateService _userState = UserStateService();
@@ -46,11 +44,7 @@ class _ShopPageState extends State<ShopPage> {
   }
 
   Future<void> _reloadUserProfile() async {
-    print('Reloading user profile in shop page');
     await _userState.loadUserProfile();
-    print(
-      'User profile reloaded. Modules data: ${_userState.currentUser?.modules}',
-    );
     await _loadModuleDetails();
   }
 
@@ -60,14 +54,11 @@ class _ShopPageState extends State<ShopPage> {
       if (completedModules.isEmpty) return;
 
       final moduleIds = completedModules.map((m) => m['id']).toList();
-      print('Loading details for module IDs: $moduleIds');
 
       final response = await SupabaseConfig.client
           .from('modules')
           .select()
           .inFilter('id', moduleIds);
-
-      print('Loaded module details: $response');
 
       setState(() {
         moduleDetails = {for (var module in response) module['id']: module};
@@ -112,8 +103,6 @@ class _ShopPageState extends State<ShopPage> {
 
   List<Map<String, dynamic>> _getCompletedQuizzes() {
     final user = _userState.currentUser;
-    print('Getting completed modules for user: ${user?.id}');
-    print('User modules data: ${user?.modules}');
 
     if (user == null || user.modules == null) {
       print('No user or modules data available');
@@ -121,7 +110,6 @@ class _ShopPageState extends State<ShopPage> {
     }
 
     final Map<String, dynamic> modules = user.modules!;
-    print('Processing modules: $modules');
 
     final completedQuizzes =
         modules.entries
@@ -168,10 +156,6 @@ class _ShopPageState extends State<ShopPage> {
       );
       return;
     }
-
-    print('Showing completed modules popup');
-    print('Current user: ${_userState.currentUser?.id}');
-    print('User quizzes: ${_userState.currentUser?.quizzes}');
 
     // Show completed modules popup first
     setState(() {
@@ -314,15 +298,13 @@ class _ShopPageState extends State<ShopPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   // Subtitle
                   Text(
-                    'Buy new accessories and environments for your dragons! Earn coins by playing and reviewing.',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      height: 1.4,
-                    ),
+                    'Earn new items and environments for your dragons by completing review sets from finished lessons.',
+                    style: theme.textTheme.labelMedium,
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 20),
                   // Toggle Buttons
                   Row(
                     children: [
@@ -342,7 +324,7 @@ class _ShopPageState extends State<ShopPage> {
                             ),
                             child: Center(
                               child: Text(
-                                'ACCESSORIES'.toUpperCase(),
+                                'ITEMS'.toUpperCase(),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: selectedTab == 0
                                       ? selectedText
@@ -461,7 +443,7 @@ class _ShopPageState extends State<ShopPage> {
             child: GestureDetector(
               onTap: () => setState(() => showLessonDialog = false),
               child: Container(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 child: Center(
                   child: Container(
                     width: 320,
@@ -471,7 +453,7 @@ class _ShopPageState extends State<ShopPage> {
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 16,
                           offset: const Offset(0, 8),
                         ),
@@ -513,7 +495,7 @@ class _ShopPageState extends State<ShopPage> {
                                       decoration: BoxDecoration(
                                         color:
                                             selectedLessonIndex == module['id']
-                                                ? primary.withOpacity(0.12)
+                                                ? primary.withValues(alpha: 0.12)
                                                 : Colors.grey[100],
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:safe_scales/services/class_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
+import 'package:safe_scales/providers/old_course_provider.dart';
 import 'package:safe_scales/ui/screens/reading/reading_results_screen.dart';
 
+import '../../../providers/course_provider.dart';
 import '../../widgets/progress_bar.dart';
 
 class ReadingActivityScreen extends StatefulWidget {
@@ -61,22 +63,20 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
 
   Future<void> _loadSlides() async {
     try {
-      if (widget.moduleId != null) {
-        final moduleData = await _classService.getModuleById(widget.moduleId!);
-        if (moduleData != null && moduleData['revision'] != null) {
-          final revision = Map<String, dynamic>.from(moduleData['revision']);
-          if (revision['slides'] != null) {
-            setState(() {
-              _slides = List<Map<String, dynamic>>.from(revision['slides']);
-              _isLoading = false;
-            });
+      final moduleData = await _classService.getModuleById(widget.moduleId);
+      if (moduleData != null && moduleData['revision'] != null) {
+        final revision = Map<String, dynamic>.from(moduleData['revision']);
+        if (revision['slides'] != null) {
+          setState(() {
+            _slides = List<Map<String, dynamic>>.from(revision['slides']);
+            _isLoading = false;
+          });
 
-            // Load previously saved bookmarks
-            await _loadBookmarks();
-          }
+          // Load previously saved bookmarks
+          await _loadBookmarks();
         }
       }
-    } catch (e) {
+        } catch (e) {
       print('❌Error loading slides: $e');
       setState(() {
         _isLoading = false;
@@ -87,7 +87,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
   Future<void> _loadBookmarks() async {
     try {
       final user = _userState.currentUser;
-      if (user == null || widget.moduleId == null) return;
+      if (user == null) return;
 
       final response =
           await _classService.supabase
@@ -98,11 +98,11 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
 
       if (response['modules'] != null) {
         final modulesData = Map<String, dynamic>.from(response['modules']);
-        if (modulesData.containsKey(widget.moduleId!) &&
-            modulesData[widget.moduleId!]['reading'] != null &&
-            modulesData[widget.moduleId!]['reading']['bookmarks'] != null) {
+        if (modulesData.containsKey(widget.moduleId) &&
+            modulesData[widget.moduleId]['reading'] != null &&
+            modulesData[widget.moduleId]['reading']['bookmarks'] != null) {
           final bookmarks = List<int>.from(
-            modulesData[widget.moduleId!]['reading']['bookmarks'],
+            modulesData[widget.moduleId]['reading']['bookmarks'],
           );
           setState(() {
             _bookmarkedPages = Set<int>.from(bookmarks);
@@ -117,7 +117,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
   Future<void> _saveBookmarks() async {
     try {
       final user = _userState.currentUser;
-      if (user == null || widget.moduleId == null) return;
+      if (user == null) return;
 
       final response =
           await _classService.supabase
@@ -131,16 +131,16 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
         modulesData = Map<String, dynamic>.from(response['modules']);
       }
 
-      if (!modulesData.containsKey(widget.moduleId!)) {
-        modulesData[widget.moduleId!] = {};
+      if (!modulesData.containsKey(widget.moduleId)) {
+        modulesData[widget.moduleId] = {};
       }
 
-      if (!modulesData[widget.moduleId!].containsKey('reading')) {
-        modulesData[widget.moduleId!]['reading'] = {};
+      if (!modulesData[widget.moduleId].containsKey('reading')) {
+        modulesData[widget.moduleId]['reading'] = {};
       }
 
       // Update only the bookmarks, preserve other reading data
-      modulesData[widget.moduleId!]['reading']['bookmarks'] =
+      modulesData[widget.moduleId]['reading']['bookmarks'] =
           _bookmarkedPages.toList();
 
       await _classService.supabase
@@ -152,50 +152,50 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
     }
   }
 
-  Future<void> _saveReadingProgress() async {
-    try {
-      final user = _userState.currentUser;
-      if (user == null || widget.moduleId == null) return;
-
-      final response =
-      await _classService.supabase
-          .from('Users')
-          .select('modules')
-          .eq('id', user.id)
-          .single();
-
-      Map<String, dynamic> modulesData = {};
-      if (response['modules'] != null) {
-        modulesData = Map<String, dynamic>.from(response['modules']);
-      }
-
-      if (!modulesData.containsKey(widget.moduleId!)) {
-        modulesData[widget.moduleId!] = {};
-      }
-
-      modulesData[widget.moduleId!]['reading'] = {
-        'completed': true,
-        'completed_at': DateTime.now().toIso8601String(),
-        'bookmarks': _bookmarkedPages.toList(),
-      };
-
-      await _classService.supabase
-          .from('Users')
-          .update({'modules': modulesData})
-          .eq('id', user.id);
-    } catch (e) {
-      print('❌Error saving reading progress: $e');
-      rethrow; // Re-throw to be caught by _markAsCompleted
-    }
-  }
+  // Future<void> _saveReadingProgress() async {
+  //   try {
+  //     final user = _userState.currentUser;
+  //     if (user == null || widget.moduleId == null) return;
+  //
+  //     final response =
+  //     await _classService.supabase
+  //         .from('Users')
+  //         .select('modules')
+  //         .eq('id', user.id)
+  //         .single();
+  //
+  //     Map<String, dynamic> modulesData = {};
+  //     if (response['modules'] != null) {
+  //       modulesData = Map<String, dynamic>.from(response['modules']);
+  //     }
+  //
+  //     if (!modulesData.containsKey(widget.moduleId!)) {
+  //       modulesData[widget.moduleId!] = {};
+  //     }
+  //
+  //     modulesData[widget.moduleId!]['reading'] = {
+  //       'completed': true,
+  //       'completed_at': DateTime.now().toIso8601String(),
+  //       'bookmarks': _bookmarkedPages.toList(),
+  //     };
+  //
+  //     await _classService.supabase
+  //         .from('Users')
+  //         .update({'modules': modulesData})
+  //         .eq('id', user.id);
+  //   } catch (e) {
+  //     print('❌Error saving reading progress: $e');
+  //     rethrow; // Re-throw to be caught by _markAsCompleted
+  //   }
+  // }
 
   Future<void> _markAsCompleted() async {
     try {
       final user = _userState.currentUser;
-      if (user == null || widget.moduleId == null) return;
+      if (user == null) return;
 
       // Save progress immediately when reading is completed
-      await _saveReadingProgress();
+      await Provider.of<CourseProvider>(context, listen: false).saveReadingProgress(lessonId: widget.moduleId, bookmarks: _bookmarkedPages);
 
       // Save isComplete flag.
       _isCompleted = true;

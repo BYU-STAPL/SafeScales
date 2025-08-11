@@ -20,14 +20,14 @@ class StickerCollectionWidget extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant,
+        color: colorScheme.surfaceContainerHigh,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(32),
           topRight: Radius.circular(32),
         ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.08),
+            color: colorScheme.shadow.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, -4),
           ),
@@ -49,7 +49,7 @@ class StickerCollectionWidget extends StatelessWidget {
                 Icon(
                   Icons.shopping_bag_outlined,
                   size: 48,
-                  color: colorScheme.primary.withOpacity(0.5),
+                  color: colorScheme.primary.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 15),
                 Text(
@@ -86,7 +86,7 @@ class StickerCollectionWidget extends StatelessWidget {
                   childWhenDragging: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.3),
+                      color: Colors.grey.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Image.network(
@@ -102,9 +102,7 @@ class StickerCollectionWidget extends StatelessWidget {
                       color: Colors.transparent,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: colorScheme.primary.withOpacity(
-                          0.3,
-                        ),
+                        color: colorScheme.primary.withValues(alpha: 0.3,),
                         width: 2,
                       ),
                     ),

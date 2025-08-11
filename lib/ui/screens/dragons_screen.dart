@@ -1,44 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:safe_scales/providers/course_provider.dart';
 import 'package:safe_scales/ui/widgets/dragon_id_card.dart';
-import 'package:safe_scales/state_management/dragon_state_manager.dart';
-import '../../models/dragon.dart';
-import '../../state_management/dragon_provider.dart';
+import '../../providers/dragon_provider.dart';
 import '../widgets/dragon_image_widget.dart';
 import 'dragon_decoration/dragon_decoration_screen.dart';
 
-class DragonsPage extends StatefulWidget {
-  const DragonsPage({super.key});
+class DragonsScreen extends StatefulWidget {
+  const DragonsScreen({super.key});
 
   @override
-  State<DragonsPage> createState() => _DragonsPageState();
+  State<DragonsScreen> createState() => _DragonsScreenState();
 }
 
-class _DragonsPageState extends State<DragonsPage> {
-  // late final DragonStateManager _dragonStateManager;
+class _DragonsScreenState extends State<DragonsScreen> {
 
   @override
   void initState() {
     super.initState();
-    // _dragonStateManager = DragonStateManager();
-
-    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-    dragonProvider.loadUserDragons();
-
-    _loadDragons();
-  }
-
-  Future<void> _loadDragons() async {
-    // await _dragonStateManager.initialize();
-    // await _dragonStateManager.loadUserDragons();
-    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-    dragonProvider.loadUserDragons();
-    setState(() {});
   }
 
   // Refresh method
   Future<void> _refreshDragons() async {
-    // await _dragonStateManager.loadUserDragons();
     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
     dragonProvider.loadUserDragons();
     setState(() {});
@@ -46,13 +29,15 @@ class _DragonsPageState extends State<DragonsPage> {
 
   // Navigation to dress up page
   void navigateToDressUp(String dragonId) {
+    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+    dragonProvider.loadUserDragons();
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => DragonDressUpPage(
           dragonId: dragonId,
-          // onEnvironmentChanged: _dragonStateManager.saveEnvironmentSelection,
-          onDragonUpdated: (_) => _refreshDragons(),
+          currentPhase: dragonProvider.getUserPreferredPhase(dragonId),
         ),
       ),
     );
@@ -64,8 +49,8 @@ class _DragonsPageState extends State<DragonsPage> {
     final Color primary = theme.colorScheme.primary;
     final Color cardBg = theme.colorScheme.surface;
 
-    return Consumer<DragonProvider>(
-        builder: (context, dragonProvider, child) {
+    return Consumer2<DragonProvider, CourseProvider>(
+        builder: (context, dragonProvider, courseProvider, child) {
           return Scaffold(
             backgroundColor: cardBg,
             body: SafeArea(
@@ -77,12 +62,20 @@ class _DragonsPageState extends State<DragonsPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
+                      horizontal: 25.0,
+                      vertical: 10.0,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        const SizedBox(height: 10),
+                        // Subtitle
+                        Text(
+                          'These are your dragons from this course. Complete their associated lessons to play with them.',
+                          style: theme.textTheme.labelMedium,
+                        ),
+                        const SizedBox(height: 5),
+
                         if (dragonProvider.dragons.isEmpty)
                           Center(
                             child: Padding(
@@ -106,6 +99,8 @@ class _DragonsPageState extends State<DragonsPage> {
                           )
                         else
                           ..._buildDragonCards(),
+
+                        SizedBox(height: 10,)
                       ],
                     ),
                   ),
@@ -126,9 +121,6 @@ class _DragonsPageState extends State<DragonsPage> {
 
     return dragons.map((dragon) {
 
-      if (dragon == null) return const SizedBox.shrink();
-
-      // Is dragon unlocked for play
       final isUnlocked = dragonProvider.isPlayUnlocked(dragon.id);
 
 

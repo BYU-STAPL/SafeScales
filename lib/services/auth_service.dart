@@ -48,9 +48,7 @@ class AuthService {
           .select()
           .eq('Email', email);
 
-      print('Database response: $response');
-
-      if (response == null || response.isEmpty) {
+      if (response.isEmpty) {
         print('No user found with email: $email');
         return false;
       }
@@ -77,12 +75,10 @@ class AuthService {
             role: 'authenticated',
           );
 
-          print('Created user object: ${supabaseUser.toJson()}');
-
           // Set the current user in UserStateService
           _userState.setUser(supabaseUser);
           _userState.setUserProfile(user);
-          print('User state updated successfully');
+
           return true;
         }
       }

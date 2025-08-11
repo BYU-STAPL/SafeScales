@@ -1,124 +1,84 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:safe_scales/state_management/dragon_provider.dart';
-import 'package:safe_scales/ui/screens/auth_screen.dart';
-import 'package:safe_scales/themes/app_theme.dart';
-import 'package:safe_scales/config/supabase_config.dart';
-import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/themes/theme_notifier.dart';
-import 'package:safe_scales/themes/theme_provider.dart';
-import 'package:safe_scales/ui/health_check.dart';
-import 'package:safe_scales/ui/screens/login/selection_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'ui/screens/main_navigation.dart';
+import 'package:safe_scales/config/supabase_config.dart';
+import 'package:safe_scales/dependencies/app_dependencies.dart';
+import 'package:safe_scales/themes/app_theme.dart';
+import 'package:safe_scales/ui/screens/login/selection_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
-  await dotenv.load();
-
-  // Initialize Supabase before running the app
-  await SupabaseConfig.initialize();
-
-  // Create and initialize the dragon provider
-  final dragonProvider = DragonProvider();
   try {
-    await dragonProvider.initialize();
-    print("Dragon provider initialization successful");
-  } catch (e) {
-    print("Dragon provider initialization failed: $e");
-  }
+    // Load environment variables
+    await dotenv.load();
 
-  runApp(
-    ChangeNotifierProvider.value(
-      value: dragonProvider,
-      child: const MyApp(),
-    ),
-  );
+    // Initialize Supabase
+    await SupabaseConfig.initialize();
+
+    // Create app dependencies (only initialize providers, don't load data yet)
+    final appDeps = createAppDependenciesFromSupabase(Supabase.instance.client);
+    await appDeps.initializeProviders();
+
+    print("🚀 App dependencies initialized successfully");
+
+    runApp(MyApp(appDeps: appDeps));
+
+  } catch (e, stackTrace) {
+    print("❌ App initialization failed: $e");
+    print("Stack trace: $stackTrace");
+
+    // Run app with error state
+    runApp(MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: AppColors.red),
+              SizedBox(height: 16),
+              Text(
+                'Failed to initialize app',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  e.toString(),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.red),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ));
+  }
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class MyApp extends StatelessWidget {
+  final AppDependencies appDeps;
 
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  final _userState = UserStateService();
-  late ThemeNotifier _themeNotifier;
-  bool _supabaseInitialized = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _themeNotifier = ThemeNotifier();
-    _themeNotifier.loadSettings(); // Load saved settings
-    _checkSupabaseConnection();
-  }
-
-  Future<void> _checkSupabaseConnection() async {
-    try {
-      await SupabaseConfig.client.from('Users').select('count').limit(1);
-      setState(() {
-        _supabaseInitialized = true;
-      });
-    } catch (e) {
-      setState(() {
-        _supabaseInitialized = false;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _themeNotifier.dispose();
-    super.dispose();
-  }
+  const MyApp({Key? key, required this.appDeps}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ThemeProvider(
-      themeNotifier: _themeNotifier,
-      child: AnimatedBuilder(
-        animation: _themeNotifier,
-        builder: (context, child) {
+    return MultiProvider(
+      providers: appDeps.getProviders(),
+      child: Consumer<ThemeNotifier>(
+        builder: (context, themeNotifier, child) {
           return MaterialApp(
-            title: 'Safe Scales',
+            title: 'SafeScales',
             theme: AppTheme.buildLightAppTheme(),
             darkTheme: AppTheme.buildDarkAppTheme(),
-            themeMode:
-            _themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-            home: Builder(
-              builder: (context) {
-                if (!_supabaseInitialized) {
-                  return Scaffold(
-                    appBar: AppBar(title: const Text('Connection Status')),
-                    body: const Center(child: HealthCheck()),
-                  );
-                }
-
-                // Check if user is already logged in
-                final currentUser = SupabaseConfig.client.auth.currentUser;
-                if (currentUser != null) {
-                  // Initialize user state
-                  _userState.setUser(currentUser);
-                  _userState.loadUserProfile().then((_) {
-                    _themeNotifier
-                        .loadSettings(); // Reload settings after profile is loaded
-
-                    // Load user dragons after profile is loaded
-                    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-                    dragonProvider.loadUserDragons();
-                  });
-                  return MainNavigation(initialIndex: 0);
-                }
-
-                return const SelectionScreen();
-              },
-            ),
+            themeMode: themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            home: const SelectionScreen(),
+            debugShowCheckedModeBanner: false,
           );
         },
       ),

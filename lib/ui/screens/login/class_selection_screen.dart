@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
-import 'package:safe_scales/ui/screens/main_navigation.dart';
+import 'package:safe_scales/ui/screens/app_initialization_screen.dart'; // Import the new screen
 import 'package:safe_scales/ui/screens/auth_screen.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 
@@ -39,20 +38,20 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
     // Check if user has any joined classes
     try {
       final response =
-          await SupabaseConfig.client
-              .from('Users')
-              .select('joined_classes')
-              .eq('id', currentUser.id)
-              .single();
+      await SupabaseConfig.client
+          .from('Users')
+          .select('joined_classes')
+          .eq('id', currentUser.id)
+          .single();
 
       final joinedClasses = response['joined_classes'] as List<dynamic>?;
 
       if (joinedClasses != null && joinedClasses.isNotEmpty) {
-        // User has joined classes, skip to main navigation
+        // User has joined classes, go to initialization screen
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
-              builder: (context) => MainNavigation(initialIndex: 0),
+              builder: (context) => const AppInitializationScreen(),
             ),
                 (route) => false, // Remove all previous routes
           );
@@ -100,11 +99,11 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
 
       // Get current user's joined classes
       final response =
-          await SupabaseConfig.client
-              .from('Users')
-              .select('joined_classes')
-              .eq('id', user.id)
-              .single();
+      await SupabaseConfig.client
+          .from('Users')
+          .select('joined_classes')
+          .eq('id', user.id)
+          .single();
 
       List<String> joinedClasses = List<String>.from(
         response['joined_classes'] ?? [],
@@ -128,10 +127,10 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
             ),
           );
 
-          // Navigate to main navigation
+          // Navigate to initialization screen instead of MainNavigation
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
-              builder: (context) => MainNavigation(initialIndex: 0),
+              builder: (context) => const AppInitializationScreen(),
             ),
                 (route) => false, // Remove all previous routes
           );
@@ -166,14 +165,6 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
     ThemeData theme = Theme.of(context);
 
     return Scaffold(
-      // appBar: AppBar(
-      //   backgroundColor: Colors.transparent,
-      //   elevation: 0,
-      //   leading: IconButton(
-      //     icon: const Icon(Icons.arrow_back),
-      //     onPressed: () => Navigator.of(context).pop(),
-      //   ),
-      // ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -187,22 +178,20 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
         ),
         child: SafeArea(
           child: Stack(
-              children: [
-                // Add back button at the top
-                // Not using app bar, so that the linear gradient takes up whole screen
-                // More aesthetic
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
+            children: [
+              // Add back button at the top
+              Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
                 ),
+              ),
 
-                Center(
+              Center(
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 30),
                     child: Column(
@@ -275,13 +264,11 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
                       ],
                     ),
                   )
-
-
-                )
-              ],
-            ),
+              )
+            ],
           ),
         ),
+      ),
     );
   }
 }

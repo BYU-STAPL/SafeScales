@@ -1,10 +1,9 @@
-import 'package:flutter/material.dart';
 
 /*
 This file contains code for quiz and review questions and question sets
  */
 
-enum ActivityType { preQuiz, postQuiz, review }
+enum ActivityType { preQuiz, postQuiz, review, reading }
 
 class Question {
   final String id;

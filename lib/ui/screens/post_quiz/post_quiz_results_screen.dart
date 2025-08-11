@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:safe_scales/ui/screens/main_navigation.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_actions_screen.dart';
 import 'package:safe_scales/ui/widgets/post_quiz_summary.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_screen.dart';
-import 'package:safe_scales/ui/screens/lesson/lesson_page.dart';
 import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
 import 'package:safe_scales/themes/app_theme.dart';
-import 'package:safe_scales/themes/theme_notifier.dart';
-import 'package:safe_scales/themes/theme_provider.dart';
 
 class PostQuizResultScreen extends StatefulWidget {
   const PostQuizResultScreen({
-    Key? key,
+    super.key,
     required this.moduleId,
     required this.questionSet,
     required this.passingScore,
@@ -22,7 +18,7 @@ class PostQuizResultScreen extends StatefulWidget {
     required this.totalQuestions,
     required this.userAnswers,
     // required this.topic,
-  }) : super(key: key);
+  });
 
   final String moduleId;
   final QuestionSet questionSet;
@@ -94,12 +90,12 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final QuestionSet questionSet = widget.questionSet;
+    // final QuestionSet questionSet = widget.questionSet;
     final int passingScore = widget.passingScore;
     final int score = widget.score;
     final int correctAnswers = widget.correctAnswers;
     final int totalQuestions = widget.totalQuestions;
-    final List<List<int>> userAnswers = widget.userAnswers;
+    // final List<List<int>> userAnswers = widget.userAnswers;
 
     ThemeData theme = Theme.of(context);
 
@@ -136,15 +132,15 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        readinessColor.withOpacity(0.1),
-                        readinessColor.withOpacity(0.05),
+                        readinessColor.withValues(alpha: 0.1),
+                        readinessColor.withValues(alpha: 0.05),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: readinessColor.withOpacity(0.2),
+                      color: readinessColor.withValues(alpha: 0.2),
                       width: 1,
                     ),
                   ),
@@ -153,7 +149,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                       Text(
                         'Quiz Score',
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                       SizedBox(height: 8),
@@ -188,7 +184,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                       Text(
                         '$correctAnswers out of $totalQuestions questions correct',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ],

@@ -1,12 +1,15 @@
 import 'package:flutter/cupertino.dart';
-
 import '../services/user_state_service.dart';
 import '../themes/app_theme.dart';
 
 class ThemeNotifier extends ChangeNotifier {
   bool _isDarkMode = false;
   double _fontSize = 1.0;
-  final _userState = UserStateService();
+  final UserStateService _userState;
+
+  // Constructor now takes UserStateService as dependency
+  ThemeNotifier({required UserStateService userStateService})
+      : _userState = userStateService;
 
   // Getters to access the private variables
   bool get isDarkMode => _isDarkMode;
@@ -36,9 +39,9 @@ class ThemeNotifier extends ChangeNotifier {
       final settings = await _userState.getUserSettings();
       _isDarkMode = settings['isDarkMode'] ?? false;
       _fontSize =
-          (settings['fontSize'] != null)
-              ? (settings['fontSize'] as num).toDouble()
-              : 1.0;
+      (settings['fontSize'] != null)
+          ? (settings['fontSize'] as num).toDouble()
+          : 1.0;
       AppTheme.setFontSizeScale(
         _fontSize,
       ); // Ensure font size is applied globally

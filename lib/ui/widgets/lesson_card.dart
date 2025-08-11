@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
-import 'package:safe_scales/state_management/dragon_state_manager.dart';
 
 import 'dragon_image_widget.dart';
 
@@ -47,7 +46,7 @@ class LessonCard extends StatelessWidget {
           shouldBeUnlocked
               ? null
               : Border.all(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
             width: 1,
           ),
           boxShadow:
