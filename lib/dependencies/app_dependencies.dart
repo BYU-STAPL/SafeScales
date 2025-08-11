@@ -8,7 +8,7 @@ import '../services/user_state_service.dart';
 import '../providers/course_provider.dart';
 import '../providers/dragon_provider.dart';
 import '../providers/item_provider.dart';
-import '../themes/theme_notifier.dart';
+import '../providers/theme_provider.dart';
 import 'course_dependencies.dart';
 import 'dragon_dependencies.dart';
 import 'item_dependencies.dart';
