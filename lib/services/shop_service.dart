@@ -1,14 +1,15 @@
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/services/user_state_service.dart';
-import 'package:safe_scales/services/class_service.dart';
+
+import 'old_class_service.dart';
 
 class ShopService {
   final supabase = SupabaseConfig.client;
   final _userState = UserStateService();
-  late final ClassService _classService;
+  late final OldClassService _classService;
 
   ShopService() {
-    _classService = ClassService(supabase);
+    _classService = OldClassService(supabase);
   }
 
   // Get assets from user's class

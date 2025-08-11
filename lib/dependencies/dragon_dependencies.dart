@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../repositories/dragon_repository.dart';
 import '../services/dragon_service.dart';
 import '../providers/dragon_provider.dart';
-import '../services/class_service.dart';
+import '../services/old_class_service.dart';
 import '../services/user_state_service.dart';
 
 /// Dependency injection container for dragon-related classes
@@ -18,7 +18,7 @@ class DragonDependencies {
   final SupabaseClient supabase;
   final UserStateService userStateService;
   final CourseService courseService;
-  final ClassService classService;
+  final OldClassService classService;
 
   DragonDependencies({
     required this.supabase,
@@ -77,7 +77,7 @@ DragonDependencies createDragonDependencies({
   required SupabaseClient supabase,
   required UserStateService userStateService,
   required CourseService courseService,
-  required ClassService classService,
+  required OldClassService classService,
 }) {
   return DragonDependencies(
     supabase: supabase,

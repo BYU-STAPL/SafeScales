@@ -1,6 +1,6 @@
 // import 'package:flutter/material.dart';
 // import 'package:provider/provider.dart';
-// import 'package:safe_scales/services/class_service.dart';
+// import 'package:safe_scales/services/old_class_service.dart';
 // import 'package:safe_scales/services/old_quiz_service.dart';
 // import 'package:safe_scales/services/user_state_service.dart';
 // import 'package:safe_scales/providers/old_old_dragon_provider.dart';
