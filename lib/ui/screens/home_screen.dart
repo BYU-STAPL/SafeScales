@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
-import 'package:safe_scales/themes/theme_notifier.dart';
 import 'package:safe_scales/ui/widgets/lesson_card.dart';
 import 'package:safe_scales/providers/course_provider.dart';
 import 'package:safe_scales/providers/dragon_provider.dart';
@@ -88,8 +87,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
 
     // Now you can access ThemeNotifier if needed for settings/preferences
-    return Consumer3<DragonProvider, CourseProvider, ThemeNotifier>(
-      builder: (context, dragonProvider, courseProvider, themeNotifier, child) {
+    return Consumer2<DragonProvider, CourseProvider>(
+      builder: (context, dragonProvider, courseProvider, child) {
         // Show loading if data is still being loaded
         if (courseProvider.isLoading) {
           return Scaffold(

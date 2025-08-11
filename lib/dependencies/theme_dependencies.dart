@@ -1,6 +1,6 @@
 import 'package:provider/provider.dart';
 import 'package:safe_scales/services/user_state_service.dart';
-import 'package:safe_scales/themes/theme_notifier.dart';
+import 'package:safe_scales/providers/theme_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Theme-specific dependencies manager
