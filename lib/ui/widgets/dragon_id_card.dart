@@ -94,7 +94,7 @@ class _DragonIdCardState extends State<DragonIdCard> {
     ThemeData theme = Theme.of(context);
 
     return Container(
-        margin: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        margin: EdgeInsets.symmetric(horizontal: 0, vertical: 15),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,

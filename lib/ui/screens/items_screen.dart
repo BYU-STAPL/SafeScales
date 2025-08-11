@@ -61,20 +61,17 @@ class _ItemsScreenState extends State<ItemsScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 8),
-              // Title and subtitle
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
                     child: Text(
-                      'My Collection',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      'This is your current collection of\nitems and environments',
+                      style: theme.textTheme.labelMedium,
                     ),
                   ),
                   // Refresh button
@@ -97,13 +94,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
                   ),
                 ],
               ),
-              Text(
-                'This is your current collection of\nitems and environments',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               // Toggle Buttons
               Row(
                 children: [
@@ -241,20 +232,13 @@ class _ItemsScreenState extends State<ItemsScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 10),
                               Text(
-                                'Complete lessons and quizzes to\nearn awesome accessories!',
+                                'Complete reviews set from the shop page to earn items and environments',
                                 style: theme.textTheme.bodyMedium,
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: () {
-                                  // Navigate to lessons or shop
-                                  // Navigator.pushNamed(context, '/lessons');
-                                },
-                                child: const Text('Start Learning'),
-                              ),
                             ],
                           ),
                         );

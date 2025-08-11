@@ -4,15 +4,18 @@ import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
 import 'package:safe_scales/themes/theme_notifier.dart';
 import 'package:safe_scales/ui/widgets/lesson_card.dart';
+import 'package:safe_scales/providers/course_provider.dart';
+import 'package:safe_scales/providers/dragon_provider.dart';
+
 
 import '../../models/lesson.dart';
-import '../../providers/course_provider.dart';
-import '../../providers/dragon_provider.dart';
-import '../widgets/continue_learning_widget.dart';
+import '../widgets/learning_action_widget.dart';
 import 'lesson/lesson_page.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.onNavigateToShop});
+
+  final Function() onNavigateToShop;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -33,12 +36,51 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    // If all lessons are complete, return the last one
+    // If all lessons are complete, return null
     if (courseProvider.lessonOrder.isNotEmpty) {
-      return lessons[courseProvider.lessonOrder.last];
+      return null;
     }
 
     return null;
+  }
+
+  Widget _buildContinueLearningSection({required CourseProvider courseProvider, required DragonProvider dragonProvider,}) {
+
+    final targetModule = getTargetLesson();
+
+    if (targetModule == null) {
+      return LearningActionWidget(
+        actionType: ActionType.review,
+        title: 'Head over to the Shop',
+        progress: 100,
+        onTap: () {
+          widget.onNavigateToShop();
+        },
+      );
+    }
+
+    else if (courseProvider.lessonOrder.isNotEmpty) {
+      return LearningActionWidget(
+          actionType: ActionType.continueLearning,
+          title: targetModule.title ?? 'Module',
+          progress: courseProvider.lessonProgress[targetModule.lessonId]?.getProgressPercent() ?? 0.0,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => LessonPage(moduleId: targetModule.lessonId),
+              ),
+            ).then((_) {
+              // Reload data when returning from lesson
+              courseProvider.loadUserProgress();
+              dragonProvider.updateAllDragonProgress();
+            });
+
+          },
+        );
+    }
+
+    return SizedBox.shrink();
   }
 
   @override
@@ -89,41 +131,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-
-                    if (courseProvider.description.isNotEmpty)
-                      Text(
-                        courseProvider.description,
-                        style: theme.textTheme.labelMedium,
-                      ),
-
                     const SizedBox(height: 20),
 
-                    // Continue Learning Card
-                    if (courseProvider.lessonOrder.isNotEmpty) ...[
-                      GestureDetector(
-                        onTap: () {
-                          final targetModule = getTargetLesson();
-                          if (targetModule != null) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => LessonPage(moduleId: targetModule.lessonId),
-                              ),
-                            ).then((_) {
-                              // Reload data when returning from lesson
-                              courseProvider.loadUserProgress();
-                              dragonProvider.updateAllDragonProgress();
-                            });
-                          }
-                        },
-                        child: ContinueLearningWidget(
-                          title: getTargetLesson()?.title ?? 'Module',
-                          progress: courseProvider.lessonProgress[getTargetLesson()?.lessonId]?.getProgressPercent() ?? 0.0,
-                        ),
-                      ),
-                      const SizedBox(height: 30),
-                    ],
+                    _buildContinueLearningSection(courseProvider: courseProvider, dragonProvider: dragonProvider),
+
+                    const SizedBox(height: 30),
+
 
                     // Lesson Heading
                     Row(
@@ -233,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       }),
 
-                    const SizedBox(height: 20),
+                    // const SizedBox(height: 5),
                   ],
                 ),
               ),

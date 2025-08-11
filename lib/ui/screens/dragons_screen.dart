@@ -62,12 +62,20 @@ class _DragonsScreenState extends State<DragonsScreen> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
+                      horizontal: 25.0,
+                      vertical: 10.0,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        const SizedBox(height: 10),
+                        // Subtitle
+                        Text(
+                          'These are your dragons from this course. Complete their associated lessons to play with them.',
+                          style: theme.textTheme.labelMedium,
+                        ),
+                        const SizedBox(height: 5),
+
                         if (dragonProvider.dragons.isEmpty)
                           Center(
                             child: Padding(
@@ -91,6 +99,8 @@ class _DragonsScreenState extends State<DragonsScreen> {
                           )
                         else
                           ..._buildDragonCards(),
+
+                        SizedBox(height: 10,)
                       ],
                     ),
                   ),
