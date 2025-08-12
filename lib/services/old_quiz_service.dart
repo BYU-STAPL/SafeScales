@@ -74,7 +74,10 @@ class OldQuizService {
   }
 
   // New method to get quiz by topic and activity type from single table structure
-  Future<QuestionSet?> getQuizByTopicAndActivityType({required String topic, required String activityType,}) async {
+  Future<QuestionSet?> getQuizByTopicAndActivityType({
+    required String topic,
+    required String activityType,
+  }) async {
     try {
       print('Fetching quiz for topic: $topic, activityType: $activityType');
 
@@ -170,7 +173,10 @@ class OldQuizService {
   }
 
   // New method to get quiz by module ID
-  Future<QuestionSet?> getQuizByModuleId({required String moduleId, required String activityType,}) async {
+  Future<QuestionSet?> getQuizByModuleId({
+    required String moduleId,
+    required String activityType,
+  }) async {
     try {
       // Get module details
       final moduleResponse =
@@ -240,7 +246,7 @@ class OldQuizService {
 
       // Create QuestionSet with module ID as the quiz ID
       final questionSet = QuestionSet(
-        id: '${moduleId}_${activityType}', // Unique ID for this quiz
+        id: '${moduleId}_$activityType', // Unique ID for this quiz
         title: moduleResponse['title'] ?? 'Module Quiz',
         description: '',
         activityType: activityTypeEnum,

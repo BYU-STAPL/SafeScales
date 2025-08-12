@@ -5,8 +5,6 @@ import 'package:safe_scales/models/lesson_progress.dart';
 import 'package:safe_scales/ui/widgets/lesson_card.dart';
 import 'package:safe_scales/providers/course_provider.dart';
 import 'package:safe_scales/providers/dragon_provider.dart';
-
-
 import '../../models/lesson.dart';
 import '../widgets/learning_action_widget.dart';
 import 'lesson/lesson_page.dart';
@@ -43,8 +41,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return null;
   }
 
-  Widget _buildContinueLearningSection({required CourseProvider courseProvider, required DragonProvider dragonProvider,}) {
-
+  Widget _buildContinueLearningSection({
+    required CourseProvider courseProvider,
+    required DragonProvider dragonProvider,
+  }) {
     final targetModule = getTargetLesson();
 
     if (targetModule == null) {
@@ -56,27 +56,27 @@ class _HomeScreenState extends State<HomeScreen> {
           widget.onNavigateToShop();
         },
       );
-    }
-
-    else if (courseProvider.lessonOrder.isNotEmpty) {
+    } else if (courseProvider.lessonOrder.isNotEmpty) {
       return LearningActionWidget(
-          actionType: ActionType.continueLearning,
-          title: targetModule.title ?? 'Module',
-          progress: courseProvider.lessonProgress[targetModule.lessonId]?.getProgressPercent() ?? 0.0,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => LessonPage(moduleId: targetModule.lessonId),
-              ),
-            ).then((_) {
-              // Reload data when returning from lesson
-              courseProvider.loadUserProgress();
-              dragonProvider.updateAllDragonProgress();
-            });
-
-          },
-        );
+        actionType: ActionType.continueLearning,
+        title: targetModule.title.toString(),
+        progress:
+            courseProvider.lessonProgress[targetModule.lessonId]
+                ?.getProgressPercent() ??
+            0.0,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LessonPage(moduleId: targetModule.lessonId),
+            ),
+          ).then((_) {
+            // Reload data when returning from lesson
+            courseProvider.loadUserProgress();
+            dragonProvider.updateAllDragonProgress();
+          });
+        },
+      );
     }
 
     return SizedBox.shrink();
@@ -132,12 +132,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    _buildContinueLearningSection(courseProvider: courseProvider, dragonProvider: dragonProvider),
+                    _buildContinueLearningSection(
+                      courseProvider: courseProvider,
+                      dragonProvider: dragonProvider,
+                    ),
 
                     const SizedBox(height: 30),
-
-
-                    // Lesson Heading
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -148,12 +148,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         Builder(
                           builder: (context) {
                             // Count completed modules (100% progress)
-                            final completedCount = courseProvider.lessonOrder
-                                .where((lessonId) => (courseProvider.lessonProgress[lessonId]?.getProgressPercent() ?? 0.0) >= 100)
-                                .length;
+                            final completedCount =
+                                courseProvider.lessonOrder
+                                    .where(
+                                      (lessonId) =>
+                                          (courseProvider
+                                                  .lessonProgress[lessonId]
+                                                  ?.getProgressPercent() ??
+                                              0.0) >=
+                                          100,
+                                    )
+                                    .length;
 
                             return Text(
-                              '${completedCount}/${courseProvider.lessonOrder.length} Completed'.toTitleCase(),
+                              '$completedCount/${courseProvider.lessonOrder.length} Completed'
+                                  .toTitleCase(),
                               style: theme.textTheme.labelMedium,
                             );
                           },
@@ -177,7 +186,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                courseProvider.lessons.isEmpty ? 'No class assigned' : 'No modules available',
+                                courseProvider.lessons.isEmpty
+                                    ? 'No class assigned'
+                                    : 'No modules available',
                                 style: theme.textTheme.labelLarge,
                               ),
                             ],
@@ -185,15 +196,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       )
                     else
-                    // Lesson Card List
-                      ...courseProvider.lessonOrder.asMap().entries.map((entry) {
+                      // Lesson Card List
+                      ...courseProvider.lessonOrder.asMap().entries.map((
+                        entry,
+                      ) {
                         int index = entry.key;
                         String lessonId = entry.value;
 
                         Lesson? lesson = courseProvider.lessons[lessonId];
-                        LessonProgress? lessonProgress = courseProvider.lessonProgress[lessonId];
+                        LessonProgress? lessonProgress =
+                            courseProvider.lessonProgress[lessonId];
 
-                        if (lesson == null || lessonProgress == null) {
+                        if (lesson == null) {
                           return const SizedBox.shrink();
                         }
 
@@ -204,16 +218,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (index == 0) {
                           shouldBeUnlocked = true;
                         } else if (index > 0) {
-                          String previousLessonId = courseProvider.lessonOrder[index - 1];
-                          Lesson? previousLesson = courseProvider.lessons[previousLessonId];
-                          LessonProgress? previousModule = courseProvider.lessonProgress[previousLessonId];
+                          String previousLessonId =
+                              courseProvider.lessonOrder[index - 1];
+                          Lesson? previousLesson =
+                              courseProvider.lessons[previousLessonId];
+                          LessonProgress? previousModule =
+                              courseProvider.lessonProgress[previousLessonId];
 
-                          final previousProgress = previousModule?.getProgressPercent() ?? 0.0;
+                          final previousProgress =
+                              previousModule?.getProgressPercent() ?? 0.0;
                           shouldBeUnlocked = previousProgress.round() >= 100;
 
                           if (!shouldBeUnlocked) {
                             newUnlockRequirement =
-                            'Complete ${previousLesson?.title ?? 'previous module'} (${previousProgress.toStringAsFixed(0)}%)';
+                                'Complete ${previousLesson?.title ?? 'previous module'} (${previousProgress.toStringAsFixed(0)}%)';
                           }
                         }
 
@@ -223,20 +241,26 @@ class _HomeScreenState extends State<HomeScreen> {
                             moduleId: lessonId,
                             title: lesson.title,
                             description: 'Learn about ${lesson.title}',
-                            actualProgress: lessonProgress.getProgressPercent(),
+                            actualProgress:
+                                lessonProgress?.getProgressPercent() ?? 0.0,
                             shouldBeUnlocked: shouldBeUnlocked,
                             newUnlockRequirement: newUnlockRequirement,
-                            unlockRequirement: index > 0 ? 'Complete previous module' : null,
+                            unlockRequirement:
+                                index > 0 ? 'Complete previous module' : null,
                             onTapCard: () {
                               if (shouldBeUnlocked) {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => LessonPage(moduleId: lessonId),
+                                    builder:
+                                        (context) =>
+                                            LessonPage(moduleId: lessonId),
                                   ),
                                 ).then((_) {
                                   // Reload data when returning from the lesson page
-                                  courseProvider.loadSingleLessonProgress(lessonId);
+                                  courseProvider.loadSingleLessonProgress(
+                                    lessonId,
+                                  );
                                   dragonProvider.updateAllDragonProgress();
                                 });
                               }

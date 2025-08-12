@@ -13,8 +13,7 @@ class LessonProgress {
   bool get isPreQuizComplete => preQuizAttempt != null;
   bool get isPostQuizComplete =>
       postQuizAttempts.isNotEmpty &&
-          postQuizAttempts.first.score >= requiredPassingScore;
-
+      postQuizAttempts.first.score >= requiredPassingScore;
 
   // TODO: Consider implementing later
   // List<QuizResult> reviewAttempts;
@@ -27,29 +26,38 @@ class LessonProgress {
     this.preQuizAttempt,
   });
 
-
   double getProgressPercent() {
-
     double progress = 0;
 
     if (isPreQuizComplete) {
-      progress = progress + (1/3);
+      progress = progress + (1 / 3);
     }
 
     if (isReadingComplete) {
-      progress = progress + (1/3);
+      progress = progress + (1 / 3);
     }
 
     if (isPostQuizComplete) {
-      progress = progress + (1/3);
+      progress = progress + (1 / 3);
     }
 
     progress = progress * 100;
 
     return progress;
   }
-}
 
+  String toDebugString() {
+    return '''
+    LessonProgress {
+      lessonId: $lessonId,
+      isReadingComplete: $isReadingComplete,
+      preQuizAttempt: ${preQuizAttempt != null ? 'Score: ${preQuizAttempt!.score}' : 'null'},
+      postQuizAttempts: ${postQuizAttempts.length} attempts,
+      requiredPassingScore: $requiredPassingScore
+    }
+    ''';
+  }
+}
 
 class QuizAttempt {
   final String id;

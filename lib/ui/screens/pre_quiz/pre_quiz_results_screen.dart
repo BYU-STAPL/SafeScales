@@ -12,14 +12,14 @@ class PreQuizResultScreen extends StatelessWidget {
   final List<List<int>> userAnswers;
 
   const PreQuizResultScreen({
-    Key? key,
+    super.key,
     required this.moduleId,
     required this.questionSet,
     required this.score,
     required this.correctAnswers,
     required this.totalQuestions,
     required this.userAnswers,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -55,8 +55,8 @@ class PreQuizResultScreen extends StatelessWidget {
 
               SizedBox(height: 30),
 
-              DragonImageWidget(moduleId: moduleId, size: 300, phase: 'stage1',),
-              
+              DragonImageWidget(moduleId: moduleId, size: 300, phase: 'stage1'),
+
               SizedBox(height: 30),
 
               Spacer(),

@@ -13,8 +13,7 @@ class ReadingActivityScreen extends StatefulWidget {
   final String moduleId;
   // final String topic;
 
-  const ReadingActivityScreen({Key? key, required this.moduleId,})
-    : super(key: key);
+  const ReadingActivityScreen({super.key, required this.moduleId});
 
   @override
   State<ReadingActivityScreen> createState() => _ReadingActivityScreenState();
@@ -36,7 +35,6 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
   bool _isFirstLoad = true;
 
   bool _isCompleted = false;
-
 
   @override
   void initState() {
@@ -75,7 +73,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
           await _loadBookmarks();
         }
       }
-        } catch (e) {
+    } catch (e) {
       print('❌Error loading slides: $e');
       setState(() {
         _isLoading = false;
@@ -194,7 +192,13 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
       if (user == null) return;
 
       // Save progress immediately when reading is completed
-      await Provider.of<CourseProvider>(context, listen: false).saveReadingProgress(lessonId: widget.moduleId, bookmarks: _bookmarkedPages);
+      await Provider.of<CourseProvider>(
+        context,
+        listen: false,
+      ).saveReadingProgress(
+        lessonId: widget.moduleId,
+        bookmarks: _bookmarkedPages,
+      );
 
       // Save isComplete flag.
       _isCompleted = true;
@@ -203,9 +207,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
       final shouldPopReading = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ReadingResultScreen(
-            modeuleId: widget.moduleId,
-          ),
+          builder: (context) => ReadingResultScreen(modeuleId: widget.moduleId),
         ),
       );
 

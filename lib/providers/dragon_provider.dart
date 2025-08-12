@@ -30,14 +30,13 @@ class DragonProvider extends ChangeNotifier {
     UserStateService? userState,
     required OldClassService classService,
   }) : _dragonService = dragonService,
-        _userState = userState ?? UserStateService(),
-        _classService = classService;
+       _userState = userState ?? UserStateService(),
+       _classService = classService;
 
   // === Getters ===
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isInitialized => _isInitialized;
-
 
   Map<String, Dragon> get dragons => _dragons;
   Map<String, List<String>> get unlockedDragonPhases => _unlockedDragonPhases;
@@ -121,7 +120,6 @@ class DragonProvider extends ChangeNotifier {
       }
 
       await _loadDragonData(user.id, classData['id']);
-
     } catch (e) {
       _setError('Failed to load user dragons: $e');
       print('❌ DragonProvider: Error loading user dragons: $e');
@@ -139,11 +137,14 @@ class DragonProvider extends ChangeNotifier {
       final user = _userState.currentUser;
       if (user == null) return;
 
-      await _dragonService.updateDragonProgressForLesson(user.id, dragon.id, lessonId);
+      await _dragonService.updateDragonProgressForLesson(
+        user.id,
+        dragon.id,
+        lessonId,
+      );
 
       // Refresh local data
       await _refreshUnlockedPhases(user.id);
-
     } catch (e) {
       _setError('Failed to update dragon phases: $e');
       print('❌ DragonProvider: Error updating dragon progress: $e');
@@ -165,7 +166,6 @@ class DragonProvider extends ChangeNotifier {
       }
 
       await _refreshUnlockedPhases(user.id);
-
     } catch (e) {
       _setError('Failed to update all dragon progress: $e');
       print('❌ DragonProvider: Error updating all dragon progress: $e');
@@ -175,12 +175,19 @@ class DragonProvider extends ChangeNotifier {
   }
 
   /// Save environment selection for dragons
-  Future<void> saveEnvironmentSelection(String dragonId, String environmentId) async {
+  Future<void> saveEnvironmentSelection(
+    String dragonId,
+    String environmentId,
+  ) async {
     try {
       final user = _userState.currentUser;
       if (user == null) return;
 
-      await _dragonService.saveEnvironmentSelection(user.id, environmentId, _unlockedDragonPhases);
+      await _dragonService.saveEnvironmentSelection(
+        user.id,
+        environmentId,
+        _unlockedDragonPhases,
+      );
 
       _currentEnvironment = environmentId;
       notifyListeners();
@@ -205,7 +212,10 @@ class DragonProvider extends ChangeNotifier {
     _dragons = _dragonService.sortDragonsByModuleId(_dragons);
 
     _dragonsByModuleId = _dragonService.createDragonsByModuleMap(_dragons);
-    _unlockedDragonPhases = _dragonService.extractClassDragonPhases(userDragonsData, classAssets);
+    _unlockedDragonPhases = _dragonService.extractClassDragonPhases(
+      userDragonsData,
+      classAssets,
+    );
     _currentEnvironment = await _dragonService.getCurrentEnvironment(userId);
 
     notifyListeners();
@@ -222,7 +232,10 @@ class DragonProvider extends ChangeNotifier {
     final userDragonsData = await _dragonService.getUserDragonsData(userId);
     final classAssets = await _dragonService.getClassAssets(classData['id']);
 
-    _unlockedDragonPhases = _dragonService.extractClassDragonPhases(userDragonsData, classAssets);
+    _unlockedDragonPhases = _dragonService.extractClassDragonPhases(
+      userDragonsData,
+      classAssets,
+    );
     notifyListeners();
   }
 

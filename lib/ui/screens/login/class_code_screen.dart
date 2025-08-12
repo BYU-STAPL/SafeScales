@@ -35,9 +35,9 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
       try {
         // Clean the class code of any ANSI color codes and trim whitespace
         final cleanClassCode =
-        _classCodeController.text
-            .replaceAll(RegExp(r'\x1B\[[0-9;]*[a-zA-Z]'), '')
-            .trim();
+            _classCodeController.text
+                .replaceAll(RegExp(r'\x1B\[[0-9;]*[a-zA-Z]'), '')
+                .trim();
 
         // Get class ID from class code (case-insensitive)
         final classResponseList = await SupabaseConfig.client
@@ -53,11 +53,11 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
 
         // Check if user with same username exists in the class
         final existingUserResponse =
-        await SupabaseConfig.client
-            .from('Users')
-            .select()
-            .eq('Username', _usernameController.text.trim())
-            .maybeSingle();
+            await SupabaseConfig.client
+                .from('Users')
+                .select()
+                .eq('Username', _usernameController.text.trim())
+                .maybeSingle();
 
         if (existingUserResponse != null) {
           // User exists, check if they're already in the class
@@ -93,7 +93,7 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                 MaterialPageRoute(
                   builder: (context) => const AppInitializationScreen(),
                 ),
-                    (route) => false, // Remove all previous routes
+                (route) => false, // Remove all previous routes
               );
             }
             return;
@@ -120,16 +120,60 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
           _userState.setUser(supabaseUser);
           _userState.setUserProfile(existingUserResponse);
         } else {
-          // Create new user
+          // Get modules for the class
+          final classResponse =
+              await SupabaseConfig.client
+                  .from('classes')
+                  .select('course_modules')
+                  .eq('id', classId)
+                  .single();
+
+          // Initialize empty progress for each module
+          Map<String, dynamic> initialModules = {};
+          if (classResponse['course_modules'] != null) {
+            for (var moduleId in classResponse['course_modules']) {
+              initialModules[moduleId] = {
+                'reading': {
+                  'completed': false,
+                  'completed_at': null,
+                  'bookmarks': [],
+                },
+                'preQuiz': {
+                  'score': 0,
+                  'answers': [],
+                  'completed_at': null,
+                  'correct_answers': 0,
+                  'total_questions': 0,
+                  'spent': false,
+                },
+                'postQuiz': {
+                  'score': 0,
+                  'answers': [],
+                  'completed_at': null,
+                  'correct_answers': 0,
+                  'total_questions': 0,
+                  'spent': false,
+                },
+              };
+            }
+          }
+
+          // Create new user with initialized modules
           final newUserResponse =
-          await SupabaseConfig.client
-              .from('Users')
-              .insert({
-            'Username': _usernameController.text.trim(),
-            'joined_classes': [classId],
-          })
-              .select()
-              .single();
+              await SupabaseConfig.client
+                  .from('Users')
+                  .insert({
+                    'Username': _usernameController.text.trim(),
+                    'joined_classes': [classId],
+                    'dragons': {},
+                    'acquired_accessories': [],
+                    'acquired_environments': {},
+                    'quizzes': {},
+                    'role': 'student',
+                    'modules': initialModules,
+                  })
+                  .select()
+                  .single();
 
           // Set the new user as current user
           final supabaseUser = supabase.User(
@@ -159,7 +203,7 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
             MaterialPageRoute(
               builder: (context) => const AppInitializationScreen(),
             ),
-                (route) => false, // Remove all previous routes
+            (route) => false, // Remove all previous routes
           );
         }
       } catch (e) {
@@ -281,14 +325,15 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                                   ),
                                 ),
                                 child:
-                                isLoading
-                                    ? const CircularProgressIndicator()
-                                    : Text(
-                                  'Join Class',
-                                  style: TextStyle(
-                                    fontSize: 16 * AppTheme.fontSizeScale,
-                                  ),
-                                ),
+                                    isLoading
+                                        ? const CircularProgressIndicator()
+                                        : Text(
+                                          'Join Class',
+                                          style: TextStyle(
+                                            fontSize:
+                                                16 * AppTheme.fontSizeScale,
+                                          ),
+                                        ),
                               ),
                             ),
                           ],
