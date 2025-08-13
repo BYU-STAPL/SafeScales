@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/models/dragon.dart';
 import '../services/dragon_service.dart';
-import '../services/old_class_service.dart';
+import '../services/course_service.dart';
 
 /// Provider that manages dragon state for the UI
 /// This layer handles UI state, loading states, and coordinates between UI and service layer
@@ -11,7 +11,7 @@ class DragonProvider extends ChangeNotifier {
   // === Services ===
   final DragonService _dragonService;
   final UserStateService _userState;
-  final OldClassService _classService;
+  final CourseService _courseService;
 
   // === State ===
   bool _isLoading = false;
@@ -28,10 +28,10 @@ class DragonProvider extends ChangeNotifier {
   DragonProvider({
     required DragonService dragonService,
     UserStateService? userState,
-    required OldClassService classService,
+    required CourseService courseService,
   }) : _dragonService = dragonService,
        _userState = userState ?? UserStateService(),
-       _classService = classService;
+       _courseService = courseService;
 
   // === Getters ===
   bool get isLoading => _isLoading;
@@ -112,14 +112,14 @@ class DragonProvider extends ChangeNotifier {
         return;
       }
 
-      final classData = await _classService.getUserClass(user.id);
-      if (classData.isEmpty) {
+      final courseData = await _courseService.getUserCourseData(user.id);
+      if (courseData == null) {
         // _setLoading(false);
         _clearData();
         return;
       }
 
-      await _loadDragonData(user.id, classData['id']);
+      await _loadDragonData(user.id, courseData.courseId);
     } catch (e) {
       _setError('Failed to load user dragons: $e');
       print('❌ DragonProvider: Error loading user dragons: $e');
@@ -226,11 +226,13 @@ class DragonProvider extends ChangeNotifier {
     final user = _userState.currentUser;
     if (user == null) return;
 
-    final classData = await _classService.getUserClass(user.id);
-    if (classData.isEmpty) return;
+    final courseData = await _courseService.getUserCourseData(user.id);
+    if (courseData == null) return;
 
     final userDragonsData = await _dragonService.getUserDragonsData(userId);
-    final classAssets = await _dragonService.getClassAssets(classData['id']);
+    final classAssets = await _dragonService.getClassAssets(
+      courseData.courseId,
+    );
 
     _unlockedDragonPhases = _dragonService.extractClassDragonPhases(
       userDragonsData,

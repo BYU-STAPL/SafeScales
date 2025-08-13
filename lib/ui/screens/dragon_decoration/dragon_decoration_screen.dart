@@ -241,6 +241,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                     setState(() {
                       placedStickers.clear();
                     });
+                    _saveDressUp();
                   }
                 },
                 itemBuilder:
@@ -578,7 +579,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
       sticker.position = Offset(clampedX, clampedY);
     });
-    _saveStickers(); // Save after moving
+    _saveDressUp(); // Save after moving
   }
 
   void _updateStickerSize(String id, double newSize) {
@@ -586,7 +587,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final sticker = placedStickers.firstWhere((s) => s.id == id);
       sticker.size = newSize.clamp(20.0, 150.0); // Limit size
     });
-    _saveStickers(); // Save after resizing
+    _saveDressUp(); // Save after resizing
   }
 
   void _removeSticker(String id) {
@@ -596,131 +597,117 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
         selectedStickerId = null;
       }
     });
-    _saveStickers(); // Save after removing
+    _saveDressUp(); // Save after removing
   }
 
-  Future<void> _saveStickers() async {
+  Future<void> _saveDressUp() async {
     try {
       final userState = UserStateService();
       final user = userState.currentUser;
 
       if (user != null) {
-        // Get current dragons data
+        // Get current dragon_dressup data, merge and update
         final userResponse =
             await SupabaseConfig.client
                 .from('Users')
-                .select('dragons')
+                .select('dragon_dressup')
                 .eq('id', user.id)
                 .single();
 
-        if (userResponse['dragons'] != null) {
-          final dragonsData = Map<String, dynamic>.from(
-            userResponse['dragons'],
-          );
+        final Map<String, dynamic> dressUpData =
+            userResponse['dragon_dressup'] != null
+                ? Map<String, dynamic>.from(userResponse['dragon_dressup'])
+                : <String, dynamic>{};
 
-          // Convert stickers to the format we want to save
-          final stickersData =
-              placedStickers
-                  .map(
-                    (sticker) => {
-                      'id': sticker.id,
-                      'size': sticker.size,
-                      'position': {
-                        'x': sticker.position.dx,
-                        'y': sticker.position.dy,
-                      },
-                      'accessory_id': sticker.name,
-                    },
-                  )
-                  .toList();
-
-          // Update the dragon's data
-          if (dragonsData[widget.dragonId] is Map) {
-            dragonsData[widget.dragonId]['stickers'] = stickersData;
-          } else {
-            dragonsData[widget.dragonId] = {
-              // 'phases': widget.phases,
-              'stickers': stickersData,
-              'current_dragon_env':
-                  userEnvironmentIds.isEmpty
-                      ? 'default'
-                      : userEnvironmentIds[selectedEnvironment],
-            };
-          }
-
-          // Overwrote the database with sticker data and removed phase progress information
-          // Save the updated dragons data (uncomment when ready)
-          // await SupabaseConfig.client
-          //     .from('Users')
-          //     .update({'dragons': dragonsData})
-          //     .eq('id', user.id);
-
-          // Notify provider that dragon was updated
-
-          setState(() {});
+        // Build this dragon's accessories map: { accessoryId: { position: {x,y}, size } }
+        final Map<String, dynamic> accessoriesForDragon = {};
+        for (final sticker in placedStickers) {
+          accessoriesForDragon[sticker.accessoryId] = {
+            'position': {'x': sticker.position.dx, 'y': sticker.position.dy},
+            'size': sticker.size,
+          };
         }
+
+        dressUpData[widget.dragonId] = accessoriesForDragon;
+
+        await SupabaseConfig.client
+            .from('Users')
+            .update({'dragon_dressup': dressUpData})
+            .eq('id', user.id);
+
+        setState(() {});
       }
     } catch (e) {
-      print('❌ Error saving stickers: $e');
+      print('❌ Error saving dragon dress-up: $e');
     }
   }
 
-  Future<void> _loadStickers() async {
+  Future<void> _loadDressUp() async {
     try {
       final userState = UserStateService();
       final user = userState.currentUser;
 
       if (user != null) {
-        // Get current dragons data
+        // Get current dragon_dressup data
         final userResponse =
             await SupabaseConfig.client
                 .from('Users')
-                .select('dragons')
+                .select('dragon_dressup')
                 .eq('id', user.id)
                 .single();
 
-        if (userResponse['dragons'] != null) {
-          final dragonsData = Map<String, dynamic>.from(
-            userResponse['dragons'],
-          );
-          final dragonData = dragonsData[widget.dragonId];
+        final Map<String, dynamic>? dressUpData =
+            userResponse['dragon_dressup'] != null
+                ? Map<String, dynamic>.from(userResponse['dragon_dressup'])
+                : null;
 
-          if (dragonData is Map && dragonData['stickers'] != null) {
-            final stickersData = List<Map<String, dynamic>>.from(
-              dragonData['stickers'],
+        if (dressUpData != null && dressUpData.containsKey(widget.dragonId)) {
+          final Map<String, dynamic> dragonMap = Map<String, dynamic>.from(
+            dressUpData[widget.dragonId],
+          );
+
+          final List<StickerItem> restored = [];
+
+          dragonMap.forEach((accId, data) {
+            final Map<String, dynamic> d = Map<String, dynamic>.from(data);
+            final Map<String, dynamic> pos = Map<String, dynamic>.from(
+              d['position'] ?? {},
             );
 
-            setState(() {
-              placedStickers =
-                  stickersData.map((sticker) {
-                    final accessory = userAccessories.firstWhere(
-                      (acc) => acc['name'] == sticker['accessory_id'],
-                      orElse: () => {'image': ''},
-                    );
+            // Find accessory image by ID
+            final accessory = userAccessories.firstWhere(
+              (acc) => acc['id'].toString() == accId.toString(),
+              orElse: () => {'image': '', 'name': ''},
+            );
 
-                    return StickerItem(
-                      id: sticker['id'],
-                      imageUrl: accessory['image'],
-                      name: sticker['accessory_id'],
-                      position: Offset(
-                        sticker['position']['x'].toDouble(),
-                        sticker['position']['y'].toDouble(),
-                      ),
-                      size: sticker['size'].toDouble(),
-                    );
-                  }).toList();
-            });
-          }
+            restored.add(
+              StickerItem(
+                id: 'acc_$accId',
+                imageUrl: accessory['image'] ?? '',
+                name: accessory['name']?.toString() ?? accId.toString(),
+                accessoryId: accId.toString(),
+                position: Offset(
+                  (pos['x'] ?? 0).toDouble(),
+                  (pos['y'] ?? 0).toDouble(),
+                ),
+                size: (d['size'] ?? 48).toDouble(),
+              ),
+            );
+          });
+
+          setState(() {
+            placedStickers = restored;
+          });
         }
       }
     } catch (e) {
-      print('❌ Error loading stickers: $e');
+      print('❌ Error loading dragon dress-up: $e');
     }
   }
 
-  // Add a method to load stickers after accessories are loaded
+  // Add a method to load dress-up after accessories are loaded
   void _onAccessoriesLoaded() {
-    _loadStickers();
+    _loadDressUp();
   }
 
   void setDetails(
@@ -772,11 +759,12 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         imageUrl: data['image'],
         name: data['name'],
+        accessoryId: data['id'].toString(),
         position: Offset(clampedX, clampedY),
       );
       placedStickers.add(newSticker);
     });
 
-    _saveStickers(); // Save after adding
+    _saveDressUp(); // Save after adding
   }
 }

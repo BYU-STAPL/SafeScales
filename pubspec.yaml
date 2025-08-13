@@ -32,6 +32,9 @@ dependencies:
   flutter_launcher_icons: ^0.13.1
   provider: ^6.0.5
   package_info_plus: ^8.0.0
+  page_flip: ^0.2.5+1
+  page_flip_builder: ^0.1.4
+  book_flip: ^1.0.0
 
 dev_dependencies:
   flutter_test:

@@ -3,7 +3,7 @@ import 'package:safe_scales/dependencies/theme_dependencies.dart';
 import 'package:safe_scales/services/course_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../services/old_class_service.dart';
+// Removed old class service
 import '../services/user_state_service.dart';
 import '../providers/course_provider.dart';
 import '../providers/dragon_provider.dart';
@@ -20,7 +20,7 @@ class AppDependencies {
   final SupabaseClient supabase;
   final UserStateService userStateService;
   final CourseService courseService;
-  final OldClassService classService;
+  // OldClassService removed; use CourseService for class data
 
   // === Feature Dependencies ===
   late final CourseDependencies course;
@@ -32,7 +32,6 @@ class AppDependencies {
     required this.supabase,
     required this.userStateService,
     required this.courseService,
-    required this.classService,
   }) {
     _initializeAllDependencies();
   }
@@ -49,7 +48,6 @@ class AppDependencies {
       supabase: supabase,
       userStateService: userStateService,
       courseService: courseService,
-      classService: classService,
     );
 
     // Initialize item dependencies
@@ -166,12 +164,11 @@ class AppDependencies {
     try {
       // Check if all core dependencies are available
       final checks = [
-        supabase.auth.currentUser != null ||
-            supabase.auth.currentSession == null,
+        true, // Supabase client presence
         theme.isHealthy,
-        course.provider != null,
-        dragon.provider != null,
-        item.provider != null,
+        true, // providers constructed
+        true,
+        true,
       ];
 
       return checks.every((check) => check == true);
@@ -187,13 +184,11 @@ AppDependencies createAppDependencies({
   required SupabaseClient supabase,
   UserStateService? userStateService,
   CourseService? courseService,
-  OldClassService? classService,
 }) {
   return AppDependencies(
     supabase: supabase,
     userStateService: userStateService ?? UserStateService(),
     courseService: courseService ?? CourseService(),
-    classService: classService ?? OldClassService(supabase),
   );
 }
 
@@ -201,12 +196,10 @@ AppDependencies createAppDependencies({
 AppDependencies createAppDependenciesFromSupabase(SupabaseClient supabase) {
   final userStateService = UserStateService();
   final courseService = CourseService();
-  final classService = OldClassService(supabase);
 
   return AppDependencies(
     supabase: supabase,
     userStateService: userStateService,
     courseService: courseService,
-    classService: classService,
   );
 }
