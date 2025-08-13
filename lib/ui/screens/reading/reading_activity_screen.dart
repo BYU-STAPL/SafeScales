@@ -237,16 +237,14 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
     );
   }
 
-  void _toggleBookmark() {
+  void _toggleBookmark(int index) {
     setState(() {
-      if (_bookmarkedPages.contains(_currentSlideIndex)) {
-        _bookmarkedPages.remove(_currentSlideIndex);
+      if (_bookmarkedPages.contains(index)) {
+        _bookmarkedPages.remove(index);
       } else {
-        _bookmarkedPages.add(_currentSlideIndex);
+        _bookmarkedPages.add(index);
       }
     });
-
-    // Save bookmarks in real-time
     _saveBookmarks();
   }
 
@@ -297,25 +295,9 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
                     : null,
               ),
               onPressed: () {
-                setState(() {
-                  if (_bookmarkedPages.contains(index)) {
-                    _bookmarkedPages.remove(index);
-                  } else {
-                    _bookmarkedPages.add(index);
-                  }
-                });
-                _saveBookmarks();
+                _toggleBookmark(index);
               },
             ),
-
-
-
-            // Icon(
-            //   isBookmarked
-            //       ? FontAwesomeIcons.solidBookmark
-            //       : FontAwesomeIcons.bookmark,
-            //   color: Theme.of(context).colorScheme.primary,
-            // ),
             title: Text(
               'P${index + 1}: ${_slides[index]['headline'] ?? 'Page ${index + 1}'}',
               style: index == _currentSlideIndex
@@ -359,14 +341,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
                       : null,
                 ),
                 onPressed: () {
-                  setState(() {
-                    if (_bookmarkedPages.contains(index)) {
-                      _bookmarkedPages.remove(index);
-                    } else {
-                      _bookmarkedPages.add(index);
-                    }
-                  });
-                  _saveBookmarks();
+                  _toggleBookmark(index);
                 },
               ),
             ],
