@@ -6,8 +6,8 @@ import 'package:safe_scales/ui/widgets/sticker_collection_widget.dart';
 
 import 'package:safe_scales/models/sticker_item_model.dart';
 
-import '../../../services/old_dragon_service.dart';
-import '../../../services/old_quiz_service.dart';
+import '../../../services/shop_service.dart';
+import '../../../config/supabase_config.dart';
 import '../../../services/user_state_service.dart';
 import '../../../providers/course_provider.dart';
 import '../../../providers/dragon_provider.dart';
@@ -65,111 +65,59 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final dragonService = OldDragonService(OldQuizService().supabase);
+        final shopService = ShopService();
 
-        // First, get the user's acquired environment IDs
-        final userResponse =
-            await dragonService.supabase
-                .from('Users')
-                .select('acquired_environments, dragons')
-                .eq('id', user.id)
-                .single();
+        // Get user's acquired environment IDs
+        final envIds = await shopService.getUserAcquiredEnvironments(user.id);
 
-        if (userResponse['acquired_environments'] != null) {
-          final acquiredEnvs = userResponse['acquired_environments'];
-          List<String> environmentIds = [];
+        // Get all environments for the user's class and filter to acquired
+        final allEnvs = await shopService.getEnvironments();
+        final foundEnvironments =
+            allEnvs
+                .where((env) => envIds.contains(env['id']))
+                .map(
+                  (env) => {
+                    'id': env['id'],
+                    'name': env['name'],
+                    'image_url': env['image_url'] ?? env['imageUrl'],
+                  },
+                )
+                .toList();
 
-          // Handle both List and Map cases
-          if (acquiredEnvs is List) {
-            environmentIds = acquiredEnvs.map((e) => e.toString()).toList();
-          } else if (acquiredEnvs is Map) {
-            environmentIds =
-                acquiredEnvs.keys.map((e) => e.toString()).toList();
-          }
+        if (mounted) {
+          if (foundEnvironments.isNotEmpty) {
+            setState(() {
+              userEnvironmentIds =
+                  foundEnvironments.map((env) => env['id'] as String).toList();
+              userEnvironments =
+                  foundEnvironments
+                      .map((env) => env['name'] as String)
+                      .toList();
+              userEnvironmentImages =
+                  foundEnvironments
+                      .map((env) => env['image_url'] as String)
+                      .toList();
+              _isLoadingEnvironments = false;
+            });
 
-          if (environmentIds.isNotEmpty) {
-            // Now fetch the environment details from classes.assets
-            final classesResponse = await dragonService.supabase
-                .from('classes')
-                .select('assets');
-
-            List<Map<String, dynamic>> foundEnvironments = [];
-
-            for (var classData in classesResponse) {
-              if (classData['assets'] != null) {
-                final assets = List<dynamic>.from(classData['assets']);
-
-                // Find environments with matching IDs
-                for (var asset in assets) {
-                  if (asset['type'] == 'environment' &&
-                      environmentIds.contains(asset['id'])) {
-                    foundEnvironments.add({
-                      'id': asset['id'],
-                      'name': asset['name'],
-                      'image_url':
-                          asset['imageUrl'], // Note: imageUrl not image_url in new structure
-                    });
-                  }
-                }
-              }
-            }
-
-            if (foundEnvironments.isNotEmpty && mounted) {
-              setState(() {
-                userEnvironmentIds =
-                    foundEnvironments
-                        .map((env) => env['id'] as String)
-                        .toList();
-                userEnvironments =
-                    foundEnvironments
-                        .map((env) => env['name'] as String)
-                        .toList();
-                userEnvironmentImages =
-                    foundEnvironments
-                        .map((env) => env['image_url'] as String)
-                        .toList();
-                _isLoadingEnvironments = false;
-              });
-
-              // Use state manager to get current environment
-              final dragonProvider = Provider.of<DragonProvider>(
-                context,
-                listen: false,
-              );
-              final currentEnvId = dragonProvider.currentEnvironment;
-              if (currentEnvId != null) {
-                final envIndex = userEnvironmentIds.indexOf(currentEnvId);
-                if (envIndex != -1) {
-                  setState(() {
-                    selectedEnvironment = envIndex;
-                  });
-                  print(
-                    '✅ Set initial environment to: ${userEnvironments[envIndex]}',
-                  );
-                }
-              }
-            } else {
-              if (mounted) {
+            // Use state manager to get current environment
+            final dragonProvider = Provider.of<DragonProvider>(
+              context,
+              listen: false,
+            );
+            final currentEnvId = dragonProvider.currentEnvironment;
+            if (currentEnvId != null) {
+              final envIndex = userEnvironmentIds.indexOf(currentEnvId);
+              if (envIndex != -1) {
                 setState(() {
-                  userEnvironments = ['Default'];
-                  userEnvironmentIds = [];
-                  userEnvironmentImages = [];
-                  _isLoadingEnvironments = false;
+                  selectedEnvironment = envIndex;
                 });
+                print(
+                  '✅ Set initial environment to: ${userEnvironments[envIndex]}',
+                );
               }
             }
           } else {
-            if (mounted) {
-              setState(() {
-                userEnvironments = ['Default'];
-                userEnvironmentIds = [];
-                userEnvironmentImages = [];
-                _isLoadingEnvironments = false;
-              });
-            }
-          }
-        } else {
-          if (mounted) {
             setState(() {
               userEnvironments = ['Default'];
               userEnvironmentIds = [];
@@ -200,54 +148,31 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final dragonService = OldDragonService(OldQuizService().supabase);
-        final userResponse =
-            await dragonService.supabase
-                .from('Users')
-                .select('acquired_accessories')
-                .eq('id', user.id)
-                .single();
+        final shopService = ShopService();
 
-        if (userResponse['acquired_accessories'] != null) {
-          final List<dynamic> acquiredAccessories =
-              userResponse['acquired_accessories'];
+        final acquiredIds = await shopService.getUserAcquiredAccessories(
+          user.id,
+        );
+        final allAccessories = await shopService.getAccessories();
 
-          // Get accessories from classes.assets
-          final classesResponse = await dragonService.supabase
-              .from('classes')
-              .select('assets');
-
-          List<Map<String, dynamic>> foundAccessories = [];
-
-          for (var classData in classesResponse) {
-            if (classData['assets'] != null) {
-              final assets = List<dynamic>.from(classData['assets']);
-
-              // Find accessories with matching IDs
-              for (var asset in assets) {
-                if (asset['type'] == 'accessory' &&
-                    acquiredAccessories.contains(asset['id'])) {
-                  foundAccessories.add({
+        final foundAccessories =
+            allAccessories
+                .where((acc) => acquiredIds.contains(acc['id'].toString()))
+                .map(
+                  (asset) => {
                     'id': asset['id'],
                     'name': asset['name'],
-                    'image':
-                        asset['imageUrl'], // Note: imageUrl not image in new structure
-                  });
-                }
-              }
-            }
-          }
+                    'image': asset['image_url'] ?? asset['imageUrl'],
+                  },
+                )
+                .toList();
 
-          setState(() {
-            userAccessories = foundAccessories;
-            _isLoadingAccessories = false;
-          });
-          print('✅ Loaded ${userAccessories.length} accessories');
-          _onAccessoriesLoaded();
-        } else {
-          print('⚠️ No acquired accessories found');
-          setState(() => _isLoadingAccessories = false);
-        }
+        setState(() {
+          userAccessories = foundAccessories;
+          _isLoadingAccessories = false;
+        });
+        print('✅ Loaded ${userAccessories.length} accessories');
+        _onAccessoriesLoaded();
       } else {
         print('⚠️ No user found');
         setState(() => _isLoadingAccessories = false);
@@ -680,11 +605,9 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final dragonService = OldDragonService(OldQuizService().supabase);
-
         // Get current dragons data
         final userResponse =
-            await dragonService.supabase
+            await SupabaseConfig.client
                 .from('Users')
                 .select('dragons')
                 .eq('id', user.id)
@@ -726,8 +649,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
           }
 
           // Overwrote the database with sticker data and removed phase progress information
-          // Save the updated dragons data
-          // await dragonService.supabase
+          // Save the updated dragons data (uncomment when ready)
+          // await SupabaseConfig.client
           //     .from('Users')
           //     .update({'dragons': dragonsData})
           //     .eq('id', user.id);
@@ -748,11 +671,9 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final dragonService = OldDragonService(OldQuizService().supabase);
-
         // Get current dragons data
         final userResponse =
-            await dragonService.supabase
+            await SupabaseConfig.client
                 .from('Users')
                 .select('dragons')
                 .eq('id', user.id)
