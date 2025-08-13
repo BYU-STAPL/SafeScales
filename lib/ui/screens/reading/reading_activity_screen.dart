@@ -418,7 +418,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
             // Main content
             //TODO: When reading a user can scroll through the reading slides by swiping or clicking the next button
-            // TODO: Is it better to only have one method of navigating through the quizzes?
+            // TODO: Is it better to only have one method of navigating through the slides?
             Expanded(
               child: _showTableOfContents
                   ? _buildTableOfContents()
