@@ -11,4 +11,6 @@ dependencies: \
   /Users/mac/STPL/SafeScales/build/ios/Debug-iphonesimulator/firebase_core/firebase_core.framework/Headers/FLTFirebaseCorePlugin.h \
   /Users/mac/STPL/SafeScales/build/ios/Debug-iphonesimulator/image_picker_ios/image_picker_ios.framework/Modules/module.modulemap \
   /Users/mac/STPL/SafeScales/build/ios/Debug-iphonesimulator/image_picker_ios/image_picker_ios.framework/Headers/FLTImagePickerPlugin.h \
+  /Users/mac/STPL/SafeScales/build/ios/Debug-iphonesimulator/package_info_plus/package_info_plus.framework/Modules/module.modulemap \
+  /Users/mac/STPL/SafeScales/build/ios/Debug-iphonesimulator/package_info_plus/package_info_plus.framework/Headers/FPPPackageInfoPlusPlugin.h \
   /Users/mac/STPL/SafeScales/build/ios/Debug-iphonesimulator/sign_in_with_apple/sign_in_with_apple.framework/Headers/SignInWithApplePlugin.h

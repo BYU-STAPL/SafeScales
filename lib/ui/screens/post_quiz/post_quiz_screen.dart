@@ -8,7 +8,6 @@ import 'package:provider/provider.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_results_screen.dart';
 import 'package:safe_scales/services/user_state_service.dart';
-import 'package:safe_scales/themes/app_theme.dart';
 
 import '../../../providers/course_provider.dart';
 import '../../widgets/progress_bar.dart';
@@ -18,12 +17,11 @@ class PostQuizScreen extends StatefulWidget {
   const PostQuizScreen({
     super.key,
     required this.moduleId,
-    required this.questionSet
+    required this.questionSet,
   });
 
   final String moduleId;
   final QuestionSet questionSet;
-
 
   @override
   _PostQuizScreenState createState() => _PostQuizScreenState();
@@ -76,13 +74,15 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     try {
       final user = _userState.currentUser;
       if (user != null) {
-        await Provider.of<CourseProvider>(context, listen: false).saveQuizProgress(
-            quizId: widget.questionSet.id,
-            userAnswers: userAnswers,
-            correctAnswers: correctAnswers,
-            totalQuestions: totalQuestions
+        await Provider.of<CourseProvider>(
+          context,
+          listen: false,
+        ).saveQuizProgress(
+          quizId: widget.questionSet.id,
+          userAnswers: userAnswers,
+          correctAnswers: correctAnswers,
+          totalQuestions: totalQuestions,
         );
-
       } else {
         print('No user logged in, skipping post-quiz progress save');
       }
@@ -377,10 +377,12 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                           ),
                           SizedBox(width: 10),
                           Expanded(
-                              child: Text(
-                                '${widget.questionSet.passingScore}% or higher is required to pass this quiz',
-                                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold,),
-                              )
+                            child: Text(
+                              '${widget.questionSet.passingScore}% or higher is required to pass this quiz',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ],
                       ),

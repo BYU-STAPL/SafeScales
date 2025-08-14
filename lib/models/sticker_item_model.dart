@@ -1,11 +1,7 @@
 // Model class for placed stickers
 import 'dart:ui';
 
-enum ItemType {
-  item,
-  environment,
-}
-
+enum ItemType { item, environment }
 
 class Item {
   final String id;
@@ -27,6 +23,7 @@ class StickerItem {
   final String id;
   final String imageUrl;
   final String name;
+  final String accessoryId;
   Offset position;
   double size;
 
@@ -34,6 +31,7 @@ class StickerItem {
     required this.id,
     required this.imageUrl,
     required this.name,
+    required this.accessoryId,
     required this.position,
     this.size = 48.0,
   });

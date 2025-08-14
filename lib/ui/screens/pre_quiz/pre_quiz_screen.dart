@@ -17,10 +17,10 @@ class PreQuizScreen extends StatefulWidget {
   final QuestionSet questionSet;
 
   const PreQuizScreen({
-    Key? key,
+    super.key,
     required this.moduleId,
     required this.questionSet,
-  }) : super(key: key);
+  });
 
   @override
   _PreQuizScreenState createState() => _PreQuizScreenState();
@@ -57,12 +57,15 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
     try {
       final user = _userState.currentUser;
       if (user != null) {
-        await Provider.of<CourseProvider>(context, listen: false).saveQuizProgress(
-            // userId: user.id,
-            quizId: widget.questionSet.id,
-            userAnswers: userAnswers,
-            correctAnswers: correctAnswers,
-            totalQuestions: totalQuestions
+        await Provider.of<CourseProvider>(
+          context,
+          listen: false,
+        ).saveQuizProgress(
+          // userId: user.id,
+          quizId: widget.questionSet.id,
+          userAnswers: userAnswers,
+          correctAnswers: correctAnswers,
+          totalQuestions: totalQuestions,
         );
       } else {
         print('No user logged in, skipping pre-quiz progress save');
@@ -111,7 +114,6 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
     return true;
   }
 
-
   void _nextQuestion() {
     if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
       setState(() {
@@ -131,7 +133,6 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   }
 
   Container _buildNavigationBar() {
-
     ThemeData theme = Theme.of(context);
 
     return Container(
@@ -157,7 +158,10 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
 
           TextButton.icon(
             iconAlignment: IconAlignment.end,
-            onPressed: userAnswers[currentQuestionIndex].isNotEmpty ? _nextQuestion : null,
+            onPressed:
+                userAnswers[currentQuestionIndex].isNotEmpty
+                    ? _nextQuestion
+                    : null,
             label: Text(
               currentQuestionIndex == widget.questionSet.questions.length - 1
                   ? 'Complete'
@@ -247,46 +251,46 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
       );
     }
 
-    final progress = (currentQuestionIndex + 1) / widget.questionSet.questions.length;
+    final progress =
+        (currentQuestionIndex + 1) / widget.questionSet.questions.length;
 
     return Scaffold(
       appBar: appBar,
       body: Column(
-          children: [
+        children: [
+          ProgressBar(
+            progress: progress,
+            currentSlideIndex: currentQuestionIndex,
+            slideLength: widget.questionSet.questions.length,
+            slideName: 'questions',
+          ),
 
-            ProgressBar(
-              progress: progress,
-              currentSlideIndex: currentQuestionIndex,
-              slideLength: widget.questionSet.questions.length,
-              slideName: 'questions',
-            ),
-
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-                child: QuestionWidget(
-                  question: widget.questionSet.questions[currentQuestionIndex],
-                  selectedAnswers: userAnswers[currentQuestionIndex],
-                  onAnswerChanged: (answers) {
-                    print(
-                      'Answer changed for question ${currentQuestionIndex + 1}: $answers',
-                    );
-                    setState(() {
-                      userAnswers[currentQuestionIndex] = answers;
-                    });
-                  },
-                  showCorrectAnswer: widget.questionSet.showCorrectAnswers,
-                  showExplanation: widget.questionSet.showExplanations,
-                  isResponseLocked: false,
-                ),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+              child: QuestionWidget(
+                question: widget.questionSet.questions[currentQuestionIndex],
+                selectedAnswers: userAnswers[currentQuestionIndex],
+                onAnswerChanged: (answers) {
+                  print(
+                    'Answer changed for question ${currentQuestionIndex + 1}: $answers',
+                  );
+                  setState(() {
+                    userAnswers[currentQuestionIndex] = answers;
+                  });
+                },
+                showCorrectAnswer: widget.questionSet.showCorrectAnswers,
+                showExplanation: widget.questionSet.showExplanations,
+                isResponseLocked: false,
               ),
             ),
+          ),
 
-            _buildNavigationBar(),
+          _buildNavigationBar(),
 
-            SizedBox(height: 15),
-          ],
-        ),
+          SizedBox(height: 15),
+        ],
+      ),
     );
   }
 }

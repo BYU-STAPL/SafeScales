@@ -11,7 +11,7 @@ class CourseService {
   final CourseRepository _repository;
 
   CourseService({CourseRepository? repository})
-      : _repository = repository ?? CourseRepository();
+    : _repository = repository ?? CourseRepository();
 
   // === Course Content Business Logic ===
 
@@ -60,6 +60,23 @@ class CourseService {
   // === Progress Business Logic ===
 
   /// Get complete progress data for a user with business logic applied
+  Future<Map<String, dynamic>?> getUserProgressData(String userId) async {
+    try {
+      // First verify user has a class
+      final classData = await _repository.getUserClass(userId);
+      if (classData == null) {
+        return null;
+      }
+
+      // Get raw progress data
+      final progressData = await _repository.getUserProgressData(userId);
+      return progressData;
+    } catch (e) {
+      print('DEBUG: Error getting user progress data: $e');
+      return null;
+    }
+  }
+
   Future<Map<String, LessonProgress>> getUserProgress(String userId) async {
     try {
       // First verify user has a class
@@ -80,11 +97,12 @@ class CourseService {
 
       // Process progress for each lesson in the class
       for (var lessonId in lessonsInClass) {
-        if (progressData.containsKey(lessonId) && lessonId != 'legacy') {
+        if (lessonId != 'legacy') {
+          final moduleData = progressData[lessonId] ?? {};
           final lessonProgress = await _buildLessonProgress(
-              lessonId,
-              progressData[lessonId],
-              classData['id']
+            lessonId,
+            moduleData,
+            classData['id'],
           );
 
           if (lessonProgress != null) {
@@ -100,7 +118,10 @@ class CourseService {
   }
 
   /// Get progress for a single lesson
-  Future<LessonProgress?> getSingleLessonProgress(String userId, String lessonId) async {
+  Future<LessonProgress?> getSingleLessonProgress(
+    String userId,
+    String lessonId,
+  ) async {
     try {
       // Verify lesson is in user's class
       final classData = await _repository.getUserClass(userId);
@@ -119,9 +140,9 @@ class CourseService {
       }
 
       return await _buildLessonProgress(
-          lessonId,
-          progressData[lessonId],
-          classData['id']
+        lessonId,
+        progressData[lessonId],
+        classData['id'],
       );
     } catch (e) {
       throw CourseServiceException('Failed to load lesson progress: $e');
@@ -139,12 +160,16 @@ class CourseService {
     try {
       // Business rule: Validate score calculation
       if (correctAnswers > totalQuestions) {
-        throw CourseServiceException('Correct answers cannot exceed total questions');
+        throw CourseServiceException(
+          'Correct answers cannot exceed total questions',
+        );
       }
 
       // Business rule: Validate answers format
       if (userAnswers.length != totalQuestions) {
-        throw CourseServiceException('Number of answers must match total questions');
+        throw CourseServiceException(
+          'Number of answers must match total questions',
+        );
       }
 
       await _repository.saveQuizProgress(
@@ -191,49 +216,89 @@ class CourseService {
 
   /// Build a LessonProgress object from raw progress data
   Future<LessonProgress?> _buildLessonProgress(
-      String lessonId,
-      Map<String, dynamic> quizMap,
-      String classId
-      ) async {
+    String lessonId,
+    Map<String, dynamic> moduleData,
+    String classId,
+  ) async {
     try {
+      print('DEBUG: Building lesson progress for $lessonId');
+      print('DEBUG: Module data: $moduleData');
+
       QuizAttempt? preQuizAttempt;
       List<QuizAttempt> postQuizAttempts = [];
       bool isReadingComplete = false;
-
-      // Process each activity type
-      for (var type in quizMap.keys) {
-        final activityType = _parseActivityType(type);
-        final activityData = quizMap[type] as Map<String, dynamic>;
-
-        if (activityType == ActivityType.reading) {
-          isReadingComplete = activityData['completed'] ?? false;
-        } else {
-          final attempt = _createQuizAttempt(
-              lessonId,
-              type,
-              activityType,
-              activityData
-          );
-
-          if (activityType == ActivityType.postQuiz) {
-            postQuizAttempts.add(attempt);
-          } else if (activityType == ActivityType.preQuiz) {
-            preQuizAttempt = attempt;
-          }
-        }
-      }
+      Set<int> bookmarks = {};
 
       // Get required passing score from lesson definition
       final lessons = await getLessonsForClass(classId);
       final passingScore = lessons[lessonId]?.postQuiz.passingScore ?? 80;
 
-      return LessonProgress(
+      // Process reading progress
+      if (moduleData.containsKey('reading')) {
+        final readingData = moduleData['reading'] as Map<String, dynamic>;
+
+        if (readingData.containsKey('bookmarks')) {
+          bookmarks = Set<int>.from(readingData['bookmarks'],);
+        }
+
+        isReadingComplete = readingData['completed'] ?? false;
+        print('DEBUG: Reading complete: $isReadingComplete');
+        print('DEBUG: ${bookmarks}');
+      }
+
+      // Process pre-quiz progress
+      if (moduleData.containsKey('preQuiz') && moduleData['preQuiz'] != null) {
+        final preQuizData = moduleData['preQuiz'] as Map<String, dynamic>;
+        if (preQuizData['spent'] == true) {
+          preQuizAttempt = _createQuizAttempt(
+            lessonId,
+            'preQuiz',
+            ActivityType.preQuiz,
+            preQuizData,
+          );
+          print('DEBUG: Pre-quiz score: ${preQuizAttempt.score}');
+        }
+      }
+
+      // Process post-quiz progress
+      if (moduleData.containsKey('postQuiz') &&
+          moduleData['postQuiz'] != null) {
+        final postQuizData = moduleData['postQuiz'] as Map<String, dynamic>;
+        if (postQuizData['spent'] == true) {
+          final attempt = _createQuizAttempt(
+            lessonId,
+            'postQuiz',
+            ActivityType.postQuiz,
+            postQuizData,
+          );
+          postQuizAttempts.add(attempt);
+          print('DEBUG: Post-quiz score: ${attempt.score}');
+        }
+      }
+
+      final progress = LessonProgress(
         lessonId: lessonId,
         isReadingComplete: isReadingComplete,
+        bookmarks: bookmarks,
         requiredPassingScore: passingScore,
         preQuizAttempt: preQuizAttempt,
         postQuizAttempts: postQuizAttempts,
       );
+
+      print(
+        'DEBUG: Built progress - Pre-quiz complete: ${progress.isPreQuizComplete}',
+      );
+      print(
+        'DEBUG: Built progress - Reading complete: ${progress.isReadingComplete}',
+      );
+      print(
+        'DEBUG: Built progress - Post-quiz complete: ${progress.isPostQuizComplete} ${progress.postQuizAttempts.isNotEmpty ? progress.postQuizAttempts.last.score : 0}',
+      );
+      print(
+        'DEBUG: Built progress - Total progress: ${progress.getProgressPercent()}%',
+      );
+
+      return progress;
     } catch (e) {
       return null;
     }
@@ -241,21 +306,38 @@ class CourseService {
 
   /// Create a QuizAttempt from raw data
   QuizAttempt _createQuizAttempt(
-      String lessonId,
-      String type,
-      ActivityType activityType,
-      Map<String, dynamic> activityData,
-      ) {
+    String lessonId,
+    String type,
+    ActivityType activityType,
+    Map<String, dynamic> activityData,
+  ) {
+    print('DEBUG: Creating quiz attempt from data: $activityData');
+
+    final score = (activityData['score'] ?? 0).toDouble();
+    final correctAnswers = activityData['correct_answers'] ?? 0;
+    final totalQuestions = activityData['total_questions'] ?? 0;
+    final responses = _parseResponses(activityData['answers'] ?? []);
+    final completedAt =
+        activityData['completed_at'] != null
+            ? DateTime.parse(activityData['completed_at'])
+            : DateTime.now();
+
+    print('DEBUG: Quiz attempt details:');
+    print('DEBUG: - Score: $score');
+    print('DEBUG: - Correct answers: $correctAnswers');
+    print('DEBUG: - Total questions: $totalQuestions');
+    print('DEBUG: - Responses count: ${responses.length}');
+
     return QuizAttempt(
       id: '',
       quizId: '${lessonId}_$type',
       lessonId: lessonId,
       type: activityType,
-      score: (activityData['score'] ?? 0).toDouble(),
-      correctAnswers: activityData['correct_answers'] ?? 0,
-      totalQuestions: activityData['total_questions'] ?? 0,
-      responses: _parseResponses(activityData['answers'] ?? []),
-      completedAt: DateTime.parse(activityData['completed_at']),
+      score: score,
+      correctAnswers: correctAnswers,
+      totalQuestions: totalQuestions,
+      responses: responses,
+      completedAt: completedAt,
     );
   }
 
@@ -339,7 +421,6 @@ class CourseService {
   }
 
   Question _createSingleQuestion(Map<String, dynamic> questionData) {
-
     final List<String> choices = List<String>.from(questionData['choices']);
 
     List<String> filteredList = choices.where((s) => s.isNotEmpty).toList();
@@ -371,9 +452,8 @@ class CourseService {
 
   ReadingSlide _createSingleReadingSlide(Map<String, dynamic> slideData) {
     final content = slideData['content'];
-    return ReadingSlide(
-      content: [TextContent(content)],
-    );
+
+    return ReadingSlide(title: slideData['headline'], content: [TextContent(content)]);
   }
 }
 

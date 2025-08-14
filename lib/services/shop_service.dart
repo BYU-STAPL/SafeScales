@@ -1,16 +1,14 @@
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 
-import 'old_class_service.dart';
+import '../repositories/course_repository.dart';
 
 class ShopService {
   final supabase = SupabaseConfig.client;
   final _userState = UserStateService();
-  late final OldClassService _classService;
+  final CourseRepository _courseRepository = CourseRepository();
 
-  ShopService() {
-    _classService = OldClassService(supabase);
-  }
+  ShopService() {}
 
   // Get assets from user's class
   Future<List<Map<String, dynamic>>> _getClassAssets() async {
@@ -19,11 +17,11 @@ class ShopService {
       if (user == null) return [];
 
       // Get user's class
-      final classData = await _classService.getUserClass(user.id);
-      if (classData.isEmpty) return [];
+      final classData = await _courseRepository.getUserClass(user.id);
+      if (classData == null || classData.isEmpty) return [];
 
       // Get class assets
-      final assets = await _classService.getClassAssets(classData['id']);
+      final assets = await _courseRepository.getClassAssets(classData['id']);
       if (assets == null) return [];
 
       return List<Map<String, dynamic>>.from(assets);

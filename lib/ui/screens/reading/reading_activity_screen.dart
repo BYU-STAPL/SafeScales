@@ -1,40 +1,50 @@
 import 'package:flutter/material.dart';
+
+// import 'package:page_flip/page_flip.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:safe_scales/models/lesson_progress.dart';
+import 'package:safe_scales/models/reading_slide.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/ui/screens/reading/reading_results_screen.dart';
 
+import '../../../models/lesson.dart';
 import '../../../providers/course_provider.dart';
-import '../../../services/old_class_service.dart';
+// import '../../../repositories/course_repository.dart';
 import '../../widgets/progress_bar.dart';
 
 class ReadingActivityScreen extends StatefulWidget {
   final String moduleId;
 
-  const ReadingActivityScreen({Key? key, required this.moduleId})
-      : super(key: key);
+  const ReadingActivityScreen({super.key, required this.moduleId});
 
   @override
   State<ReadingActivityScreen> createState() => _ReadingActivityScreenState();
 }
 
 class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
-  final OldClassService _classService = OldClassService(SupabaseConfig.client);
+  // final CourseRepository _courseRepository = CourseRepository();
   final UserStateService _userState = UserStateService();
   final PageController _pageController = PageController(initialPage: 0);
 
-  List<Map<String, dynamic>> _slides = [];
+  // List<Map<String, dynamic>> _slides = [];
+  List<ReadingSlide> _readingSlides = [];
   int _currentSlideIndex = 0;
   bool _isLoading = true;
   bool _showTableOfContents = false;
   Set<int> _bookmarkedPages = {};
+  // bool _isForward = true;
+  // bool _isFirstLoad = true;
+
+  // final GlobalKey<PageFlipWidgetState> _pageFlipKey = GlobalKey<PageFlipWidgetState>();
+
   bool _isCompleted = false;
 
   @override
   void initState() {
     super.initState();
-    _loadSlides();
+    _loadReading();
   }
 
   @override
@@ -43,20 +53,23 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
     super.dispose();
   }
 
-  Future<void> _loadSlides() async {
+  Future<void> _loadReading() async {
     try {
-      final moduleData = await _classService.getModuleById(widget.moduleId);
-      if (moduleData != null && moduleData['revision'] != null) {
-        final revision = Map<String, dynamic>.from(moduleData['revision']);
-        if (revision['slides'] != null) {
-          setState(() {
-            _slides = List<Map<String, dynamic>>.from(revision['slides']);
-            _isLoading = false;
-          });
+      CourseProvider courseProvider = Provider.of<CourseProvider>(context, listen: false);
 
-          // Load previously saved bookmarks
-          await _loadBookmarks();
-        }
+      // Get Lesson
+      Lesson? lesson = courseProvider.getLesson(widget.moduleId);
+      LessonProgress? lessonProgress = courseProvider.getLessonProgress(widget.moduleId);
+
+      if (lesson == null || lessonProgress == null) {
+        throw Exception("No Lesson Found for ${widget.moduleId}");
+      }
+      else {
+        setState(() {
+          _readingSlides = lesson.reading;
+          _bookmarkedPages = lessonProgress.bookmarks;
+          _isLoading = false;
+        });
       }
     } catch (e) {
       print('❌Error loading slides: $e');
@@ -66,45 +79,17 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
     }
   }
 
-  Future<void> _loadBookmarks() async {
-    try {
-      final user = _userState.currentUser;
-      if (user == null) return;
-
-      final response = await _classService.supabase
-          .from('Users')
-          .select('modules')
-          .eq('id', user.id)
-          .single();
-
-      if (response['modules'] != null) {
-        final modulesData = Map<String, dynamic>.from(response['modules']);
-        if (modulesData.containsKey(widget.moduleId) &&
-            modulesData[widget.moduleId]['reading'] != null &&
-            modulesData[widget.moduleId]['reading']['bookmarks'] != null) {
-          final bookmarks = List<int>.from(
-            modulesData[widget.moduleId]['reading']['bookmarks'],
-          );
-          setState(() {
-            _bookmarkedPages = Set<int>.from(bookmarks);
-          });
-        }
-      }
-    } catch (e) {
-      print('❌Error loading bookmarks: $e');
-    }
-  }
-
   Future<void> _saveBookmarks() async {
     try {
       final user = _userState.currentUser;
       if (user == null) return;
 
-      final response = await _classService.supabase
-          .from('Users')
-          .select('modules')
-          .eq('id', user.id)
-          .single();
+      final response =
+          await SupabaseConfig.client
+              .from('Users')
+              .select('modules')
+              .eq('id', user.id)
+              .single();
 
       Map<String, dynamic> modulesData = {};
       if (response['modules'] != null) {
@@ -123,7 +108,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
       modulesData[widget.moduleId]['reading']['bookmarks'] =
           _bookmarkedPages.toList();
 
-      await _classService.supabase
+      await SupabaseConfig.client
           .from('Users')
           .update({'modules': modulesData})
           .eq('id', user.id);
@@ -138,9 +123,13 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
       if (user == null) return;
 
       // Save progress immediately when reading is completed
-      await Provider.of<CourseProvider>(context, listen: false)
-          .saveReadingProgress(
-          lessonId: widget.moduleId, bookmarks: _bookmarkedPages);
+      await Provider.of<CourseProvider>(
+        context,
+        listen: false,
+      ).saveReadingProgress(
+        lessonId: widget.moduleId,
+        bookmarks: _bookmarkedPages,
+      );
 
       // Save isComplete flag.
       _isCompleted = true;
@@ -149,9 +138,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
       final shouldPopReading = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ReadingResultScreen(
-            modeuleId: widget.moduleId,
-          ),
+          builder: (context) => ReadingResultScreen(modeuleId: widget.moduleId),
         ),
       );
 
@@ -174,11 +161,14 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
   }
 
   void _nextSlide() {
-    if (_currentSlideIndex < _slides.length - 1) {
+    if (_currentSlideIndex < _readingSlides.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+
+      // _pageFlipKey.currentState?.nextPage();
+
     } else {
       _markAsCompleted();
     }
@@ -190,6 +180,9 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+
+      // _pageFlipKey.currentState?.previousPage();
+
     }
   }
 
@@ -226,7 +219,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
             iconAlignment: IconAlignment.end,
             onPressed: _nextSlide,
             label: Text(
-              _currentSlideIndex < _slides.length - 1
+              _currentSlideIndex < _readingSlides.length - 1
                   ? 'Next'.toUpperCase()
                   : 'Complete'.toUpperCase(),
             ),
@@ -249,7 +242,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
   }
 
   void _jumpToPage(int index) {
-    if (index >= 0 && index < _slides.length) {
+    if (index >= 0 && index < _readingSlides.length) {
       // Check if PageController is attached to a PageView
       if (_pageController.hasClients) {
         // Use jumpToPage for instant navigation without animation
@@ -269,6 +262,9 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
         });
       }
 
+      // _pageFlipKey.currentState?.goToPage(index);
+
+
       setState(() {
         _showTableOfContents = false;
       });
@@ -280,7 +276,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
       padding: EdgeInsets.all(30),
       color: Theme.of(context).colorScheme.surface,
       child: ListView.builder(
-        itemCount: _slides.length,
+        itemCount: _readingSlides.length,
         itemBuilder: (context, index) {
           final isBookmarked = _bookmarkedPages.contains(index);
           return ListTile(
@@ -299,7 +295,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
               },
             ),
             title: Text(
-              'P${index + 1}: ${_slides[index]['headline'] ?? 'Page ${index + 1}'}',
+              'P${index + 1}: ${_readingSlides[index].title ?? 'Page ${index + 1}'}',
               style: index == _currentSlideIndex
                   ? Theme.of(context)
                   .textTheme
@@ -314,8 +310,8 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
     );
   }
 
-  Widget _buildPageContent(int index) {
-    final theme = Theme.of(context);
+  Widget _buildPageContentFor(int index) {
+      final theme = Theme.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
       child: Column(
@@ -348,13 +344,25 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _slides[index]['headline'] ?? 'Reading Content',
+            _readingSlides[index].title ?? 'Reading Content',
             style: theme.textTheme.headlineMedium,
           ),
           const SizedBox(height: 24),
-          Text(
-            _slides[index]['content'] ?? '',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.8),
+          Column(
+            children: _readingSlides[index].content.map((content) {
+              if (content is TextContent) {
+                return Text(
+                  content.text,
+                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.8),
+                );
+              } else if (content is ImageContent) {
+                return Image.asset(
+                  content.imagePath,
+                  semanticLabel: content.altText,
+                );
+              }
+              return const SizedBox.shrink(); // fallback
+            }).toList(),
           ),
         ],
       ),
@@ -364,7 +372,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final progress = (_currentSlideIndex + 1) / _slides.length;
+    final progress = (_currentSlideIndex + 1) / _readingSlides.length;
 
     return PopScope(
       canPop: false, // Prevent default back button behavior
@@ -399,7 +407,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : _slides.isEmpty
+            : _readingSlides.isEmpty
             ? Center(
           child: Text(
             'No reading content available',
@@ -412,7 +420,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
             ProgressBar(
               progress: progress,
               currentSlideIndex: _currentSlideIndex,
-              slideLength: _slides.length,
+              slideLength: _readingSlides.length,
               slideName: 'page',
             ),
 
@@ -425,12 +433,33 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
                   : PageView.builder(
                 controller: _pageController,
                 onPageChanged: _onPageChanged,
-                itemCount: _slides.length,
+                itemCount: _readingSlides.length,
                 itemBuilder: (context, index) {
-                  return _buildPageContent(index);
+                  return _buildPageContentFor(index);
                 },
               ),
             ),
+
+            // Expanded(
+            //   child:
+            //   _showTableOfContents
+            //       ? _buildTableOfContents()
+            //       : PageFlipWidget(
+            //     key: _pageFlipKey,
+            //     backgroundColor:
+            //     Theme.of(context).colorScheme.surface,
+            //     duration: const Duration(milliseconds: 550),
+            //     onPageFlipped: (page) {
+            //       setState(() {
+            //         _currentSlideIndex = page;
+            //       });
+            //     },
+            //     children: List.generate(
+            //       _slides.length,
+            //           (index) => _buildPageContent(index),
+            //     ),
+            //   ),
+            // ),
 
             // Navigation controls
             _buildNavigationBar(),
