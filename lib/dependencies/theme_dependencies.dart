@@ -1,4 +1,3 @@
-import 'package:provider/provider.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/providers/theme_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,10 +9,7 @@ class ThemeDependencies {
 
   late final ThemeNotifier _themeNotifier;
 
-  ThemeDependencies({
-    required this.supabase,
-    required this.userStateService,
-  }) {
+  ThemeDependencies({required this.supabase, required this.userStateService}) {
     _initializeThemeDependencies();
   }
 

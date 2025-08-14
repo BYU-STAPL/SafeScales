@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/services/shop_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
+import 'package:safe_scales/ui/screens/review_set/review_screen.dart';
+import 'package:safe_scales/models/question.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -115,20 +118,21 @@ class _ShopScreenState extends State<ShopScreen> {
         modules.entries
             .where((moduleEntry) {
               final moduleData = moduleEntry.value as Map<String, dynamic>;
-              // Check if both preQuiz and postQuiz are completed with 100% score
               final preQuiz = moduleData['preQuiz'] as Map<String, dynamic>?;
               final postQuiz = moduleData['postQuiz'] as Map<String, dynamic>?;
+              final reading = moduleData['reading'] as Map<String, dynamic>?;
 
-              // Check if either quiz is already spent
-              final isPreQuizSpent = preQuiz?['spent'] == true;
-              final isPostQuizSpent = postQuiz?['spent'] == true;
+              final bool preCompleted =
+                  preQuiz != null && preQuiz['completed_at'] != null;
+              final bool postCompleted =
+                  postQuiz != null && postQuiz['completed_at'] != null;
+              final bool readingCompleted =
+                  reading != null &&
+                  (reading['completed'] == true ||
+                      reading['completed_at'] != null);
 
-              return preQuiz != null &&
-                  postQuiz != null &&
-                  preQuiz['score'] == 100 &&
-                  postQuiz['score'] == 100 &&
-                  !isPreQuizSpent &&
-                  !isPostQuizSpent;
+              // A module is considered completed if reading, preQuiz, and postQuiz are all completed
+              return preCompleted && postCompleted && readingCompleted;
             })
             .map((moduleEntry) {
               final moduleData = moduleEntry.value as Map<String, dynamic>;
@@ -171,98 +175,56 @@ class _ShopScreenState extends State<ShopScreen> {
     if (userId == null) return;
 
     try {
-      // Get current user's modules data
-      final response =
-          await SupabaseConfig.client
-              .from('Users')
-              .select('modules')
-              .eq('id', userId)
-              .single();
+      // Hide module selection dialog before starting the revision quiz
+      setState(() {
+        showLessonDialog = false;
+      });
 
-      final Map<String, dynamic> modules = response['modules'] ?? {};
+      // Start the revision quiz for the selected module
+      final bool passedRevision = await _startRevisionQuiz(
+        selectedLessonIndex!,
+      );
 
-      // Update the spent flag for the selected module
-      if (modules[selectedLessonIndex] != null) {
-        final moduleData = modules[selectedLessonIndex] as Map<String, dynamic>;
+      if (!mounted) return;
 
-        // Check if module is already spent
-        final preQuiz = moduleData['preQuiz'] as Map<String, dynamic>?;
-        final postQuiz = moduleData['postQuiz'] as Map<String, dynamic>?;
+      if (!passedRevision) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Revision not completed. Purchase cancelled.'),
+          ),
+        );
+        setState(() {
+          selectedLessonIndex = null;
+        });
+        return;
+      }
 
-        if (preQuiz?['spent'] == true || postQuiz?['spent'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('This module has already been used for a purchase'),
-            ),
-          );
-          return;
-        }
+      // Proceed with the purchase after successful revision
+      bool purchaseSuccess;
+      if (selectedTab == 0) {
+        purchaseSuccess = await _shopService.purchaseAccessory(
+          userId,
+          accessories[selectedIndex!]['id'].toString(),
+        );
+      } else {
+        purchaseSuccess = await _shopService.purchaseEnvironment(
+          userId,
+          environments[selectedIndex!]['id'].toString(),
+        );
+      }
 
-        // Mark both preQuiz and postQuiz as spent
-        if (preQuiz != null) {
-          preQuiz['spent'] = true;
-          preQuiz['spent_at'] = DateTime.now().toIso8601String();
-        }
-        if (postQuiz != null) {
-          postQuiz['spent'] = true;
-          postQuiz['spent_at'] = DateTime.now().toIso8601String();
-        }
-
-        // Update the modules data in the database
-        await SupabaseConfig.client
-            .from('Users')
-            .update({'modules': modules})
-            .eq('id', userId);
-
-        // Update local user state
-        await _userState.loadUserProfile();
-
-        // Proceed with the purchase
-        bool purchaseSuccess;
-        if (selectedTab == 0) {
-          purchaseSuccess = await _shopService.purchaseAccessory(
-            userId,
-            accessories[selectedIndex!]['id'].toString(),
-          );
-        } else {
-          purchaseSuccess = await _shopService.purchaseEnvironment(
-            userId,
-            environments[selectedIndex!]['id'].toString(),
-          );
-        }
-
-        if (purchaseSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Purchase successful! Module marked as spent.'),
-            ),
-          );
-          await _loadItems(); // Reload items to update owned status
-        } else {
-          // If purchase fails, revert the spent flags
-          if (preQuiz != null) {
-            preQuiz['spent'] = false;
-            preQuiz.remove('spent_at');
-          }
-          if (postQuiz != null) {
-            postQuiz['spent'] = false;
-            postQuiz.remove('spent_at');
-          }
-
-          // Update the database to revert the spent flags
-          await SupabaseConfig.client
-              .from('Users')
-              .update({'modules': modules})
-              .eq('id', userId);
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to complete purchase')),
-          );
-        }
+      if (purchaseSuccess) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Purchase successful!')));
+        await _loadItems();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to complete purchase')),
+        );
       }
 
       setState(() {
-        showLessonDialog = false;
         selectedLessonIndex = null;
       });
     } catch (e) {
@@ -273,14 +235,112 @@ class _ShopScreenState extends State<ShopScreen> {
     }
   }
 
+  Future<bool> _startRevisionQuiz(String moduleId) async {
+    try {
+      final moduleResponse =
+          await SupabaseConfig.client
+              .from('modules')
+              .select('id, title, revision_questions')
+              .eq('id', moduleId)
+              .single();
+
+      final questionSet = _parseRevisionQuestionsToQuestionSet(moduleResponse);
+
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ReviewScreen(questionSet: questionSet),
+        ),
+      );
+
+      // ReviewScreen returns true on completion
+      return result == true;
+    } catch (e) {
+      print('❌Error starting revision quiz: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not load revision questions')),
+      );
+      return false;
+    }
+  }
+
+  QuestionSet _parseRevisionQuestionsToQuestionSet(
+    Map<String, dynamic> module,
+  ) {
+    final String moduleId = module['id'].toString();
+    final String title = (module['title'] ?? 'Module Review').toString();
+    final String subject = 'General';
+
+    dynamic revision = module['revision_questions'];
+    if (revision is String) {
+      try {
+        revision =
+            revision.isNotEmpty
+                ? (revision == 'null' ? {} : jsonDecode(revision))
+                : {};
+      } catch (_) {
+        revision = {};
+      }
+    }
+
+    final List<dynamic> rawQuestions =
+        (revision is Map<String, dynamic>)
+            ? List<dynamic>.from(revision['questions'] ?? [])
+            : (revision is List)
+            ? revision
+            : <dynamic>[];
+
+    final List<Question> questions = [];
+    for (int i = 0; i < rawQuestions.length; i++) {
+      final q = rawQuestions[i] as Map<String, dynamic>;
+      final String questionText = (q['question'] ?? '').toString();
+      final List<String> options = List<String>.from(
+        q['choices']?.map((c) => c.toString()) ?? [],
+      );
+      // answer could be a string index like "0" or an int
+      final dynamic answerRaw = q['answer'];
+      int correctIndex = 0;
+      if (answerRaw is int) {
+        correctIndex = answerRaw;
+      } else if (answerRaw is String) {
+        correctIndex = int.tryParse(answerRaw) ?? 0;
+      }
+
+      questions.add(
+        Question.singleAnswer(
+          id: 'q_$i',
+          questionText: questionText,
+          options: options,
+          correctAnswerIndex: correctIndex,
+          explanation: '',
+        ),
+      );
+    }
+
+    return QuestionSet(
+      id: 'rev_$moduleId',
+      title: '$title Review',
+      description: 'Answer the review questions to unlock your item.',
+      activityType: ActivityType.review,
+      subject: subject,
+      passingScore: 0,
+      showResults: false,
+      showCorrectAnswers: true,
+      showExplanations: false,
+      allowRetakes: true,
+      questions: questions,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-
     ThemeData theme = Theme.of(context);
 
     final Color primary = Theme.of(context).colorScheme.primary;
     final Color selected = primary;
-    final Color unselected = theme.colorScheme.lightBlue.withValues(alpha: 0.5); //Colors.blue[100]!;
+    final Color unselected = theme.colorScheme.lightBlue.withValues(
+      alpha: 0.5,
+    ); //Colors.blue[100]!;
     final Color selectedText = Colors.white;
     final Color unselectedText = primary;
     final Color highlight = theme.colorScheme.green.withValues(alpha: 0.25);
@@ -326,9 +386,10 @@ class _ShopScreenState extends State<ShopScreen> {
                               child: Text(
                                 'ITEMS'.toUpperCase(),
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: selectedTab == 0
-                                      ? selectedText
-                                      : unselectedText,
+                                  color:
+                                      selectedTab == 0
+                                          ? selectedText
+                                          : unselectedText,
                                   letterSpacing: 1.1,
                                 ),
                               ),
@@ -355,9 +416,10 @@ class _ShopScreenState extends State<ShopScreen> {
                               child: Text(
                                 'ENVIRONMENTS',
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: selectedTab == 1
-                                      ? selectedText
-                                      : unselectedText,
+                                  color:
+                                      selectedTab == 1
+                                          ? selectedText
+                                          : unselectedText,
                                   letterSpacing: 1.1,
                                 ),
                               ),
@@ -425,7 +487,7 @@ class _ShopScreenState extends State<ShopScreen> {
                           //   ),
                           // ),
                           child: Text(
-                              'PURCHASE'.toUpperCase(),
+                            'PURCHASE'.toUpperCase(),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: Colors.white,
                             ),
@@ -495,7 +557,9 @@ class _ShopScreenState extends State<ShopScreen> {
                                       decoration: BoxDecoration(
                                         color:
                                             selectedLessonIndex == module['id']
-                                                ? primary.withValues(alpha: 0.12)
+                                                ? primary.withValues(
+                                                  alpha: 0.12,
+                                                )
                                                 : Colors.grey[100],
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
@@ -514,9 +578,12 @@ class _ShopScreenState extends State<ShopScreen> {
                                           Text(
                                             moduleDetail?['title'] ??
                                                 'Unknown Module',
-                                            style: theme.textTheme.headlineSmall?.copyWith(
-                                              fontSize: 15 * AppTheme.fontSizeScale,
-                                            ),
+                                            style: theme.textTheme.headlineSmall
+                                                ?.copyWith(
+                                                  fontSize:
+                                                      15 *
+                                                      AppTheme.fontSizeScale,
+                                                ),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
@@ -526,9 +593,11 @@ class _ShopScreenState extends State<ShopScreen> {
                                           const SizedBox(height: 4),
                                           Text(
                                             'Post-Quiz Score: ${module['postQuiz']['score']}%',
-                                            style: theme.textTheme.bodySmall?.copyWith(
-                                              color: theme.colorScheme.green,
-                                            ),
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                                  color:
+                                                      theme.colorScheme.green,
+                                                ),
                                           ),
                                         ],
                                       ),
@@ -609,7 +678,6 @@ class _ShopItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     ThemeData theme = Theme.of(context);
 
     Color green = theme.colorScheme.secondary;
@@ -621,10 +689,16 @@ class _ShopItemCard extends StatelessWidget {
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: isSelected ? highlight : theme.colorScheme.surfaceContainerHigh,
+            color:
+                isSelected ? highlight : theme.colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isOwned ? green : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+              color:
+                  isOwned
+                      ? green
+                      : theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.2,
+                      ),
               width: isOwned ? 2 : 1.2,
             ),
             boxShadow: [

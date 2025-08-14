@@ -16,7 +16,7 @@ class LessonPage extends StatefulWidget {
   final String moduleId;
   final String? topic; // Keep for backward compatibility
 
-  const LessonPage({super.key, required this.moduleId, this.topic,});
+  const LessonPage({super.key, required this.moduleId, this.topic});
 
   @override
   State<LessonPage> createState() => _LessonPageState();
@@ -27,16 +27,67 @@ class _LessonPageState extends State<LessonPage> {
   LessonProgress? _lessonProgress; // Make nullable
   bool _isLoading = true; // Add loading state
 
+  bool _initialized = false;
+
   @override
-  void initState() {
-    super.initState();
-    _initializeData();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      _initializeData();
+    }
   }
 
   Future<void> _initializeData() async {
+    if (!mounted) return;
+
     final courseProvider = Provider.of<CourseProvider>(context, listen: false);
-    _lesson = (courseProvider.lessons[widget.moduleId])!;
-    _lessonProgress = (courseProvider.lessonProgress[widget.moduleId])!;
+
+    // print('DEBUG: ====== Lesson Page Initialization ======');
+    // print('DEBUG: Initializing lesson page for moduleId: ${widget.moduleId}');
+    // print('DEBUG: Available lessons: ${courseProvider.lessons.keys.toList()}');
+    // print(
+    //   'DEBUG: Available progress: ${courseProvider.lessonProgress.keys.toList()}',
+    // );
+    // print('DEBUG: Course loading state: ${courseProvider.isLoading}');
+    // print('DEBUG: Course error state: ${courseProvider.error}');
+
+    // Check if provider is initialized
+    if (!courseProvider.isInitialized) {
+      // print('DEBUG: ERROR - CourseProvider not initialized');
+      await courseProvider.initialize();
+      // print('DEBUG: CourseProvider initialized');
+    }
+
+    setState(() {
+      _lesson = courseProvider.lessons[widget.moduleId];
+      _lessonProgress = courseProvider.lessonProgress[widget.moduleId];
+    });
+
+    // If either lesson or progress is null, show error
+    if (_lesson == null || _lessonProgress == null) {
+      if (mounted) {
+        // Schedule the SnackBar to show after the current frame
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            // Check mounted again as this runs later
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Lesson not found or not properly initialized',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+                ),
+                backgroundColor: Theme.of(context).colorScheme.errorContainer,
+              ),
+            );
+            Navigator.pop(context);
+          }
+        });
+      }
+      return;
+    }
 
     if (mounted) {
       setState(() {
@@ -68,77 +119,106 @@ class _LessonPageState extends State<LessonPage> {
             title: Text(widget.topic ?? _lesson!.title),
             centerTitle: true,
           ),
-          body: courseProvider.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Dragon image container
-              Container(
-                width: screenSize.width,
-                height: screenSize.height * 0.3, // 30% of screen height
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey[300]!, width: 1),
-                  ),
-                ),
-                child: Center(child: _getDragonImage(dragonProvider)),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.only(
-                  left: 20,
-                  right: 20,
-                  top: 20,
-                ),
-                child: Text(
-                  'Lesson Activities',
-                  style: theme.textTheme.headlineSmall,
-                ),
-              ),
-
-              // Existing content
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
+          body:
+              courseProvider.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ...[
-                        _buildQuizCard(
-                          title: 'Pre-Quiz',
-                          description: 'Test your knowledge before starting',
-                          onTap: () => _startQuiz(_lesson!.preQuiz),
-                          icon: Icons.quiz,
-                          color: theme.colorScheme.primary,
-                          isCompleted: _lessonProgress!.isPreQuizComplete,
-                          score: _lessonProgress!.preQuizAttempt?.score ?? 0.0,
-                          isUnlocked: !_lessonProgress!.isPreQuizComplete, // Only unlock when the pre-quiz is not completed, lock after
+                      // Dragon image container
+                      Container(
+                        width: screenSize.width,
+                        height: screenSize.height * 0.3, // 30% of screen height
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.grey[300]!,
+                              width: 1,
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 20),
-                      ],
-                      _buildReadingCard(isUnlocked: _lessonProgress!.isPreQuizComplete),
-                      ...[
-                        const SizedBox(height: 20),
-                        _buildQuizCard(
-                          title: 'Post-Quiz',
-                          description: 'Test what you\'ve learned',
-                          onTap: () => _startQuiz(_lesson!.postQuiz),
-                          icon: Icons.assignment,
-                          color: theme.colorScheme.primary,
-                          isCompleted: _lessonProgress!.isPostQuizComplete && _lessonProgress!.postQuizAttempts.isNotEmpty &&
-                              (_lessonProgress!.postQuizAttempts.first.score >= _lesson!.postQuiz.passingScore),
-                          score: _lessonProgress!.postQuizAttempts.isNotEmpty ? _lessonProgress!.postQuizAttempts.last.score : null,
-                          isUnlocked: _lessonProgress!.isReadingComplete,
+                        child: Center(child: _getDragonImage(dragonProvider)),
+                      ),
+
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          left: 20,
+                          right: 20,
+                          top: 20,
                         ),
-                      ],
+                        child: Text(
+                          'Lesson Activities',
+                          style: theme.textTheme.headlineSmall,
+                        ),
+                      ),
+
+                      // Existing content
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ...[
+                                _buildQuizCard(
+                                  title: 'Pre-Quiz',
+                                  description:
+                                      'Test your knowledge before starting',
+                                  onTap: () => _startQuiz(_lesson!.preQuiz),
+                                  icon: Icons.quiz,
+                                  color: theme.colorScheme.primary,
+                                  isCompleted:
+                                      _lessonProgress!.isPreQuizComplete,
+                                  score:
+                                      _lessonProgress!.preQuizAttempt?.score ??
+                                      0.0,
+                                  isUnlocked:
+                                      !_lessonProgress!
+                                          .isPreQuizComplete, // Only unlock when the pre-quiz is not completed, lock after
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                              _buildReadingCard(
+                                isUnlocked: _lessonProgress!.isPreQuizComplete,
+                              ),
+                              ...[
+                                const SizedBox(height: 20),
+                                _buildQuizCard(
+                                  title: 'Post-Quiz',
+                                  description: 'Test what you\'ve learned',
+                                  onTap: () => _startQuiz(_lesson!.postQuiz),
+                                  icon: Icons.assignment,
+                                  color: theme.colorScheme.primary,
+                                  isCompleted:
+                                      _lessonProgress!.isPostQuizComplete &&
+                                      _lessonProgress!
+                                          .postQuizAttempts
+                                          .isNotEmpty &&
+                                      (_lessonProgress!
+                                              .postQuizAttempts
+                                              .first
+                                              .score >=
+                                          _lesson!.postQuiz.passingScore),
+                                  score:
+                                      _lessonProgress!
+                                              .postQuizAttempts
+                                              .isNotEmpty
+                                          ? _lessonProgress!
+                                              .postQuizAttempts
+                                              .last
+                                              .score
+                                          : null,
+                                  isUnlocked:
+                                      _lessonProgress!.isReadingComplete,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                ),
-              ),
-            ],
-          ),
         );
       },
     );
@@ -159,17 +239,17 @@ class _LessonPageState extends State<LessonPage> {
     return Container(
       decoration: BoxDecoration(
         color:
-        isCompleted
-            ? theme.colorScheme.green.withValues(
-          alpha: 0.1,
-        ) //secondary.withValues(alpha: 0.1)
-            : theme.colorScheme.surface,
+            isCompleted
+                ? theme.colorScheme.green.withValues(
+                  alpha: 0.1,
+                ) //secondary.withValues(alpha: 0.1)
+                : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color:
-          isCompleted
-              ? theme.colorScheme.green
-              : color.withValues(alpha: 0.5),
+              isCompleted
+                  ? theme.colorScheme.green
+                  : color.withValues(alpha: 0.5),
           width: 2,
         ),
         boxShadow: [
@@ -263,15 +343,15 @@ class _LessonPageState extends State<LessonPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color:
-        _lessonProgress!.isReadingComplete
-            ? theme.colorScheme.green.withValues(alpha: 0.1)
-            : cardBg,
+            _lessonProgress!.isReadingComplete
+                ? theme.colorScheme.green.withValues(alpha: 0.1)
+                : cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color:
-          _lessonProgress!.isReadingComplete
-              ? theme.colorScheme.green
-              : primary.withValues(alpha: 0.5),
+              _lessonProgress!.isReadingComplete
+                  ? theme.colorScheme.green
+                  : primary.withValues(alpha: 0.5),
           width: 2,
         ),
         boxShadow: [
@@ -286,58 +366,125 @@ class _LessonPageState extends State<LessonPage> {
         color: Colors.transparent,
         child: InkWell(
           onTap:
-          _lessonProgress!.isPreQuizComplete
-              ? () {
-            // Navigate to reading activity screen
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (context) =>
-                    ReadingActivityScreen(
-                      // topic: widget.topic ?? _moduleTitle,
-                      moduleId: widget.moduleId,
-                    ),
-              ),
-            ).then((completed) async {
-              if (completed == true) {
+              _lessonProgress!.isPreQuizComplete
+                  ? () {
+                    // Navigate to reading activity screen
+                    setState(() {
+                      _isLoading = true; // Show loading state
+                    });
 
-                final courseProvider = Provider.of<CourseProvider>(context, listen: false);
-                await courseProvider.loadSingleLessonProgress(widget.moduleId);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => ReadingActivityScreen(
+                              moduleId: widget.moduleId,
+                            ),
+                      ),
+                    ).then((completed) async {
+                      if (completed == true) {
+                        // Show loading overlay
+                        if (mounted) {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (BuildContext context) {
+                              return Center(
+                                child: Container(
+                                  padding: const EdgeInsets.all(32),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        Theme.of(context).colorScheme.surface,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const CircularProgressIndicator(),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Updating progress...',
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        }
 
-                await Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
+                        try {
+                          final courseProvider = Provider.of<CourseProvider>(
+                            context,
+                            listen: false,
+                          );
+                          await courseProvider.loadSingleLessonProgress(
+                            widget.moduleId,
+                          );
 
+                          await Provider.of<DragonProvider>(
+                            context,
+                            listen: false,
+                          ).updateAllDragonProgress();
 
-                if (mounted) {
-                  setState(() {
-                    _lessonProgress = courseProvider.lessonProgress[widget.moduleId];
-                  });
-                }
-              }
-            });
-          }
-              : () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Please complete the Pre-Quiz activity first',
-                  style: TextStyle(
-                    color:
-                    Theme
-                        .of(context)
-                        .colorScheme
-                        .onInverseSurface,
-                  ),
-                ),
-                backgroundColor:
-                Theme
-                    .of(context)
-                    .colorScheme
-                    .inverseSurface,
-              ),
-            );
-            return;
-          },
+                          if (mounted) {
+                            setState(() {
+                              _lessonProgress =
+                                  courseProvider.lessonProgress[widget
+                                      .moduleId];
+                              _isLoading = false;
+                            });
+                            // Close loading dialog
+                            Navigator.of(context).pop();
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            // Close loading dialog
+                            Navigator.of(context).pop();
+                            // Show error snackbar
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error updating progress: $e'),
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.error,
+                              ),
+                            );
+                          }
+                        }
+                      } else {
+                        setState(() {
+                          _isLoading = false;
+                        });
+                      }
+                    });
+                  }
+                  : () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Please complete the Pre-Quiz activity first',
+                          style: TextStyle(
+                            color:
+                                Theme.of(context).colorScheme.onInverseSurface,
+                          ),
+                        ),
+                        backgroundColor:
+                            Theme.of(context).colorScheme.inverseSurface,
+                      ),
+                    );
+                    return;
+                  },
           borderRadius: BorderRadius.circular(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -411,60 +558,44 @@ class _LessonPageState extends State<LessonPage> {
           content: Text(
             'This quiz is not available yet',
             style: TextStyle(
-              color: Theme
-                  .of(context)
-                  .colorScheme
-                  .onInverseSurface,
+              color: Theme.of(context).colorScheme.onInverseSurface,
             ),
           ),
-          backgroundColor: Theme
-              .of(context)
-              .colorScheme
-              .inverseSurface,
+          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
         ),
       );
       return;
     }
 
     // Check if pre-quiz has already been completed
-    if (quiz.activityType == ActivityType.preQuiz && _lessonProgress!.isPreQuizComplete) {
+    if (quiz.activityType == ActivityType.preQuiz &&
+        _lessonProgress!.isPreQuizComplete) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Pre-Quiz has already been completed',
             style: TextStyle(
-              color: Theme
-                  .of(context)
-                  .colorScheme
-                  .onInverseSurface,
+              color: Theme.of(context).colorScheme.onInverseSurface,
             ),
           ),
-          backgroundColor: Theme
-              .of(context)
-              .colorScheme
-              .inverseSurface,
+          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
         ),
       );
       return;
     }
 
     // Check if post-quiz is being attempted before reading is completed
-    if (quiz.activityType == ActivityType.postQuiz && !_lessonProgress!.isReadingComplete) {
+    if (quiz.activityType == ActivityType.postQuiz &&
+        !_lessonProgress!.isReadingComplete) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Please complete the Reading activity first',
             style: TextStyle(
-              color: Theme
-                  .of(context)
-                  .colorScheme
-                  .onInverseSurface,
+              color: Theme.of(context).colorScheme.onInverseSurface,
             ),
           ),
-          backgroundColor: Theme
-              .of(context)
-              .colorScheme
-              .inverseSurface,
+          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
         ),
       );
       return;
@@ -477,23 +608,90 @@ class _LessonPageState extends State<LessonPage> {
       quizScreen = PostQuizScreen(moduleId: widget.moduleId, questionSet: quiz);
     }
 
+    setState(() {
+      _isLoading = true; // Show loading state
+    });
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => quizScreen),
     ).then((completed) async {
       if (completed == true) {
-        final courseProvider = Provider.of<CourseProvider>(context, listen: false);
-        await courseProvider.loadSingleLessonProgress(widget.moduleId);
+        final courseProvider = Provider.of<CourseProvider>(
+          context,
+          listen: false,
+        );
 
-        await Provider.of<DragonProvider>(context, listen: false).updateDragonPhases(widget.moduleId);
-        // await Provider.of<DragonProvider>(context, listen: false).updateAllDragonProgress();
-
+        // Show loading overlay
         if (mounted) {
-          setState(() {
-            // Update local lesson progress variable
-            _lessonProgress = courseProvider.lessonProgress[widget.moduleId];
-          });
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return Center(
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Updating progress...',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
         }
+
+        try {
+          // Load new progress
+          await courseProvider.loadSingleLessonProgress(widget.moduleId);
+          await Provider.of<DragonProvider>(
+            context,
+            listen: false,
+          ).updateDragonPhases(widget.moduleId);
+
+          if (mounted) {
+            setState(() {
+              _lessonProgress = courseProvider.lessonProgress[widget.moduleId];
+              _isLoading = false;
+            });
+            // Close loading dialog
+            Navigator.of(context).pop();
+          }
+        } catch (e) {
+          if (mounted) {
+            // Close loading dialog
+            Navigator.of(context).pop();
+            // Show error snackbar
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error updating progress: $e'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
+          }
+        }
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
       }
     });
   }

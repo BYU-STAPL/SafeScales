@@ -223,7 +223,6 @@ extension CustomColorScheme on ColorScheme {
   Color get orange => AppColors.orange;
 }
 
-
 /* Full App Theme */
 
 class AppTheme {
@@ -335,8 +334,8 @@ class AppTheme {
       // Icon Button
       iconButtonTheme: IconButtonThemeData(
         style: ButtonStyle(
-          iconColor: MaterialStateProperty.all(lightColorScheme.primary),
-          shadowColor: MaterialStateProperty.all(lightColorScheme.shadow),
+          iconColor: WidgetStateProperty.all(lightColorScheme.primary),
+          shadowColor: WidgetStateProperty.all(lightColorScheme.shadow),
         ),
       ),
 

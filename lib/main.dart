@@ -26,45 +26,46 @@ void main() async {
     print("🚀 App dependencies initialized successfully");
 
     runApp(MyApp(appDeps: appDeps));
-
   } catch (e, stackTrace) {
     print("❌ App initialization failed: $e");
     print("Stack trace: $stackTrace");
 
     // Run app with error state
-    runApp(MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 64, color: AppColors.red),
-              SizedBox(height: 16),
-              Text(
-                'Failed to initialize app',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  e.toString(),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.red),
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: AppColors.red),
+                SizedBox(height: 16),
+                Text(
+                  'Failed to initialize app',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-              ),
-            ],
+                SizedBox(height: 8),
+                Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    e.toString(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.red),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ));
+    );
   }
 }
 
 class MyApp extends StatelessWidget {
   final AppDependencies appDeps;
 
-  const MyApp({Key? key, required this.appDeps}) : super(key: key);
+  const MyApp({super.key, required this.appDeps});
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +77,8 @@ class MyApp extends StatelessWidget {
             title: 'SafeScales',
             theme: AppTheme.buildLightAppTheme(),
             darkTheme: AppTheme.buildDarkAppTheme(),
-            themeMode: themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            themeMode:
+                themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             home: const SelectionScreen(),
             debugShowCheckedModeBanner: false,
           );
