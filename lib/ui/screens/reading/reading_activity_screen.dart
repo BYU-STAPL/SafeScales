@@ -5,13 +5,10 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
 import 'package:safe_scales/models/reading_slide.dart';
-import 'package:safe_scales/services/user_state_service.dart';
-import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/ui/screens/reading/reading_results_screen.dart';
 
 import '../../../models/lesson.dart';
 import '../../../providers/course_provider.dart';
-// import '../../../repositories/course_repository.dart';
 import '../../widgets/progress_bar.dart';
 
 class ReadingActivityScreen extends StatefulWidget {
@@ -24,8 +21,6 @@ class ReadingActivityScreen extends StatefulWidget {
 }
 
 class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
-  // final CourseRepository _courseRepository = CourseRepository();
-  final UserStateService _userState = UserStateService();
   final PageController _pageController = PageController(initialPage: 0);
 
   // List<Map<String, dynamic>> _slides = [];
@@ -81,37 +76,13 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
   Future<void> _saveBookmarks() async {
     try {
-      final user = _userState.currentUser;
-      if (user == null) return;
 
-      final response =
-          await SupabaseConfig.client
-              .from('Users')
-              .select('modules')
-              .eq('id', user.id)
-              .single();
+      CourseProvider courseProvider = Provider.of<CourseProvider>(context, listen: false);
 
-      Map<String, dynamic> modulesData = {};
-      if (response['modules'] != null) {
-        modulesData = Map<String, dynamic>.from(response['modules']);
-      }
-
-      if (!modulesData.containsKey(widget.moduleId)) {
-        modulesData[widget.moduleId] = {};
-      }
-
-      if (!modulesData[widget.moduleId].containsKey('reading')) {
-        modulesData[widget.moduleId]['reading'] = {};
-      }
-
-      // Update only the bookmarks, preserve other reading data
-      modulesData[widget.moduleId]['reading']['bookmarks'] =
-          _bookmarkedPages.toList();
-
-      await SupabaseConfig.client
-          .from('Users')
-          .update({'modules': modulesData})
-          .eq('id', user.id);
+      courseProvider.saveReadingProgress(
+          lessonId: widget.moduleId,
+          bookmarks: _bookmarkedPages,
+      );
     } catch (e) {
       print('❌Error saving bookmarks: $e');
     }
@@ -119,8 +90,8 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
   Future<void> _markAsCompleted() async {
     try {
-      final user = _userState.currentUser;
-      if (user == null) return;
+      // final user = _userState.currentUser;
+      // if (user == null) return;
 
       // Save progress immediately when reading is completed
       await Provider.of<CourseProvider>(
