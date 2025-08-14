@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:safe_scales/ui/widgets/dragon_image_widget.dart';
 
 class ReadingResultScreen extends StatelessWidget {
-  const ReadingResultScreen({
-    Key? key,
-    required this.modeuleId,
-  }) : super(key: key);
+  const ReadingResultScreen({super.key, required this.modeuleId});
 
   final String modeuleId;
 
@@ -43,7 +40,11 @@ class ReadingResultScreen extends StatelessWidget {
 
               SizedBox(height: 30),
 
-              DragonImageWidget(moduleId: modeuleId, phase: 'stage2', size: 300),
+              DragonImageWidget(
+                moduleId: modeuleId,
+                phase: 'stage2',
+                size: 300,
+              ),
 
               SizedBox(height: 30),
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 
 class HealthCheck extends StatefulWidget {
-  const HealthCheck({Key? key}) : super(key: key);
+  const HealthCheck({super.key});
 
   @override
   State<HealthCheck> createState() => _HealthCheckState();

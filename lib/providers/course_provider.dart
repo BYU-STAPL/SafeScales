@@ -30,7 +30,7 @@ class CourseProvider extends ChangeNotifier {
     CourseService? courseService,
     UserStateService? userStateService,
   }) : _courseService = courseService ?? CourseService(),
-        _userStateService = userStateService ?? UserStateService();
+       _userStateService = userStateService ?? UserStateService();
 
   // === Getters ===
   bool get isLoading => _isLoading;
@@ -41,7 +41,8 @@ class CourseProvider extends ChangeNotifier {
   String get description => _description;
   Map<String, Lesson> get lessons => Map.unmodifiable(_lessons);
   List<String> get lessonOrder => List.unmodifiable(_lessonOrder);
-  Map<String, LessonProgress> get lessonProgress => Map.unmodifiable(_lessonProgress);
+  Map<String, LessonProgress> get lessonProgress =>
+      Map.unmodifiable(_lessonProgress);
 
   /// Get the current user
   User? get currentUser => _userStateService.currentUser;
@@ -95,6 +96,42 @@ class CourseProvider extends ChangeNotifier {
   }
 
   /// Load user progress for all lessons
+  // Future<void> loadUserProgress() async {
+  //   if (!isUserLoggedIn) {
+  //     _lessonProgress.clear();
+  //     notifyListeners();
+  //     return;
+  //   }
+  //
+  //   await _executeWithErrorHandling(() async {
+  //     // Get raw progress data from database
+  //     final progressData = await _courseService.getUserProgressData(
+  //       currentUser!.id,
+  //     );
+  //     print('DEBUG: Raw progress data: $progressData');
+  //
+  //     // Convert raw progress data to LessonProgress objects
+  //     Map<String, LessonProgress> progress = {};
+  //
+  //     // For each lesson in the course, create a LessonProgress object
+  //     for (var lessonId in _lessons.keys) {
+  //       final lesson = _lessons[lessonId]!;
+  //       final moduleProgress = progressData?[lessonId];
+  //
+  //       // Create LessonProgress whether the module exists in progress or not
+  //       progress[lessonId] = LessonProgress(
+  //         lessonId: lessonId,
+  //         isReadingComplete: moduleProgress?['reading']?['completed'] ?? false,
+  //         requiredPassingScore: lesson.postQuiz.passingScore,
+  //         postQuizAttempts: [], // Will be populated if exists
+  //         preQuizAttempt: null, // Will be populated if exists
+  //       );
+  //     }
+  //
+  //     _lessonProgress = progress;
+  //     notifyListeners();
+  //   });
+  // }
   Future<void> loadUserProgress() async {
     if (!isUserLoggedIn) {
       _lessonProgress.clear();
@@ -108,14 +145,15 @@ class CourseProvider extends ChangeNotifier {
     });
   }
 
+
   /// Load progress for a specific lesson
   Future<void> loadSingleLessonProgress(String lessonId) async {
     if (!isUserLoggedIn) return;
 
     await _executeWithErrorHandling(() async {
       final progress = await _courseService.getSingleLessonProgress(
-          currentUser!.id,
-          lessonId
+        currentUser!.id,
+        lessonId,
       );
 
       if (progress != null) {
@@ -181,9 +219,9 @@ class CourseProvider extends ChangeNotifier {
 
   /// Execute an operation with proper error handling and loading states
   Future<T> _executeWithErrorHandling<T>(
-      Future<T> Function() operation, {
-        T? defaultValue,
-      }) async {
+    Future<T> Function() operation, {
+    T? defaultValue,
+  }) async {
     try {
       _setLoading(true);
       _clearError();
@@ -270,8 +308,7 @@ class CourseProvider extends ChangeNotifier {
     final progress = _lessonProgress[lessonId];
     if (progress == null) return false;
 
-    return progress.isReadingComplete &&
-        progress.isPostQuizComplete;
+    return progress.isReadingComplete && progress.isPostQuizComplete;
   }
 
   /// Get completion percentage for the entire course

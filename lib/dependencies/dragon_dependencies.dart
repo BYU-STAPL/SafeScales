@@ -1,10 +1,9 @@
-import 'package:safe_scales/services/course_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../repositories/dragon_repository.dart';
 import '../services/dragon_service.dart';
 import '../providers/dragon_provider.dart';
-import '../services/old_class_service.dart';
+import '../services/course_service.dart';
 import '../services/user_state_service.dart';
 
 /// Dependency injection container for dragon-related classes
@@ -18,13 +17,11 @@ class DragonDependencies {
   final SupabaseClient supabase;
   final UserStateService userStateService;
   final CourseService courseService;
-  final OldClassService classService;
 
   DragonDependencies({
     required this.supabase,
     required this.userStateService,
     required this.courseService,
-    required this.classService,
   }) {
     _initializeDependencies();
   }
@@ -34,13 +31,16 @@ class DragonDependencies {
     _repository = DragonRepository(supabase: supabase);
 
     // Service layer - handles business logic
-    _service = DragonService(courseService: courseService, repository: _repository);
+    _service = DragonService(
+      courseService: courseService,
+      repository: _repository,
+    );
 
     // Provider layer - handles UI state management
     _provider = DragonProvider(
       dragonService: _service,
       userState: userStateService,
-      classService: classService,
+      courseService: courseService,
     );
   }
 
@@ -77,12 +77,10 @@ DragonDependencies createDragonDependencies({
   required SupabaseClient supabase,
   required UserStateService userStateService,
   required CourseService courseService,
-  required OldClassService classService,
 }) {
   return DragonDependencies(
     supabase: supabase,
     userStateService: userStateService,
     courseService: courseService,
-    classService: classService,
   );
 }

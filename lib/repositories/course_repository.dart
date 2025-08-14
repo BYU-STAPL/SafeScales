@@ -7,18 +7,19 @@ class CourseRepository {
   final SupabaseClient _supabase;
 
   CourseRepository({SupabaseClient? supabase})
-      : _supabase = supabase ?? SupabaseConfig.client;
+    : _supabase = supabase ?? SupabaseConfig.client;
 
   // === User Class Operations ===
 
   /// Get the class that a user is enrolled in
   Future<Map<String, dynamic>?> getUserClass(String userId) async {
     try {
-      final userResponse = await _supabase
-          .from('Users')
-          .select('joined_classes')
-          .eq('id', userId)
-          .single();
+      final userResponse =
+          await _supabase
+              .from('Users')
+              .select('joined_classes')
+              .eq('id', userId)
+              .single();
 
       if (userResponse['joined_classes'] == null ||
           (userResponse['joined_classes'] as List).isEmpty) {
@@ -26,11 +27,8 @@ class CourseRepository {
       }
 
       final classId = (userResponse['joined_classes'] as List).first;
-      final classResponse = await _supabase
-          .from('classes')
-          .select()
-          .eq('id', classId)
-          .single();
+      final classResponse =
+          await _supabase.from('classes').select().eq('id', classId).single();
 
       return Map<String, dynamic>.from(classResponse);
     } catch (e) {
@@ -43,11 +41,12 @@ class CourseRepository {
   /// Get all modules/lessons for a specific class
   Future<List<Map<String, dynamic>>> getClassModules(String classId) async {
     try {
-      final classResponse = await _supabase
-          .from('classes')
-          .select('course_modules')
-          .eq('id', classId)
-          .single();
+      final classResponse =
+          await _supabase
+              .from('classes')
+              .select('course_modules')
+              .eq('id', classId)
+              .single();
 
       if (classResponse['course_modules'] == null) {
         return [];
@@ -69,11 +68,12 @@ class CourseRepository {
   /// Get lesson order for a class
   Future<List<String>> getLessonOrder(String classId) async {
     try {
-      final classResponse = await _supabase
-          .from('classes')
-          .select('course_modules')
-          .eq('id', classId)
-          .single();
+      final classResponse =
+          await _supabase
+              .from('classes')
+              .select('course_modules')
+              .eq('id', classId)
+              .single();
 
       if (classResponse['course_modules'] == null) {
         return [];
@@ -97,11 +97,8 @@ class CourseRepository {
   /// Get a specific module by ID
   Future<Map<String, dynamic>?> getModuleById(String moduleId) async {
     try {
-      final moduleResponse = await _supabase
-          .from('modules')
-          .select()
-          .eq('id', moduleId)
-          .single();
+      final moduleResponse =
+          await _supabase.from('modules').select().eq('id', moduleId).single();
 
       return Map<String, dynamic>.from(moduleResponse);
     } catch (e) {
@@ -112,11 +109,12 @@ class CourseRepository {
   /// Get class assets
   Future<List<dynamic>?> getClassAssets(String classId) async {
     try {
-      final classResponse = await _supabase
-          .from('classes')
-          .select('assets')
-          .eq('id', classId)
-          .single();
+      final classResponse =
+          await _supabase
+              .from('classes')
+              .select('assets')
+              .eq('id', classId)
+              .single();
 
       return classResponse['assets'] != null
           ? List<dynamic>.from(classResponse['assets'])
@@ -131,11 +129,12 @@ class CourseRepository {
   /// Get all user progress data
   Future<Map<String, dynamic>?> getUserProgressData(String userId) async {
     try {
-      final response = await _supabase
-          .from('Users')
-          .select('modules')
-          .eq('id', userId)
-          .single();
+      final response =
+          await _supabase
+              .from('Users')
+              .select('modules')
+              .eq('id', userId)
+              .single();
 
       return response['modules'];
     } catch (e) {
@@ -144,16 +143,23 @@ class CourseRepository {
   }
 
   /// Save quiz progress to database
-  Future<void> saveQuizProgress({required String userId, required String quizId, required List<List<int>> answers, required int correctAnswers, required int totalQuestions,}) async {
+  Future<void> saveQuizProgress({
+    required String userId,
+    required String quizId,
+    required List<List<int>> answers,
+    required int correctAnswers,
+    required int totalQuestions,
+  }) async {
     try {
       final score = ((correctAnswers / totalQuestions) * 100).round();
 
       // Get current user data
-      final response = await _supabase
-          .from('Users')
-          .select('quizzes, modules')
-          .eq('id', userId)
-          .single();
+      final response =
+          await _supabase
+              .from('Users')
+              .select('quizzes, modules')
+              .eq('id', userId)
+              .single();
 
       // Update legacy quizzes column
       Map<String, dynamic> quizzes = {};
@@ -190,12 +196,36 @@ class CourseRepository {
 
       // Initialize module entry if it doesn't exist
       if (!modules.containsKey(moduleId)) {
-        modules[moduleId] = {};
+        modules[moduleId] = {
+          'reading': {
+            'completed': false,
+            'completed_at': null,
+            'bookmarks': [],
+          },
+          'preQuiz': {
+            'score': 0,
+            'spent': false,
+            'answers': [],
+            'completed_at': null,
+            'correct_answers': 0,
+            'total_questions': 0,
+          },
+          'postQuiz': {
+            'score': 0,
+            'spent': false,
+            'answers': [],
+            'completed_at': null,
+            'correct_answers': 0,
+            'total_questions': 0,
+          },
+        };
       }
 
+      // Update the specific quiz
       modules[moduleId][quizType] = {
         'answers': answers,
         'score': score,
+        'spent': true,
         'completed_at': DateTime.now().toIso8601String(),
         'correct_answers': correctAnswers,
         'total_questions': totalQuestions,
@@ -212,13 +242,18 @@ class CourseRepository {
   }
 
   /// Save reading progress to database
-  Future<void> saveReadingProgress({required String userId, required String lessonId, required Set<int> bookmarks,}) async {
+  Future<void> saveReadingProgress({
+    required String userId,
+    required String lessonId,
+    required Set<int> bookmarks,
+  }) async {
     try {
-      final response = await _supabase
-          .from('Users')
-          .select('modules')
-          .eq('id', userId)
-          .single();
+      final response =
+          await _supabase
+              .from('Users')
+              .select('modules')
+              .eq('id', userId)
+              .single();
 
       Map<String, dynamic> modulesData = {};
       if (response['modules'] != null) {
@@ -226,10 +261,34 @@ class CourseRepository {
       }
 
       if (!modulesData.containsKey(lessonId)) {
-        modulesData[lessonId] = {};
+        modulesData[lessonId] = {
+          'reading': {
+            'completed': false,
+            'completed_at': null,
+            'bookmarks': [],
+          },
+          'preQuiz': {
+            'score': 0,
+            'spent': false,
+            'answers': [],
+            'completed_at': null,
+            'correct_answers': 0,
+            'total_questions': 0,
+          },
+          'postQuiz': {
+            'score': 0,
+            'spent': false,
+            'answers': [],
+            'completed_at': null,
+            'correct_answers': 0,
+            'total_questions': 0,
+          },
+        };
       }
 
-      modulesData[lessonId]['reading'] = {
+      // Update reading progress while preserving other fields
+      final currentModule = modulesData[lessonId] as Map<String, dynamic>;
+      currentModule['reading'] = {
         'completed': true,
         'completed_at': DateTime.now().toIso8601String(),
         'bookmarks': bookmarks.toList(),
