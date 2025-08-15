@@ -257,7 +257,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                       PopupMenuDivider(),
                       PopupMenuItem(
                         value: 'clear',
-                        child: Text('Clear All Stickers'),
+                        child: Text('Clear All Items'),
                       ),
                     ],
               ),
