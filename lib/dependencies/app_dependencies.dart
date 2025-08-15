@@ -1,5 +1,7 @@
 import 'package:provider/provider.dart';
+import 'package:safe_scales/dependencies/shop_dependencies.dart';
 import 'package:safe_scales/dependencies/theme_dependencies.dart';
+import 'package:safe_scales/providers/shop_provider.dart';
 import 'package:safe_scales/services/course_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -26,7 +28,8 @@ class AppDependencies {
   late final CourseDependencies course;
   late final DragonDependencies dragon;
   late final ItemDependencies item;
-  late final ThemeDependencies theme; // Add theme dependencies
+  late final ShopDependencies shop;
+  late final ThemeDependencies theme;
 
   AppDependencies({
     required this.supabase,
@@ -61,6 +64,11 @@ class AppDependencies {
       supabase: supabase,
       userStateService: userStateService,
     );
+
+    shop = ShopDependencies(
+        supabase: supabase,
+        userStateService: userStateService
+    );
   }
 
   /// Initialize all providers - but DON'T load data yet
@@ -71,6 +79,7 @@ class AppDependencies {
       await course.provider.initialize();
       await dragon.provider.initialize();
       await item.provider.initialize();
+      await shop.provider.initialize();
 
     } catch (e) {
       print("❌ Provider initialization failed: $e");
@@ -88,8 +97,11 @@ class AppDependencies {
       // Load dragon data
       await dragon.provider.loadUserDragons();
 
-      // load item data
+      // Load item data
       await item.provider.loadUserItems();
+
+      // Load shop data
+      await shop.provider.loadShopData();
 
     } catch (e) {
       print("❌ Provider data loading failed: $e");
@@ -139,6 +151,7 @@ class AppDependencies {
       ChangeNotifierProvider<CourseProvider>.value(value: course.provider),
       ChangeNotifierProvider<DragonProvider>.value(value: dragon.provider),
       ChangeNotifierProvider<ItemProvider>.value(value: item.provider),
+      ChangeNotifierProvider<ShopProvider>.value(value: shop.provider,),
       // Add future providers here
     ];
   }
@@ -149,6 +162,7 @@ class AppDependencies {
     course.dispose();
     dragon.dispose();
     item.dispose();
+    shop.dispose();
   }
 
   /// Health check - verify all dependencies are properly initialized

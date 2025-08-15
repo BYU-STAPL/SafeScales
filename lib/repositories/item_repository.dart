@@ -95,6 +95,7 @@ class ItemRepository {
           name: asset['name'],
           type: type,
           imageUrl: asset['imageUrl'],
+          cost: asset['cost'] ?? 1,
         );
 
         foundItems[item.id] = item;

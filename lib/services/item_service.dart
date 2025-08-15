@@ -118,6 +118,7 @@ class ItemService {
         type: type,
         name: asset['name'],
         imageUrl: asset['imageUrl'],
+        cost: asset['cost'] ?? 1,
       );
 
     } catch (e) {

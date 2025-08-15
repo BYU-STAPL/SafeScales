@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:safe_scales/providers/shop_provider.dart';
 import 'dart:convert';
 import 'package:safe_scales/themes/app_theme.dart';
-import 'package:safe_scales/services/shop_service.dart';
+import 'package:safe_scales/repositories/shop_repository.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/ui/screens/review_set/review_screen.dart';
@@ -10,7 +11,6 @@ import 'package:safe_scales/models/question.dart';
 
 import '../../models/lesson.dart';
 import '../../providers/course_provider.dart';
-import '../../providers/dragon_provider.dart';
 import '../widgets/shop_item_card.dart';
 
 class ShopScreen extends StatefulWidget {
@@ -22,11 +22,17 @@ class ShopScreen extends StatefulWidget {
 
 class _ShopScreenState extends State<ShopScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final ShopService _shopService = ShopService();
+
+
+  final ShopRepository _shopRepository = ShopRepository();
   final UserStateService _userState = UserStateService();
+
+
   int selectedTab = 0; // 0 = Accessories, 1 = Environments
   int? selectedIndex; // Track selected item index
   String? selectedLessonIndex; // Track selected lesson in popup
+
+
   bool showLessonDialog = false;
   List<Map<String, dynamic>> accessories = [];
   List<Map<String, dynamic>> environments = [];
@@ -36,19 +42,37 @@ class _ShopScreenState extends State<ShopScreen> {
   Map<String, Map<String, dynamic>> quizDetails = {};
   Map<String, Map<String, dynamic>> moduleDetails = {};
 
-  // Placeholder completed lessons
-  final List<String> completedLessons = [
-    'Lesson 1: Internet Safety',
-    'Lesson 2: Social Media Norms',
-    'Lesson 3: Passwords',
-    'Lesson 4: Digital Footprint',
-  ];
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
     _loadItems();
     _reloadUserProfile();
+
+
+    // Use addPostFrameCallback to ensure initialization happens after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeData();
+    });
+  }
+
+  Future<void> _initializeData() async {
+    if (_isInitialized) return;
+
+    final shopProvider = Provider.of<ShopProvider>(context, listen: false);
+
+    try {
+      // Only initialize if not already initialized
+      // Since AppDependencies already calls initialize(), we might not need this
+      if (!shopProvider.isLoading) {
+        await shopProvider.initialize();
+      }
+
+      _isInitialized = true;
+    } catch (e) {
+      debugPrint('Initialization error: $e');
+    }
   }
 
   Future<void> _reloadUserProfile() async {
@@ -82,16 +106,16 @@ class _ShopScreenState extends State<ShopScreen> {
     });
 
     try {
-      final accessoriesData = await _shopService.getAccessories();
-      final environmentsData = await _shopService.getEnvironments();
+      final accessoriesData = await _shopRepository.getAccessories();
+      final environmentsData = await _shopRepository.getEnvironments();
 
       // Load user's acquired items
       final userId = _userState.currentUser?.id;
       if (userId != null) {
-        acquiredAccessories = await _shopService.getUserAcquiredAccessories(
+        acquiredAccessories = await _shopRepository.getUserAcquiredAccessories(
           userId,
         );
-        acquiredEnvironments = await _shopService.getUserAcquiredEnvironments(
+        acquiredEnvironments = await _shopRepository.getUserAcquiredEnvironments(
           userId,
         );
       }
@@ -191,7 +215,7 @@ class _ShopScreenState extends State<ShopScreen> {
       if (!passedRevision) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Revision not completed. Purchase cancelled.'),
+            content: Text('Review set not completed. Purchase cancelled.'),
           ),
         );
         setState(() {
@@ -203,12 +227,12 @@ class _ShopScreenState extends State<ShopScreen> {
       // Proceed with the purchase after successful revision
       bool purchaseSuccess;
       if (selectedTab == 0) {
-        purchaseSuccess = await _shopService.purchaseAccessory(
+        purchaseSuccess = await _shopRepository.purchaseAccessory(
           userId,
           accessories[selectedIndex!]['id'].toString(),
         );
       } else {
-        purchaseSuccess = await _shopService.purchaseEnvironment(
+        purchaseSuccess = await _shopRepository.purchaseEnvironment(
           userId,
           environments[selectedIndex!]['id'].toString(),
         );
@@ -364,8 +388,8 @@ class _ShopScreenState extends State<ShopScreen> {
 
     final items = selectedTab == 0 ? accessories : environments;
 
-    return Consumer2<DragonProvider, CourseProvider>(
-      builder: (context, dragonProvider, courseProvider, child) {
+    return Consumer2<ShopProvider, CourseProvider>(
+      builder: (context, shopProvider, courseProvider, child) {
         return Stack(
           children: [
             Scaffold(
@@ -460,14 +484,11 @@ class _ShopScreenState extends State<ShopScreen> {
                           crossAxisSpacing: 24,
                           childAspectRatio: 0.95,
                           children: [
-                            for (int i = 0; i < items.length; i++)
+                            for (int i = 0; i < shopProvider.availableItems.length; i++)
                               ShopItemCard(
-                                image:
-                                items[i]['image_url'] ??
-                                    items[i]['imageUrl'] ??
-                                    items[i]['image'],
-                                name: items[i]['name'],
-                                cost: items[i]['cost']?.toString() ?? '1',
+                                image: shopProvider.availableItems[i].imageUrl,
+                                name: shopProvider.availableItems[i].name,
+                                cost: shopProvider.availableItems[i].cost.toString() ?? '1',
                                 isSelected: selectedIndex == i,
                                 isOwned:
                                 selectedTab == 0

@@ -6,7 +6,7 @@ import 'package:safe_scales/ui/widgets/sticker_collection_widget.dart';
 
 import 'package:safe_scales/models/sticker_item_model.dart';
 
-import '../../../services/shop_service.dart';
+import '../../../repositories/shop_repository.dart';
 import '../../../config/supabase_config.dart';
 import '../../../services/user_state_service.dart';
 import '../../../providers/course_provider.dart';
@@ -63,7 +63,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final shopService = ShopService();
+        final shopService = ShopRepository();
 
         // Get user's acquired environment IDs
         final envIds = await shopService.getUserAcquiredEnvironments(user.id);
@@ -143,7 +143,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        final shopService = ShopService();
+        final shopService = ShopRepository();
 
         final acquiredIds = await shopService.getUserAcquiredAccessories(
           user.id,
