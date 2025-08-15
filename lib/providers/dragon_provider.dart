@@ -95,7 +95,7 @@ class DragonProvider extends ChangeNotifier {
   /// Initialize the provider
   Future<void> initialize() async {
     await loadUserDragons();
-    print('DragonProvider initialized');
+    // print('DragonProvider initialized');
     _isInitialized = true;
   }
 
@@ -192,7 +192,6 @@ class DragonProvider extends ChangeNotifier {
       _currentEnvironment = environmentId;
       notifyListeners();
 
-      print('✅ Environment selection saved successfully');
     } catch (e) {
       _setError('Failed to save environment selection: $e');
       print('❌ Error saving environment selection: $e');

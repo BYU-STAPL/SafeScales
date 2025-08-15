@@ -69,7 +69,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
     });
 
     if (_isAnswerCorrect(currentQuestionIndex)) {
-      print("Correct Answer");
       setState(() {
         isCurrentQuestionCorrect = true;
         // showAnswerMessage = true; // Currently using snack-bar function: showAnswerCheckMessage
@@ -276,9 +275,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 question: widget.questionSet.questions[currentQuestionIndex],
                 selectedAnswers: userAnswers[currentQuestionIndex],
                 onAnswerChanged: (answers) {
-                  print(
-                    'Answer changed for question ${currentQuestionIndex + 1}: $answers',
-                  );
                   setState(() {
                     userAnswers[currentQuestionIndex] = answers;
                   });

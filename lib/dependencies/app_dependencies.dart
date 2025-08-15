@@ -67,17 +67,11 @@ class AppDependencies {
   /// Data loading will happen in AppInitializationScreen after authentication
   Future<void> initializeProviders() async {
     try {
-      print("🚀 Initializing providers (without data loading)...");
-
       // Just initialize the providers, don't load data
       await course.provider.initialize();
       await dragon.provider.initialize();
       await item.provider.initialize();
 
-      print("✅ All providers initialized successfully");
-      print("📚 Course Provider ready");
-      print("🐉 Dragon Provider ready");
-      print("🎒 Item Provider ready");
     } catch (e) {
       print("❌ Provider initialization failed: $e");
       rethrow;
@@ -87,8 +81,6 @@ class AppDependencies {
   /// Load all provider data - called from AppInitializationScreen
   Future<void> loadAllData() async {
     try {
-      print("📊 Loading all provider data...");
-
       // Load course data
       await course.provider.loadCourseContent();
       await course.provider.loadUserProgress();
@@ -96,9 +88,9 @@ class AppDependencies {
       // Load dragon data
       await dragon.provider.loadUserDragons();
 
-      // Item provider data will be loaded if needed by the initialization screen
+      // load item data
+      await item.provider.loadUserItems();
 
-      print("✅ All provider data loaded successfully");
     } catch (e) {
       print("❌ Provider data loading failed: $e");
       rethrow;
@@ -106,39 +98,39 @@ class AppDependencies {
   }
 
   /// Helper method to get current class ID
-  Future<String?> _getCurrentClassId() async {
-    try {
-      final user = userStateService.currentUser;
-      if (user == null) {
-        print("⚠️ No current user for class ID lookup");
-        return null;
-      }
-
-      // Option 1: Get from user's metadata if stored there
-      final userMetadata = user.userMetadata;
-      if (userMetadata.containsKey('class_id')) {
-        return userMetadata['class_id'] as String?;
-      }
-
-      // Option 2: Query from database
-      try {
-        final response =
-            await supabase
-                .from('Users')
-                .select('class_id')
-                .eq('id', user.id)
-                .maybeSingle();
-
-        return response?['class_id'] as String?;
-      } catch (dbError) {
-        print("⚠️ Database query for class_id failed: $dbError");
-        return null;
-      }
-    } catch (e) {
-      print("❌ Error getting current class ID: $e");
-      return null;
-    }
-  }
+  // Future<String?> _getCurrentClassId() async {
+  //   try {
+  //     final user = userStateService.currentUser;
+  //     if (user == null) {
+  //       print("⚠️ No current user for class ID lookup");
+  //       return null;
+  //     }
+  //
+  //     // Option 1: Get from user's metadata if stored there
+  //     final userMetadata = user.userMetadata;
+  //     if (userMetadata.containsKey('class_id')) {
+  //       return userMetadata['class_id'] as String?;
+  //     }
+  //
+  //     // Option 2: Query from database
+  //     try {
+  //       final response =
+  //           await supabase
+  //               .from('Users')
+  //               .select('class_id')
+  //               .eq('id', user.id)
+  //               .maybeSingle();
+  //
+  //       return response?['class_id'] as String?;
+  //     } catch (dbError) {
+  //       print("⚠️ Database query for class_id failed: $dbError");
+  //       return null;
+  //     }
+  //   } catch (e) {
+  //     print("❌ Error getting current class ID: $e");
+  //     return null;
+  //   }
+  // }
 
   /// Get all providers for MultiProvider setup
   List<ChangeNotifierProvider> getProviders() {

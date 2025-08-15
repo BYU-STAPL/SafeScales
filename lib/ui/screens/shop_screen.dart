@@ -113,7 +113,6 @@ class _ShopScreenState extends State<ShopScreen> {
     final user = _userState.currentUser;
 
     if (user == null || user.modules == null) {
-      print('No user or modules data available');
       return [];
     }
 
@@ -149,9 +148,6 @@ class _ShopScreenState extends State<ShopScreen> {
             })
             .toList();
 
-    print(
-      'Found ${completedQuizzes.length} available completed modules: $completedQuizzes',
-    );
     return completedQuizzes;
   }
 

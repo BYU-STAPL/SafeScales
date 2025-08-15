@@ -97,7 +97,6 @@ class ShopService {
 
       // Check if user already has this accessory
       if (acquiredAccessories.contains(accessoryId)) {
-        print('User already owns this accessory');
         return false;
       }
 
@@ -197,7 +196,6 @@ class ShopService {
 
       // Check if user already has this environment
       if (acquiredEnvironments.contains(environmentId)) {
-        print('User already owns this environment');
         return false;
       }
 

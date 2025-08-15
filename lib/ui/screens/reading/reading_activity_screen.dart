@@ -254,10 +254,10 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
             leading: IconButton(
               iconSize: 22,
               icon: Icon(
-                _bookmarkedPages.contains(index)
+                isBookmarked
                     ? FontAwesomeIcons.solidBookmark
                     : FontAwesomeIcons.bookmark,
-                color: _bookmarkedPages.contains(index)
+                color: isBookmarked
                     ? Theme.of(context).colorScheme.primary
                     : null,
               ),

@@ -44,8 +44,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   List<StickerItem> placedStickers = [];
   String? selectedStickerId;
 
-  // List<String> _availablePhases = [];
-
   @override
   void initState() {
     super.initState();
@@ -112,9 +110,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                 setState(() {
                   selectedEnvironment = envIndex;
                 });
-                print(
-                  '✅ Set initial environment to: ${userEnvironments[envIndex]}',
-                );
               }
             }
           } else {
@@ -171,9 +166,11 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
           userAccessories = foundAccessories;
           _isLoadingAccessories = false;
         });
-        print('✅ Loaded ${userAccessories.length} accessories');
+
         _onAccessoriesLoaded();
-      } else {
+
+      }
+      else {
         print('⚠️ No user found');
         setState(() => _isLoadingAccessories = false);
       }
@@ -200,7 +197,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
         setState(() => selectedPhase = phase);
       }
     } catch (e) {
-      print(e);
+      print('❌ Error: $e');
     }
   }
 
@@ -379,33 +376,12 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     );
   }
 
-  // Get available phases using state manager
-  // List<String> get availablePhases {
-  //   // Get phases from state manager instead of widget.phases
-  //   // final userPhases = _stateManager.userDragons;
-  //
-  //   List<String> phases = ['egg'];
-  //
-  //   // Check if dragon has each phase using state manager
-  //   if (_stateManager.hasPhase(widget.dragonId, 'stage1')) phases.add('stage1');
-  //   if (_stateManager.hasPhase(widget.dragonId, 'stage2')) phases.add('stage2');
-  //   if (_stateManager.hasPhase(widget.dragonId, 'final')) phases.add('final');
-  //
-  //   return phases;
-  // }
-
-  // Get image URL for current phase using state manager
-  // String getCurrentPhasePhase() {
-  //   return availablePhases[selectedPhase];
-  // }
-
   void _showPhaseDialog() async {
     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
 
     final availablePhases =
         dragonProvider.unlockedDragonPhases[widget.dragonId];
     if (availablePhases == null) {
-      print("Error DragonDecoration showPhaseDialog: No available phases");
       return;
     }
 

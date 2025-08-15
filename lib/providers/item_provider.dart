@@ -52,7 +52,6 @@ class ItemProvider extends ChangeNotifier {
 
     if (currentUser == null) {
       _clearData();
-      print('Item Provider initialized');
       _isInitialized = true;
       return;
     }
@@ -61,8 +60,6 @@ class ItemProvider extends ChangeNotifier {
     _currentCourseId = courseData?.courseId;
 
     await loadUserItems();
-
-    print('Item Provider initialized with Data');
 
     _isInitialized = true;
   }

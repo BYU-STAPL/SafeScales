@@ -64,7 +64,7 @@ class CourseProvider extends ChangeNotifier {
     if (!isUserLoggedIn) {
       _clearData();
 
-      print('Course Provider initialized');
+      // print('Course Provider initialized');
       _isInitialized = true;
       return;
     }
@@ -73,7 +73,6 @@ class CourseProvider extends ChangeNotifier {
       await _loadCourseData();
       await loadUserProgress();
 
-      print('Course Provider initialized with Data');
       _isInitialized = true;
     });
   }

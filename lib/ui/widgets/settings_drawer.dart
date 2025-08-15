@@ -21,12 +21,12 @@ class SettingsDrawer extends StatelessWidget {
   final VoidCallback onHelp;
   final VoidCallback onLogout;
 
-  String _version = '';
-
-  _getVersionInfo() async {
-    PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    _version = 'v${packageInfo.version} (${packageInfo.buildNumber})';
-  }
+  // String _version = '';
+  //
+  // _getVersionInfo() async {
+  //   PackageInfo packageInfo = await PackageInfo.fromPlatform();
+  //   _version = 'v${packageInfo.version} (${packageInfo.buildNumber})';
+  // }
 
   @override
   Widget build(BuildContext context) {
