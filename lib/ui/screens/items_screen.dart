@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:safe_scales/ui/widgets/toy_box_item_card.dart';
+import 'package:safe_scales/ui/widgets/item_card.dart';
 import 'package:safe_scales/providers/item_provider.dart';
 
 class ItemsScreen extends StatefulWidget {
@@ -253,7 +253,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
                           childAspectRatio: 0.95,
                           children: [
                             for (var accessory in accessories)
-                              ToyBoxItemCard(
+                              ItemCard(
                                 image: accessory.imageUrl,
                                 name: accessory.name,
                                 onTap: () {
@@ -315,7 +315,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
                           childAspectRatio: 0.95,
                           children: [
                             for (var environment in environments)
-                              ToyBoxItemCard(
+                              ItemCard(
                                 image: environment.imageUrl,
                                 name: environment.name,
                                 onTap: () {

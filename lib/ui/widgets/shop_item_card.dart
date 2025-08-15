@@ -3,22 +3,30 @@ import 'package:safe_scales/extensions/string_extensions.dart';
 
 import '../../themes/app_theme.dart';
 
-class ToyBoxItemCard extends StatelessWidget {
+class ShopItemCard extends StatelessWidget {
   final String? image;
   final String name;
+  final String cost;
+  final bool isSelected;
+  final bool isOwned;
+  final Color highlight;
   final VoidCallback onTap;
 
-  const ToyBoxItemCard({
-    super.key,
+  const ShopItemCard({
     this.image,
     required this.name,
+    required this.cost,
+    required this.isSelected,
+    required this.isOwned,
+    required this.highlight,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-
     ThemeData theme = Theme.of(context);
+
+    Color green = theme.colorScheme.secondary;
 
     return Material(
       color: Colors.transparent,
@@ -27,11 +35,17 @@ class ToyBoxItemCard extends StatelessWidget {
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHigh,
+            color:
+            isSelected ? highlight : theme.colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
-              width: 1.2,
+              color:
+              isOwned
+                  ? green
+                  : theme.colorScheme.onSurfaceVariant.withValues(
+                alpha: 0.2,
+              ),
+              width: isOwned ? 2 : 1.2,
             ),
             boxShadow: [
               BoxShadow(
@@ -53,8 +67,8 @@ class ToyBoxItemCard extends StatelessWidget {
                     image != null
                         ? Image.network(
                       image!,
-                      width: 75 * AppTheme.fontSizeScale,
-                      height: 75 * AppTheme.fontSizeScale,
+                      width: 60 * AppTheme.fontSizeScale,
+                      height: 60 * AppTheme.fontSizeScale,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
@@ -80,6 +94,23 @@ class ToyBoxItemCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (isOwned)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: green,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.check,
+                          size: 16 * AppTheme.fontSizeScale,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -92,7 +123,13 @@ class ToyBoxItemCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 5),
+              const SizedBox(height: 4),
+              Text(
+                isOwned ? 'OWNED'.toUpperCase() : 'Cost: $cost review set',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: isOwned ? green : theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
             ],
           ),
         ),
