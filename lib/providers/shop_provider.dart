@@ -3,12 +3,16 @@ import 'package:safe_scales/repositories/shop_repository.dart';
 
 import '../models/lesson.dart';
 import '../models/sticker_item_model.dart';
+import '../models/user.dart';
+import '../services/course_service.dart';
+import '../services/item_service.dart';
 import '../services/shop_service.dart';
 import '../services/user_state_service.dart';
 
 class ShopProvider extends ChangeNotifier {
   // Services
   final ShopService _shopService;
+  final ItemService _itemService;
   final UserStateService _userStateService;
 
   // State Variables
@@ -23,8 +27,10 @@ class ShopProvider extends ChangeNotifier {
 
   ShopProvider({
     ShopService? shopService,
+    ItemService? itemService,
     UserStateService? userStateService,
   }) : _shopService = shopService ?? ShopService(),
+        _itemService = itemService ?? ItemService(),
         _userStateService = userStateService ?? UserStateService();
 
 
@@ -90,7 +96,37 @@ class ShopProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      _availableItems = await _shopService.getShopItems();
+      final availableItems = await _shopService.getShopItems();
+
+      final availableEnvironments = await _shopService.getShopEnvironments();
+
+      User? currentUser = _userStateService.currentUser;
+      if (currentUser == null) {
+        _clearData();
+        _isInitialized = true;
+        return;
+      }
+
+      final courseData = await CourseService().getUserCourseData(currentUser.id);
+      if (courseData == null) {
+        _clearData();
+        _isInitialized = true;
+        return;
+      }
+
+      _availableItems = [];
+      for (Item item in availableItems) {
+        if (!await _itemService.userHasItem(currentUser.id, courseData.courseId, item.id)) {
+          _availableItems.add(item);
+        }
+      }
+
+      _availableEnvironments = [];
+      for (Item env in availableEnvironments) {
+        if (!await _itemService.userHasItem(currentUser.id, courseData.courseId, env.id)) {
+          _availableEnvironments.add(env);
+        }
+      }
 
       _isLoading = false;
       notifyListeners();

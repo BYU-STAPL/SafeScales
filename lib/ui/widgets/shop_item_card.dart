@@ -8,7 +8,7 @@ class ShopItemCard extends StatelessWidget {
   final String name;
   final String cost;
   final bool isSelected;
-  final bool isOwned;
+  // final bool isOwned;
   final Color highlight;
   final VoidCallback onTap;
 
@@ -17,7 +17,7 @@ class ShopItemCard extends StatelessWidget {
     required this.name,
     required this.cost,
     required this.isSelected,
-    required this.isOwned,
+    // required this.isOwned,
     required this.highlight,
     required this.onTap,
   });
@@ -39,13 +39,8 @@ class ShopItemCard extends StatelessWidget {
             isSelected ? highlight : theme.colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color:
-              isOwned
-                  ? green
-                  : theme.colorScheme.onSurfaceVariant.withValues(
-                alpha: 0.2,
-              ),
-              width: isOwned ? 2 : 1.2,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2,), //isOwned ? green : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2,),
+              width: 1.2, //isOwned ? 2 : 1.2,
             ),
             boxShadow: [
               BoxShadow(
@@ -94,23 +89,23 @@ class ShopItemCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (isOwned)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: green,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.check,
-                          size: 16 * AppTheme.fontSizeScale,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                  // if (isOwned)
+                  //   Positioned(
+                  //     right: 0,
+                  //     top: 0,
+                  //     child: Container(
+                  //       padding: const EdgeInsets.all(4),
+                  //       decoration: BoxDecoration(
+                  //         color: green,
+                  //         borderRadius: BorderRadius.circular(8),
+                  //       ),
+                  //       child: Icon(
+                  //         Icons.check,
+                  //         size: 16 * AppTheme.fontSizeScale,
+                  //         color: Colors.white,
+                  //       ),
+                  //     ),
+                  //   ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -125,9 +120,9 @@ class ShopItemCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                isOwned ? 'OWNED'.toUpperCase() : 'Cost: $cost review set',
+                'Cost: $cost review set', //isOwned ? 'OWNED'.toUpperCase() : 'Cost: $cost review set',
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: isOwned ? green : theme.colorScheme.onSurfaceVariant,
+                  color: theme.colorScheme.onSurfaceVariant, //isOwned ? green : theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
