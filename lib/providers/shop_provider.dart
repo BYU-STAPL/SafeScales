@@ -71,6 +71,11 @@ class ShopProvider extends ChangeNotifier {
     }
   }
 
+  /// Refresh all data
+  Future<void> refresh() async {
+    await loadShopData();
+  }
+
   // === Initialization ===
   Future<void> initialize() async {
     _setLoading(true);
@@ -91,7 +96,6 @@ class ShopProvider extends ChangeNotifier {
 
   // === Load Shop Data from Shop Service ===
   Future<void> loadShopData() async {
-
     try {
       _isLoading = true;
       notifyListeners();
@@ -104,11 +108,12 @@ class ShopProvider extends ChangeNotifier {
       if (currentUser == null) {
         _clearData();
         _isInitialized = true;
+
         return;
       }
 
-      final courseData = await CourseService().getUserCourseData(currentUser.id);
-      if (courseData == null) {
+      String? courseId = await CourseService().getUserCourseId(currentUser.id);
+      if (courseId == null) {
         _clearData();
         _isInitialized = true;
         return;
@@ -116,14 +121,14 @@ class ShopProvider extends ChangeNotifier {
 
       _availableItems = [];
       for (Item item in availableItems) {
-        if (!await _itemService.userHasItem(currentUser.id, courseData.courseId, item.id)) {
+        if (!await _itemService.userHasItem(currentUser.id, courseId, item.id)) {
           _availableItems.add(item);
         }
       }
 
       _availableEnvironments = [];
       for (Item env in availableEnvironments) {
-        if (!await _itemService.userHasItem(currentUser.id, courseData.courseId, env.id)) {
+        if (!await _itemService.userHasItem(currentUser.id, courseId, env.id)) {
           _availableEnvironments.add(env);
         }
       }

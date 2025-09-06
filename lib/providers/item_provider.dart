@@ -56,8 +56,12 @@ class ItemProvider extends ChangeNotifier {
       return;
     }
 
-    final courseData = await CourseService().getUserCourseData(currentUser!.id);
-    _currentCourseId = courseData?.courseId;
+    String? courseId = await CourseService().getUserCourseId(currentUser!.id);
+    if (courseId == null) {
+      _clearData();
+      return;
+    }
+    _currentCourseId = courseId;
 
     await loadUserItems();
 

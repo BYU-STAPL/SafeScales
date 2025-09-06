@@ -54,8 +54,6 @@ class _ShopScreenState extends State<ShopScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeData();
     });
-
-    // _refresh(); this is broken
   }
 
   Future<void> _initializeData() async {
@@ -75,111 +73,6 @@ class _ShopScreenState extends State<ShopScreen> {
       debugPrint('Initialization error: $e');
     }
   }
-
-  Future<void> _refresh() async {
-    await Provider.of<ShopProvider>(context, listen: false).loadShopData();
-  }
-
-  // Future<void> _reloadUserProfile() async {
-  //   await _userState.loadUserProfile();
-  //   await _loadModuleDetails();
-  // }
-
-  // Future<void> _loadModuleDetails() async {
-  //   try {
-  //     final completedModules = _getCompletedQuizzes();
-  //     if (completedModules.isEmpty) return;
-  //
-  //     final moduleIds = completedModules.map((m) => m['id']).toList();
-  //
-  //     final response = await SupabaseConfig.client
-  //         .from('modules')
-  //         .select()
-  //         .inFilter('id', moduleIds);
-  //
-  //     setState(() {
-  //       moduleDetails = {for (var module in response) module['id']: module};
-  //     });
-  //   } catch (e) {
-  //     print('❌Error loading module details: $e');
-  //   }
-  // }
-
-  // Future<void> _loadItems() async {
-  //   setState(() {
-  //     isLoading = true;
-  //   });
-  //
-  //   try {
-  //     final accessoriesData = await _shopRepository.getAccessories();
-  //     final environmentsData = await _shopRepository.getEnvironments();
-  //
-  //     // Load user's acquired items
-  //     final userId = _userState.currentUser?.id;
-  //     if (userId != null) {
-  //       acquiredAccessories = await _shopRepository.getUserAcquiredAccessories(
-  //         userId,
-  //       );
-  //       acquiredEnvironments = await _shopRepository.getUserAcquiredEnvironments(
-  //         userId,
-  //       );
-  //     }
-  //
-  //     setState(() {
-  //       accessories = accessoriesData;
-  //       environments = environmentsData;
-  //       isLoading = false;
-  //     });
-  //
-  //   } catch (e) {
-  //     print('❌Error loading shop items: $e');
-  //     setState(() {
-  //       isLoading = false;
-  //     });
-  //   }
-  // }
-
-  // List<Map<String, dynamic>> _getCompletedQuizzes() {
-  //   final user = _userState.currentUser;
-  //
-  //   if (user == null || user.modules == null) {
-  //     return [];
-  //   }
-  //
-  //   final Map<String, dynamic> modules = user.modules!;
-  //
-  //   final completedQuizzes =
-  //       modules.entries
-  //           .where((moduleEntry) {
-  //             final moduleData = moduleEntry.value as Map<String, dynamic>;
-  //             final preQuiz = moduleData['preQuiz'] as Map<String, dynamic>?;
-  //             final postQuiz = moduleData['postQuiz'] as Map<String, dynamic>?;
-  //             final reading = moduleData['reading'] as Map<String, dynamic>?;
-  //
-  //             final bool preCompleted =
-  //                 preQuiz != null && preQuiz['completed_at'] != null;
-  //             final bool postCompleted =
-  //                 postQuiz != null && postQuiz['completed_at'] != null;
-  //             final bool readingCompleted =
-  //                 reading != null &&
-  //                 (reading['completed'] == true ||
-  //                     reading['completed_at'] != null);
-  //
-  //             // A module is considered completed if reading, preQuiz, and postQuiz are all completed
-  //             return preCompleted && postCompleted && readingCompleted;
-  //           })
-  //           .map((moduleEntry) {
-  //             final moduleData = moduleEntry.value as Map<String, dynamic>;
-  //             return {
-  //               'id': moduleEntry.key,
-  //               'preQuiz': moduleData['preQuiz'],
-  //               'postQuiz': moduleData['postQuiz'],
-  //             };
-  //           })
-  //           .toList();
-  //
-  //   return completedQuizzes;
-  // }
 
   Future<void> _handlePurchase() async {
     if (selectedIndex == null) return;
@@ -411,11 +304,38 @@ class _ShopScreenState extends State<ShopScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 10),
-                      // Subtitle
-                      Text(
-                        'Earn new items and environments for your dragons by completing review sets from finished lessons.',
-                        style: theme.textTheme.labelMedium,
+
+                      Row(
+                        children: [
+                          // Subtitle
+                          Expanded(
+                            child: Text(
+                              'Earn new items and environments for your dragons by completing review sets from finished lessons.',
+                              style: theme.textTheme.labelMedium,
+                            ),
+                          ),
+
+                          // Refresh button
+                          Consumer<ShopProvider>(
+                            builder: (context, shopProvider, child) {
+                              return IconButton(
+                                onPressed: shopProvider.isLoading
+                                    ? null
+                                    : () => shopProvider.refresh(),
+                                icon: shopProvider.isLoading
+                                    ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                                    : const Icon(Icons.refresh),
+                                tooltip: 'Refresh items',
+                              );
+                            },
+                          ),
+                        ],
                       ),
+
                       const SizedBox(height: 20),
                       // Toggle Buttons
                       Row(

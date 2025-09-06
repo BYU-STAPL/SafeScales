@@ -14,6 +14,20 @@ class CourseService {
     : _repository = repository ?? CourseRepository();
 
   // === Course Content Business Logic ===
+  Future<String?> getUserCourseId(String userId) async {
+    try {
+      // Get user's class
+      final classData = await _repository.getUserClass(userId);
+      if (classData == null) {
+        return null;
+      }
+
+      return classData['id'];
+
+    } catch (e) {
+      throw CourseServiceException('Failed to load course id: $e');
+    }
+  }
 
   /// Get complete course data for a user including class info and lessons
   Future<CourseData?> getUserCourseData(String userId) async {
