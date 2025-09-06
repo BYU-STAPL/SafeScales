@@ -17,6 +17,7 @@ class ShopProvider extends ChangeNotifier {
 
   // State Variables
   bool _isLoading = false;
+  bool _isPurchasing = false; // Add purchasing state
   String? _error;
   bool _isInitialized = false;
 
@@ -33,9 +34,9 @@ class ShopProvider extends ChangeNotifier {
         _itemService = itemService ?? ItemService(),
         _userStateService = userStateService ?? UserStateService();
 
-
   // === GETTERS ===
   bool get isLoading => _isLoading;
+  bool get isPurchasing => _isPurchasing;
   String? get error => _error;
   bool get isInitialized => _isInitialized;
 
@@ -43,11 +44,11 @@ class ShopProvider extends ChangeNotifier {
   List<Item> get availableItems => _availableItems;
   List<Item> get availableEnvironments => _availableEnvironments;
 
-
   // === Utility ===
   void _clearData() {
     _completedLessons = [];
     _availableItems = [];
+    _availableEnvironments = [];
     _isInitialized = false;
     notifyListeners();
   }
@@ -55,6 +56,13 @@ class ShopProvider extends ChangeNotifier {
   void _setLoading(bool loading) {
     if (_isLoading != loading) {
       _isLoading = loading;
+      notifyListeners();
+    }
+  }
+
+  void _setPurchasing(bool purchasing) {
+    if (_isPurchasing != purchasing) {
+      _isPurchasing = purchasing;
       notifyListeners();
     }
   }
@@ -101,14 +109,12 @@ class ShopProvider extends ChangeNotifier {
       notifyListeners();
 
       final availableItems = await _shopService.getShopItems();
-
       final availableEnvironments = await _shopService.getShopEnvironments();
 
       User? currentUser = _userStateService.currentUser;
       if (currentUser == null) {
         _clearData();
         _isInitialized = true;
-
         return;
       }
 
@@ -143,13 +149,100 @@ class ShopProvider extends ChangeNotifier {
     }
   }
 
+  // === Purchase Methods ===
 
-  // === Process a completed Purchase ===
-  // Update the available items to buy
+  /// Purchase a specific item by index from available items
+  Future<PurchaseResult> purchaseItemByIndex(int itemIndex, bool isEnvironment) async {
+    User? currentUser = _userStateService.currentUser;
+    if (currentUser == null) {
+      return PurchaseResult.failure('User not logged in');
+    }
 
+    List<Item> sourceList = isEnvironment ? _availableEnvironments : _availableItems;
 
+    if (itemIndex < 0 || itemIndex >= sourceList.length) {
+      return PurchaseResult.failure('Invalid item selection');
+    }
 
+    Item selectedItem = sourceList[itemIndex];
+    return await purchaseItem(selectedItem);
+  }
 
+  /// Purchase a specific item
+  Future<PurchaseResult> purchaseItem(Item item) async {
+    User? currentUser = _userStateService.currentUser;
+    if (currentUser == null) {
+      return PurchaseResult.failure('User not logged in');
+    }
+
+    _setPurchasing(true);
+    _clearError();
+
+    try {
+      debugPrint('🛒 Attempting to purchase: ${item.name} (${item.id})');
+
+      bool success = await _shopService.purchaseShopItem(currentUser.id, item);
+
+      if (success) {
+        // Remove the item from available items since it's now owned
+        if (item.type == ItemType.item) {
+          _availableItems.removeWhere((i) => i.id == item.id);
+        } else if (item.type == ItemType.environment) {
+          _availableEnvironments.removeWhere((i) => i.id == item.id);
+        }
+
+        notifyListeners();
+
+        debugPrint('✅ Purchase successful: ${item.name}');
+        return PurchaseResult.success(item);
+      } else {
+        debugPrint('❌ Purchase failed: ${item.name}');
+        return PurchaseResult.failure('Purchase failed');
+      }
+
+    } catch (e) {
+      debugPrint('❌ Error during purchase: $e');
+      _setError('Purchase error: $e');
+      return PurchaseResult.failure('Error: ${e.toString()}');
+    } finally {
+      _setPurchasing(false);
+    }
+  }
+
+  /// Get item by index for UI purposes
+  Item? getItemByIndex(int index, bool isEnvironment) {
+    List<Item> sourceList = isEnvironment ? _availableEnvironments : _availableItems;
+    if (index < 0 || index >= sourceList.length) return null;
+    return sourceList[index];
+  }
+}
+
+/// Result class for purchase operations
+class PurchaseResult {
+  final bool isSuccess;
+  final String message;
+  final Item? item;
+
+  PurchaseResult._({
+    required this.isSuccess,
+    required this.message,
+    this.item,
+  });
+
+  factory PurchaseResult.success(Item item) {
+    return PurchaseResult._(
+      isSuccess: true,
+      message: 'Purchase successful!',
+      item: item,
+    );
+  }
+
+  factory PurchaseResult.failure(String message) {
+    return PurchaseResult._(
+      isSuccess: false,
+      message: message,
+    );
+  }
 }
 
 class ShopProviderException implements Exception {

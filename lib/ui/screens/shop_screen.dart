@@ -10,6 +10,7 @@ import 'package:safe_scales/ui/screens/review_set/review_screen.dart';
 import 'package:safe_scales/models/question.dart';
 
 import '../../models/lesson.dart';
+import '../../models/sticker_item_model.dart';
 import '../../providers/course_provider.dart';
 import '../widgets/shop_item_card.dart';
 
@@ -77,13 +78,14 @@ class _ShopScreenState extends State<ShopScreen> {
   Future<void> _handlePurchase() async {
     if (selectedIndex == null) return;
 
-    final userId = _userState.currentUser?.id;
-    if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to purchase items')),
-      );
-      return;
-    }
+    // User can't see shop unless logged in
+    // final userId = _userState.currentUser?.id;
+    // if (userId == null) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(content: Text('Please log in to purchase items')),
+    //   );
+    //   return;
+    // }
 
     // Show completed modules popup first
     setState(() {
@@ -92,11 +94,81 @@ class _ShopScreenState extends State<ShopScreen> {
     });
   }
 
+  // Future<void> _completePurchase() async {
+  //   if (selectedIndex == null || selectedLessonIndex == null) return;
+  //
+  //   final userId = _userState.currentUser?.id;
+  //   if (userId == null) return;
+  //
+  //   try {
+  //     // Hide module selection dialog before starting the revision quiz
+  //     setState(() {
+  //       showLessonDialog = false;
+  //     });
+  //
+  //     // Start the revision quiz for the selected module
+  //     final bool passedRevision = await _startRevisionQuiz(
+  //       selectedLessonIndex!,
+  //     );
+  //
+  //     if (!mounted) return;
+  //
+  //     if (!passedRevision) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text('Review set not completed. Purchase cancelled.'),
+  //         ),
+  //       );
+  //       setState(() {
+  //         selectedLessonIndex = null;
+  //       });
+  //       return;
+  //     }
+  //
+  //     // Proceed with the purchase after successful revision
+  //     bool purchaseSuccess;
+  //     if (selectedTab == 0) {
+  //       purchaseSuccess = await _shopRepository.purchaseAccessory(
+  //         userId,
+  //         accessories[selectedIndex!]['id'].toString(),
+  //       );
+  //     } else {
+  //       purchaseSuccess = await _shopRepository.purchaseEnvironment(
+  //         userId,
+  //         environments[selectedIndex!]['id'].toString(),
+  //       );
+  //     }
+  //
+  //     if (purchaseSuccess) {
+  //       ScaffoldMessenger.of(
+  //         context,
+  //       ).showSnackBar(const SnackBar(content: Text('Purchase successful!')));
+  //       // await _loadItems();
+  //       // TODO: Create Refresh
+  //     } else {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text('Failed to complete purchase')),
+  //       );
+  //     }
+  //
+  //     setState(() {
+  //       selectedLessonIndex = null;
+  //     });
+  //   } catch (e) {
+  //     print('❌Error during purchase: $e');
+  //     ScaffoldMessenger.of(
+  //       context,
+  //     ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+  //   }
+  // }
+
   Future<void> _completePurchase() async {
     if (selectedIndex == null || selectedLessonIndex == null) return;
 
     final userId = _userState.currentUser?.id;
     if (userId == null) return;
+
+    final shopProvider = Provider.of<ShopProvider>(context, listen: false);
 
     try {
       // Hide module selection dialog before starting the revision quiz
@@ -123,29 +195,26 @@ class _ShopScreenState extends State<ShopScreen> {
         return;
       }
 
-      // Proceed with the purchase after successful revision
-      bool purchaseSuccess;
-      if (selectedTab == 0) {
-        purchaseSuccess = await _shopRepository.purchaseAccessory(
-          userId,
-          accessories[selectedIndex!]['id'].toString(),
-        );
-      } else {
-        purchaseSuccess = await _shopRepository.purchaseEnvironment(
-          userId,
-          environments[selectedIndex!]['id'].toString(),
-        );
-      }
+      // Proceed with the purchase using the provider
+      final PurchaseResult result = await shopProvider.purchaseItemByIndex(
+        selectedIndex!,
+        selectedTab == 1, // true for environments, false for items
+      );
 
-      if (purchaseSuccess) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Purchase successful!')));
-        // await _loadItems();
-        // TODO: Create Refresh
+      if (!mounted) return;
+
+      if (result.isSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message)),
+        );
+
+        // Reset selected index since the item is no longer available
+        setState(() {
+          selectedIndex = null;
+        });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to complete purchase')),
+          SnackBar(content: Text(result.message)),
         );
       }
 
@@ -153,10 +222,14 @@ class _ShopScreenState extends State<ShopScreen> {
         selectedLessonIndex = null;
       });
     } catch (e) {
-      print('❌Error during purchase: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+      debugPrint('Error during purchase: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+
+      setState(() {
+        selectedLessonIndex = null;
+      });
     }
   }
 
@@ -173,7 +246,32 @@ class _ShopScreenState extends State<ShopScreen> {
 
       bool result = false;
 
+      ShopProvider shopProvider = Provider.of<ShopProvider>(context, listen: false);
+      Item? selectedItem = shopProvider.getItemByIndex(selectedIndex!, selectedTab == 1);
+
       if (questionSet.questions.isEmpty) {
+
+        //TODO: Remove after testing
+        QuestionSet testingSet = QuestionSet(
+            id: "id",
+            title: "test",
+            description: "description...",
+            activityType: ActivityType.review,
+            subject: "subject",
+            questions: [
+              Question(id: "id", questionText: "Pick A", options: ['a', 'b'], correctAnswerIndices: [0], isMultipleAnswer: true, explanation: 'a is right'),
+            ]
+        );
+
+        result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReviewScreen(questionSet: testingSet, image: selectedItem?.imageUrl),
+          ),
+        );
+
+        //TODO: Put back after testing
+        /*
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -186,6 +284,7 @@ class _ShopScreenState extends State<ShopScreen> {
             Theme.of(context).colorScheme.inverseSurface,
           ),
         );
+        */
       }
       else {
         result = await Navigator.push(
@@ -279,15 +378,10 @@ class _ShopScreenState extends State<ShopScreen> {
 
     final Color primary = Theme.of(context).colorScheme.primary;
     final Color selected = primary;
-    final Color unselected = theme.colorScheme.lightBlue.withValues(
-      alpha: 0.5,
-    ); //Colors.blue[100]!;
+    final Color unselected = theme.colorScheme.lightBlue.withValues(alpha: 0.5,);
     final Color selectedText = Colors.white;
     final Color unselectedText = primary;
     final Color highlight = theme.colorScheme.green.withValues(alpha: 0.25);
-
-    final shopProvider = Provider.of<ShopProvider>(context, listen: false);
-
 
     return Consumer2<ShopProvider, CourseProvider>(
       builder: (context, shopProvider, courseProvider, child) {

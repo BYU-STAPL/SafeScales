@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
+import 'package:safe_scales/ui/screens/review_set/review_results_screen.dart';
 
 import '../../widgets/progress_bar.dart';
 import '../../../models/question.dart';
@@ -7,9 +8,10 @@ import '../../widgets/question_widget.dart';
 
 class ReviewScreen extends StatefulWidget {
   final QuestionSet questionSet;
+  final String? image;
 
   const ReviewScreen({
-    super.key, required this.questionSet
+    super.key, required this.questionSet, this.image,
   });
 
   @override
@@ -41,6 +43,19 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   void _finishReview() async {
+
+    if (!mounted) return;
+
+    // Show results screen and then return to previous screen
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => ReviewResultsScreen(
+          image: widget.image,
+        ),
+      ),
+    );
 
     if (!mounted) return;
 

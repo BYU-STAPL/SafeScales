@@ -18,11 +18,11 @@ class ShopService {
       for (var rawItem in rawData) {
         // Build Item
         Item item = Item(
-            id: rawItem['id'],
-            type: ItemType.item,
-            name: rawItem['name'],
-            imageUrl: rawItem['imageUrl'] ?? rawItem['image_url'] ?? '',
-            cost: rawItem['cost'] ?? 1,
+          id: rawItem['id'],
+          type: ItemType.item,
+          name: rawItem['name'],
+          imageUrl: rawItem['imageUrl'] ?? rawItem['image_url'] ?? '',
+          cost: rawItem['cost'] ?? 1,
         );
 
         items.add(item);
@@ -119,4 +119,48 @@ class ShopService {
     }
   }
 
+  // === Purchase Methods ===
+
+  /// Purchase an item (accessory)
+  Future<bool> purchaseItem(String userId, String itemId) async {
+    try {
+      return await _repository.purchaseAccessory(userId, itemId);
+    } catch (e) {
+      throw ShopServiceException('Failed to purchase item: $e');
+    }
+  }
+
+  /// Purchase an environment
+  Future<bool> purchaseEnvironment(String userId, String environmentId) async {
+    try {
+      return await _repository.purchaseEnvironment(userId, environmentId);
+    } catch (e) {
+      throw ShopServiceException('Failed to purchase environment: $e');
+    }
+  }
+
+  /// Generic purchase method that handles both items and environments
+  Future<bool> purchaseShopItem(String userId, Item item) async {
+    try {
+      switch (item.type) {
+        case ItemType.item:
+          return await purchaseItem(userId, item.id);
+        case ItemType.environment:
+          return await purchaseEnvironment(userId, item.id);
+        default:
+          throw ShopServiceException('Unknown item type: ${item.type}');
+      }
+    } catch (e) {
+      throw ShopServiceException('Failed to purchase shop item: $e');
+    }
+  }
+}
+
+/// Custom exception for shop service operations
+class ShopServiceException implements Exception {
+  final String message;
+  ShopServiceException(this.message);
+
+  @override
+  String toString() => 'ShopServiceException: $message';
 }
