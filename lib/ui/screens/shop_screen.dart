@@ -288,10 +288,12 @@ class _ShopScreenState extends State<ShopScreen> {
 
     final shopProvider = Provider.of<ShopProvider>(context, listen: false);
 
-    final items = selectedTab == 0 ?  shopProvider.availableItems : shopProvider.availableEnvironments;
 
     return Consumer2<ShopProvider, CourseProvider>(
       builder: (context, shopProvider, courseProvider, child) {
+
+        final items = selectedTab == 0 ?  shopProvider.availableItems : shopProvider.availableEnvironments;
+
         return Stack(
           children: [
             Scaffold(
