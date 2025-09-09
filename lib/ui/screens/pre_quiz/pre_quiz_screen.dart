@@ -272,9 +272,6 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
                 question: widget.questionSet.questions[currentQuestionIndex],
                 selectedAnswers: userAnswers[currentQuestionIndex],
                 onAnswerChanged: (answers) {
-                  print(
-                    'Answer changed for question ${currentQuestionIndex + 1}: $answers',
-                  );
                   setState(() {
                     userAnswers[currentQuestionIndex] = answers;
                   });

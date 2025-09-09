@@ -11,7 +11,7 @@ class Question {
   final String questionText; // This is the actual question the user answers
   final List<String> options;
   final List<int> correctAnswerIndices;
-  final bool isMultipleChoice;
+  final bool isMultipleAnswer;
   final String explanation;
   // final List<String>? photos; // TODO: Do we need photos in questions?
 
@@ -21,7 +21,7 @@ class Question {
     required this.questionText,
     required this.options,
     required this.correctAnswerIndices,
-    required this.isMultipleChoice,
+    required this.isMultipleAnswer,
     required this.explanation,
   });
 
@@ -40,7 +40,7 @@ class Question {
       questionText: questionText,
       options: options,
       correctAnswerIndices: [correctAnswerIndex],
-      isMultipleChoice: false,
+      isMultipleAnswer: false,
       explanation: explanation,
     );
   }
@@ -59,7 +59,7 @@ class Question {
       questionText: questionText,
       options: options,
       correctAnswerIndices: correctAnswerIndices,
-      isMultipleChoice: true,
+      isMultipleAnswer: true,
       explanation: explanation,
     );
   }

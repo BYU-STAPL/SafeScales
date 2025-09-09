@@ -64,7 +64,7 @@ class CourseProvider extends ChangeNotifier {
     if (!isUserLoggedIn) {
       _clearData();
 
-      print('Course Provider initialized');
+      // print('Course Provider initialized');
       _isInitialized = true;
       return;
     }
@@ -73,7 +73,6 @@ class CourseProvider extends ChangeNotifier {
       await _loadCourseData();
       await loadUserProgress();
 
-      print('Course Provider initialized with Data');
       _isInitialized = true;
     });
   }
@@ -96,42 +95,6 @@ class CourseProvider extends ChangeNotifier {
   }
 
   /// Load user progress for all lessons
-  // Future<void> loadUserProgress() async {
-  //   if (!isUserLoggedIn) {
-  //     _lessonProgress.clear();
-  //     notifyListeners();
-  //     return;
-  //   }
-  //
-  //   await _executeWithErrorHandling(() async {
-  //     // Get raw progress data from database
-  //     final progressData = await _courseService.getUserProgressData(
-  //       currentUser!.id,
-  //     );
-  //     print('DEBUG: Raw progress data: $progressData');
-  //
-  //     // Convert raw progress data to LessonProgress objects
-  //     Map<String, LessonProgress> progress = {};
-  //
-  //     // For each lesson in the course, create a LessonProgress object
-  //     for (var lessonId in _lessons.keys) {
-  //       final lesson = _lessons[lessonId]!;
-  //       final moduleProgress = progressData?[lessonId];
-  //
-  //       // Create LessonProgress whether the module exists in progress or not
-  //       progress[lessonId] = LessonProgress(
-  //         lessonId: lessonId,
-  //         isReadingComplete: moduleProgress?['reading']?['completed'] ?? false,
-  //         requiredPassingScore: lesson.postQuiz.passingScore,
-  //         postQuizAttempts: [], // Will be populated if exists
-  //         preQuizAttempt: null, // Will be populated if exists
-  //       );
-  //     }
-  //
-  //     _lessonProgress = progress;
-  //     notifyListeners();
-  //   });
-  // }
   Future<void> loadUserProgress() async {
     if (!isUserLoggedIn) {
       _lessonProgress.clear();
@@ -324,6 +287,33 @@ class CourseProvider extends ChangeNotifier {
 
     return (completedLessons / _lessonOrder.length) * 100;
   }
+
+
+  /// Get list of completed lessons (to unlock for review)
+  List<Lesson> getAllCompletedLessons() {
+
+    // Get Id's of completed lessons
+    List<String> completedLessonIds = [];
+
+    for (String id in _lessonOrder) {
+      if (isLessonCompleted(id)) {
+        completedLessonIds.add(id);
+      }
+    }
+
+    // Get lesson data
+    List<Lesson> completedLessons = [];
+    for (String id in completedLessonIds) {
+      Lesson? lesson = _lessons[id];
+      if (lesson != null) {
+        completedLessons.add(lesson);
+      }
+    }
+
+    return completedLessons;
+  }
+
+
 
   /// Get the next available lesson (for navigation)
   String? getNextAvailableLesson() {

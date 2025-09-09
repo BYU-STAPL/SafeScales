@@ -35,7 +35,7 @@ class StickerCollectionWidget extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'Drag stickers onto your dragon',
+            'Drag items onto your dragon',
             style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 15),
@@ -45,20 +45,21 @@ class StickerCollectionWidget extends StatelessWidget {
               ? Center(
                 child: Column(
                   children: [
-                    Icon(
-                      Icons.shopping_bag_outlined,
-                      size: 48,
-                      color: colorScheme.primary.withValues(alpha: 0.5),
-                    ),
-                    const SizedBox(height: 15),
+                    // Icon(
+                    //   Icons.shopping_bag_outlined,
+                    //   size: 48,
+                    //   color: colorScheme.primary.withValues(alpha: 0.5),
+                    // ),
+                    const SizedBox(height: 5),
                     Text(
-                      'No stickers yet.\nVisit the shop to buy some!',
+                      'No items yet.\nVisit the shop to earn some!',
                       style: TextStyle(
                         fontSize: 14,
                         color: colorScheme.onSurfaceVariant,
                       ),
                       textAlign: TextAlign.center,
                     ),
+                    const SizedBox(height: 5),
                   ],
                 ),
               )
@@ -121,7 +122,7 @@ class StickerCollectionWidget extends StatelessWidget {
               ),
           const SizedBox(height: 15),
           Text(
-            'Long press a sticker to remove it',
+            'Long press a item to remove it',
             style: theme.textTheme.labelMedium,
           ),
           const SizedBox(height: 10),

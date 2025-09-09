@@ -23,9 +23,8 @@ void main() async {
     final appDeps = createAppDependenciesFromSupabase(Supabase.instance.client);
     await appDeps.initializeProviders();
 
-    print("🚀 App dependencies initialized successfully");
-
     runApp(MyApp(appDeps: appDeps));
+
   } catch (e, stackTrace) {
     print("❌ App initialization failed: $e");
     print("Stack trace: $stackTrace");

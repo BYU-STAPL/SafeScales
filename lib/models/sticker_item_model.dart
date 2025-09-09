@@ -8,6 +8,7 @@ class Item {
   final ItemType type;
   final String name;
   final String imageUrl;
+  final int cost;
 
   // TODO: Later add a cost parameter for the shop
 
@@ -16,6 +17,7 @@ class Item {
     required this.type,
     required this.name,
     required this.imageUrl,
+    required this.cost,
   });
 }
 

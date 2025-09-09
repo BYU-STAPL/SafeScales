@@ -92,14 +92,7 @@ class UserStateService {
     }
   }
 
-  Future<void> saveQuizProgress({
-    required String moduleId,
-    required String quizType, // 'preQuiz' or 'postQuiz'
-    required int totalQuestions,
-    required int correctAnswers,
-    required double scorePercentage,
-    required List<List<int>> userAnswers,
-  }) async {
+  Future<void> saveQuizProgress({required String moduleId, required String quizType /* 'preQuiz' or 'postQuiz'*/, required int totalQuestions, required int correctAnswers, required double scorePercentage, required List<List<int>> userAnswers,}) async {
     if (_userId == null) {
       print('❌ Error: UserStateService saveQuizProgress No user logged in, skipping quiz progress save');
       return;
@@ -168,10 +161,7 @@ class UserStateService {
   }
 
   // Save user's theme and font size settings to the Users table
-  Future<void> saveUserSettings({
-    required bool isDarkMode,
-    required double fontSize,
-  }) async {
+  Future<void> saveUserSettings({required bool isDarkMode, required double fontSize,}) async {
     if (_userId == null) {
       print('❌ Error: UserStateService saveUserSettings() Cannot save settings: No user ID available');
       return;

@@ -14,6 +14,20 @@ class CourseService {
     : _repository = repository ?? CourseRepository();
 
   // === Course Content Business Logic ===
+  Future<String?> getUserCourseId(String userId) async {
+    try {
+      // Get user's class
+      final classData = await _repository.getUserClass(userId);
+      if (classData == null) {
+        return null;
+      }
+
+      return classData['id'];
+
+    } catch (e) {
+      throw CourseServiceException('Failed to load course id: $e');
+    }
+  }
 
   /// Get complete course data for a user including class info and lessons
   Future<CourseData?> getUserCourseData(String userId) async {
@@ -72,7 +86,7 @@ class CourseService {
       final progressData = await _repository.getUserProgressData(userId);
       return progressData;
     } catch (e) {
-      print('DEBUG: Error getting user progress data: $e');
+      print('Error getting user progress data: $e');
       return null;
     }
   }
@@ -221,9 +235,6 @@ class CourseService {
     String classId,
   ) async {
     try {
-      print('DEBUG: Building lesson progress for $lessonId');
-      print('DEBUG: Module data: $moduleData');
-
       QuizAttempt? preQuizAttempt;
       List<QuizAttempt> postQuizAttempts = [];
       bool isReadingComplete = false;
@@ -242,8 +253,6 @@ class CourseService {
         }
 
         isReadingComplete = readingData['completed'] ?? false;
-        print('DEBUG: Reading complete: $isReadingComplete');
-        print('DEBUG: ${bookmarks}');
       }
 
       // Process pre-quiz progress
@@ -256,7 +265,6 @@ class CourseService {
             ActivityType.preQuiz,
             preQuizData,
           );
-          print('DEBUG: Pre-quiz score: ${preQuizAttempt.score}');
         }
       }
 
@@ -272,7 +280,6 @@ class CourseService {
             postQuizData,
           );
           postQuizAttempts.add(attempt);
-          print('DEBUG: Post-quiz score: ${attempt.score}');
         }
       }
 
@@ -285,20 +292,8 @@ class CourseService {
         postQuizAttempts: postQuizAttempts,
       );
 
-      print(
-        'DEBUG: Built progress - Pre-quiz complete: ${progress.isPreQuizComplete}',
-      );
-      print(
-        'DEBUG: Built progress - Reading complete: ${progress.isReadingComplete}',
-      );
-      print(
-        'DEBUG: Built progress - Post-quiz complete: ${progress.isPostQuizComplete} ${progress.postQuizAttempts.isNotEmpty ? progress.postQuizAttempts.last.score : 0}',
-      );
-      print(
-        'DEBUG: Built progress - Total progress: ${progress.getProgressPercent()}%',
-      );
-
       return progress;
+
     } catch (e) {
       return null;
     }
@@ -311,7 +306,6 @@ class CourseService {
     ActivityType activityType,
     Map<String, dynamic> activityData,
   ) {
-    print('DEBUG: Creating quiz attempt from data: $activityData');
 
     final score = (activityData['score'] ?? 0).toDouble();
     final correctAnswers = activityData['correct_answers'] ?? 0;
@@ -321,12 +315,6 @@ class CourseService {
         activityData['completed_at'] != null
             ? DateTime.parse(activityData['completed_at'])
             : DateTime.now();
-
-    print('DEBUG: Quiz attempt details:');
-    print('DEBUG: - Score: $score');
-    print('DEBUG: - Correct answers: $correctAnswers');
-    print('DEBUG: - Total questions: $totalQuestions');
-    print('DEBUG: - Responses count: ${responses.length}');
 
     return QuizAttempt(
       id: '',
