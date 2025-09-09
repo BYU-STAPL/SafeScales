@@ -46,7 +46,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
       ),
     );
 
-    if (question.isMultipleChoice) {
+    if (question.isMultipleAnswer) {
       instructionText = Text(
         'Select all that apply:',
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -93,7 +93,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
               : () {
                 List<int> newAnswers = List.from(selectedAnswers);
 
-                if (question.isMultipleChoice) {
+                if (question.isMultipleAnswer) {
                   if (isSelected) {
                     newAnswers.remove(index);
                   } else {
@@ -120,7 +120,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
         child: Row(
           children: [
             Icon(
-              question.isMultipleChoice
+              question.isMultipleAnswer
                   ? (isSelected
                       ? Icons.check_box
                       : Icons.check_box_outline_blank_rounded)

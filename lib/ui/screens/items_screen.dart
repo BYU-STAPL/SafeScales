@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:safe_scales/ui/widgets/toy_box_item_card.dart';
+import 'package:safe_scales/ui/widgets/item_card.dart';
 import 'package:safe_scales/providers/item_provider.dart';
 
 class ItemsScreen extends StatefulWidget {
@@ -15,7 +15,6 @@ class _ItemsScreenState extends State<ItemsScreen> {
   int selectedTab = 0; // 0 = Accessories, 1 = Environments
 
   bool _isInitialized = false;
-
 
   @override
   void initState() {
@@ -56,28 +55,33 @@ class _ItemsScreenState extends State<ItemsScreen> {
 
     ThemeData theme = Theme.of(context);
 
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 10),
-              Row(
+    return Consumer<ItemProvider>(
+      builder: (context, itemProvider, child) {
+        // Move the items logic inside the consumer so it rebuilds when provider changes
+        final items = selectedTab == 0
+            ? itemProvider.items
+            : itemProvider.environments;
+
+        return Scaffold(
+          key: _scaffoldKey,
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      'This is your current collection of\nitems and environments',
-                      style: theme.textTheme.labelMedium,
-                    ),
-                  ),
-                  // Refresh button
-                  Consumer<ItemProvider>(
-                    builder: (context, itemProvider, child) {
-                      return IconButton(
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'This is your current collection of\nitems and environments',
+                          style: theme.textTheme.labelMedium,
+                        ),
+                      ),
+                      // Refresh button
+                      IconButton(
                         onPressed: itemProvider.isLoading
                             ? null
                             : () => itemProvider.refresh(),
@@ -89,58 +93,50 @@ class _ItemsScreenState extends State<ItemsScreen> {
                         )
                             : const Icon(Icons.refresh),
                         tooltip: 'Refresh items',
-                      );
-                    },
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // Toggle Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => selectedTab = 0),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: selectedTab == 0 ? selected : unselected,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Consumer<ItemProvider>(
-                            builder: (context, itemProvider, child) {
-                              return Text(
-                                'ITEMS (${itemProvider.accessories.length})',
+                  const SizedBox(height: 20),
+                  // Toggle Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => selectedTab = 0),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: selectedTab == 0 ? selected : unselected,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Center(
+                              child: Text(
+                                'ITEMS (${itemProvider.items.length})',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: selectedTab == 0
                                       ? selectedText
                                       : unselectedText,
                                   letterSpacing: 1.1,
                                 ),
-                              );
-                            },
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => selectedTab = 1),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: selectedTab == 1 ? selected : unselected,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Consumer<ItemProvider>(
-                            builder: (context, itemProvider, child) {
-                              return Text(
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => selectedTab = 1),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: selectedTab == 1 ? selected : unselected,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Center(
+                              child: Text(
                                 'ENVIRONMENTS (${itemProvider.environments.length})',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: selectedTab == 1
@@ -148,191 +144,127 @@ class _ItemsScreenState extends State<ItemsScreen> {
                                       : unselectedText,
                                   letterSpacing: 1.1,
                                 ),
-                              );
-                            },
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Items Grid
+                  Expanded(
+                    child: _buildItemsGrid(context, items, itemProvider),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              // Items Grid
-              Expanded(
-                child: Consumer<ItemProvider>(
-                  builder: (context, itemProvider, child) {
-                    // Handle loading state
-                    if (itemProvider.isLoading) {
-                      return const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 16),
-                            Text('Loading your collection...'),
-                          ],
-                        ),
-                      );
-                    }
-
-                    // Handle error state
-                    if (itemProvider.error != null) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 64,
-                              color: primary.withValues(alpha: 0.5),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Error loading items',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              itemProvider.error!,
-                              style: theme.textTheme.bodySmall,
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed: () => itemProvider.refresh(),
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Try Again'),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    // Show accessories tab
-                    if (selectedTab == 0) {
-                      final accessories = itemProvider.accessories;
-
-                      if (accessories.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.shopping_bag_outlined,
-                                size: 64,
-                                color: primary.withValues(alpha: 0.5),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No accessories yet',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                'Complete reviews set from the shop page to earn items and environments',
-                                style: theme.textTheme.bodyMedium,
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-                          ),
-                        );
-                      }
-
-                      return RefreshIndicator(
-                        onRefresh: itemProvider.refresh,
-                        child: GridView.count(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 24,
-                          crossAxisSpacing: 24,
-                          childAspectRatio: 0.95,
-                          children: [
-                            for (var accessory in accessories)
-                              ToyBoxItemCard(
-                                image: accessory.imageUrl,
-                                name: accessory.name,
-                                onTap: () {
-                                  // Handle accessory tap
-                                  _showItemDetails(context, accessory, 'accessory');
-                                },
-                              ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    // Show environments tab
-                    else {
-                      final environments = itemProvider.environments;
-
-                      if (environments.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.landscape_outlined,
-                                size: 64,
-                                color: primary.withValues(alpha: 0.5),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No environments yet',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Complete lessons and quizzes to\nunlock beautiful environments!',
-                                style: theme.textTheme.bodyMedium,
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: () {
-                                  // Navigate to lessons or shop
-                                  // Navigator.pushNamed(context, '/lessons');
-                                },
-                                child: const Text('Start Learning'),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-
-                      return RefreshIndicator(
-                        onRefresh: itemProvider.refresh,
-                        child: GridView.count(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 24,
-                          crossAxisSpacing: 24,
-                          childAspectRatio: 0.95,
-                          children: [
-                            for (var environment in environments)
-                              ToyBoxItemCard(
-                                image: environment.imageUrl,
-                                name: environment.name,
-                                onTap: () {
-                                  // Handle environment tap
-                                  _showItemDetails(context, environment, 'environment');
-                                },
-                              ),
-                          ],
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ),
-            ],
+            ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildItemsGrid(BuildContext context, List items, ItemProvider itemProvider) {
+    final Color primary = Theme.of(context).colorScheme.primary;
+    final ThemeData theme = Theme.of(context);
+
+    // Handle error state
+    if (itemProvider.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: primary.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Error loading items',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              itemProvider.error!,
+              style: theme.textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => itemProvider.refresh(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try Again'),
+            ),
+          ],
         ),
+      );
+    }
+
+    // Handle empty state
+    if (items.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              selectedTab == 0
+                  ? Icons.shopping_bag_outlined
+                  : Icons.landscape_outlined,
+              size: 64,
+              color: primary.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              selectedTab == 0 ? 'No accessories yet' : 'No environments yet',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              selectedTab == 0
+                  ? 'Complete reviews set from the shop page to earn items and environments'
+                  : 'Complete lessons and quizzes to\nunlock beautiful environments!',
+              style: theme.textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            if (selectedTab == 1)
+              ElevatedButton(
+                onPressed: () {
+                  // Navigate to lessons or shop
+                  // Navigator.pushNamed(context, '/lessons');
+                },
+                child: const Text('Start Learning'),
+              ),
+          ],
+        ),
+      );
+    }
+
+    // Show items grid
+    return RefreshIndicator(
+      onRefresh: itemProvider.refresh,
+      child: GridView.count(
+        crossAxisCount: 2,
+        mainAxisSpacing: 24,
+        crossAxisSpacing: 24,
+        childAspectRatio: 0.95,
+        children: [
+          for (var item in items)
+            ItemCard(
+              image: item.imageUrl,
+              name: item.name,
+              onTap: () {
+                // Handle item tap
+                _showItemDetails(context, item, selectedTab == 0 ? 'accessory' : 'environment');
+              },
+            ),
+        ],
       ),
     );
   }

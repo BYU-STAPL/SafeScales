@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
+import 'package:safe_scales/ui/screens/review_set/review_results_screen.dart';
 
 import '../../widgets/progress_bar.dart';
 import '../../../models/question.dart';
@@ -7,9 +8,10 @@ import '../../widgets/question_widget.dart';
 
 class ReviewScreen extends StatefulWidget {
   final QuestionSet questionSet;
+  final String? image;
 
   const ReviewScreen({
-    super.key, required this.questionSet
+    super.key, required this.questionSet, this.image,
   });
 
   @override
@@ -44,6 +46,19 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
     if (!mounted) return;
 
+    // Show results screen and then return to previous screen
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => ReviewResultsScreen(
+          image: widget.image,
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+
     // Return to previous screen with completion status
     Navigator.pop(context, true);
   }
@@ -69,7 +84,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
     });
 
     if (_isAnswerCorrect(currentQuestionIndex)) {
-      print("Correct Answer");
       setState(() {
         isCurrentQuestionCorrect = true;
         // showAnswerMessage = true; // Currently using snack-bar function: showAnswerCheckMessage
@@ -276,9 +290,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 question: widget.questionSet.questions[currentQuestionIndex],
                 selectedAnswers: userAnswers[currentQuestionIndex],
                 onAnswerChanged: (answers) {
-                  print(
-                    'Answer changed for question ${currentQuestionIndex + 1}: $answers',
-                  );
                   setState(() {
                     userAnswers[currentQuestionIndex] = answers;
                   });
