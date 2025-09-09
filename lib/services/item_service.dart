@@ -14,7 +14,7 @@ class ItemService {
   Future<Map<String, List<Item>>> processUserItems(String userId, String classId) async {
     try {
 
-      final List<dynamic> acquiredItems = await _repository.fetchUserItems(userId);
+      final List<dynamic> acquiredItems = await _repository.fetchUserItemIDList(userId);
 
       final assets = await _repository.fetchClassAssets(classId);
 
@@ -23,7 +23,7 @@ class ItemService {
 
       // Find accessories with matching IDs
       for (var asset in assets) {
-        if (asset['type'] == 'accessory' && acquiredItems.contains(asset['id'])) {
+        if (asset['type'] != 'dragon' && acquiredItems.contains(asset['id'])) {
 
           final Item item = _createItemFromAsset(asset);
 
@@ -71,8 +71,8 @@ class ItemService {
   /// Check if user has a specific item
   Future<bool> userHasItem(String userId, String classId, String itemId) async {
     try {
-      final userItems = await _repository.fetchUserAllItems(userId, classId);
-      return userItems.containsKey(itemId);
+      final userItems = await _repository.fetchUserItemIDList(userId);
+      return userItems.contains(itemId);
     } catch (e) {
       throw ItemServiceException('Failed to check if user has item: $e');
     }
@@ -167,9 +167,9 @@ class ItemService {
   // === Repository Delegates ===
 
   /// Direct access to fetch user items (delegates to repository)
-  Future<Map<String, Item>> fetchUserItems(String userId, String classId) async {
-    return await _repository.fetchUserAllItems(userId, classId);
-  }
+  // Future<Map<String, Item>> fetchUserItems(String userId, String classId) async {
+  //   return await _repository.fetchAllUserItemsAndEnvs(userId, classId);
+  // }
 
   /// Direct access to fetch class assets (delegates to repository)
   Future<List<Map<String, dynamic>>> fetchClassAssets(String classId) async {
