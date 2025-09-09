@@ -59,7 +59,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
       builder: (context, itemProvider, child) {
         // Move the items logic inside the consumer so it rebuilds when provider changes
         final items = selectedTab == 0
-            ? itemProvider.accessories
+            ? itemProvider.items
             : itemProvider.environments;
 
         return Scaffold(
@@ -112,7 +112,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
                             ),
                             child: Center(
                               child: Text(
-                                'ITEMS (${itemProvider.accessories.length})',
+                                'ITEMS (${itemProvider.items.length})',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: selectedTab == 0
                                       ? selectedText

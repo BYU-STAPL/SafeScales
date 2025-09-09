@@ -452,7 +452,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    'ITEMS'.toUpperCase(),
+                                    'ITEMS (${shopProvider.availableItems.length})'.toUpperCase(),
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color:
                                       selectedTab == 0
@@ -482,7 +482,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    'ENVIRONMENTS',
+                                    'ENVIRONMENTS (${shopProvider.availableEnvironments.length})'.toUpperCase(),
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color:
                                       selectedTab == 1

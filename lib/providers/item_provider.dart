@@ -12,7 +12,7 @@ class ItemProvider extends ChangeNotifier {
   final UserStateService _userStateService;
 
   // State variables
-  List<Item> _accessories = [];
+  List<Item> _items = [];
   List<Item> _environments = [];
 
   bool _isLoading = false;
@@ -29,18 +29,18 @@ class ItemProvider extends ChangeNotifier {
 
   // === Getters ===
 
-  List<Item> get accessories => List.unmodifiable(_accessories);
+  List<Item> get items => List.unmodifiable(_items);
   List<Item> get environments => List.unmodifiable(_environments);
 
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isInitialized => _isInitialized;
 
-  bool get hasAccessories => _accessories.isNotEmpty;
+  bool get hasAccessories => _items.isNotEmpty;
   bool get hasEnvironments => _environments.isNotEmpty;
 
   // Combined getter for all items
-  List<Item> get allItems => [..._accessories, ..._environments];
+  List<Item> get allItems => [..._items, ..._environments];
 
   User? get currentUser => _userStateService.currentUser;
 
@@ -69,7 +69,7 @@ class ItemProvider extends ChangeNotifier {
   }
 
   void _clearData() {
-    _accessories = [];
+    _items = [];
     _environments = [];
     notifyListeners();
   }
@@ -92,10 +92,10 @@ class ItemProvider extends ChangeNotifier {
         _currentCourseId!,
       );
 
-      _accessories = processedItems['accessories'] ?? [];
+      _items = processedItems['accessories'] ?? [];
       _environments = processedItems['environments'] ?? [];
 
-      debugPrint('✅ Loaded ${_accessories.length} accessories and ${_environments.length} environments');
+      debugPrint('✅ Loaded ${_items.length} accessories and ${_environments.length} environments');
 
     } catch (e) {
       _setError('Failed to load user items: $e');
@@ -118,12 +118,12 @@ class ItemProvider extends ChangeNotifier {
     _clearError();
 
     try {
-      _accessories = await _itemService.getUserAccessories(
+      _items = await _itemService.getUserAccessories(
         _currentUserId!,
         _currentCourseId!,
       );
 
-      debugPrint('✅ Loaded ${_accessories.length} accessories');
+      debugPrint('✅ Loaded ${_items.length} accessories');
 
     } catch (e) {
       _setError('Failed to load accessories: $e');
@@ -193,10 +193,10 @@ class ItemProvider extends ChangeNotifier {
 
   /// Filter accessories by name
   List<Item> filterAccessories(String query) {
-    if (query.isEmpty) return accessories;
+    if (query.isEmpty) return items;
 
     return _itemService.filterItems(
-      _accessories,
+      _items,
       nameFilter: query,
     );
   }
@@ -213,7 +213,7 @@ class ItemProvider extends ChangeNotifier {
 
   /// Sort accessories
   List<Item> getSortedAccessories({bool ascending = true}) {
-    return _itemService.sortItemsByName(_accessories, ascending: ascending);
+    return _itemService.sortItemsByName(_items, ascending: ascending);
   }
 
   /// Sort environments
@@ -223,7 +223,7 @@ class ItemProvider extends ChangeNotifier {
 
   /// Clear all data (useful for logout)
   void clear() {
-    _accessories.clear();
+    _items.clear();
     _environments.clear();
     _currentUserId = null;
     _currentCourseId = null;
@@ -257,7 +257,7 @@ class ItemProvider extends ChangeNotifier {
   /// Get debug info about current state
   Map<String, dynamic> getDebugInfo() {
     return {
-      'accessories_count': _accessories.length,
+      'accessories_count': _items.length,
       'environments_count': _environments.length,
       'is_loading': _isLoading,
       'has_error': _error != null,
