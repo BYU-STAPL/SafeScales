@@ -46,21 +46,15 @@ class ItemRepository {
         acquiredItems = response['acquired_accessories'];
       }
 
-      print("GET ENVIRONMENTS");
-
       final response2 = await _supabase
           .from('Users')
           .select('acquired_environments')
           .eq('id', userId)
           .single();
 
-      print(response2);
-
       if (response2['acquired_environments'] != null) {
         acquiredEnvs = response2['acquired_environments'];
       }
-
-      print("JOIN LISTS");
 
       List<dynamic> userItemAndEnvIds = acquiredItems + acquiredEnvs;
 

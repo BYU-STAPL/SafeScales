@@ -126,17 +126,12 @@ class ShopProvider extends ChangeNotifier {
         return;
       }
 
-      print("DEBUG");
-
-
       _availableItems = [];
       for (Item item in availableItems) {
         if (!await _itemService.userHasItem(currentUser.id, courseId, item.id)) {
           _availableItems.add(item);
         }
       }
-
-      print(_availableItems);
 
       _availableEnvironments = [];
       for (Item env in availableEnvironments) {
