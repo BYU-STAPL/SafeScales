@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/lesson.dart';
 import '../models/lesson_progress.dart';
+import '../models/question.dart';
 import '../models/user.dart';
 import '../services/course_service.dart';
 import '../services/user_state_service.dart';
@@ -94,6 +95,34 @@ class CourseProvider extends ChangeNotifier {
     });
   }
 
+  // Load Single ReviewSet
+  Future<QuestionSet?> getReviewQuestionSetForLesson(String lessonId) async {
+    try {
+      final currentUser = _userStateService.currentUser;
+      if (currentUser == null) {
+        throw Exception('User not logged in');
+      }
+
+      // Get user's course ID
+      final courseId = await _courseService.getUserCourseId(currentUser.id);
+      if (courseId == null) {
+        throw Exception('User not enrolled in any course');
+      }
+
+      // Get the lesson from the course service
+      final lesson = await _courseService.getLessonFromClass(courseId, lessonId);
+
+      // Extract review questions from the lesson's revision_questions field
+      return _extractReviewQuestionSet(lesson);
+
+    } catch (e) {
+      debugPrint('Error getting review question set: $e');
+      return null;
+    }
+  }
+
+
+
   /// Load user progress for all lessons
   Future<void> loadUserProgress() async {
     if (!isUserLoggedIn) {
@@ -179,6 +208,21 @@ class CourseProvider extends ChangeNotifier {
   }
 
   // === Helper Methods ===
+
+  QuestionSet? _extractReviewQuestionSet(Lesson lesson,) {
+    try {
+
+      if (lesson.review == null) {
+        return null;
+      }
+
+      return lesson.review;
+
+    } catch (e) {
+      debugPrint('Error extracting review question set: $e');
+      return null;
+    }
+  }
 
   /// Execute an operation with proper error handling and loading states
   Future<T> _executeWithErrorHandling<T>(

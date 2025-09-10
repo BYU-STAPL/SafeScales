@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/providers/shop_provider.dart';
-import 'dart:convert';
 import 'package:safe_scales/themes/app_theme.dart';
-import 'package:safe_scales/repositories/shop_repository.dart';
-import 'package:safe_scales/services/user_state_service.dart';
-import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/ui/screens/review_set/review_screen.dart';
 import 'package:safe_scales/models/question.dart';
 
@@ -24,32 +20,17 @@ class ShopScreen extends StatefulWidget {
 class _ShopScreenState extends State<ShopScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-
-  final ShopRepository _shopRepository = ShopRepository();
-  final UserStateService _userState = UserStateService();
-
-
   int selectedTab = 0; // 0 = Accessories, 1 = Environments
   int? selectedIndex; // Track selected item index
   String? selectedLessonIndex; // Track selected lesson in popup
 
-
   bool showLessonDialog = false;
-  List<Map<String, dynamic>> accessories = [];
-  List<Map<String, dynamic>> environments = [];
   bool isLoading = true;
-  List<String> acquiredAccessories = [];
-  List<String> acquiredEnvironments = [];
-  Map<String, Map<String, dynamic>> quizDetails = {};
-  Map<String, Map<String, dynamic>> moduleDetails = {};
-
   bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    // _loadItems();
-    // _reloadUserProfile();
 
     // Use addPostFrameCallback to ensure initialization happens after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -94,79 +75,8 @@ class _ShopScreenState extends State<ShopScreen> {
     });
   }
 
-  // Future<void> _completePurchase() async {
-  //   if (selectedIndex == null || selectedLessonIndex == null) return;
-  //
-  //   final userId = _userState.currentUser?.id;
-  //   if (userId == null) return;
-  //
-  //   try {
-  //     // Hide module selection dialog before starting the revision quiz
-  //     setState(() {
-  //       showLessonDialog = false;
-  //     });
-  //
-  //     // Start the revision quiz for the selected module
-  //     final bool passedRevision = await _startRevisionQuiz(
-  //       selectedLessonIndex!,
-  //     );
-  //
-  //     if (!mounted) return;
-  //
-  //     if (!passedRevision) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(
-  //           content: Text('Review set not completed. Purchase cancelled.'),
-  //         ),
-  //       );
-  //       setState(() {
-  //         selectedLessonIndex = null;
-  //       });
-  //       return;
-  //     }
-  //
-  //     // Proceed with the purchase after successful revision
-  //     bool purchaseSuccess;
-  //     if (selectedTab == 0) {
-  //       purchaseSuccess = await _shopRepository.purchaseAccessory(
-  //         userId,
-  //         accessories[selectedIndex!]['id'].toString(),
-  //       );
-  //     } else {
-  //       purchaseSuccess = await _shopRepository.purchaseEnvironment(
-  //         userId,
-  //         environments[selectedIndex!]['id'].toString(),
-  //       );
-  //     }
-  //
-  //     if (purchaseSuccess) {
-  //       ScaffoldMessenger.of(
-  //         context,
-  //       ).showSnackBar(const SnackBar(content: Text('Purchase successful!')));
-  //       // await _loadItems();
-  //       // TODO: Create Refresh
-  //     } else {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(content: Text('Failed to complete purchase')),
-  //       );
-  //     }
-  //
-  //     setState(() {
-  //       selectedLessonIndex = null;
-  //     });
-  //   } catch (e) {
-  //     print('❌Error during purchase: $e');
-  //     ScaffoldMessenger.of(
-  //       context,
-  //     ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-  //   }
-  // }
-
   Future<void> _completePurchase() async {
     if (selectedIndex == null || selectedLessonIndex == null) return;
-
-    final userId = _userState.currentUser?.id;
-    if (userId == null) return;
 
     final shopProvider = Provider.of<ShopProvider>(context, listen: false);
 
@@ -177,13 +87,13 @@ class _ShopScreenState extends State<ShopScreen> {
       });
 
       // Start the revision quiz for the selected module
-      final bool passedRevision = await _startRevisionQuiz(
+      final bool passedReviewSet = await _startReviewSet(
         selectedLessonIndex!,
       );
 
       if (!mounted) return;
 
-      if (!passedRevision) {
+      if (!passedReviewSet) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Review set not completed. Purchase cancelled.'),
@@ -233,44 +143,48 @@ class _ShopScreenState extends State<ShopScreen> {
     }
   }
 
-  Future<bool> _startRevisionQuiz(String moduleId) async {
+  Future<bool> _startReviewSet(String lessonId) async {
     try {
-      final moduleResponse =
-          await SupabaseConfig.client
-              .from('modules')
-              .select('id, title, revision_questions')
-              .eq('id', moduleId)
-              .single();
+      final shopProvider = Provider.of<ShopProvider>(context, listen: false);
+      final courseProvider = Provider.of<CourseProvider>(context, listen: false);
 
-      final questionSet = _parseRevisionQuestionsToQuestionSet(moduleResponse);
+      // Get the review question set for the lesson using the course provider/service
+      final questionSet = await courseProvider.getReviewQuestionSetForLesson(lessonId);
 
       bool result = false;
-
-      ShopProvider shopProvider = Provider.of<ShopProvider>(context, listen: false);
       Item? selectedItem = shopProvider.getItemByIndex(selectedIndex!, selectedTab == 1);
 
-      if (questionSet.questions.isEmpty) {
-
-        //TODO: Remove after testing
+      if (questionSet == null || questionSet.questions.isEmpty) {
+        // TODO: Remove after testing
         QuestionSet testingSet = QuestionSet(
-            id: "id",
-            title: "test",
-            description: "description...",
+            id: "test_$lessonId",
+            title: "Test Review",
+            description: "Test review questions...",
             activityType: ActivityType.review,
             subject: "subject",
             questions: [
-              Question(id: "id", questionText: "Pick A", options: ['a', 'b'], correctAnswerIndices: [0], isMultipleAnswer: true, explanation: 'a is right'),
+              Question(
+                  id: "test_q1",
+                  questionText: "Pick A",
+                  options: ['a', 'b'],
+                  correctAnswerIndices: [0],
+                  isMultipleAnswer: true,
+                  explanation: 'a is right'
+              ),
             ]
         );
 
         result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ReviewScreen(questionSet: testingSet, image: selectedItem?.imageUrl),
+            builder: (context) => ReviewScreen(
+                questionSet: testingSet,
+                image: selectedItem?.imageUrl
+            ),
           ),
         );
 
-        //TODO: Put back after testing
+        // TODO: Put back after testing
         /*
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -280,96 +194,35 @@ class _ShopScreenState extends State<ShopScreen> {
                 color: Theme.of(context).colorScheme.onInverseSurface,
               ),
             ),
-            backgroundColor:
-            Theme.of(context).colorScheme.inverseSurface,
+            backgroundColor: Theme.of(context).colorScheme.inverseSurface,
           ),
         );
+        return false;
         */
-      }
-      else {
+      } else {
         result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ReviewScreen(questionSet: questionSet),
+            builder: (context) => ReviewScreen(
+              questionSet: questionSet,
+              image: selectedItem?.imageUrl,
+            ),
           ),
         );
       }
 
       // ReviewScreen returns true on completion
       return result == true;
+
     } catch (e) {
-      print('❌Error starting revision quiz: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not load revision questions')),
-      );
+      debugPrint('Error starting review set: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not load review set')),
+        );
+      }
       return false;
     }
-  }
-
-  QuestionSet _parseRevisionQuestionsToQuestionSet(Map<String, dynamic> module,) {
-    final String moduleId = module['id'].toString();
-    final String title = (module['title'] ?? 'Module Review').toString();
-    final String subject = 'General';
-
-    dynamic revision = module['revision_questions'];
-    if (revision is String) {
-      try {
-        revision =
-            revision.isNotEmpty
-                ? (revision == 'null' ? {} : jsonDecode(revision))
-                : {};
-      } catch (_) {
-        revision = {};
-      }
-    }
-
-    final List<dynamic> rawQuestions =
-        (revision is Map<String, dynamic>)
-            ? List<dynamic>.from(revision['questions'] ?? [])
-            : (revision is List)
-            ? revision
-            : <dynamic>[];
-
-    final List<Question> questions = [];
-    for (int i = 0; i < rawQuestions.length; i++) {
-      final q = rawQuestions[i] as Map<String, dynamic>;
-      final String questionText = (q['question'] ?? '').toString();
-      final List<String> options = List<String>.from(
-        q['choices']?.map((c) => c.toString()) ?? [],
-      );
-      // answer could be a string index like "0" or an int
-      final dynamic answerRaw = q['answer'];
-      int correctIndex = 0;
-      if (answerRaw is int) {
-        correctIndex = answerRaw;
-      } else if (answerRaw is String) {
-        correctIndex = int.tryParse(answerRaw) ?? 0;
-      }
-
-      questions.add(
-        Question.singleAnswer(
-          id: 'q_$i',
-          questionText: questionText,
-          options: options,
-          correctAnswerIndex: correctIndex,
-          explanation: '',
-        ),
-      );
-    }
-
-    return QuestionSet(
-      id: 'rev_$moduleId',
-      title: '$title Review',
-      description: 'Answer the review questions to unlock your item.',
-      activityType: ActivityType.review,
-      subject: subject,
-      passingScore: 0,
-      showResults: false,
-      showCorrectAnswers: true,
-      showExplanations: false,
-      allowRetakes: true,
-      questions: questions,
-    );
   }
 
   @override

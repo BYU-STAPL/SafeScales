@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../models/course.dart';
 import '../models/lesson.dart';
 import '../models/lesson_progress.dart';
@@ -68,6 +70,24 @@ class CourseService {
       return lessons;
     } catch (e) {
       throw CourseServiceException('Failed to load lessons: $e');
+    }
+  }
+
+  /// Get single lesson from a class
+  Future<Lesson> getLessonFromClass(String classId, String lessonId) async {
+    try {
+
+      final moduleData = await _repository.getModuleById(lessonId);
+
+      if (moduleData == null) {
+        throw CourseServiceException('No module found');
+      }
+
+      final lesson = _createLessonFromRawData(moduleData);
+
+      return lesson;
+    } catch (e) {
+      throw CourseServiceException('Failed to load lesson ${lessonId} from class ${classId}: $e');
     }
   }
 
@@ -366,6 +386,7 @@ class CourseService {
       preQuiz: _createPreQuiz(lessonMap),
       reading: _createReadingSlides(lessonMap),
       postQuiz: _createPostQuiz(lessonMap),
+      review: _createReviewSet(lessonMap),
     );
   }
 
@@ -427,8 +448,8 @@ class CourseService {
   }
 
   List<ReadingSlide> _createReadingSlides(Map<String, dynamic> lessonMap) {
-    final revision = lessonMap['revision'];
-    final slides = revision['slides'];
+    final rawReadingData = lessonMap['revision'];
+    final slides = rawReadingData['slides'];
     List<ReadingSlide> reading = [];
 
     for (var slideData in slides) {
@@ -442,6 +463,69 @@ class CourseService {
     final content = slideData['content'];
 
     return ReadingSlide(title: slideData['headline'], content: [TextContent(content)]);
+  }
+
+  QuestionSet _createReviewSet(Map<String, dynamic> lessonMap,) {
+    final String moduleId = lessonMap['id'].toString();
+    final String title = (lessonMap['title'] ?? 'Module Review').toString();
+    final String subject = 'General';
+
+    dynamic reviewSetData = lessonMap['revision_questions'];
+    if (reviewSetData is String) {
+      try {
+        reviewSetData = reviewSetData.isNotEmpty ? (reviewSetData == 'null' ? {} : jsonDecode(reviewSetData)) : {};
+      } catch (_) {
+        reviewSetData = {};
+      }
+    }
+
+    final List<dynamic> rawQuestions =
+    (reviewSetData is Map<String, dynamic>)
+        ? List<dynamic>.from(reviewSetData['questions'] ?? [])
+        : (reviewSetData is List)
+        ? reviewSetData
+        : <dynamic>[];
+
+    final List<Question> questions = [];
+    for (int i = 0; i < rawQuestions.length; i++) {
+      final q = rawQuestions[i] as Map<String, dynamic>;
+      final String questionText = (q['question'] ?? '').toString();
+      final List<String> options = List<String>.from(
+        q['choices']?.map((c) => c.toString()) ?? [],
+      );
+      // answer could be a string index like "0" or an int
+      final dynamic answerRaw = q['answer'];
+      int correctIndex = 0;
+      if (answerRaw is int) {
+        correctIndex = answerRaw;
+      } else if (answerRaw is String) {
+        correctIndex = int.tryParse(answerRaw) ?? 0;
+      }
+
+      questions.add(
+        Question.singleAnswer(
+          id: 'q_$i',
+          questionText: questionText,
+          options: options,
+          correctAnswerIndex: correctIndex,
+          explanation: '',
+        ),
+      );
+    }
+
+    return QuestionSet(
+      id: 'rev_$moduleId',
+      title: '$title Review',
+      description: 'Answer the review questions to unlock your item.',
+      activityType: ActivityType.review,
+      subject: subject,
+      passingScore: 0,
+      showResults: false,
+      showCorrectAnswers: true,
+      showExplanations: false,
+      allowRetakes: true,
+      questions: questions,
+    );
   }
 }
 
