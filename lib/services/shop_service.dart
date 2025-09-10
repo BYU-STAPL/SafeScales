@@ -1,5 +1,4 @@
 import '../models/sticker_item_model.dart';
-import '../repositories/item_repository.dart';
 import '../repositories/shop_repository.dart';
 
 class ShopService {
