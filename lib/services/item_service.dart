@@ -71,7 +71,9 @@ class ItemService {
   /// Check if user has a specific item
   Future<bool> userHasItem(String userId, String classId, String itemId) async {
     try {
+
       final userItems = await _repository.fetchUserItemIDList(userId);
+      print(userItems);
       return userItems.contains(itemId);
     } catch (e) {
       throw ItemServiceException('Failed to check if user has item: $e');

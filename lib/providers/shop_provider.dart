@@ -108,6 +108,7 @@ class ShopProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
+      // TODO: Move filtering logic over to shop service
       final availableItems = await _shopService.getShopItems();
       final availableEnvironments = await _shopService.getShopEnvironments();
 
@@ -125,12 +126,17 @@ class ShopProvider extends ChangeNotifier {
         return;
       }
 
+      print("DEBUG");
+
+
       _availableItems = [];
       for (Item item in availableItems) {
         if (!await _itemService.userHasItem(currentUser.id, courseId, item.id)) {
           _availableItems.add(item);
         }
       }
+
+      print(_availableItems);
 
       _availableEnvironments = [];
       for (Item env in availableEnvironments) {

@@ -167,7 +167,7 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                     'joined_classes': [classId],
                     'dragons': {},
                     'acquired_accessories': [],
-                    'acquired_environments': {},
+                    'acquired_environments': [],
                     'quizzes': {},
                     'role': 'student',
                     'modules': initialModules,
