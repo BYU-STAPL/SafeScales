@@ -162,6 +162,7 @@ class _LessonPageState extends State<LessonPage> {
                             children: [
                               ...[
                                 _buildQuizCard(
+                                  type: ActivityType.preQuiz,
                                   title: 'Pre-Quiz',
                                   description:
                                       'Test your knowledge before starting',
@@ -185,6 +186,7 @@ class _LessonPageState extends State<LessonPage> {
                               ...[
                                 const SizedBox(height: 20),
                                 _buildQuizCard(
+                                  type: ActivityType.postQuiz,
                                   title: 'Post-Quiz',
                                   description: 'Test what you\'ve learned',
                                   onTap: () => _startQuiz(_lesson!.postQuiz),
@@ -225,6 +227,7 @@ class _LessonPageState extends State<LessonPage> {
   }
 
   Widget _buildQuizCard({
+    required ActivityType type,
     required String title,
     required String description,
     required VoidCallback onTap,
@@ -295,7 +298,8 @@ class _LessonPageState extends State<LessonPage> {
                               size: 18,
                             ),
                           ],
-                          if (score != null) ...[
+                          // Only show score for post-quiz
+                          if (type == ActivityType.postQuiz && score != null) ...[
                             const SizedBox(width: 10),
                             Text(
                               '${score.toStringAsFixed(0)}%',
