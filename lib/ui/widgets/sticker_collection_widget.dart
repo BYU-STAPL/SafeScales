@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../models/sticker_item_model.dart';
+
 class StickerCollectionWidget extends StatelessWidget {
   const StickerCollectionWidget({
     super.key,
@@ -8,7 +10,7 @@ class StickerCollectionWidget extends StatelessWidget {
   }) : _isLoadingAccessories = isLoadingAccessories;
 
   final bool _isLoadingAccessories;
-  final List<Map<String, dynamic>> userAccessories;
+  final List<Item> userAccessories;
 
   @override
   Widget build(BuildContext context) {
@@ -68,17 +70,17 @@ class StickerCollectionWidget extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children:
-                      userAccessories.map((accessory) {
+                      userAccessories.map((item) {
                         return Draggable<Map<String, dynamic>>(
                           data: {
-                            'id': accessory['id'].toString(),
-                            'image': accessory['image'],
-                            'name': accessory['name'],
+                            'id': item.id,
+                            'image': item.imageUrl,
+                            'name': item.name,
                           },
                           feedback: Material(
                             color: Colors.transparent,
                             child: Image.network(
-                              accessory['image'],
+                              item.imageUrl,
                               width: 48,
                               height: 48,
                               fit: BoxFit.contain,
@@ -91,7 +93,7 @@ class StickerCollectionWidget extends StatelessWidget {
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Image.network(
-                              accessory['image'],
+                              item.imageUrl,
                               width: 36,
                               height: 36,
                               fit: BoxFit.contain,
@@ -110,7 +112,7 @@ class StickerCollectionWidget extends StatelessWidget {
                               ),
                             ),
                             child: Image.network(
-                              accessory['image'],
+                              item.imageUrl,
                               width: 36,
                               height: 36,
                               fit: BoxFit.contain,

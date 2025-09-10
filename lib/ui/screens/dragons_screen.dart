@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/providers/course_provider.dart';
 import 'package:safe_scales/ui/widgets/dragon_id_card.dart';
+import '../../providers/dragon_decoration_provider.dart';
 import '../../providers/dragon_provider.dart';
 import '../widgets/dragon_image_widget.dart';
 import 'dragon_decoration/dragon_decoration_screen.dart';
@@ -35,10 +36,20 @@ class _DragonsScreenState extends State<DragonsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DragonDressUpPage(
-          dragonId: dragonId,
-          currentPhase: dragonProvider.getUserPreferredPhase(dragonId),
-        ),
+        builder: (context) {
+          return MultiProvider(
+            providers: [
+              ChangeNotifierProvider<DragonDecorationProvider>(
+                create: (_) => DragonDecorationProvider(),
+              ),
+              // DragonProvider is already above, no need to redeclare
+            ],
+            child: DragonDressUpPage(
+              dragonId: dragonId,
+              currentPhase: dragonProvider.getUserPreferredPhase(dragonId),
+            ),
+          );
+        },
       ),
     );
   }
