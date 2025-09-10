@@ -108,6 +108,7 @@ class ShopProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
+      // TODO: Move filtering logic over to shop service
       final availableItems = await _shopService.getShopItems();
       final availableEnvironments = await _shopService.getShopEnvironments();
 

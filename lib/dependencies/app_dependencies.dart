@@ -5,7 +5,6 @@ import 'package:safe_scales/providers/shop_provider.dart';
 import 'package:safe_scales/services/course_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Removed old class service
 import '../services/user_state_service.dart';
 import '../providers/course_provider.dart';
 import '../providers/dragon_provider.dart';
@@ -22,7 +21,6 @@ class AppDependencies {
   final SupabaseClient supabase;
   final UserStateService userStateService;
   final CourseService courseService;
-  // OldClassService removed; use CourseService for class data
 
   // === Feature Dependencies ===
   late final CourseDependencies course;

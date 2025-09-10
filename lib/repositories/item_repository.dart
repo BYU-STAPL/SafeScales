@@ -32,18 +32,19 @@ class ItemRepository {
   /// Get user's items and environments
   Future<List<dynamic>> fetchUserItemIDList(String userId) async {
     try {
+
+      List<dynamic> acquiredItems = [];
+      List<dynamic> acquiredEnvs = [];
+
       final response = await _supabase
           .from('Users')
           .select('acquired_accessories')
           .eq('id', userId)
           .single();
 
-      if (response['acquired_accessories'] == null) {
-        throw ItemRepositoryException('User $userId has no items');
+      if (response['acquired_accessories'] != null) {
+        acquiredItems = response['acquired_accessories'];
       }
-
-      final List<dynamic> acquiredItems = response['acquired_accessories'] ?? [];
-
 
       final response2 = await _supabase
           .from('Users')
@@ -51,11 +52,9 @@ class ItemRepository {
           .eq('id', userId)
           .single();
 
-      if (response2['acquired_environments'] == null) {
-        throw ItemRepositoryException('User $userId has no environments');
+      if (response2['acquired_environments'] != null) {
+        acquiredEnvs = response2['acquired_environments'];
       }
-
-      final List<dynamic> acquiredEnvs = response2['acquired_environments'] ?? [];
 
       List<dynamic> userItemAndEnvIds = acquiredItems + acquiredEnvs;
 
