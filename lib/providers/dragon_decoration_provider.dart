@@ -51,18 +51,18 @@ class DragonDecorationProvider extends ChangeNotifier {
   int get selectedEnvironmentIndex => _selectedEnvironmentIndex;
   String get currentDragonId => _currentDragonId;
 
-  // Environment helper getters
-  List<String> get userEnvironmentNames =>
-      _userEnvironments.map((env) => env.name).toList();
-
-  List<String> get userEnvironmentIds =>
-      _userEnvironments.map((env) => env.id).toList();
-
-  List<String> get userEnvironmentImages =>
-      _userEnvironments.map((env) => env.imageUrl).toList();
+  // // Environment helper getters
+  // List<String> get userEnvironmentNames =>
+  //     _userEnvironments.map((env) => env.name).toList();
+  //
+  // List<String> get userEnvironmentIds =>
+  //     _userEnvironments.map((env) => env.id).toList();
+  //
+  // List<String> get userEnvironmentImages =>
+  //     _userEnvironments.map((env) => env.imageUrl).toList();
 
   Item? getCurrentEnvironment() {
-    if (isNoEnvironmentSelected || _selectedEnvironmentIndex >= userEnvironmentIds.length) {
+    if (isNoEnvironmentSelected || _selectedEnvironmentIndex >= _userEnvironments.length) {
       return null;
     }
 
@@ -219,16 +219,12 @@ class DragonDecorationProvider extends ChangeNotifier {
 
       // If no environments, add default
       if (_userEnvironments.isEmpty) {
-        _userEnvironments = [
-          Item(id: 'id', type: ItemType.environment, name: 'Default', imageUrl: "", cost: 1)
-        ];
+        _userEnvironments = [];
       }
     } catch (e) {
       debugPrint('❌ Error loading environments: $e');
       _setError('Failed to load environments: $e');
-      _userEnvironments = [
-        Item(id: 'id', type: ItemType.environment, name: 'Default', imageUrl: "", cost: 1)
-      ];
+      _userEnvironments = [];
     } finally {
       _setLoadingEnvironments(false);
     }

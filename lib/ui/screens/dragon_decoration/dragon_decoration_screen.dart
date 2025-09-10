@@ -373,64 +373,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     }
   }
 
-  // void _showEnvironmentDialog() async {
-  //
-  //   print("DEBUG SHOW ENV DIALOG");
-  //
-  //   if (_isLoadingEnvironments) {
-  //     ScaffoldMessenger.of(
-  //       context,
-  //     ).showSnackBar(SnackBar(content: Text('Loading environments...')));
-  //   }
-  //
-  //   final dragonDecorationProvider = Provider.of<DragonDecorationProvider>(context, listen: false);
-  //
-  //
-  //   if (dragonDecorationProvider.userEnvironments.isEmpty) {
-  //     print('❌ No environments available');
-  //     ScaffoldMessenger.of(
-  //       context,
-  //     ).showSnackBar(SnackBar(content: Text('No environments available')));
-  //     return;
-  //   }
-  //
-  //   int? choice = await showDialog<int>(
-  //     context: context,
-  //     builder:
-  //         (context) => SimpleDialog(
-  //           title: const Text('Select Environment'),
-  //           children: List.generate(
-  //             dragonDecorationProvider.userEnvironments.length,
-  //             (i) => SimpleDialogOption(
-  //               onPressed: () {
-  //                 Navigator.pop(context, i);
-  //               },
-  //               child: Text(dragonDecorationProvider.userEnvironments[i].name),
-  //             ),
-  //           ),
-  //         ),
-  //   );
-  //
-  //   if (choice != null && choice < dragonDecorationProvider.userEnvironments.length) {
-  //     setState(() => selectedEnvironment = choice);
-  //
-  //     // Use state manager to save environment selection
-  //     final dragonProvider = Provider.of<DragonProvider>(
-  //       context,
-  //       listen: false,
-  //     );
-  //     await dragonProvider.saveEnvironmentSelection(
-  //       widget.dragonId,
-  //       userEnvironmentIds[choice],
-  //     );
-  //
-  //     // Use the callback for parent notification
-  //     // if (widget.onEnvironmentChanged != null) {
-  //     //   widget.onEnvironmentChanged!(widget.dragonId, userEnvironmentIds[choice]);
-  //     // }
-  //   }
-  // }
-
   void _showEnvironmentDialog() async {
     final decorationProvider = Provider.of<DragonDecorationProvider>(context, listen: false);;
 
@@ -441,7 +383,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       return;
     }
 
-    if (decorationProvider.userEnvironmentNames.isEmpty) {
+    if (decorationProvider.userEnvironments.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No environments available')),
       );
@@ -467,7 +409,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
       // Save environment selection to dragon provider
       final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
-      final environmentId = decorationProvider.userEnvironmentIds[choice];
+      final environmentId = decorationProvider.userEnvironments[choice].id;
       await dragonProvider.saveEnvironmentSelection(widget.dragonId, environmentId);
     }
   }
@@ -488,7 +430,9 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       child: Text('None'),
     ));
 
-    print(decorationProvider.userEnvironments);
+    for (var env in decorationProvider.userEnvironments) {
+      print("${env.name} ${env.id}");
+    }
 
     return envOptions;
   }
@@ -647,74 +591,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       print('❌ Error saving dragon dress-up: $e');
     }
   }
-
-  // Future<void> _loadDressUp() async {
-  //   try {
-  //     final userState = UserStateService();
-  //     final user = userState.currentUser;
-  //
-  //     if (user != null) {
-  //       // Get current dragon_dressup data
-  //       final userResponse =
-  //           await SupabaseConfig.client
-  //               .from('Users')
-  //               .select('dragon_dressup')
-  //               .eq('id', user.id)
-  //               .single();
-  //
-  //       final Map<String, dynamic>? dressUpData =
-  //           userResponse['dragon_dressup'] != null
-  //               ? Map<String, dynamic>.from(userResponse['dragon_dressup'])
-  //               : null;
-  //
-  //       if (dressUpData != null && dressUpData.containsKey(widget.dragonId)) {
-  //         final Map<String, dynamic> dragonMap = Map<String, dynamic>.from(
-  //           dressUpData[widget.dragonId],
-  //         );
-  //
-  //         final List<StickerItem> restored = [];
-  //
-  //         dragonMap.forEach((accId, data) {
-  //           final Map<String, dynamic> d = Map<String, dynamic>.from(data);
-  //           final Map<String, dynamic> pos = Map<String, dynamic>.from(
-  //             d['position'] ?? {},
-  //           );
-  //
-  //           // Find accessory image by ID
-  //           final accessory = userAccessories.firstWhere(
-  //             (acc) => acc['id'].toString() == accId.toString(),
-  //             orElse: () => {'image': '', 'name': ''},
-  //           );
-  //
-  //           restored.add(
-  //             StickerItem(
-  //               id: 'acc_$accId',
-  //               imageUrl: accessory['image'] ?? '',
-  //               name: accessory['name']?.toString() ?? accId.toString(),
-  //               accessoryId: accId.toString(),
-  //               position: Offset(
-  //                 (pos['x'] ?? 0).toDouble(),
-  //                 (pos['y'] ?? 0).toDouble(),
-  //               ),
-  //               size: (d['size'] ?? 48).toDouble(),
-  //             ),
-  //           );
-  //         });
-  //
-  //         setState(() {
-  //           placedStickers = restored;
-  //         });
-  //       }
-  //     }
-  //   } catch (e) {
-  //     print('❌ Error loading dragon dress-up: $e');
-  //   }
-  // }
-
-  // Add a method to load dress-up after accessories are loaded
-  // void _onAccessoriesLoaded() {
-  //   _loadDressUp();
-  // }
 
   void setDetails(
     DragTargetDetails details,
