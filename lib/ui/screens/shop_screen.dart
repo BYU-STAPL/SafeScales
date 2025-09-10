@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:safe_scales/providers/shop_provider.dart';
 import 'dart:convert';
-import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/themes/app_theme.dart';
-import 'package:safe_scales/services/shop_service.dart';
+import 'package:safe_scales/repositories/shop_repository.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/ui/screens/review_set/review_screen.dart';
 import 'package:safe_scales/models/question.dart';
+
+import '../../models/lesson.dart';
+import '../../models/sticker_item_model.dart';
+import '../../providers/course_provider.dart';
+import '../widgets/shop_item_card.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -17,11 +23,17 @@ class ShopScreen extends StatefulWidget {
 
 class _ShopScreenState extends State<ShopScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final ShopService _shopService = ShopService();
+
+
+  final ShopRepository _shopRepository = ShopRepository();
   final UserStateService _userState = UserStateService();
+
+
   int selectedTab = 0; // 0 = Accessories, 1 = Environments
   int? selectedIndex; // Track selected item index
   String? selectedLessonIndex; // Track selected lesson in popup
+
+
   bool showLessonDialog = false;
   List<Map<String, dynamic>> accessories = [];
   List<Map<String, dynamic>> environments = [];
@@ -31,135 +43,49 @@ class _ShopScreenState extends State<ShopScreen> {
   Map<String, Map<String, dynamic>> quizDetails = {};
   Map<String, Map<String, dynamic>> moduleDetails = {};
 
-  // Placeholder completed lessons
-  final List<String> completedLessons = [
-    'Lesson 1: Internet Safety',
-    'Lesson 2: Social Media Norms',
-    'Lesson 3: Passwords',
-    'Lesson 4: Digital Footprint',
-  ];
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _loadItems();
-    _reloadUserProfile();
-  }
+    // _loadItems();
+    // _reloadUserProfile();
 
-  Future<void> _reloadUserProfile() async {
-    await _userState.loadUserProfile();
-    await _loadModuleDetails();
-  }
-
-  Future<void> _loadModuleDetails() async {
-    try {
-      final completedModules = _getCompletedQuizzes();
-      if (completedModules.isEmpty) return;
-
-      final moduleIds = completedModules.map((m) => m['id']).toList();
-
-      final response = await SupabaseConfig.client
-          .from('modules')
-          .select()
-          .inFilter('id', moduleIds);
-
-      setState(() {
-        moduleDetails = {for (var module in response) module['id']: module};
-      });
-    } catch (e) {
-      print('❌Error loading module details: $e');
-    }
-  }
-
-  Future<void> _loadItems() async {
-    setState(() {
-      isLoading = true;
+    // Use addPostFrameCallback to ensure initialization happens after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeData();
     });
+  }
+
+  Future<void> _initializeData() async {
+    if (_isInitialized) return;
+
+    final shopProvider = Provider.of<ShopProvider>(context, listen: false);
 
     try {
-      final accessoriesData = await _shopService.getAccessories();
-      final environmentsData = await _shopService.getEnvironments();
-
-      // Load user's acquired items
-      final userId = _userState.currentUser?.id;
-      if (userId != null) {
-        acquiredAccessories = await _shopService.getUserAcquiredAccessories(
-          userId,
-        );
-        acquiredEnvironments = await _shopService.getUserAcquiredEnvironments(
-          userId,
-        );
+      // Only initialize if not already initialized
+      // Since AppDependencies already calls initialize(), we might not need this
+      if (!shopProvider.isLoading) {
+        await shopProvider.initialize();
       }
 
-      setState(() {
-        accessories = accessoriesData;
-        environments = environmentsData;
-        isLoading = false;
-      });
+      _isInitialized = true;
     } catch (e) {
-      print('❌Error loading shop items: $e');
-      setState(() {
-        isLoading = false;
-      });
+      debugPrint('Initialization error: $e');
     }
-  }
-
-  List<Map<String, dynamic>> _getCompletedQuizzes() {
-    final user = _userState.currentUser;
-
-    if (user == null || user.modules == null) {
-      print('No user or modules data available');
-      return [];
-    }
-
-    final Map<String, dynamic> modules = user.modules!;
-
-    final completedQuizzes =
-        modules.entries
-            .where((moduleEntry) {
-              final moduleData = moduleEntry.value as Map<String, dynamic>;
-              final preQuiz = moduleData['preQuiz'] as Map<String, dynamic>?;
-              final postQuiz = moduleData['postQuiz'] as Map<String, dynamic>?;
-              final reading = moduleData['reading'] as Map<String, dynamic>?;
-
-              final bool preCompleted =
-                  preQuiz != null && preQuiz['completed_at'] != null;
-              final bool postCompleted =
-                  postQuiz != null && postQuiz['completed_at'] != null;
-              final bool readingCompleted =
-                  reading != null &&
-                  (reading['completed'] == true ||
-                      reading['completed_at'] != null);
-
-              // A module is considered completed if reading, preQuiz, and postQuiz are all completed
-              return preCompleted && postCompleted && readingCompleted;
-            })
-            .map((moduleEntry) {
-              final moduleData = moduleEntry.value as Map<String, dynamic>;
-              return {
-                'id': moduleEntry.key,
-                'preQuiz': moduleData['preQuiz'],
-                'postQuiz': moduleData['postQuiz'],
-              };
-            })
-            .toList();
-
-    print(
-      'Found ${completedQuizzes.length} available completed modules: $completedQuizzes',
-    );
-    return completedQuizzes;
   }
 
   Future<void> _handlePurchase() async {
     if (selectedIndex == null) return;
 
-    final userId = _userState.currentUser?.id;
-    if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to purchase items')),
-      );
-      return;
-    }
+    // User can't see shop unless logged in
+    // final userId = _userState.currentUser?.id;
+    // if (userId == null) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(content: Text('Please log in to purchase items')),
+    //   );
+    //   return;
+    // }
 
     // Show completed modules popup first
     setState(() {
@@ -168,11 +94,81 @@ class _ShopScreenState extends State<ShopScreen> {
     });
   }
 
+  // Future<void> _completePurchase() async {
+  //   if (selectedIndex == null || selectedLessonIndex == null) return;
+  //
+  //   final userId = _userState.currentUser?.id;
+  //   if (userId == null) return;
+  //
+  //   try {
+  //     // Hide module selection dialog before starting the revision quiz
+  //     setState(() {
+  //       showLessonDialog = false;
+  //     });
+  //
+  //     // Start the revision quiz for the selected module
+  //     final bool passedRevision = await _startRevisionQuiz(
+  //       selectedLessonIndex!,
+  //     );
+  //
+  //     if (!mounted) return;
+  //
+  //     if (!passedRevision) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text('Review set not completed. Purchase cancelled.'),
+  //         ),
+  //       );
+  //       setState(() {
+  //         selectedLessonIndex = null;
+  //       });
+  //       return;
+  //     }
+  //
+  //     // Proceed with the purchase after successful revision
+  //     bool purchaseSuccess;
+  //     if (selectedTab == 0) {
+  //       purchaseSuccess = await _shopRepository.purchaseAccessory(
+  //         userId,
+  //         accessories[selectedIndex!]['id'].toString(),
+  //       );
+  //     } else {
+  //       purchaseSuccess = await _shopRepository.purchaseEnvironment(
+  //         userId,
+  //         environments[selectedIndex!]['id'].toString(),
+  //       );
+  //     }
+  //
+  //     if (purchaseSuccess) {
+  //       ScaffoldMessenger.of(
+  //         context,
+  //       ).showSnackBar(const SnackBar(content: Text('Purchase successful!')));
+  //       // await _loadItems();
+  //       // TODO: Create Refresh
+  //     } else {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text('Failed to complete purchase')),
+  //       );
+  //     }
+  //
+  //     setState(() {
+  //       selectedLessonIndex = null;
+  //     });
+  //   } catch (e) {
+  //     print('❌Error during purchase: $e');
+  //     ScaffoldMessenger.of(
+  //       context,
+  //     ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+  //   }
+  // }
+
   Future<void> _completePurchase() async {
     if (selectedIndex == null || selectedLessonIndex == null) return;
 
     final userId = _userState.currentUser?.id;
     if (userId == null) return;
+
+    final shopProvider = Provider.of<ShopProvider>(context, listen: false);
 
     try {
       // Hide module selection dialog before starting the revision quiz
@@ -190,7 +186,7 @@ class _ShopScreenState extends State<ShopScreen> {
       if (!passedRevision) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Revision not completed. Purchase cancelled.'),
+            content: Text('Review set not completed. Purchase cancelled.'),
           ),
         );
         setState(() {
@@ -199,28 +195,26 @@ class _ShopScreenState extends State<ShopScreen> {
         return;
       }
 
-      // Proceed with the purchase after successful revision
-      bool purchaseSuccess;
-      if (selectedTab == 0) {
-        purchaseSuccess = await _shopService.purchaseAccessory(
-          userId,
-          accessories[selectedIndex!]['id'].toString(),
-        );
-      } else {
-        purchaseSuccess = await _shopService.purchaseEnvironment(
-          userId,
-          environments[selectedIndex!]['id'].toString(),
-        );
-      }
+      // Proceed with the purchase using the provider
+      final PurchaseResult result = await shopProvider.purchaseItemByIndex(
+        selectedIndex!,
+        selectedTab == 1, // true for environments, false for items
+      );
 
-      if (purchaseSuccess) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Purchase successful!')));
-        await _loadItems();
+      if (!mounted) return;
+
+      if (result.isSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message)),
+        );
+
+        // Reset selected index since the item is no longer available
+        setState(() {
+          selectedIndex = null;
+        });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to complete purchase')),
+          SnackBar(content: Text(result.message)),
         );
       }
 
@@ -228,10 +222,14 @@ class _ShopScreenState extends State<ShopScreen> {
         selectedLessonIndex = null;
       });
     } catch (e) {
-      print('❌Error during purchase: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+      debugPrint('Error during purchase: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+
+      setState(() {
+        selectedLessonIndex = null;
+      });
     }
   }
 
@@ -246,12 +244,56 @@ class _ShopScreenState extends State<ShopScreen> {
 
       final questionSet = _parseRevisionQuestionsToQuestionSet(moduleResponse);
 
-      final result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ReviewScreen(questionSet: questionSet),
-        ),
-      );
+      bool result = false;
+
+      ShopProvider shopProvider = Provider.of<ShopProvider>(context, listen: false);
+      Item? selectedItem = shopProvider.getItemByIndex(selectedIndex!, selectedTab == 1);
+
+      if (questionSet.questions.isEmpty) {
+
+        //TODO: Remove after testing
+        QuestionSet testingSet = QuestionSet(
+            id: "id",
+            title: "test",
+            description: "description...",
+            activityType: ActivityType.review,
+            subject: "subject",
+            questions: [
+              Question(id: "id", questionText: "Pick A", options: ['a', 'b'], correctAnswerIndices: [0], isMultipleAnswer: true, explanation: 'a is right'),
+            ]
+        );
+
+        result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReviewScreen(questionSet: testingSet, image: selectedItem?.imageUrl),
+          ),
+        );
+
+        //TODO: Put back after testing
+        /*
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'The Teacher has not created a review set for this lesson',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onInverseSurface,
+              ),
+            ),
+            backgroundColor:
+            Theme.of(context).colorScheme.inverseSurface,
+          ),
+        );
+        */
+      }
+      else {
+        result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReviewScreen(questionSet: questionSet),
+          ),
+        );
+      }
 
       // ReviewScreen returns true on completion
       return result == true;
@@ -264,9 +306,7 @@ class _ShopScreenState extends State<ShopScreen> {
     }
   }
 
-  QuestionSet _parseRevisionQuestionsToQuestionSet(
-    Map<String, dynamic> module,
-  ) {
+  QuestionSet _parseRevisionQuestionsToQuestionSet(Map<String, dynamic> module,) {
     final String moduleId = module['id'].toString();
     final String title = (module['title'] ?? 'Module Review').toString();
     final String subject = 'General';
@@ -338,456 +378,306 @@ class _ShopScreenState extends State<ShopScreen> {
 
     final Color primary = Theme.of(context).colorScheme.primary;
     final Color selected = primary;
-    final Color unselected = theme.colorScheme.lightBlue.withValues(
-      alpha: 0.5,
-    ); //Colors.blue[100]!;
+    final Color unselected = theme.colorScheme.lightBlue.withValues(alpha: 0.5,);
     final Color selectedText = Colors.white;
     final Color unselectedText = primary;
     final Color highlight = theme.colorScheme.green.withValues(alpha: 0.25);
 
-    final items = selectedTab == 0 ? accessories : environments;
+    return Consumer2<ShopProvider, CourseProvider>(
+      builder: (context, shopProvider, courseProvider, child) {
 
-    return Stack(
-      children: [
-        Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 10),
-                  // Subtitle
-                  Text(
-                    'Earn new items and environments for your dragons by completing review sets from finished lessons.',
-                    style: theme.textTheme.labelMedium,
-                  ),
-                  const SizedBox(height: 20),
-                  // Toggle Buttons
-                  Row(
+        final items = selectedTab == 0 ?  shopProvider.availableItems : shopProvider.availableEnvironments;
+
+        return Stack(
+          children: [
+            Scaffold(
+              key: _scaffoldKey,
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              body: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap:
-                              () => setState(() {
+                      const SizedBox(height: 10),
+
+                      Row(
+                        children: [
+                          // Subtitle
+                          Expanded(
+                            child: Text(
+                              'Earn new items and environments for your dragons by completing review sets from finished lessons.',
+                              style: theme.textTheme.labelMedium,
+                            ),
+                          ),
+
+                          // Refresh button
+                          Consumer<ShopProvider>(
+                            builder: (context, shopProvider, child) {
+                              return IconButton(
+                                onPressed: shopProvider.isLoading
+                                    ? null
+                                    : () => shopProvider.refresh(),
+                                icon: shopProvider.isLoading
+                                    ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                                    : const Icon(Icons.refresh),
+                                tooltip: 'Refresh items',
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+                      // Toggle Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap:
+                                  () => setState(() {
                                 selectedTab = 0;
                                 selectedIndex = null;
                               }),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: selectedTab == 0 ? selected : unselected,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Center(
-                              child: Text(
-                                'ITEMS'.toUpperCase(),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color:
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: selectedTab == 0 ? selected : unselected,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'ITEMS (${shopProvider.availableItems.length})'.toUpperCase(),
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color:
                                       selectedTab == 0
                                           ? selectedText
                                           : unselectedText,
-                                  letterSpacing: 1.1,
+                                      letterSpacing: 1.1,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap:
-                              () => setState(() {
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap:
+                                  () => setState(() {
                                 selectedTab = 1;
                                 selectedIndex = null;
                               }),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: selectedTab == 1 ? selected : unselected,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Center(
-                              child: Text(
-                                'ENVIRONMENTS',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color:
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: selectedTab == 1 ? selected : unselected,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'ENVIRONMENTS (${shopProvider.availableEnvironments.length})'.toUpperCase(),
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color:
                                       selectedTab == 1
                                           ? selectedText
                                           : unselectedText,
-                                  letterSpacing: 1.1,
+                                      letterSpacing: 1.1,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      // Shop Items Grid
+                      Expanded(
+                        child:
+                        // isLoading
+                        //     ? const Center(child: CircularProgressIndicator()) :
+                        GridView.count(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 24,
+                          crossAxisSpacing: 24,
+                          childAspectRatio: 0.95,
+                          children: [
+                            for (int i = 0; i < items.length; i++)
+                              ShopItemCard(
+                                image: items[i].imageUrl,
+                                name: items[i].name,
+                                cost: items[i].cost.toString() ?? '1',
+                                isSelected: selectedIndex == i,
+                                // isOwned:
+                                // selectedTab == 0 ? acquiredAccessories.contains(items[i].id.toString(),)
+                                //     : acquiredEnvironments.contains(items[i]['id'].toString(),),
+                                highlight: highlight,
+                                onTap: () {
+                                  setState(() {
+                                    selectedIndex = i;
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (selectedIndex != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
+                          child: Center(
+                            child: ElevatedButton(
+                              onPressed: _handlePurchase,
+                              child: Text(
+                                'PURCHASE'.toUpperCase(),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-                  // Shop Items Grid
-                  Expanded(
-                    child:
-                        isLoading
-                            ? const Center(child: CircularProgressIndicator())
-                            : GridView.count(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 24,
-                              crossAxisSpacing: 24,
-                              childAspectRatio: 0.95,
-                              children: [
-                                for (int i = 0; i < items.length; i++)
-                                  _ShopItemCard(
-                                    image:
-                                        items[i]['image_url'] ??
-                                        items[i]['imageUrl'] ??
-                                        items[i]['image'],
-                                    name: items[i]['name'],
-                                    cost: items[i]['cost']?.toString() ?? '1',
-                                    isSelected: selectedIndex == i,
-                                    isOwned:
-                                        selectedTab == 0
-                                            ? acquiredAccessories.contains(
-                                              items[i]['id'].toString(),
-                                            )
-                                            : acquiredEnvironments.contains(
-                                              items[i]['id'].toString(),
-                                            ),
-                                    highlight: highlight,
-                                    onTap: () {
-                                      setState(() {
-                                        selectedIndex = i;
-                                      });
-                                    },
-                                  ),
-                              ],
-                            ),
-                  ),
-                  if (selectedIndex != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
-                      child: Center(
-                        child: ElevatedButton(
-                          onPressed: _handlePurchase,
-                          // style: ElevatedButton.styleFrom(
-                          //   backgroundColor: primary,
-                          //   foregroundColor: Colors.white,
-                          //   elevation: 2,
-                          //   shape: RoundedRectangleBorder(
-                          //     borderRadius: BorderRadius.circular(12),
-                          //   ),
-                          //   padding: const EdgeInsets.symmetric(
-                          //     horizontal: 36,
-                          //     vertical: 14,
-                          //   ),
-                          // ),
-                          child: Text(
-                            'PURCHASE'.toUpperCase(),
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
-        if (showLessonDialog)
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: () => setState(() => showLessonDialog = false),
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.3),
-                child: Center(
+            if (showLessonDialog)
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () => setState(() => showLessonDialog = false),
                   child: Container(
-                    width: 320,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Select a completed module'.toTitleCase(),
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontSize: 18 * AppTheme.fontSizeScale,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: MediaQuery.of(context).size.height * 0.5,
-                          ),
-                          child: ListView(
-                            shrinkWrap: true,
-                            children:
-                                _getCompletedQuizzes().map((module) {
-                                  final moduleDetail =
-                                      moduleDetails[module['id']];
-                                  return GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        selectedLessonIndex = module['id'];
-                                      });
-                                    },
-                                    child: Container(
-                                      margin: const EdgeInsets.only(bottom: 10),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 12,
-                                        horizontal: 14,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            selectedLessonIndex == module['id']
-                                                ? primary.withValues(
-                                                  alpha: 0.12,
-                                                )
-                                                : Colors.grey[100],
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(
-                                          color:
-                                              selectedLessonIndex ==
-                                                      module['id']
-                                                  ? primary
-                                                  : Colors.transparent,
-                                          width: 2,
-                                        ),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            moduleDetail?['title'] ??
-                                                'Unknown Module',
-                                            style: theme.textTheme.headlineSmall
-                                                ?.copyWith(
-                                                  fontSize:
-                                                      15 *
-                                                      AppTheme.fontSizeScale,
-                                                ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'Pre-Quiz Score: ${module['preQuiz']['score']}%',
-                                            style: theme.textTheme.bodySmall,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'Post-Quiz Score: ${module['postQuiz']['score']}%',
-                                            style: theme.textTheme.bodySmall
-                                                ?.copyWith(
-                                                  color:
-                                                      theme.colorScheme.green,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed:
-                                  () =>
-                                      setState(() => showLessonDialog = false),
-                              child: Text(
-                                'CANCEL',
-                                style: TextStyle(
-                                  fontSize: 14 * AppTheme.fontSizeScale,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            ElevatedButton(
-                              onPressed:
-                                  selectedLessonIndex != null
-                                      ? () {
-                                        _completePurchase();
-                                      }
-                                      : null,
-                              // style: ElevatedButton.styleFrom(
-                              //   backgroundColor: primary,
-                              //   foregroundColor: Colors.white,
-                              //   elevation: 1,
-                              //   shape: RoundedRectangleBorder(
-                              //     borderRadius: BorderRadius.circular(8),
-                              //   ),
-                              //   padding: const EdgeInsets.symmetric(
-                              //     horizontal: 18,
-                              //     vertical: 10,
-                              //   ),
-                              // ),
-                              child: const Text('SELECT'),
+                    color: Colors.black.withValues(alpha: 0.3),
+                    child: Center(
+                      child: Container(
+                        width: 320,
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _ShopItemCard extends StatelessWidget {
-  final String? image;
-  final String name;
-  final String cost;
-  final bool isSelected;
-  final bool isOwned;
-  final Color highlight;
-  final VoidCallback onTap;
-
-  const _ShopItemCard({
-    this.image,
-    required this.name,
-    required this.cost,
-    required this.isSelected,
-    required this.isOwned,
-    required this.highlight,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    ThemeData theme = Theme.of(context);
-
-    Color green = theme.colorScheme.secondary;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(15),
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            color:
-                isSelected ? highlight : theme.colorScheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color:
-                  isOwned
-                      ? green
-                      : theme.colorScheme.onSurfaceVariant.withValues(
-                        alpha: 0.2,
-                      ),
-              width: isOwned ? 2 : 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child:
-                        image != null
-                            ? Image.network(
-                              image!,
-                              width: 60 * AppTheme.fontSizeScale,
-                              height: 60 * AppTheme.fontSizeScale,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 60 * AppTheme.fontSizeScale,
-                                  height: 60 * AppTheme.fontSizeScale,
-                                  color: theme.colorScheme.surface,
-                                  child: Icon(
-                                    Icons.shopping_bag,
-                                    size: 32 * AppTheme.fontSizeScale,
-                                    color: theme.colorScheme.onSurface,
-                                  ),
-                                );
-                              },
-                            )
-                            : Container(
-                              width: 60 * AppTheme.fontSizeScale,
-                              height: 60 * AppTheme.fontSizeScale,
-                              color: theme.colorScheme.surface,
-                              child: Icon(
-                                Icons.shopping_bag,
-                                size: 32 * AppTheme.fontSizeScale,
-                                color: theme.colorScheme.onSurface,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Select a lesson to review',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontSize: 18 * AppTheme.fontSizeScale,
                               ),
                             ),
-                  ),
-                  if (isOwned)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: green,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.check,
-                          size: 16 * AppTheme.fontSizeScale,
-                          color: Colors.white,
+                            const SizedBox(height: 18),
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight: MediaQuery.of(context).size.height * 0.5,
+                              ),
+                              child: ListView(
+                                shrinkWrap: true,
+                                children:
+                                  courseProvider.getAllCompletedLessons().map((lesson) {
+                                    return _buildLessonCardForReview(lesson);
+                                  }).toList(),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton(
+                                  onPressed:
+                                      () =>
+                                      setState(() => showLessonDialog = false),
+                                  child: Text(
+                                    'CANCEL'.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 14 * AppTheme.fontSizeScale,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton(
+                                  onPressed:
+                                  selectedLessonIndex != null
+                                      ? () {
+                                    _completePurchase();
+                                  }
+                                      : null,
+                                  child: Text('SELECT'.toUpperCase()),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                name.toTitleCase(),
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontSize: 15 * AppTheme.fontSizeScale,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                isOwned ? 'OWNED'.toUpperCase() : 'Cost: $cost review set',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: isOwned ? green : theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
-            ],
+          ],
+        );
+      },
+    );
+
+  }
+
+  GestureDetector _buildLessonCardForReview(Lesson lesson) {
+
+    ThemeData theme = Theme.of(context);
+    Color selectionColor = theme.colorScheme.primary;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedLessonIndex = lesson.lessonId;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(
+          vertical: 12,
+          horizontal: 14,
+        ),
+        decoration: BoxDecoration(
+          color:
+              selectedLessonIndex == lesson.lessonId
+                  ? selectionColor.withValues(
+                    alpha: 0.12,
+                  )
+                  : Colors.grey[100],
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color:
+                selectedLessonIndex == lesson.lessonId
+                    ? selectionColor
+                    : Colors.transparent,
+            width: 2,
           ),
+        ),
+        child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            Text(
+              lesson.title,
+              style: theme.textTheme.bodyMedium,
+            ),
+          ],
         ),
       ),
     );
   }
 }
+

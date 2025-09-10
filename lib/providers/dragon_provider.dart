@@ -95,7 +95,7 @@ class DragonProvider extends ChangeNotifier {
   /// Initialize the provider
   Future<void> initialize() async {
     await loadUserDragons();
-    print('DragonProvider initialized');
+    // print('DragonProvider initialized');
     _isInitialized = true;
   }
 
@@ -112,14 +112,13 @@ class DragonProvider extends ChangeNotifier {
         return;
       }
 
-      final courseData = await _courseService.getUserCourseData(user.id);
-      if (courseData == null) {
-        // _setLoading(false);
+      String? courseId = await CourseService().getUserCourseId(user.id);
+      if (courseId == null) {
         _clearData();
         return;
       }
 
-      await _loadDragonData(user.id, courseData.courseId);
+      await _loadDragonData(user.id, courseId);
     } catch (e) {
       _setError('Failed to load user dragons: $e');
       print('❌ DragonProvider: Error loading user dragons: $e');
@@ -192,7 +191,6 @@ class DragonProvider extends ChangeNotifier {
       _currentEnvironment = environmentId;
       notifyListeners();
 
-      print('✅ Environment selection saved successfully');
     } catch (e) {
       _setError('Failed to save environment selection: $e');
       print('❌ Error saving environment selection: $e');
@@ -226,12 +224,14 @@ class DragonProvider extends ChangeNotifier {
     final user = _userState.currentUser;
     if (user == null) return;
 
-    final courseData = await _courseService.getUserCourseData(user.id);
-    if (courseData == null) return;
+    String? courseId = await CourseService().getUserCourseId(user.id);
+    if (courseId == null) {
+      return;
+    }
 
     final userDragonsData = await _dragonService.getUserDragonsData(userId);
     final classAssets = await _dragonService.getClassAssets(
-      courseData.courseId,
+      courseId,
     );
 
     _unlockedDragonPhases = _dragonService.extractClassDragonPhases(

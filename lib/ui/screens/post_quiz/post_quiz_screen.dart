@@ -34,7 +34,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   bool _showTableOfContents = false;
   final _userState = UserStateService();
 
-  bool _isForward = true;
+  late bool _isForward;
   bool _isFirstLoad = true;
 
   @override
@@ -62,13 +62,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
 
     int totalQuestions = widget.questionSet.questions.length;
     int scorePercentage = ((correctAnswers / totalQuestions) * 100).round();
-
-    // print('Post-quiz completed:');
-    // print('Quiz ID: ${widget.questionSet.id}');
-    // print('Total questions: $totalQuestions');
-    // print('Correct answers: $correctAnswers');
-    // print('Score percentage: $scorePercentage');
-    // print('User answers: $userAnswers');
 
     // Save quiz progress
     try {

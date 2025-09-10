@@ -43,20 +43,9 @@ class _LessonPageState extends State<LessonPage> {
 
     final courseProvider = Provider.of<CourseProvider>(context, listen: false);
 
-    // print('DEBUG: ====== Lesson Page Initialization ======');
-    // print('DEBUG: Initializing lesson page for moduleId: ${widget.moduleId}');
-    // print('DEBUG: Available lessons: ${courseProvider.lessons.keys.toList()}');
-    // print(
-    //   'DEBUG: Available progress: ${courseProvider.lessonProgress.keys.toList()}',
-    // );
-    // print('DEBUG: Course loading state: ${courseProvider.isLoading}');
-    // print('DEBUG: Course error state: ${courseProvider.error}');
-
     // Check if provider is initialized
     if (!courseProvider.isInitialized) {
-      // print('DEBUG: ERROR - CourseProvider not initialized');
       await courseProvider.initialize();
-      // print('DEBUG: CourseProvider initialized');
     }
 
     setState(() {

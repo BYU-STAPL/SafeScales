@@ -23,9 +23,9 @@ class ThemeDependencies {
   /// Initialize theme settings (load from storage)
   Future<void> initialize() async {
     try {
-      print("🎨 Initializing theme settings...");
+
       await _themeNotifier.loadSettings();
-      print("✅ Theme settings loaded successfully");
+
     } catch (e) {
       print("❌ Theme initialization failed: $e");
       rethrow;

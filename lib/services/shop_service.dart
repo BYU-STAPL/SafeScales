@@ -1,219 +1,166 @@
-import 'package:safe_scales/config/supabase_config.dart';
-import 'package:safe_scales/services/user_state_service.dart';
-
-import '../repositories/course_repository.dart';
+import '../models/sticker_item_model.dart';
+import '../repositories/item_repository.dart';
+import '../repositories/shop_repository.dart';
 
 class ShopService {
-  final supabase = SupabaseConfig.client;
-  final _userState = UserStateService();
-  final CourseRepository _courseRepository = CourseRepository();
+  final ShopRepository _repository;
 
-  ShopService() {}
+  ShopService({ShopRepository? repository})
+      : _repository = repository ?? ShopRepository();
 
-  // Get assets from user's class
-  Future<List<Map<String, dynamic>>> _getClassAssets() async {
+  // Get items
+  Future<List<Item>> getShopItems() async {
     try {
-      final user = _userState.currentUser;
-      if (user == null) return [];
+      List<Item> items = [];
 
-      // Get user's class
-      final classData = await _courseRepository.getUserClass(user.id);
-      if (classData == null || classData.isEmpty) return [];
+      final List<Map<String, dynamic>> rawData = await _repository.getAccessories();
 
-      // Get class assets
-      final assets = await _courseRepository.getClassAssets(classData['id']);
-      if (assets == null) return [];
+      for (var rawItem in rawData) {
+        // Build Item
+        Item item = Item(
+          id: rawItem['id'],
+          type: ItemType.item,
+          name: rawItem['name'],
+          imageUrl: rawItem['imageUrl'] ?? rawItem['image_url'] ?? '',
+          cost: rawItem['cost'] ?? 1,
+        );
 
-      return List<Map<String, dynamic>>.from(assets);
-    } catch (e) {
-      print('❌Error getting class assets: $e');
-      return [];
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> getAccessories() async {
-    try {
-      final assets = await _getClassAssets();
-      // Filter for accessories and add cost field
-      return assets
-          .where((asset) => asset['type'] == 'accessory')
-          .map(
-            (asset) => {
-              ...asset,
-              'image_url':
-                  asset['imageUrl'], // Map imageUrl to image_url for compatibility
-              'cost': 1, // Default cost
-            },
-          )
-          .toList();
-    } catch (e) {
-      print('❌Error fetching accessories: $e');
-      return [];
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> getEnvironments() async {
-    try {
-      final assets = await _getClassAssets();
-      // Filter for environments and add cost field
-      return assets
-          .where((asset) => asset['type'] == 'environment')
-          .map(
-            (asset) => {
-              ...asset,
-              'image_url':
-                  asset['imageUrl'], // Map imageUrl to image_url for compatibility
-              'cost': 1, // Default cost
-            },
-          )
-          .toList();
-    } catch (e) {
-      print('❌Error fetching environments: $e');
-      return [];
-    }
-  }
-
-  Future<bool> purchaseAccessory(String userId, String accessoryId) async {
-    try {
-      // First get the current user's acquired accessories
-      final userResponse =
-          await supabase
-              .from('Users')
-              .select('acquired_accessories')
-              .eq('id', userId)
-              .single();
-
-      // Handle both Map and List formats
-      List<dynamic> acquiredAccessories;
-      if (userResponse['acquired_accessories'] is Map) {
-        // If it's a Map, convert it to a List of IDs
-        final Map<String, dynamic> accessoriesMap =
-            userResponse['acquired_accessories'];
-        acquiredAccessories = accessoriesMap.values.toList();
-      } else {
-        // If it's already a List, use it directly
-        acquiredAccessories = userResponse['acquired_accessories'] ?? [];
+        items.add(item);
       }
 
-      // Check if user already has this accessory
-      if (acquiredAccessories.contains(accessoryId)) {
-        print('User already owns this accessory');
-        return false;
-      }
-
-      // Add the new accessory ID to the list
-      acquiredAccessories.add(accessoryId);
-
-      // Update the user's acquired accessories
-      await supabase
-          .from('Users')
-          .update({'acquired_accessories': acquiredAccessories})
-          .eq('id', userId);
-
-      return true;
-    } catch (e) {
-      print('❌Error purchasing accessory: $e');
-      return false;
+      return items;
     }
-  }
-
-  Future<List<String>> getUserAcquiredAccessories(String userId) async {
-    try {
-      final response =
-          await supabase
-              .from('Users')
-              .select('acquired_accessories')
-              .eq('id', userId)
-              .single();
-
-      // Handle both Map and List formats
-      List<dynamic> acquiredAccessories;
-      if (response['acquired_accessories'] is Map) {
-        // If it's a Map, convert it to a List of IDs
-        final Map<String, dynamic> accessoriesMap =
-            response['acquired_accessories'];
-        acquiredAccessories = accessoriesMap.values.toList();
-      } else {
-        // If it's already a List, use it directly
-        acquiredAccessories = response['acquired_accessories'] ?? [];
-      }
-
-      return acquiredAccessories.map((id) => id.toString()).toList();
-    } catch (e) {
-      print('❌Error getting user acquired accessories: $e');
+    catch (e) {
+      print(e);
       return [];
     }
   }
 
-  Future<List<String>> getUserAcquiredEnvironments(String userId) async {
+  Future<Map<String, Item>> getShopItemsAsMap() async {
     try {
-      final response =
-          await supabase
-              .from('Users')
-              .select('acquired_environments')
-              .eq('id', userId)
-              .single();
+      Map<String, Item> items = {};
 
-      // Handle both Map and List formats
-      List<dynamic> acquiredEnvironments;
-      if (response['acquired_environments'] is Map) {
-        // If it's a Map, convert it to a List of IDs
-        final Map<String, dynamic> environmentsMap =
-            response['acquired_environments'];
-        acquiredEnvironments = environmentsMap.values.toList();
-      } else {
-        // If it's already a List, use it directly
-        acquiredEnvironments = response['acquired_environments'] ?? [];
+      final List<Map<String, dynamic>> rawData = await _repository.getAccessories();
+
+      for (var rawItem in rawData) {
+        // Build Item
+        Item item = Item(
+          id: rawItem['id'],
+          type: ItemType.item,
+          name: rawItem['name'],
+          imageUrl: rawItem['imageUrl'] ?? rawItem['image_url'] ?? '',
+          cost: rawItem['cost'] ?? 1,
+        );
+
+        items[item.id] = item;
       }
 
-      return acquiredEnvironments.map((id) => id as String).toList();
-    } catch (e) {
-      print('❌Error getting user acquired environments: $e');
+      return items;
+    }
+    catch (e) {
+      print(e);
+      return {};
+    }
+  }
+
+  Future<List<Item>> getShopEnvironments() async {
+    try {
+      List<Item> environments = [];
+
+      final List<Map<String, dynamic>> rawData = await _repository.getEnvironments();
+
+      for (var rawItem in rawData) {
+
+        // Build Item
+        Item env = Item(
+          id: rawItem['id'],
+          type: ItemType.environment,
+          name: rawItem['name'],
+          imageUrl: rawItem['imageUrl'] ?? rawItem['image_url'] ?? '',
+          cost: rawItem['cost'] ?? 1,
+        );
+
+        environments.add(env);
+      }
+
+      return environments;
+    }
+    catch (e) {
+      print(e);
       return [];
     }
   }
 
+  Future<Map<String, Item>> getShopEnvironmentsAsMap() async {
+    try {
+      Map<String, Item> environments = {};
+
+      final List<Map<String, dynamic>> rawData = await _repository.getEnvironments();
+
+      for (var rawItem in rawData) {
+
+        // Build Item
+        Item env = Item(
+          id: rawItem['id'],
+          type: ItemType.environment,
+          name: rawItem['name'],
+          imageUrl: rawItem['imageUrl'] ?? rawItem['image_url'] ?? '',
+          cost: rawItem['cost'] ?? 1,
+        );
+
+        environments[env.id] = env;
+      }
+
+      return environments;
+    }
+    catch (e) {
+      print(e);
+      return {};
+    }
+  }
+
+  // === Purchase Methods ===
+
+  /// Purchase an item (accessory)
+  Future<bool> purchaseItem(String userId, String itemId) async {
+    try {
+      return await _repository.purchaseAccessory(userId, itemId);
+    } catch (e) {
+      throw ShopServiceException('Failed to purchase item: $e');
+    }
+  }
+
+  /// Purchase an environment
   Future<bool> purchaseEnvironment(String userId, String environmentId) async {
     try {
-      // First get the current user's acquired environments
-      final userResponse =
-          await supabase
-              .from('Users')
-              .select('acquired_environments')
-              .eq('id', userId)
-              .single();
-
-      // Handle both Map and List formats
-      List<dynamic> acquiredEnvironments;
-      if (userResponse['acquired_environments'] is Map) {
-        // If it's a Map, convert it to a List of IDs
-        final Map<String, dynamic> environmentsMap =
-            userResponse['acquired_environments'];
-        acquiredEnvironments = environmentsMap.values.toList();
-      } else {
-        // If it's already a List, use it directly
-        acquiredEnvironments = userResponse['acquired_environments'] ?? [];
-      }
-
-      // Check if user already has this environment
-      if (acquiredEnvironments.contains(environmentId)) {
-        print('User already owns this environment');
-        return false;
-      }
-
-      // Add the new environment ID to the list
-      acquiredEnvironments.add(environmentId);
-
-      // Update the user's acquired environments
-      await supabase
-          .from('Users')
-          .update({'acquired_environments': acquiredEnvironments})
-          .eq('id', userId);
-
-      return true;
+      return await _repository.purchaseEnvironment(userId, environmentId);
     } catch (e) {
-      print('❌Error purchasing environment: $e');
-      return false;
+      throw ShopServiceException('Failed to purchase environment: $e');
     }
   }
+
+  /// Generic purchase method that handles both items and environments
+  Future<bool> purchaseShopItem(String userId, Item item) async {
+    try {
+      switch (item.type) {
+        case ItemType.item:
+          return await purchaseItem(userId, item.id);
+        case ItemType.environment:
+          return await purchaseEnvironment(userId, item.id);
+        default:
+          throw ShopServiceException('Unknown item type: ${item.type}');
+      }
+    } catch (e) {
+      throw ShopServiceException('Failed to purchase shop item: $e');
+    }
+  }
+}
+
+/// Custom exception for shop service operations
+class ShopServiceException implements Exception {
+  final String message;
+  ShopServiceException(this.message);
+
+  @override
+  String toString() => 'ShopServiceException: $message';
 }

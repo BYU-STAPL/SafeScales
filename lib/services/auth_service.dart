@@ -40,8 +40,6 @@ class AuthService {
 
   Future<bool> signIn({required String email, required String password}) async {
     try {
-      print('Attempting sign in with email: $email');
-
       // Get all users with matching email
       final response = await supabaseClient
           .from('Users')
@@ -55,15 +53,7 @@ class AuthService {
 
       // Check all matching users for password match
       for (var user in response) {
-        print('Checking user: ${user['Username']}');
-        print('Stored email: ${user['Email']}');
-        print('Stored password: ${user['password']}');
-        print('Input password: $password');
-        print('Password comparison result: ${user['password'] == password}');
-
         if (user['password'] == password) {
-          print('Password match found for user: ${user['Username']}');
-
           // Create a simple user object with the necessary data
           final supabaseUser = supabase.User(
             id: user['id'],
@@ -83,7 +73,6 @@ class AuthService {
         }
       }
 
-      print('No matching password found for any user with email: $email');
       return false;
     } catch (e) {
       print('❌Error signing in: $e');

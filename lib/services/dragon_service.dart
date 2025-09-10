@@ -98,9 +98,6 @@ class DragonService {
     List<Map<String, dynamic>> classAssets,
   ) {
     final dragons = <String, Dragon>{};
-    print(
-      'DEBUG: Processing dragons from assets: ${classAssets.length} assets',
-    );
 
     // Process each dragon asset
     for (final asset in classAssets) {
@@ -109,9 +106,6 @@ class DragonService {
       final dragonId = asset['id'] as String?;
       if (dragonId == null) continue;
 
-      print('DEBUG: Processing dragon asset: $dragonId');
-      print('DEBUG: Module ID: ${asset['moduleId']}');
-
       // Initialize phases list for new dragons
       if (!userDragonsData.containsKey(dragonId)) {
         userDragonsData[dragonId] = ['egg'];
@@ -119,9 +113,6 @@ class DragonService {
 
       final dragon = _createDragonFromAsset(asset, dragonId);
       if (dragon != null) {
-        print(
-          'DEBUG: Created dragon: ${dragon.speciesName} for module ${dragon.moduleId}',
-        );
         dragons[dragonId] = dragon;
       }
     }
@@ -132,14 +123,11 @@ class DragonService {
   /// Create Dragon object from asset data
   Dragon? _createDragonFromAsset(Map<String, dynamic> asset, String dragonId) {
     try {
-      print('DEBUG: Creating dragon from asset: ${asset['name']}');
       final stages = asset['stages'] as Map<String, dynamic>?;
       if (stages == null) {
-        print('DEBUG: No stages found in asset');
         return null;
       }
 
-      print('DEBUG: Found stages: ${stages.keys.toList()}');
       final images = <String, String>{
         'egg': stages['egg']?.toString() ?? '',
         'stage1': stages['baby']?.toString() ?? '',
@@ -147,9 +135,7 @@ class DragonService {
         'final': stages['adult']?.toString() ?? '',
       };
 
-      print('DEBUG: Mapped images: $images');
       final moduleId = asset['moduleId']?.toString() ?? '';
-      print('DEBUG: Module ID: $moduleId');
 
       return Dragon(
         id: dragonId,

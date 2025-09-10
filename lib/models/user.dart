@@ -32,7 +32,7 @@ class User {
       id: supabaseUser.id,
       email: supabaseUser.email,
       createdAt: supabaseUser.createdAt,
-      appMetadata: Map<String, dynamic>.from(supabaseUser.appMetadata ?? {}),
+      appMetadata: Map<String, dynamic>.from(supabaseUser.appMetadata),
       userMetadata: Map<String, dynamic>.from(supabaseUser.userMetadata ?? {}),
       aud: supabaseUser.aud ?? 'authenticated',
       role: supabaseUser.role ?? 'authenticated',
