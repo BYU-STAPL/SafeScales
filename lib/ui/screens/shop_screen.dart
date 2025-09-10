@@ -155,37 +155,7 @@ class _ShopScreenState extends State<ShopScreen> {
       Item? selectedItem = shopProvider.getItemByIndex(selectedIndex!, selectedTab == 1);
 
       if (questionSet == null || questionSet.questions.isEmpty) {
-        // TODO: Remove after testing
-        QuestionSet testingSet = QuestionSet(
-            id: "test_$lessonId",
-            title: "Test Review",
-            description: "Test review questions...",
-            activityType: ActivityType.review,
-            subject: "subject",
-            questions: [
-              Question(
-                  id: "test_q1",
-                  questionText: "Pick A",
-                  options: ['a', 'b'],
-                  correctAnswerIndices: [0],
-                  isMultipleAnswer: true,
-                  explanation: 'a is right'
-              ),
-            ]
-        );
 
-        result = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ReviewScreen(
-                questionSet: testingSet,
-                image: selectedItem?.imageUrl
-            ),
-          ),
-        );
-
-        // TODO: Put back after testing
-        /*
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -197,8 +167,9 @@ class _ShopScreenState extends State<ShopScreen> {
             backgroundColor: Theme.of(context).colorScheme.inverseSurface,
           ),
         );
+
         return false;
-        */
+
       } else {
         result = await Navigator.push(
           context,
