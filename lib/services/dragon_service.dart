@@ -279,12 +279,13 @@ class DragonService {
   Future<void> saveEnvironmentSelection(
     String userId,
     String environmentId,
-    Map<String, List<String>> existingPhases,
+    String dragonId,
+    // Map<String, List<String>> existingPhases,
   ) async {
     await _repository.updateUserEnvironment(
       userId,
       environmentId,
-      existingPhases,
+      dragonId,
     );
   }
 }

@@ -185,7 +185,7 @@ class DragonProvider extends ChangeNotifier {
       await _dragonService.saveEnvironmentSelection(
         user.id,
         environmentId,
-        _unlockedDragonPhases,
+        dragonId,
       );
 
       _currentEnvironment = environmentId;

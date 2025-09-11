@@ -97,8 +97,28 @@ class DragonRepository {
   }
 
   /// Update user's dragon environment
-  Future<void> updateUserEnvironment(String userId, String environmentId, Map<String, List<String>> existingDragonPhases) async {
+  Future<void> updateUserEnvironment(String userId, String environmentId, String dragonId) async {
     try {
+      final response = await _supabase
+          .from('Users')
+          .select('dragon_environments')
+          .eq('id', userId)
+          .single();
+
+      print("DEBUG");
+      print(response);
+
+      response['dragon_environments'][dragonId] = environmentId;
+
+      print(response);
+
+
+      await _supabase
+          .from('Users')
+          .update({'dragon_environments': response['dragon_environments']})
+          .eq('id', userId);
+
+      /*
       final updatedData = <String, dynamic>{
         'current_dragon_env': environmentId,
         ...existingDragonPhases,
@@ -108,6 +128,7 @@ class DragonRepository {
           .from('Users')
           .update({'dragons': updatedData})
           .eq('id', userId);
+       */
     } catch (e) {
       throw DragonRepositoryException('Failed to update environment for $userId: $e');
     }

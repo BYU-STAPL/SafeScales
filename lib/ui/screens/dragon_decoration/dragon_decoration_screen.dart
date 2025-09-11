@@ -367,6 +367,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     return envOptions;
   }
 
+
+
   Positioned _buildSticker(
       StickerItem sticker,
       bool isSelected,
