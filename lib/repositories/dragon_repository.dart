@@ -89,6 +89,10 @@ class DragonRepository {
           .eq('id', userId)
           .single();
 
+      if (response['dragon_preferred_phases'] == null) {
+        response['dragon_preferred_phases'] = {};
+      }
+
       if (phase == "") {
         response['dragon_preferred_phases'][dragonId] = "final";
       }

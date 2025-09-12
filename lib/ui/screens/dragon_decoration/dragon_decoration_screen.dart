@@ -372,12 +372,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
 
 
-  Positioned _buildSticker(
-      StickerItem sticker,
-      bool isSelected,
-      ({double width, double height}) stickerEnvironmentSize,
-      DragonDecorationProvider provider,
-      ) {
+  Positioned _buildSticker(StickerItem sticker, bool isSelected, ({double width, double height}) stickerEnvironmentSize, DragonDecorationProvider provider,) {
     ThemeData theme = Theme.of(context);
 
     return Positioned(
@@ -454,12 +449,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     provider.clearAllStickers();
   }
 
-  void _handleStickerDrop(
-      DragTargetDetails details,
-      double dragonSize,
-      ({double height, double width}) environmentSize,
-      DragonDecorationProvider provider,
-      ) {
+  void _handleStickerDrop(DragTargetDetails details, double dragonSize, ({double height, double width}) environmentSize, DragonDecorationProvider provider,) {
     final data = details.data;
 
     // Calculate the drop position using the provider's utility method

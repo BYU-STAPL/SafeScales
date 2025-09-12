@@ -190,7 +190,6 @@ class DragonProvider extends ChangeNotifier {
     try {
       final user = _userState.currentUser;
       if (user == null) {
-        // _setLoading(false);
         _clearData();
         return;
       }

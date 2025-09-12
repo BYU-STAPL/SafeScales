@@ -27,6 +27,8 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
   }
 
   Future<void> _submitForm() async {
+    //TODO: Move Direct database access code into a repository file
+
     if (_formKey.currentState!.validate()) {
       setState(() {
         isLoading = true;
@@ -119,7 +121,11 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
 
           _userState.setUser(supabaseUser);
           _userState.setUserProfile(existingUserResponse);
-        } else {
+        }
+        else {
+
+          // User doesn't already exist
+
           // Get modules for the class
           final classResponse =
               await SupabaseConfig.client
@@ -164,12 +170,16 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                   .from('Users')
                   .insert({
                     'Username': _usernameController.text.trim(),
+                    'role': 'student',
                     'joined_classes': [classId],
+                    'settings': {"fontSize": 1.0, "isDarkMode": false},
                     'dragons': {},
                     'acquired_accessories': [],
                     'acquired_environments': [],
+                    'dragon_preferred_phases': {},
+                    'dragon_environments': {},
+                    'dragon_dressup': {},
                     'quizzes': {},
-                    'role': 'student',
                     'modules': initialModules,
                   })
                   .select()
