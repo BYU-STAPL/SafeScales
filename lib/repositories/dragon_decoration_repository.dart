@@ -31,6 +31,10 @@ class DragonDecorationRepository {
           .eq('id', userId)
           .single();
 
+      if (response['dragon_environments'] == null) {
+        response['dragon_environments'] = {};
+      }
+
       if (environmentId == "") {
         response['dragon_environments'][dragonId] = null;
       }
@@ -151,5 +155,5 @@ class DragonDecorationRepositoryException implements Exception {
   DragonDecorationRepositoryException(this.message);
 
   @override
-  String toString() => 'DragonRepositoryException: $message';
+  String toString() => 'DragonDecorationRepositoryException: $message';
 }

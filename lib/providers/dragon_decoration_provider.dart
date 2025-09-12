@@ -240,8 +240,6 @@ class DragonDecorationProvider extends ChangeNotifier {
 
   Future<void> saveEnvironmentSelection(String dragonId, String environmentId,) async {
     try {
-      print("DEBUG");
-      print(environmentId);
 
       final user = _userStateService.currentUser;
       if (user == null) return;
