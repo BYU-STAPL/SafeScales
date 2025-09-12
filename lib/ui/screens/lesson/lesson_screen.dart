@@ -115,19 +115,8 @@ class _LessonScreenState extends State<LessonScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Dragon image container
-                      Container(
-                        width: screenSize.width,
-                        height: screenSize.height * 0.3, // 30% of screen height
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          border: Border(
-                            bottom: BorderSide(
-                              color: Colors.grey[300]!,
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                        child: Center(child: _getDragonImage(dragonProvider)),
+                      Center(
+                        child: _getDragonImage(dragonProvider),
                       ),
 
                       Padding(
