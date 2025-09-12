@@ -172,7 +172,7 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                     'Username': _usernameController.text.trim(),
                     'role': 'student',
                     'joined_classes': [classId],
-                    'settings': {},
+                    'settings': {"fontSize": 1.0, "isDarkMode": false},
                     'dragons': {},
                     'acquired_accessories': [],
                     'acquired_environments': [],
