@@ -1,5 +1,6 @@
 import 'dart:core';
 import 'package:flutter/cupertino.dart';
+import 'package:path/path.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/models/dragon.dart';
 import '../services/dragon_service.dart';
@@ -13,6 +14,15 @@ class DragonProvider extends ChangeNotifier {
   final UserStateService _userState;
   final CourseService _courseService;
 
+  // === Constructor ===
+  DragonProvider({
+    required DragonService dragonService,
+    UserStateService? userState,
+    required CourseService courseService,
+  }) : _dragonService = dragonService,
+        _userState = userState ?? UserStateService(),
+        _courseService = courseService;
+
   // === State ===
   bool _isLoading = false;
   String? _error;
@@ -23,15 +33,7 @@ class DragonProvider extends ChangeNotifier {
   Map<String, List<String>> _unlockedDragonPhases = {};
   Map<String, Dragon> _dragonsByModuleId = {};
   String? _currentEnvironment;
-
-  // === Constructor ===
-  DragonProvider({
-    required DragonService dragonService,
-    UserStateService? userState,
-    required CourseService courseService,
-  }) : _dragonService = dragonService,
-       _userState = userState ?? UserStateService(),
-       _courseService = courseService;
+  Map<String, String> _preferredPhases = {};
 
   // === Getters ===
   bool get isLoading => _isLoading;
@@ -42,6 +44,7 @@ class DragonProvider extends ChangeNotifier {
   Map<String, List<String>> get unlockedDragonPhases => _unlockedDragonPhases;
   Map<String, Dragon> get dragonsByModuleId => _dragonsByModuleId;
   String? get currentEnvironment => _currentEnvironment;
+  Map<String, String> get preferredPhases => _preferredPhases;
 
   /// Get dragon by ID
   Dragon? getDragonById(String dragonId) => _dragons[dragonId];
@@ -71,8 +74,18 @@ class DragonProvider extends ChangeNotifier {
 
   /// Get user's preferred phase for a dragon (currently returns highest unlocked)
   String getUserPreferredPhase(String dragonId) {
-    // TODO: Implement user preference storage
-    return getDragonHighestPhase(dragonId);
+    return _preferredPhases[dragonId] ?? getDragonHighestPhase(dragonId);
+  }
+
+  Future<void> _loadUserPreferredPhases() async {
+    final user = _userState.currentUser;
+    if (user == null) {
+      // _setLoading(false);
+      _clearData();
+      return;
+    }
+
+    _preferredPhases = await _dragonService.loadUserPreferredPhases(user.id);
   }
 
   /// Check if play mode is unlocked for a dragon
@@ -95,7 +108,7 @@ class DragonProvider extends ChangeNotifier {
   /// Initialize the provider
   Future<void> initialize() async {
     await loadUserDragons();
-    // print('DragonProvider initialized');
+    await _loadUserPreferredPhases();
     _isInitialized = true;
   }
 
@@ -172,6 +185,27 @@ class DragonProvider extends ChangeNotifier {
       _setLoading(false);
     }
   }
+
+  Future<void> updateUserPreferredPhase(String dragonId, String phase) async {
+    try {
+      final user = _userState.currentUser;
+      if (user == null) {
+        // _setLoading(false);
+        _clearData();
+        return;
+      }
+
+      String normalPhase = _dragonService.normalizePhase(phase);
+      preferredPhases[dragonId] = normalPhase;
+
+      await _dragonService.updateUserPreferredPhase(user.id, dragonId, phase);
+    }
+    catch (e) {
+      _setError('Failed to update preferred dragon phase: $e');
+      print('❌ DragonProvider: Error updating preferred dragon phase: $e');
+    }
+  }
+
 
   // === Private Helper Methods ===
 

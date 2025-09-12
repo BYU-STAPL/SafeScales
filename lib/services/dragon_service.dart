@@ -267,6 +267,18 @@ class DragonService {
   Future<List<Map<String, dynamic>>> getClassAssets(String classId) async {
     return await _repository.fetchClassAssets(classId);
   }
+
+  Future<void> updateUserPreferredPhase(String userId, String dragonId, String phase) async {
+
+    String normalizedPhase = normalizePhase(phase);
+
+    return await _repository.updateUserPreferredPhase(userId, dragonId, normalizedPhase);
+
+  }
+
+  Future<Map<String, String>> loadUserPreferredPhases(String userId) async {
+    return await _repository.fetchUserPreferredPhases(userId);
+  }
 }
 
 /// Custom exception for service operations

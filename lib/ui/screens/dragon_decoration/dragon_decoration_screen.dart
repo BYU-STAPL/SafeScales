@@ -55,7 +55,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
     await dragonProvider.initialize();
 
-    final phase = dragonProvider.getUserPreferredPhase(widget.dragonId);
+    final phase = await dragonProvider.getUserPreferredPhase(widget.dragonId);
 
     try {
       final availablePhases = dragonProvider.unlockedDragonPhases[widget.dragonId];
@@ -308,11 +308,11 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       ),
     );
 
-    if (choice != null) {
+    if (choice != null && choice < availablePhases.length) {
       setState(() => selectedPhase = availablePhases[choice]);
       // Note: For now, we're just updating the UI.
       // When you implement user preference saving, you would call:
-      // await dragonProvider.saveUserPreferredPhase(widget.dragonId, availablePhases[choice]);
+      await dragonProvider.updateUserPreferredPhase(widget.dragonId, availablePhases[choice]);
     }
   }
 
