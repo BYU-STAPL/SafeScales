@@ -192,9 +192,7 @@ class DragonService {
 
     // Filter user dragons to only include those in this class
     userDragonsData.forEach((key, phases) {
-      if (key != 'current_dragon_env' &&
-          phases is List &&
-          classDragonIds.contains(key)) {
+      if (phases is List && classDragonIds.contains(key)) {
         classUnlockedPhases[key] = phases.cast<String>();
       }
     });

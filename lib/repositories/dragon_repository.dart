@@ -82,22 +82,22 @@ class DragonRepository {
   }
 
   /// Save multiple dragon phases at once
-  Future<void> saveAllUserDragonPhases(String userId, Map<String, List<String>> dragonPhases, {String? environment}) async {
-    try {
-      final data = <String, dynamic>{...dragonPhases};
-
-      if (environment != null) {
-        data['current_dragon_env'] = environment;
-      }
-
-      await _supabase
-          .from('Users')
-          .update({'dragons': data})
-          .eq('id', userId);
-    } catch (e) {
-      throw DragonRepositoryException('Failed to save dragon phases for $userId: $e');
-    }
-  }
+  // Future<void> saveAllUserDragonPhases(String userId, Map<String, List<String>> dragonPhases) async {
+  //   try {
+  //     final data = <String, dynamic>{...dragonPhases};
+  //
+  //     // if (environment != null) {
+  //     //   data['current_dragon_env'] = environment;
+  //     // }
+  //
+  //     await _supabase
+  //         .from('Users')
+  //         .update({'dragons': data})
+  //         .eq('id', userId);
+  //   } catch (e) {
+  //     throw DragonRepositoryException('Failed to save dragon phases for $userId: $e');
+  //   }
+  // }
 }
 
 /// Custom exception for repository operations
