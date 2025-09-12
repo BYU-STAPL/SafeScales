@@ -7,7 +7,7 @@ import 'package:safe_scales/providers/course_provider.dart';
 import 'package:safe_scales/providers/dragon_provider.dart';
 import '../../models/lesson.dart';
 import '../widgets/learning_action_widget.dart';
-import 'lesson/lesson_page.dart';
+import 'lesson/lesson_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.onNavigateToShop});
@@ -68,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => LessonPage(moduleId: targetModule.lessonId),
+              builder: (context) => LessonScreen(moduleId: targetModule.lessonId),
             ),
           ).then((_) {
             // Reload data when returning from lesson
@@ -254,7 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   MaterialPageRoute(
                                     builder:
                                         (context) =>
-                                            LessonPage(moduleId: lessonId),
+                                            LessonScreen(moduleId: lessonId),
                                   ),
                                 ).then((_) {
                                   // Reload data when returning from the lesson page

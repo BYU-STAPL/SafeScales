@@ -12,17 +12,17 @@ import '../../../providers/dragon_provider.dart';
 import '../../../themes/app_theme.dart';
 import '../../widgets/dragon_image_widget.dart';
 
-class LessonPage extends StatefulWidget {
+class LessonScreen extends StatefulWidget {
   final String moduleId;
   final String? topic; // Keep for backward compatibility
 
-  const LessonPage({super.key, required this.moduleId, this.topic});
+  const LessonScreen({super.key, required this.moduleId, this.topic});
 
   @override
-  State<LessonPage> createState() => _LessonPageState();
+  State<LessonScreen> createState() => _LessonScreenState();
 }
 
-class _LessonPageState extends State<LessonPage> {
+class _LessonScreenState extends State<LessonScreen> {
   Lesson? _lesson; // Make nullable
   LessonProgress? _lessonProgress; // Make nullable
   bool _isLoading = true; // Add loading state
