@@ -7,6 +7,47 @@ class DragonDecorationRepository {
   DragonDecorationRepository({SupabaseClient? supabase})
       : _supabase = supabase ?? SupabaseConfig.client;
 
+  Future<String> loadCurrentDragonEnvironment(String userId, String dragonId) async {
+    try {
+      final response = await _supabase
+          .from('Users')
+          .select('dragon_environments')
+          .eq('id', userId)
+          .single();
+
+      return response['dragon_environments']?[dragonId] ?? "";
+    }
+    catch (e) {
+      print('❌ Error loading current dragon environment for dragon ${dragonId}: $e');
+      return "";
+    }
+  }
+
+  Future<void> updateUserEnvironment(String userId, String environmentId, String dragonId) async {
+    try {
+      final response = await _supabase
+          .from('Users')
+          .select('dragon_environments')
+          .eq('id', userId)
+          .single();
+
+      if (environmentId == "") {
+        response['dragon_environments'][dragonId] = null;
+      }
+      else {
+        response['dragon_environments'][dragonId] = environmentId;
+      }
+
+      await _supabase
+          .from('Users')
+          .update({'dragon_environments': response['dragon_environments']})
+          .eq('id', userId);
+
+    } catch (e) {
+      throw DragonDecorationRepositoryException('Failed to update environment for $userId: $e');
+    }
+  }
+
   /// Save dragon dress-up data for a specific user and dragon
   Future<bool> saveDragonDressUp({
     required String userId,
@@ -103,4 +144,12 @@ class DragonDecorationRepository {
       return false;
     }
   }
+}
+
+class DragonDecorationRepositoryException implements Exception {
+  final String message;
+  DragonDecorationRepositoryException(this.message);
+
+  @override
+  String toString() => 'DragonRepositoryException: $message';
 }

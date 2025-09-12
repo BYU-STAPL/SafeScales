@@ -51,16 +51,6 @@ class DragonDecorationProvider extends ChangeNotifier {
   int get selectedEnvironmentIndex => _selectedEnvironmentIndex;
   String get currentDragonId => _currentDragonId;
 
-  // // Environment helper getters
-  // List<String> get userEnvironmentNames =>
-  //     _userEnvironments.map((env) => env.name).toList();
-  //
-  // List<String> get userEnvironmentIds =>
-  //     _userEnvironments.map((env) => env.id).toList();
-  //
-  // List<String> get userEnvironmentImages =>
-  //     _userEnvironments.map((env) => env.imageUrl).toList();
-
   Item? getCurrentEnvironment() {
     if (isNoEnvironmentSelected || _selectedEnvironmentIndex >= _userEnvironments.length) {
       return null;
@@ -68,20 +58,6 @@ class DragonDecorationProvider extends ChangeNotifier {
 
     return _userEnvironments[_selectedEnvironmentIndex];
   }
-  // String? get currentEnvironmentId =>
-  //     isNoEnvironmentSelected == false ? _selectedEnvironmentIndex < userEnvironmentIds.length
-  //         ? userEnvironmentIds[_selectedEnvironmentIndex]
-  //         : null;
-  //
-  // String get currentEnvironmentName =>
-  //     _selectedEnvironmentIndex < userEnvironmentNames.length
-  //         ? userEnvironmentNames[_selectedEnvironmentIndex]
-  //         : 'None';
-  //
-  // String? get currentEnvironmentImage =>
-  //     _selectedEnvironmentIndex < userEnvironmentImages.length
-  //         ? userEnvironmentImages[_selectedEnvironmentIndex]
-  //         : null;
 
   // === UTILITY METHODS ===
   void _setLoading(bool loading) {
@@ -152,6 +128,7 @@ class DragonDecorationProvider extends ChangeNotifier {
       ]);
 
       await _loadDragonDecoration();
+      await _loadCurrentDragonEnvironment();
       _isInitialized = true;
 
     } catch (e) {
@@ -227,6 +204,75 @@ class DragonDecorationProvider extends ChangeNotifier {
       _userEnvironments = [];
     } finally {
       _setLoadingEnvironments(false);
+    }
+  }
+
+  Future<void> _loadCurrentDragonEnvironment() async {
+    try {
+      final user = _userStateService.currentUser;
+      if (user == null) return;
+
+      final environmentId = await _service.loadCurrentDragonEnvironment(
+        user.id,
+        _currentDragonId,
+      );
+
+      if (environmentId != "") {
+        for (int i = 0; i < _userEnvironments.length ; i++) {
+          if (environmentId == _userEnvironments[i].id) {
+            _selectedEnvironmentIndex = i;
+            isNoEnvironmentSelected = false;
+            return;
+          }
+        }
+      }
+      else {
+        isNoEnvironmentSelected = true;
+        _selectedEnvironmentIndex = 0;
+      }
+    }
+    catch (e) {
+      debugPrint('❌ Error loading dragon decoration: $e');
+      _selectedEnvironmentIndex = 0;
+      isNoEnvironmentSelected = true;
+    }
+  }
+
+  Future<void> saveEnvironmentSelection(String dragonId, String environmentId,) async {
+    try {
+      print("DEBUG");
+      print(environmentId);
+
+      final user = _userStateService.currentUser;
+      if (user == null) return;
+
+
+      await _service.saveEnvironmentSelection(
+        user.id,
+        environmentId,
+        dragonId,
+      );
+
+
+      if (environmentId != "") {
+        for (int i = 0; i < _userEnvironments.length ; i++) {
+          if (environmentId == _userEnvironments[i].id) {
+            _selectedEnvironmentIndex = i;
+            isNoEnvironmentSelected = false;
+            return;
+          }
+        }
+      }
+      else {
+        isNoEnvironmentSelected = true;
+        _selectedEnvironmentIndex = 0;
+      }
+
+      notifyListeners();
+
+    } catch (e) {
+      _setError('Failed to save environment selection: $e');
+      print('❌ Error saving environment selection: $e');
     }
   }
 

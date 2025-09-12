@@ -337,11 +337,14 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     if (choice != null) {
       decorationProvider.selectEnvironment(choice, choice == -1);
 
-      // Save environment selection to dragon provider
+      // Save environment selection
       if (choice != -1 && choice < decorationProvider.userEnvironments.length) {
-        final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
         final environmentId = decorationProvider.userEnvironments[choice].id;
-        await dragonProvider.saveEnvironmentSelection(widget.dragonId, environmentId);
+        await decorationProvider.saveEnvironmentSelection(widget.dragonId, environmentId);
+      }
+      else {
+        await decorationProvider.saveEnvironmentSelection(widget.dragonId, "");
+
       }
     }
   }

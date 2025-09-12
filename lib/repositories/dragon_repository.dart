@@ -60,21 +60,6 @@ class DragonRepository {
     }
   }
 
-  /// Get user's current dragon environment
-  Future<String?> fetchCurrentEnvironment(String userId) async {
-    try {
-      final response = await _supabase
-          .from('Users')
-          .select('dragons')
-          .eq('id', userId)
-          .single();
-
-      return response['dragons']?['current_dragon_env'];
-    } catch (e) {
-      throw DragonRepositoryException('Failed to fetch current environment for $userId: $e');
-    }
-  }
-
   // === Update Operations ===
 
   /// Update user's dragon phases
@@ -93,44 +78,6 @@ class DragonRepository {
           .eq('id', userId);
     } catch (e) {
       throw DragonRepositoryException('Failed to update dragon phases for $userId: $e');
-    }
-  }
-
-  /// Update user's dragon environment
-  Future<void> updateUserEnvironment(String userId, String environmentId, String dragonId) async {
-    try {
-      final response = await _supabase
-          .from('Users')
-          .select('dragon_environments')
-          .eq('id', userId)
-          .single();
-
-      print("DEBUG");
-      print(response);
-
-      response['dragon_environments'][dragonId] = environmentId;
-
-      print(response);
-
-
-      await _supabase
-          .from('Users')
-          .update({'dragon_environments': response['dragon_environments']})
-          .eq('id', userId);
-
-      /*
-      final updatedData = <String, dynamic>{
-        'current_dragon_env': environmentId,
-        ...existingDragonPhases,
-      };
-
-      await _supabase
-          .from('Users')
-          .update({'dragons': updatedData})
-          .eq('id', userId);
-       */
-    } catch (e) {
-      throw DragonRepositoryException('Failed to update environment for $userId: $e');
     }
   }
 

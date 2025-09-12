@@ -160,6 +160,25 @@ class DragonDecorationService {
     }
   }
 
+  // Load/get current environment
+  Future<String> loadCurrentDragonEnvironment(String userId, String dragonId) async {
+    try {
+      return await _repository.loadCurrentDragonEnvironment(userId, dragonId);
+    }
+    catch (e) {
+      throw DragonDecorationServiceException('Failed to load current dragon environment for ${dragonId}: $e');
+    }
+  }
+
+  /// Save environment selection
+  Future<void> saveEnvironmentSelection(String userId, String environmentId, String dragonId,) async {
+    await _repository.updateUserEnvironment(
+      userId,
+      environmentId,
+      dragonId,
+    );
+  }
+
   /// Get user's available accessories
   Future<List<Item>> getUserItems(String userId, String classId) async {
     try {
