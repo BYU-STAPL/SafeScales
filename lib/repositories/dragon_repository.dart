@@ -60,21 +60,6 @@ class DragonRepository {
     }
   }
 
-  /// Get user's current dragon environment
-  Future<String?> fetchCurrentEnvironment(String userId) async {
-    try {
-      final response = await _supabase
-          .from('Users')
-          .select('dragons')
-          .eq('id', userId)
-          .single();
-
-      return response['dragons']?['current_dragon_env'];
-    } catch (e) {
-      throw DragonRepositoryException('Failed to fetch current environment for $userId: $e');
-    }
-  }
-
   // === Update Operations ===
 
   /// Update user's dragon phases
@@ -96,40 +81,23 @@ class DragonRepository {
     }
   }
 
-  /// Update user's dragon environment
-  Future<void> updateUserEnvironment(String userId, String environmentId, Map<String, List<String>> existingDragonPhases) async {
-    try {
-      final updatedData = <String, dynamic>{
-        'current_dragon_env': environmentId,
-        ...existingDragonPhases,
-      };
-
-      await _supabase
-          .from('Users')
-          .update({'dragons': updatedData})
-          .eq('id', userId);
-    } catch (e) {
-      throw DragonRepositoryException('Failed to update environment for $userId: $e');
-    }
-  }
-
   /// Save multiple dragon phases at once
-  Future<void> saveAllUserDragonPhases(String userId, Map<String, List<String>> dragonPhases, {String? environment}) async {
-    try {
-      final data = <String, dynamic>{...dragonPhases};
-
-      if (environment != null) {
-        data['current_dragon_env'] = environment;
-      }
-
-      await _supabase
-          .from('Users')
-          .update({'dragons': data})
-          .eq('id', userId);
-    } catch (e) {
-      throw DragonRepositoryException('Failed to save dragon phases for $userId: $e');
-    }
-  }
+  // Future<void> saveAllUserDragonPhases(String userId, Map<String, List<String>> dragonPhases) async {
+  //   try {
+  //     final data = <String, dynamic>{...dragonPhases};
+  //
+  //     // if (environment != null) {
+  //     //   data['current_dragon_env'] = environment;
+  //     // }
+  //
+  //     await _supabase
+  //         .from('Users')
+  //         .update({'dragons': data})
+  //         .eq('id', userId);
+  //   } catch (e) {
+  //     throw DragonRepositoryException('Failed to save dragon phases for $userId: $e');
+  //   }
+  // }
 }
 
 /// Custom exception for repository operations

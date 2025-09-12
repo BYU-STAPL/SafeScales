@@ -11,22 +11,6 @@ class ItemRepository {
   ItemRepository({SupabaseClient? supabase})
       : _supabase = supabase ?? SupabaseConfig.client;
 
-  // === Raw Item Data ===
-
-  /// Fetch all items from the accessories table
-  // Future<List<Map<String, dynamic>>> fetchAllItems() async {
-  //   try {
-  //     final response = await _supabase
-  //         .from('dragons')
-  //         .select()
-  //         .order('id', ascending: true);
-  //
-  //     return List<Map<String, dynamic>>.from(response);
-  //   } catch (e) {
-  //     throw DragonRepositoryException('Failed to fetch dragons: $e');
-  //   }
-  // }
-
   // === User Item Data ===
 
   /// Get user's items and environments
@@ -67,56 +51,6 @@ class ItemRepository {
   }
 
 
-//   Future<Map<String, Item>> fetchAllUserItemsAndEnvs(String userId, String classId) async {
-//   try {
-//     List<dynamic> acquiredItems = await fetchUserItemIDList(userId);
-//
-//     final List<Map<String, dynamic>> assets = await fetchClassAssets(classId);
-//
-//     Map<String, Item> foundItems = {};
-//
-//     // Find accessories with matching IDs
-//     for (var asset in assets) {
-//
-//       if (asset['type'] != 'dragon' && acquiredItems.contains(asset['id'])) {
-//
-//         ItemType type;
-//         switch (asset['type']) {
-//           case 'accessory':
-//             type = ItemType.item;
-//             break;
-//
-//           case 'environment':
-//             print("environment");
-//             type = ItemType.environment;
-//             break;
-//
-//           default:
-//             type = ItemType.item;
-//             break;
-//         }
-//
-//         final item = Item(
-//           id: asset['id'],
-//           name: asset['name'],
-//           type: type,
-//           imageUrl: asset['imageUrl'],
-//           cost: asset['cost'] ?? 1,
-//         );
-//
-//         foundItems[item.id] = item;
-//
-//       }
-//     }
-//
-//     return foundItems;
-//   }
-//   catch (e) {
-//     throw ItemRepositoryException('Failed to fetch user items for user $userId for class $classId: $e');
-//     return {};
-//   }
-// }
-
   /// Get class item assets
   Future<List<Map<String, dynamic>>> fetchClassAssets(String classId) async {
     try {
@@ -131,21 +65,6 @@ class ItemRepository {
       throw ItemRepositoryException('Failed to fetch class assets for $classId: $e');
     }
   }
-
-  // /// Get user's current i environment
-  // Future<String?> fetchCurrentEnvironment(String userId) async {
-  //   try {
-  //     final response = await _supabase
-  //         .from('Users')
-  //         .select('dragons')
-  //         .eq('id', userId)
-  //         .single();
-  //
-  //     return response['dragons']?['current_dragon_env'];
-  //   } catch (e) {
-  //     throw DragonRepositoryException('Failed to fetch current environment for $userId: $e');
-  //   }
-  // }
 
   // === Update Operations ===
 

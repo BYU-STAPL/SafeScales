@@ -39,33 +39,42 @@ class DragonDecorationService {
         d['position'] ?? {},
       );
 
-      // Find accessory image by ID
-      //
-      // final item = userItems[accId.toString()] ?? Item(
-      //   id: 'id',
-      //   type: ItemType.item,
-      //   name: '',
-      //   imageUrl: '',
-      //   cost: 0,
-      // );
+      // DEBUG: Print what we're looking for
+      debugPrint('🔍 Looking for accessory ID: "$accId"');
+      debugPrint('🔍 Available user items: ${userItems.map((i) => '${i.id}:"${i.imageUrl}"').join(', ')}');
 
+      // Find accessory by ID - FIXED: Compare i.id instead of i.toString()
       final item = userItems.firstWhere(
-            (i) => i.toString() == accId.toString(),
-        orElse: () => Item(
-          id: 'id',
-          type: ItemType.item,
-          name: '',
-          imageUrl: '',
-          cost: 0,
-        ),
+            (i) => i.id == accId.toString(), // This is the fix!
+        orElse: () {
+          debugPrint('❌ Could not find item with ID: $accId');
+          return Item(
+            id: accId.toString(),
+            type: ItemType.item,
+            name: 'Missing Item',
+            imageUrl: '', // This will cause the file:/// error
+            cost: 0,
+          );
+        },
       );
+
+      // DEBUG: Print the found item
+      debugPrint('🔍 Found item: ${item.name}, URL: "${item.imageUrl}"');
+
+      // Validate the image URL before creating the sticker
+      if (item.imageUrl.isEmpty ||
+          item.imageUrl.startsWith('file:') ||
+          item.imageUrl == 'null') {
+        debugPrint('❌ Skipping item with invalid image URL: "${item.imageUrl}"');
+        return; // Skip this item
+      }
 
       restored.add(
         StickerItem(
           id: 'acc_$accId',
-          imageUrl: item.imageUrl, //accessory['image'] ?? accessory['image_url'] ?? '',
-          name: item.name, //accessory['name']?.toString() ?? accId.toString(),
-          accessoryId: item.id, //accId.toString(),
+          imageUrl: item.imageUrl,
+          name: item.name,
+          accessoryId: item.id,
           position: Offset(
             (pos['x'] ?? 0).toDouble(),
             (pos['y'] ?? 0).toDouble(),
@@ -75,6 +84,7 @@ class DragonDecorationService {
       );
     });
 
+    debugPrint('✅ Successfully restored ${restored.length} stickers');
     return restored;
   }
 
@@ -85,6 +95,12 @@ class DragonDecorationService {
     required List<StickerItem> stickers,
   }) async {
     try {
+      // DEBUG: Print what we're saving
+      debugPrint('🔍 Saving ${stickers.length} stickers for dragon $dragonId');
+      for (final sticker in stickers) {
+        debugPrint('🔍 Saving sticker: ${sticker.name} (${sticker.accessoryId}) - URL: "${sticker.imageUrl}"');
+      }
+
       final accessoriesData = _stickersToAccessoriesData(stickers);
       return await _repository.saveDragonDressUp(
         userId: userId,
@@ -92,6 +108,7 @@ class DragonDecorationService {
         accessoriesData: accessoriesData,
       );
     } catch (e) {
+      debugPrint('❌ Error saving dragon decoration: $e');
       throw DragonDecorationServiceException('Failed to save decoration: $e');
     }
   }
@@ -103,20 +120,27 @@ class DragonDecorationService {
     required List<Item> userItems,
   }) async {
     try {
+      debugPrint('🔍 Loading dragon decoration for dragon: $dragonId');
+      debugPrint('🔍 Available user items count: ${userItems.length}');
+
       final accessoriesData = await _repository.loadDragonDressUp(
         userId: userId,
         dragonId: dragonId,
       );
 
       if (accessoriesData == null || accessoriesData.isEmpty) {
+        debugPrint('🔍 No decoration data found');
         return [];
       }
+
+      debugPrint('🔍 Found decoration data: $accessoriesData');
 
       return await _accessoriesDataToStickers(
         accessoriesData: accessoriesData,
         userItems: userItems,
       );
     } catch (e) {
+      debugPrint('❌ Error loading dragon decoration: $e');
       throw DragonDecorationServiceException('Failed to load decoration: $e');
     }
   }
@@ -136,14 +160,40 @@ class DragonDecorationService {
     }
   }
 
+  // Load/get current environment
+  Future<String> loadCurrentDragonEnvironment(String userId, String dragonId) async {
+    try {
+      return await _repository.loadCurrentDragonEnvironment(userId, dragonId);
+    }
+    catch (e) {
+      throw DragonDecorationServiceException('Failed to load current dragon environment for ${dragonId}: $e');
+    }
+  }
+
+  /// Save environment selection
+  Future<void> saveEnvironmentSelection(String userId, String environmentId, String dragonId,) async {
+    await _repository.updateUserEnvironment(
+      userId,
+      environmentId,
+      dragonId,
+    );
+  }
+
   /// Get user's available accessories
   Future<List<Item>> getUserItems(String userId, String classId) async {
     try {
       List<Item> userItems = await _itemService.getUserAccessories(userId, classId);
 
+      // DEBUG: Print loaded items
+      debugPrint('🔍 Loaded ${userItems.length} user accessories');
+      for (final item in userItems) {
+        debugPrint('🔍 Item: ${item.name} (${item.id}) - URL: "${item.imageUrl}"');
+      }
+
       return userItems;
 
     } catch (e) {
+      debugPrint('❌ Error getting user accessories: $e');
       throw DragonDecorationServiceException('Failed to get user accessories: $e');
     }
   }
@@ -153,10 +203,17 @@ class DragonDecorationService {
     try {
       List<Item> userEnvs = await _itemService.getUserEnvironments(userId, classId);
 
+      // DEBUG: Print loaded environments
+      debugPrint('🔍 Loaded ${userEnvs.length} user environments');
+      for (final env in userEnvs) {
+        debugPrint('🔍 Environment: ${env.name} (${env.id}) - URL: "${env.imageUrl}"');
+      }
+
       return userEnvs;
 
     }
     catch (e) {
+      debugPrint('❌ Error getting user environments: $e');
       throw DragonDecorationServiceException('Failed to get user environments: $e');
     }
   }
@@ -167,11 +224,22 @@ class DragonDecorationService {
     required Offset position,
     double size = 48.0,
   }) {
+    // DEBUG: Print item being used for sticker
+    debugPrint('🔍 Creating sticker from item: ${item.name} (${item.id}) - URL: "${item.imageUrl}"');
+
+    // Validate the image URL
+    if (item.imageUrl.isEmpty ||
+        item.imageUrl.startsWith('file:') ||
+        item.imageUrl == 'null') {
+      debugPrint('❌ Cannot create sticker with invalid image URL: "${item.imageUrl}"');
+      throw DragonDecorationServiceException('Invalid image URL for item: ${item.name}');
+    }
+
     return StickerItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      imageUrl: item.imageUrl, //accessoryData['image'] ?? accessoryData['image_url'] ?? '',
-      name: item.name, //accessoryData['name']?.toString() ?? '',
-      accessoryId: item.id, //accessoryData['id'].toString(),
+      imageUrl: item.imageUrl,
+      name: item.name,
+      accessoryId: item.id,
       position: position,
       size: size,
     );

@@ -173,30 +173,6 @@ class DragonProvider extends ChangeNotifier {
     }
   }
 
-  /// Save environment selection for dragons
-  Future<void> saveEnvironmentSelection(
-    String dragonId,
-    String environmentId,
-  ) async {
-    try {
-      final user = _userState.currentUser;
-      if (user == null) return;
-
-      await _dragonService.saveEnvironmentSelection(
-        user.id,
-        environmentId,
-        _unlockedDragonPhases,
-      );
-
-      _currentEnvironment = environmentId;
-      notifyListeners();
-
-    } catch (e) {
-      _setError('Failed to save environment selection: $e');
-      print('❌ Error saving environment selection: $e');
-    }
-  }
-
   // === Private Helper Methods ===
 
   /// Load all dragon-related data for a user
@@ -214,7 +190,6 @@ class DragonProvider extends ChangeNotifier {
       userDragonsData,
       classAssets,
     );
-    _currentEnvironment = await _dragonService.getCurrentEnvironment(userId);
 
     notifyListeners();
   }

@@ -192,9 +192,7 @@ class DragonService {
 
     // Filter user dragons to only include those in this class
     userDragonsData.forEach((key, phases) {
-      if (key != 'current_dragon_env' &&
-          phases is List &&
-          classDragonIds.contains(key)) {
+      if (phases is List && classDragonIds.contains(key)) {
         classUnlockedPhases[key] = phases.cast<String>();
       }
     });
@@ -268,24 +266,6 @@ class DragonService {
   /// Get class assets
   Future<List<Map<String, dynamic>>> getClassAssets(String classId) async {
     return await _repository.fetchClassAssets(classId);
-  }
-
-  /// Get current environment
-  Future<String?> getCurrentEnvironment(String userId) async {
-    return await _repository.fetchCurrentEnvironment(userId);
-  }
-
-  /// Save environment selection
-  Future<void> saveEnvironmentSelection(
-    String userId,
-    String environmentId,
-    Map<String, List<String>> existingPhases,
-  ) async {
-    await _repository.updateUserEnvironment(
-      userId,
-      environmentId,
-      existingPhases,
-    );
   }
 }
 
