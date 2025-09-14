@@ -226,7 +226,20 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       builder: (context, dragonProvider, courseProvider, child) {
         return Scaffold(
           appBar: AppBar(
-            title: Text('Play'),
+            title: GestureDetector(
+              onTap: () => _showNameDialog(dragonProvider),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    dragonProvider.getDragonById(widget.dragonId)?.name ??
+                        'Unnamed Dragon',
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.edit, size: 16),
+                ],
+              ),
+            ),
             centerTitle: true,
             backgroundColor: colorScheme.surface,
             elevation: 0,
@@ -766,5 +779,75 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     });
 
     _saveDressUp(); // Save after adding
+  }
+
+  void _showNameDialog(DragonProvider dragonProvider) {
+    final TextEditingController nameController = TextEditingController(
+      text: dragonProvider.getDragonById(widget.dragonId)?.name ?? '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Change Dragon Name'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Dragon Name',
+                      hintText: 'Enter a name for your dragon',
+                      counterText: '${nameController.text.length}/10',
+                      errorText:
+                          nameController.text.length > 10
+                              ? 'Name cannot be longer than 10 characters'
+                              : null,
+                    ),
+                    autofocus: true,
+                    maxLength: 10,
+                    onChanged: (value) {
+                      setState(() {}); // Update counter and error text
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed:
+                      nameController.text.trim().isEmpty ||
+                              nameController.text.length > 10
+                          ? null // Disable button if name is empty or too long
+                          : () async {
+                            try {
+                              await dragonProvider.updateDragonName(
+                                widget.dragonId,
+                                nameController.text,
+                              );
+                              if (mounted) Navigator.pop(context);
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString())),
+                                );
+                              }
+                            }
+                          },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 }

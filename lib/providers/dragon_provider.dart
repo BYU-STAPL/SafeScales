@@ -199,6 +199,40 @@ class DragonProvider extends ChangeNotifier {
     }
   }
 
+  /// Update dragon name
+  Future<void> updateDragonName(String dragonId, String newName) async {
+    try {
+      final user = _userState.currentUser;
+      if (user == null) {
+        _setError('User not logged in');
+        return;
+      }
+
+      await _dragonService.updateDragonName(user.id, dragonId, newName);
+
+      // Update local dragon data
+      if (_dragons.containsKey(dragonId)) {
+        final updatedDragon = Dragon(
+          id: _dragons[dragonId]!.id,
+          speciesName: _dragons[dragonId]!.speciesName,
+          moduleId: _dragons[dragonId]!.moduleId,
+          preferredEnvironment: _dragons[dragonId]!.preferredEnvironment,
+          favoriteItem: _dragons[dragonId]!.favoriteItem,
+          name: newName,
+          phaseImages: _dragons[dragonId]!.phaseImages,
+          phaseOrder: _dragons[dragonId]!.phaseOrder,
+        );
+        _dragons[dragonId] = updatedDragon;
+        notifyListeners();
+      }
+
+      print('✅ Dragon name updated successfully');
+    } catch (e) {
+      _setError('Failed to update dragon name: $e');
+      print('❌ Error updating dragon name: $e');
+    }
+  }
+
   // === Private Helper Methods ===
 
   /// Load all dragon-related data for a user
