@@ -132,6 +132,7 @@ class DragonProvider extends ChangeNotifier {
       }
 
       await _loadDragonData(user.id, courseId);
+
     } catch (e) {
       _setError('Failed to load user dragons: $e');
       print('❌ DragonProvider: Error loading user dragons: $e');
@@ -144,6 +145,7 @@ class DragonProvider extends ChangeNotifier {
   Future<void> updateDragonPhases(String lessonId) async {
     try {
       final dragon = getDragonByModuleId(lessonId);
+
       if (dragon == null) return;
 
       final user = _userState.currentUser;
@@ -157,6 +159,7 @@ class DragonProvider extends ChangeNotifier {
 
       // Refresh local data
       await _refreshUnlockedPhases(user.id);
+
     } catch (e) {
       _setError('Failed to update dragon phases: $e');
       print('❌ DragonProvider: Error updating dragon progress: $e');

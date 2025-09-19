@@ -100,7 +100,6 @@ class DragonService {
     final dragons = <String, Dragon>{};
 
     // Process each dragon asset
-    print("DEBUG: Process each dragon");
     for (final asset in classAssets) {
       if (asset['type'] != 'dragon') continue;
 
@@ -113,15 +112,10 @@ class DragonService {
       }
 
       final dragon = _createDragonFromAsset(userDragonsData[dragonId], asset, dragonId);
-      print("DEBUG: Is Dragon not null");
       if (dragon != null) {
-        print("DEBUG: Add dragon");
         dragons[dragonId] = dragon;
       }
-      print("DEBUG: Dragon created");
     }
-
-    print("DEBUG: Finish processing");
 
     return dragons;
   }
@@ -129,7 +123,6 @@ class DragonService {
   /// Create Dragon object from asset data
   Dragon? _createDragonFromAsset(Map<String, dynamic> userDragonInfo, Map<String, dynamic> asset, String dragonId) {
     try {
-      print("DEBUG");
       final stages = asset['stages'] as Map<String, dynamic>?;
       if (stages == null) {
         return null;

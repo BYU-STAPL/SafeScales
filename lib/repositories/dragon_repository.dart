@@ -93,13 +93,14 @@ class DragonRepository {
       final currentData = await fetchUserDragons(userId);
 
       // Update specific dragon phases
-      currentData[dragonId] = phases;
+      currentData[dragonId]["phases"] = phases;
 
       // Save back to database
       await _supabase
           .from('Users')
           .update({'dragons': currentData})
           .eq('id', userId);
+
     } catch (e) {
       throw DragonRepositoryException('Failed to update dragon phases for $userId: $e');
     }
