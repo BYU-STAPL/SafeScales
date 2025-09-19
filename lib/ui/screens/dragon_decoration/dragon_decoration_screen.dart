@@ -74,13 +74,13 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     final double dragonSize = MediaQuery.of(context).size.width * 0.75;
 
     final environmentSize = (
-    width: dragonSize * 1.25,
-    height: dragonSize * 1.75,
+      width: dragonSize * 1.25,
+      height: dragonSize * 1.75,
     );
 
     final stickerEnvironmentSize = (
-    width: environmentSize.width - 10,
-    height: environmentSize.height - 10,
+      width: environmentSize.width - 10,
+      height: environmentSize.height - 10,
     );
 
     return Consumer2<DragonDecorationProvider, DragonProvider>(
@@ -131,7 +131,20 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text('Play'),
+            title: GestureDetector(
+              onTap: () => _showNameDialog(dragonProvider),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    dragonProvider.getDragonById(widget.dragonId)?.name ??
+                        'Unnamed Dragon',
+                  ),
+                  const SizedBox(width: 15),
+                  const Icon(Icons.edit, size: 25),
+                ],
+              ),
+            ),
             centerTitle: true,
             backgroundColor: colorScheme.surface,
             elevation: 0,
@@ -480,6 +493,76 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       item: item,
       position: dropPosition,
       size: 48.0,
+    );
+  }
+
+  void _showNameDialog(DragonProvider dragonProvider) {
+    final TextEditingController nameController = TextEditingController(
+      text: dragonProvider.getDragonById(widget.dragonId)?.name ?? '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Change Dragon Name'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      // labelText: 'Dragon Name',
+                      hintText: 'Enter Your Dragon\'s Name',
+                      counterText: '${nameController.text.length}/10',
+                      errorText:
+                          nameController.text.length > 10
+                              ? 'Name cannot be longer than 10 characters'
+                              : null,
+                    ),
+                    autofocus: true,
+                    maxLength: 10,
+                    onChanged: (value) {
+                      setState(() {}); // Update counter and error text
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed:
+                      nameController.text.trim().isEmpty ||
+                              nameController.text.length > 10
+                          ? null // Disable button if name is empty or too long
+                          : () async {
+                            try {
+                              await dragonProvider.updateDragonName(
+                                widget.dragonId,
+                                nameController.text,
+                              );
+                              if (mounted) Navigator.pop(context);
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString())),
+                                );
+                              }
+                            }
+                          },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -367,6 +367,7 @@ class AppTheme {
           horizontal: 16,
           vertical: 12,
         ),
+        hintStyle: getTextTheme(lightColorScheme).labelMedium,
       ),
 
       // Bottom Navigation Bar Theme

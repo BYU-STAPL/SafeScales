@@ -139,9 +139,10 @@ class _DragonsScreenState extends State<DragonsScreen> {
       Widget dragonImageWidget = DragonImageWidget(dragonId: dragon.id, size: 180);
 
       return DragonIdCard(
+        dragonId: dragon.id,
         dragonImage: dragonImageWidget,
         species: dragon.speciesName,
-        name: 'Jack',
+        name: dragon.name,
         favoriteItem: dragon.favoriteItem,
         favoriteEnvironment: dragon.preferredEnvironment,
         isPlayUnlocked: isUnlocked,
