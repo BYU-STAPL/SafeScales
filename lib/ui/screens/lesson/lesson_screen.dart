@@ -90,6 +90,8 @@ class _LessonScreenState extends State<LessonScreen> {
     ThemeData theme = Theme.of(context);
     final screenSize = MediaQuery.of(context).size;
 
+    final double statBoxWidth = 155;
+
     return Consumer2<DragonProvider, CourseProvider>(
       builder: (context, dragonProvider, courseProvider, child) {
         // Show loading if data is not ready
@@ -126,6 +128,131 @@ class _LessonScreenState extends State<LessonScreen> {
                           top: 20,
                         ),
                         child: Text(
+                          'Post Quiz Scores',
+                          style: theme.textTheme.headlineSmall,
+                        ),
+                      ),
+
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          left: 20,
+                          right: 20,
+                          top: 20,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+
+                            Container(
+                              width: statBoxWidth,
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1), //Colors.white.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.timer,
+                                        color: theme.colorScheme.primary,
+                                        size: 15,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        "Most Recent",
+                                        style: theme.textTheme.labelSmall,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Icon(
+                                        Icons.timer,
+                                        color: theme.colorScheme.primary,
+                                        size: 15,
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 6),
+                                  Text(
+                                    "${_lessonProgress?.getMostRecentPostQuizScore().toInt()}%",
+                                    style: theme.textTheme.headlineSmall?.copyWith(
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            SizedBox(width: 40,),
+
+                            Container(
+                              width: statBoxWidth,
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1), //Colors.white.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.star,
+                                        color: theme.colorScheme.primary,
+                                        size: 15,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        "Highest",
+                                        style: theme.textTheme.labelSmall,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Icon(
+                                        Icons.star,
+                                        color: theme.colorScheme.primary,
+                                        size: 15,
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 6),
+                                  Text(
+                                    "${_lessonProgress?.getHighestPostQuizScore().toInt()}%",
+                                    style: theme.textTheme.headlineSmall?.copyWith(
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+
+
+
+
+
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          left: 20,
+                          right: 20,
+                          top: 20,
+                        ),
+                        child: Text(
                           'Lesson Activities',
                           style: theme.textTheme.headlineSmall,
                         ),
@@ -140,7 +267,7 @@ class _LessonScreenState extends State<LessonScreen> {
                             children: [
                               ...[
                                 _buildQuizCard(
-                                  type: ActivityType.preQuiz,
+                                  // type: ActivityType.preQuiz,
                                   title: 'Pre-Quiz',
                                   description:
                                       'Test your knowledge before starting',
@@ -164,22 +291,13 @@ class _LessonScreenState extends State<LessonScreen> {
                               ...[
                                 const SizedBox(height: 20),
                                 _buildQuizCard(
-                                  type: ActivityType.postQuiz,
                                   title: 'Post-Quiz',
                                   description: 'Test what you\'ve learned',
                                   onTap: () => _startQuiz(_lesson!.postQuiz),
                                   icon: Icons.assignment,
                                   color: theme.colorScheme.primary,
                                   isCompleted:
-                                      _lessonProgress!.isPostQuizComplete &&
-                                      _lessonProgress!
-                                          .postQuizAttempts
-                                          .isNotEmpty &&
-                                      (_lessonProgress!
-                                              .postQuizAttempts
-                                              .first
-                                              .score >=
-                                          _lesson!.postQuiz.passingScore),
+                                      _lessonProgress!.isPostQuizComplete(),
                                   score:
                                       _lessonProgress!
                                               .postQuizAttempts
@@ -205,7 +323,6 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   Widget _buildQuizCard({
-    required ActivityType type,
     required String title,
     required String description,
     required VoidCallback onTap,
@@ -274,16 +391,6 @@ class _LessonScreenState extends State<LessonScreen> {
                               Icons.check_circle,
                               color: theme.colorScheme.green,
                               size: 18,
-                            ),
-                          ],
-                          // Only show score for post-quiz
-                          if (type == ActivityType.postQuiz && score != null) ...[
-                            const SizedBox(width: 10),
-                            Text(
-                              '${score.toStringAsFixed(0)}%',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.green,
-                              ),
                             ),
                           ],
                         ],
