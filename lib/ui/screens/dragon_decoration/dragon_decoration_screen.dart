@@ -140,8 +140,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                     dragonProvider.getDragonById(widget.dragonId)?.name ??
                         'Unnamed Dragon',
                   ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.edit, size: 16),
+                  const SizedBox(width: 15),
+                  const Icon(Icons.edit, size: 25),
                 ],
               ),
             ),
@@ -515,8 +515,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(
-                      labelText: 'Dragon Name',
-                      hintText: 'Enter a name for your dragon',
+                      // labelText: 'Dragon Name',
+                      hintText: 'Enter Your Dragon\'s Name',
                       counterText: '${nameController.text.length}/10',
                       errorText:
                           nameController.text.length > 10

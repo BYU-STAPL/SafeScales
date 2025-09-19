@@ -100,6 +100,7 @@ class DragonService {
     final dragons = <String, Dragon>{};
 
     // Process each dragon asset
+    print("DEBUG: Process each dragon");
     for (final asset in classAssets) {
       if (asset['type'] != 'dragon') continue;
 
@@ -111,18 +112,24 @@ class DragonService {
         userDragonsData[dragonId] = ['egg'];
       }
 
-      final dragon = _createDragonFromAsset(asset, dragonId);
+      final dragon = _createDragonFromAsset(userDragonsData[dragonId], asset, dragonId);
+      print("DEBUG: Is Dragon not null");
       if (dragon != null) {
+        print("DEBUG: Add dragon");
         dragons[dragonId] = dragon;
       }
+      print("DEBUG: Dragon created");
     }
+
+    print("DEBUG: Finish processing");
 
     return dragons;
   }
 
   /// Create Dragon object from asset data
-  Dragon? _createDragonFromAsset(Map<String, dynamic> asset, String dragonId) {
+  Dragon? _createDragonFromAsset(Map<String, dynamic> userDragonInfo, Map<String, dynamic> asset, String dragonId) {
     try {
+      print("DEBUG");
       final stages = asset['stages'] as Map<String, dynamic>?;
       if (stages == null) {
         return null;
@@ -139,13 +146,13 @@ class DragonService {
 
       return Dragon(
         id: dragonId,
-        speciesName: asset['name']?.toString() ?? 'Unnamed Dragon',
+        speciesName: asset['name']?.toString() ?? 'Unknown Species',
         moduleId: moduleId,
         phaseImages: images,
         phaseOrder: phaseOrder,
-        preferredEnvironment: 'Mountain', // Default value
-        favoriteItem: asset['favorite_item']?.toString() ?? 'Ice Cream',
-        name: asset['name']?.toString() ?? 'Unnamed Dragon',
+        preferredEnvironment: asset['favorite_item']?.toString() ?? 'Unknown', // Default value
+        favoriteItem: asset['favorite_item']?.toString() ?? 'Unknown',
+        name: userDragonInfo['name']?.toString() ?? 'Unnamed',
       );
     } catch (e) {
       print('❌ Error creating dragon from asset: $e');
@@ -191,8 +198,11 @@ class DragonService {
     }
 
     // Filter user dragons to only include those in this class
-    userDragonsData.forEach((key, phases) {
-      if (phases is List && classDragonIds.contains(key)) {
+    userDragonsData.forEach((key, data) {
+
+      final phases = data['phases']; // Dragon's name is in this data too.
+
+      if (phases != null && phases is List && classDragonIds.contains(key)) {
         classUnlockedPhases[key] = phases.cast<String>();
       }
     });
