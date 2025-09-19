@@ -279,6 +279,33 @@ class DragonService {
   Future<Map<String, String>> loadUserPreferredPhases(String userId) async {
     return await _repository.fetchUserPreferredPhases(userId);
   }
+
+  /// Update dragon name
+  Future<void> updateDragonName(
+    String userId,
+    String dragonId,
+    String newName,
+  ) async {
+    try {
+      // Validate name
+      final trimmedName = newName.trim();
+      if (trimmedName.isEmpty) {
+        throw DragonServiceException('Dragon name cannot be empty');
+      }
+
+      // Limit name length to 10 characters
+      if (trimmedName.length > 10) {
+        throw DragonServiceException(
+          'Dragon name cannot be longer than 10 characters',
+        );
+      }
+
+      // Update name in repository
+      await _repository.updateDragonName(userId, dragonId, trimmedName);
+    } catch (e) {
+      throw DragonServiceException('Failed to update dragon name: $e');
+    }
+  }
 }
 
 /// Custom exception for service operations
