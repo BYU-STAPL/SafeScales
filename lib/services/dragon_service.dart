@@ -213,7 +213,7 @@ class DragonService {
   ) async {
     // Ask Course Service for lesson progress
     LessonProgress? lessonProgress = await _courseService
-        .getSingleLessonProgress(userId, lessonId);
+        .getLessonProgress(userId, lessonId);
 
     if (lessonProgress == null) {
       throw DragonServiceException(

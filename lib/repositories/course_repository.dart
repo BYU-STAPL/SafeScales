@@ -143,6 +143,22 @@ class CourseRepository {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getUserQuizAttempts(String userId, String lessonId) async {
+    try {
+      final response = await _supabase
+          .from('quiz_attempts')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('lesson_id', lessonId)
+          .order('completed_at', ascending: true); // oldest first
+
+      return List<Map<String, dynamic>>.from(response);
+
+    } catch (e) {
+      throw Exception('Failed to fetch quiz attempts: $e');
+    }
+  }
+
 
   /// Save Quiz Attempt
   Future<void> saveQuizAttempt({
@@ -159,13 +175,11 @@ class CourseRepository {
 
       if (quizType == ActivityType.postQuiz) {
 
-        //Double check quiz id old version with type as a postfix
-        // String correctedQuizId = quizId.split('_')[0];
-
         // Prep data
         final attemptData = {
           'user_id': userId,
           'quiz_id': quizId,
+          'lesson_id': quizId.split('_')[0], // Quiz id is just the lesson_id + preQuiz or postQuiz at end
           'quiz_type': 'post_quiz'.toLowerCase(),
           'question_responses': answers, // Supabase will automatically convert to JSON
           'num_correct_answers': correctAnswers,
@@ -176,24 +190,45 @@ class CourseRepository {
         };
 
         // Insert into database
-        final response = await _supabase
-            .from('quiz_attempts')
-            .insert(attemptData)
-            .select('id') // Return the ID of the created record
-            .single();
-
-        print('Quiz attempt saved successfully with ID: ${response['id']}');
-
-
-
+        await _supabase
+          .from('quiz_attempts')
+          .insert(attemptData)
+          .select('id') // Return the ID of the created record
+          .single();
 
       }
       else if (quizType == ActivityType.preQuiz) {
         // Check if an attempt for this pre-quiz already exists
+        List<dynamic> response = await _supabase
+            .from('quiz_attempts')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('quiz_id', quizId)
+            .order('completed_at', ascending: true); // oldest first
+
+        if (response.isNotEmpty) {
+          return;
+        }
 
         // Prep data
+        final attemptData = {
+          'user_id': userId,
+          'quiz_id': quizId,
+          'lesson_id': quizId.split('_')[0], // Quiz id is just the lesson_id + preQuiz or postQuiz at end
+          'quiz_type': 'pre_quiz'.toLowerCase(),
+          'question_responses': answers, // Supabase will automatically convert to JSON
+          'num_correct_answers': correctAnswers,
+          'total_questions': totalQuestions,
+          'started_at': startTime.toIso8601String(),
+          'completed_at': DateTime.now().toIso8601String(),
+        };
 
-
+        // Insert into database
+        await _supabase
+            .from('quiz_attempts')
+            .insert(attemptData)
+            .select('id') // Return the ID of the created record
+            .single();
       }
       else {
         throw Exception('Missing pre_quiz or post_quiz type');

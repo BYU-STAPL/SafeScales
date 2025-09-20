@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:safe_scales/models/question.dart';
 
 class LessonProgress {
@@ -95,30 +97,31 @@ class QuizAttempt {
   final ActivityType type; // preQuiz, postQuiz, practice, assessment
 
   // Results
-  double score; // percentage (0-100)
+  // double score; // percentage (0-100)
   final int correctAnswers; // Number of correct answers
   final int totalQuestions;
   final List<List<int>> responses;
 
   // Timing
-  // final DateTime startedAt;
+  final DateTime startedAt;
   final DateTime completedAt;
-  // final int timeSpentSeconds;
 
   // Status
   // final int attemptNumber;
   // final bool passed; // based on passing threshold
+
+  double get score => ((correctAnswers / totalQuestions) * 100).round().toDouble();
 
   QuizAttempt({
     required this.id,
     required this.quizId,
     required this.lessonId,
     required this.type,
-    required this.score,
+    // required this.score,
     required this.correctAnswers,
     required this.totalQuestions,
     required this.responses,
-    // required this.startedAt,
+    required this.startedAt,
     required this.completedAt,
     // required this.timeSpentSeconds,
     // required this.attemptNumber,

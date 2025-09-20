@@ -143,7 +143,7 @@ class CourseProvider extends ChangeNotifier {
     if (!isUserLoggedIn) return;
 
     await _executeWithErrorHandling(() async {
-      final progress = await _courseService.getSingleLessonProgress(
+      final progress = await _courseService.getLessonProgress(
         currentUser!.id,
         lessonId,
       );
