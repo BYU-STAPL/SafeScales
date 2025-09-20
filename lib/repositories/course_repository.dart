@@ -1,3 +1,4 @@
+import 'package:safe_scales/models/question.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 
@@ -142,15 +143,95 @@ class CourseRepository {
     }
   }
 
+
+  /// Save Quiz Attempt
+  Future<void> saveQuizAttempt({
+    required String userId,
+    required String quizId,
+    required ActivityType quizType,
+    required List<List<int>> answers,
+    required int correctAnswers,
+    required int totalQuestions,
+    required DateTime startTime,
+    required DateTime endTime,
+  }) async {
+    try {
+
+      if (quizType == ActivityType.postQuiz) {
+
+        //Double check quiz id old version with type as a postfix
+        // String correctedQuizId = quizId.split('_')[0];
+
+        // Prep data
+        final attemptData = {
+          'user_id': userId,
+          'quiz_id': quizId,
+          'quiz_type': 'post_quiz'.toLowerCase(),
+          'question_responses': answers, // Supabase will automatically convert to JSON
+          'num_correct_answers': correctAnswers,
+          'total_questions': totalQuestions,
+          'started_at': startTime.toIso8601String(),
+          'completed_at': DateTime.now().toIso8601String(),
+          // created_at will be auto-generated if you have a default value
+        };
+
+        // Insert into database
+        final response = await _supabase
+            .from('quiz_attempts')
+            .insert(attemptData)
+            .select('id') // Return the ID of the created record
+            .single();
+
+        print('Quiz attempt saved successfully with ID: ${response['id']}');
+
+
+
+
+      }
+      else if (quizType == ActivityType.preQuiz) {
+        // Check if an attempt for this pre-quiz already exists
+
+        // Prep data
+
+
+      }
+      else {
+        throw Exception('Missing pre_quiz or post_quiz type');
+      }
+
+
+    } catch (e) {
+      throw Exception('CourseRepository SaveQuizAttempt(): Failed to save quiz progress: $e');
+    }
+  }
+
+
+
+
   /// Save quiz progress to database
   Future<void> saveQuizProgress({
     required String userId,
     required String quizId,
+    required ActivityType quizType,
     required List<List<int>> answers,
     required int correctAnswers,
     required int totalQuestions,
+    required DateTime startTime,
+    required DateTime endTime,
   }) async {
     try {
+
+      await saveQuizAttempt(
+        userId: userId,
+        quizId: quizId,
+        quizType: quizType,
+        answers: answers,
+        correctAnswers: correctAnswers,
+        totalQuestions: totalQuestions,
+        startTime: startTime,
+        endTime: endTime,
+      );
+
       final score = ((correctAnswers / totalQuestions) * 100).round();
 
       // Get current user data
@@ -183,15 +264,15 @@ class CourseRepository {
 
       // Parse quiz ID to get module and quiz type
       String moduleId;
-      String quizType;
+      String quizTypeText;
 
       if (quizId.contains('_')) {
         final parts = quizId.split('_');
         moduleId = parts[0];
-        quizType = parts.length > 1 ? parts[1] : 'quiz';
+        quizTypeText = parts.length > 1 ? parts[1] : 'quiz';
       } else {
         moduleId = 'legacy';
-        quizType = quizId;
+        quizTypeText = quizId;
       }
 
       // Initialize module entry if it doesn't exist
@@ -222,7 +303,7 @@ class CourseRepository {
       }
 
       // Update the specific quiz
-      modules[moduleId][quizType] = {
+      modules[moduleId][quizTypeText] = {
         'answers': answers,
         'score': score,
         'spent': true,

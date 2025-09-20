@@ -34,6 +34,10 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   bool _showTableOfContents = false;
   final _userState = UserStateService();
 
+  late DateTime _quizStartTime;
+  late DateTime _quizEndTime;
+
+
   late bool _isForward;
   bool _isFirstLoad = true;
 
@@ -51,10 +55,16 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   void _startPostQuiz() {
     setState(() {
       isStarted = true;
+      _quizStartTime = DateTime.now();
     });
   }
 
   void _finishPostQuiz() async {
+
+    setState(() {
+      _quizEndTime = DateTime.now();
+    });
+
     int correctAnswers = 0;
     for (int i = 0; i < widget.questionSet.questions.length; i++) {
       if (_isAnswerCorrect(i)) correctAnswers++;
@@ -71,10 +81,13 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
           context,
           listen: false,
         ).saveQuizProgress(
+          quizType: widget.questionSet.activityType,
           quizId: widget.questionSet.id,
           userAnswers: userAnswers,
           correctAnswers: correctAnswers,
           totalQuestions: totalQuestions,
+          startTime: _quizStartTime,
+          endTime: _quizEndTime,
         );
       } else {
         print('No user logged in, skipping post-quiz progress save');

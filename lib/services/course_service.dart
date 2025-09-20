@@ -187,9 +187,12 @@ class CourseService {
   Future<void> saveQuizProgress({
     required String userId,
     required String quizId,
+    required ActivityType quizType,
     required List<List<int>> userAnswers,
     required int correctAnswers,
     required int totalQuestions,
+    required DateTime startTime,
+    required DateTime endTime,
   }) async {
     try {
       // Business rule: Validate score calculation
@@ -209,9 +212,12 @@ class CourseService {
       await _repository.saveQuizProgress(
         userId: userId,
         quizId: quizId,
+        quizType: quizType,
         answers: userAnswers,
         correctAnswers: correctAnswers,
         totalQuestions: totalQuestions,
+        startTime: startTime,
+        endTime: endTime,
       );
     } catch (e) {
       throw CourseServiceException('Failed to save quiz progress: $e');
