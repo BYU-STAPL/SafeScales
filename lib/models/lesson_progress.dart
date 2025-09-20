@@ -12,12 +12,12 @@ class LessonProgress {
   final int requiredPassingScore;
 
   bool get isPreQuizComplete => preQuizAttempt != null;
-  bool get isPostQuizComplete =>
-      postQuizAttempts.isNotEmpty &&
-      postQuizAttempts.first.score >= requiredPassingScore;
+  // bool get isPostQuizComplete =>
+  //     postQuizAttempts.isNotEmpty &&
+  //     postQuizAttempts.first.score >= requiredPassingScore;
 
   // TODO: Consider implementing later
-  // List<QuizResult> reviewAttempts;
+  // List<QuizAttempt> reviewAttempts;
 
   LessonProgress({
     required this.lessonId,
@@ -27,6 +27,33 @@ class LessonProgress {
     required this.postQuizAttempts,
     this.preQuizAttempt,
   });
+
+  bool isPostQuizComplete() {
+    // Find at least one attempt where the user passed
+    for (final attempt in postQuizAttempts) {
+      if (attempt.score >= requiredPassingScore) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  double getMostRecentPostQuizScore() {
+    return postQuizAttempts.isNotEmpty ? postQuizAttempts.last.score : 0;
+  }
+
+  double getHighestPostQuizScore() {
+    double highScore = 0;
+    for (final attempt in postQuizAttempts) {
+      if (attempt.score > highScore) {
+        highScore = attempt.score;
+      }
+    }
+
+    return highScore;
+  }
+
 
   double getProgressPercent() {
     double progress = 0;
@@ -39,7 +66,7 @@ class LessonProgress {
       progress = progress + (1 / 3);
     }
 
-    if (isPostQuizComplete) {
+    if (isPostQuizComplete()) {
       progress = progress + (1 / 3);
     }
 

@@ -315,7 +315,7 @@ class CourseProvider extends ChangeNotifier {
     final progress = _lessonProgress[lessonId];
     if (progress == null) return false;
 
-    return progress.isReadingComplete && progress.isPostQuizComplete;
+    return progress.isReadingComplete && progress.isPostQuizComplete();
   }
 
   /// Get completion percentage for the entire course
