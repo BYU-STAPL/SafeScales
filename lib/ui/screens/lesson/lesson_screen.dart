@@ -116,6 +116,7 @@ class _LessonScreenState extends State<LessonScreen> {
                   : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      SizedBox(height: 10,),
                       // Dragon image container
                       Center(
                         child: _getDragonImage(dragonProvider),
@@ -240,10 +241,6 @@ class _LessonScreenState extends State<LessonScreen> {
                           ],
                         ),
                       ),
-
-
-
-
 
 
                       Padding(
