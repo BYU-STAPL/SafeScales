@@ -7,6 +7,12 @@ class DragonDecorationRepository {
   DragonDecorationRepository({SupabaseClient? supabase})
       : _supabase = supabase ?? SupabaseConfig.client;
 
+  // ---------------- CREATE ----------------
+
+
+  // ---------------- READ ----------------
+
+  /// Load current user selected environment
   Future<String> loadCurrentDragonEnvironment(String userId, String dragonId) async {
     try {
       final response = await _supabase
@@ -23,6 +29,35 @@ class DragonDecorationRepository {
     }
   }
 
+  /// Load dragon dress-up data for a specific user and dragon
+  Future<Map<String, dynamic>?> loadDragonDressUp({required String userId, required String dragonId,}) async {
+    try {
+      final userResponse = await _supabase
+          .from('Users')
+          .select('dragon_dressup')
+          .eq('id', userId)
+          .single();
+
+      final Map<String, dynamic>? dressUpData =
+      userResponse['dragon_dressup'] != null
+          ? Map<String, dynamic>.from(userResponse['dragon_dressup'])
+          : null;
+
+      if (dressUpData != null && dressUpData.containsKey(dragonId)) {
+        return Map<String, dynamic>.from(dressUpData[dragonId]);
+      }
+
+      return null;
+    } catch (e) {
+      print('❌ Error loading dragon dress-up: $e');
+      return null;
+    }
+  }
+
+
+  // ---------------- UPDATE ----------------
+
+  /// Save the new chosen environment
   Future<void> updateUserEnvironment(String userId, String environmentId, String dragonId) async {
     try {
       final response = await _supabase
@@ -87,33 +122,8 @@ class DragonDecorationRepository {
     }
   }
 
-  /// Load dragon dress-up data for a specific user and dragon
-  Future<Map<String, dynamic>?> loadDragonDressUp({
-    required String userId,
-    required String dragonId,
-  }) async {
-    try {
-      final userResponse = await _supabase
-          .from('Users')
-          .select('dragon_dressup')
-          .eq('id', userId)
-          .single();
 
-      final Map<String, dynamic>? dressUpData =
-      userResponse['dragon_dressup'] != null
-          ? Map<String, dynamic>.from(userResponse['dragon_dressup'])
-          : null;
-
-      if (dressUpData != null && dressUpData.containsKey(dragonId)) {
-        return Map<String, dynamic>.from(dressUpData[dragonId]);
-      }
-
-      return null;
-    } catch (e) {
-      print('❌ Error loading dragon dress-up: $e');
-      return null;
-    }
-  }
+  // ---------------- DELETE ----------------
 
   /// Clear all dress-up data for a specific dragon
   Future<bool> clearDragonDressUp({
@@ -148,6 +158,8 @@ class DragonDecorationRepository {
       return false;
     }
   }
+
+
 }
 
 class DragonDecorationRepositoryException implements Exception {

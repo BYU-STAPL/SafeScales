@@ -30,7 +30,9 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   int currentQuestionIndex = 0;
   List<List<int>> userAnswers = [];
   bool isStarted = false;
-  final _userState = UserStateService();
+
+  late DateTime _quizStartTime;
+  late DateTime _quizEndTime;
 
   @override
   void initState() {
@@ -41,10 +43,16 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   void _startPreQuiz() {
     setState(() {
       isStarted = true;
+      _quizStartTime = DateTime.now();
     });
   }
 
   void _finishPreQuiz() async {
+
+    setState(() {
+      _quizEndTime = DateTime.now();
+    });
+
     int correctAnswers = 0;
     for (int i = 0; i < widget.questionSet.questions.length; i++) {
       if (_isAnswerCorrect(i)) correctAnswers++;
@@ -55,21 +63,20 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
 
     // Save quiz progress
     try {
-      final user = _userState.currentUser;
-      if (user != null) {
-        await Provider.of<CourseProvider>(
-          context,
-          listen: false,
-        ).saveQuizProgress(
-          // userId: user.id,
-          quizId: widget.questionSet.id,
-          userAnswers: userAnswers,
-          correctAnswers: correctAnswers,
-          totalQuestions: totalQuestions,
-        );
-      } else {
-        print('No user logged in, skipping pre-quiz progress save');
-      }
+
+      await Provider.of<CourseProvider>(
+        context,
+        listen: false,
+      ).saveQuizProgress(
+        quizType: widget.questionSet.activityType,
+        quizId: widget.questionSet.id,
+        userAnswers: userAnswers,
+        correctAnswers: correctAnswers,
+        totalQuestions: totalQuestions,
+        startTime: _quizStartTime,
+        endTime: _quizEndTime,
+      );
+
     } catch (e) {
       print('❌ Error saving pre-quiz progress: $e');
       // Continue to show results even if saving fails
