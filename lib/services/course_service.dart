@@ -99,25 +99,23 @@ class CourseService {
 
   // === Progress Business Logic ===
 
-
-
   /// Get complete progress data for a user with business logic applied
-  Future<Map<String, dynamic>?> getUserProgressData(String userId) async {
-    try {
-      // First verify user has a class
-      final classData = await _repository.getUserClass(userId);
-      if (classData == null) {
-        return null;
-      }
-
-      // Get raw progress data
-      final progressData = await _repository.getUserProgressData(userId);
-      return progressData;
-    } catch (e) {
-      print('Error getting user progress data: $e');
-      return null;
-    }
-  }
+  // Future<Map<String, dynamic>?> getUserProgressData(String userId) async {
+  //   try {
+  //     // First verify user has a class
+  //     final classData = await _repository.getUserClass(userId);
+  //     if (classData == null) {
+  //       return null;
+  //     }
+  //
+  //     // Get raw progress data
+  //     final progressData = await _repository.getUserProgressData(userId);
+  //     return progressData;
+  //   } catch (e) {
+  //     print('Error getting user progress data: $e');
+  //     return null;
+  //   }
+  // }
 
   Future<Map<String, LessonProgress>> getUserProgress(String userId) async {
     try {
@@ -139,17 +137,12 @@ class CourseService {
 
       // Process progress for each lesson in the class
       for (var lessonId in lessonsInClass) {
-        if (lessonId != 'legacy') {
-          final moduleData = progressData[lessonId] ?? {};
-          final lessonProgress = await _buildLessonProgress(
-            lessonId,
-            moduleData,
-            classData['id'],
-          );
 
-          if (lessonProgress != null) {
-            progress[lessonId] = lessonProgress;
-          }
+
+        LessonProgress? lessonProgress = await getLessonProgress(userId, lessonId);
+
+        if (lessonProgress != null) {
+          progress[lessonId] = lessonProgress;
         }
       }
 
@@ -158,36 +151,6 @@ class CourseService {
       throw CourseServiceException('Failed to load user progress: $e');
     }
   }
-
-  /// Get progress for a single lesson
-  // Future<LessonProgress?> getSingleLessonProgress(String userId, String lessonId,) async {
-  //   try {
-  //     // Verify lesson is in user's class
-  //     final classData = await _repository.getUserClass(userId);
-  //     if (classData == null) {
-  //       return null;
-  //     }
-  //
-  //     final lessonsInClass = await _repository.getLessonOrder(classData['id']);
-  //     if (!lessonsInClass.contains(lessonId)) {
-  //       return null;
-  //     }
-  //
-  //     final progressData = await _repository.getUserProgressData(userId);
-  //     if (progressData == null || !progressData.containsKey(lessonId)) {
-  //       return null;
-  //     }
-  //
-  //     return await _buildLessonProgress(
-  //       lessonId,
-  //       progressData[lessonId],
-  //       classData['id'],
-  //     );
-  //   } catch (e) {
-  //     throw CourseServiceException('Failed to load lesson progress: $e');
-  //   }
-  // }
-
 
   Future<LessonProgress?> getLessonProgress(String userId, String lessonId,) async {
     try {
@@ -343,7 +306,7 @@ class CourseService {
       }
 
       // TODO: start using new function save Quiz Attempt
-      await _repository.saveQuizProgress(
+      await _repository.saveQuizAttempt(
         userId: userId,
         quizId: quizId,
         quizType: quizType,
