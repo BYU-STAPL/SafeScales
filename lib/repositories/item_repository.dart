@@ -11,7 +11,11 @@ class ItemRepository {
   ItemRepository({SupabaseClient? supabase})
       : _supabase = supabase ?? SupabaseConfig.client;
 
-  // === User Item Data ===
+
+  // ---------------- CREATE ----------------
+
+
+  // ---------------- READ ----------------
 
   /// Get user's items and environments
   Future<List<dynamic>> fetchUserItemIDList(String userId) async {
@@ -50,7 +54,6 @@ class ItemRepository {
     }
   }
 
-
   /// Get class item assets
   Future<List<Map<String, dynamic>>> fetchClassAssets(String classId) async {
     try {
@@ -66,8 +69,9 @@ class ItemRepository {
     }
   }
 
-  // === Update Operations ===
+  // ---------------- UPDATE ----------------
 
+  // ---------------- DELETE ----------------
 
 }
 

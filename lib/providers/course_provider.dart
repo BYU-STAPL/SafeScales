@@ -143,7 +143,7 @@ class CourseProvider extends ChangeNotifier {
     if (!isUserLoggedIn) return;
 
     await _executeWithErrorHandling(() async {
-      final progress = await _courseService.getSingleLessonProgress(
+      final progress = await _courseService.getLessonProgress(
         currentUser!.id,
         lessonId,
       );
@@ -157,9 +157,12 @@ class CourseProvider extends ChangeNotifier {
   /// Save quiz progress
   Future<bool> saveQuizProgress({
     required String quizId,
+    required ActivityType quizType,
     required List<List<int>> userAnswers,
     required int correctAnswers,
     required int totalQuestions,
+    required DateTime startTime,
+    required DateTime endTime,
   }) async {
     if (!isUserLoggedIn) return false;
 
@@ -167,9 +170,12 @@ class CourseProvider extends ChangeNotifier {
       await _courseService.saveQuizProgress(
         userId: currentUser!.id,
         quizId: quizId,
+        quizType: quizType,
         userAnswers: userAnswers,
         correctAnswers: correctAnswers,
         totalQuestions: totalQuestions,
+        startTime: startTime,
+        endTime: endTime,
       );
 
       // Reload progress for the affected lesson
@@ -315,7 +321,7 @@ class CourseProvider extends ChangeNotifier {
     final progress = _lessonProgress[lessonId];
     if (progress == null) return false;
 
-    return progress.isReadingComplete && progress.isPostQuizComplete;
+    return progress.isReadingComplete && progress.isPostQuizComplete();
   }
 
   /// Get completion percentage for the entire course

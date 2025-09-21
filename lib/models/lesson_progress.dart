@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:safe_scales/models/question.dart';
 
 class LessonProgress {
@@ -12,12 +14,12 @@ class LessonProgress {
   final int requiredPassingScore;
 
   bool get isPreQuizComplete => preQuizAttempt != null;
-  bool get isPostQuizComplete =>
-      postQuizAttempts.isNotEmpty &&
-      postQuizAttempts.first.score >= requiredPassingScore;
+  // bool get isPostQuizComplete =>
+  //     postQuizAttempts.isNotEmpty &&
+  //     postQuizAttempts.first.score >= requiredPassingScore;
 
   // TODO: Consider implementing later
-  // List<QuizResult> reviewAttempts;
+  // List<QuizAttempt> reviewAttempts;
 
   LessonProgress({
     required this.lessonId,
@@ -27,6 +29,33 @@ class LessonProgress {
     required this.postQuizAttempts,
     this.preQuizAttempt,
   });
+
+  bool isPostQuizComplete() {
+    // Find at least one attempt where the user passed
+    for (final attempt in postQuizAttempts) {
+      if (attempt.score >= requiredPassingScore) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  double getMostRecentPostQuizScore() {
+    return postQuizAttempts.isNotEmpty ? postQuizAttempts.last.score : 0;
+  }
+
+  double getHighestPostQuizScore() {
+    double highScore = 0;
+    for (final attempt in postQuizAttempts) {
+      if (attempt.score > highScore) {
+        highScore = attempt.score;
+      }
+    }
+
+    return highScore;
+  }
+
 
   double getProgressPercent() {
     double progress = 0;
@@ -39,7 +68,7 @@ class LessonProgress {
       progress = progress + (1 / 3);
     }
 
-    if (isPostQuizComplete) {
+    if (isPostQuizComplete()) {
       progress = progress + (1 / 3);
     }
 
@@ -68,30 +97,31 @@ class QuizAttempt {
   final ActivityType type; // preQuiz, postQuiz, practice, assessment
 
   // Results
-  double score; // percentage (0-100)
+  // double score; // percentage (0-100)
   final int correctAnswers; // Number of correct answers
   final int totalQuestions;
   final List<List<int>> responses;
 
   // Timing
-  // final DateTime startedAt;
+  final DateTime startedAt;
   final DateTime completedAt;
-  // final int timeSpentSeconds;
 
   // Status
   // final int attemptNumber;
   // final bool passed; // based on passing threshold
+
+  double get score => ((correctAnswers / totalQuestions) * 100).round().toDouble();
 
   QuizAttempt({
     required this.id,
     required this.quizId,
     required this.lessonId,
     required this.type,
-    required this.score,
+    // required this.score,
     required this.correctAnswers,
     required this.totalQuestions,
     required this.responses,
-    // required this.startedAt,
+    required this.startedAt,
     required this.completedAt,
     // required this.timeSpentSeconds,
     // required this.attemptNumber,

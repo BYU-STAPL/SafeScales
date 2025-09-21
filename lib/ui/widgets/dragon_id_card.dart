@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
 
+import '../../providers/dragon_provider.dart';
+
 class DragonIdCard extends StatefulWidget {
+  final String dragonId;
   final Widget dragonImage;
   final String species;
   final String name;
@@ -19,6 +23,7 @@ class DragonIdCard extends StatefulWidget {
 
   const DragonIdCard({
     super.key,
+    required this.dragonId,
     required this.dragonImage,
     required this.species,
     required this.name,
@@ -43,6 +48,80 @@ class _DragonIdCardState extends State<DragonIdCard> {
     super.initState();
 
     _isPlayUnlocked = widget.isPlayUnlocked;
+  }
+
+
+  void _showNameDialog() {
+
+    DragonProvider dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+
+    final TextEditingController nameController = TextEditingController(
+      text: dragonProvider.getDragonById(widget.dragonId)?.name ?? '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Change Dragon Name'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      // labelText: 'Dragon Name',
+                      hintText: 'Enter Your Dragon\'s Name',
+                      counterText: '${nameController.text.length}/10',
+                      errorText:
+                      nameController.text.length > 10
+                          ? 'Name cannot be longer than 10 characters'
+                          : null,
+                    ),
+                    autofocus: true,
+                    maxLength: 10,
+                    onChanged: (value) {
+                      setState(() {}); // Update counter and error text
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed:
+                  nameController.text.trim().isEmpty ||
+                      nameController.text.length > 10
+                      ? null // Disable button if name is empty or too long
+                      : () async {
+                    try {
+                      await dragonProvider.updateDragonName(
+                        widget.dragonId,
+                        nameController.text,
+                      );
+                      if (mounted) Navigator.pop(context);
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.toString())),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void openEditNameDialog() {
@@ -170,13 +249,13 @@ class _DragonIdCardState extends State<DragonIdCard> {
                                 ),
 
                                 //TODO: Enable when dragon names can be saved
-                                // IconButton(
-                                //   onPressed: openEditNameDialog,
-                                //   icon: Icon(
-                                //     FontAwesomeIcons.pencil,
-                                //     size: 15,
-                                //   ),
-                                // ),
+                                IconButton(
+                                  onPressed: _showNameDialog,
+                                  icon: Icon(
+                                    FontAwesomeIcons.pencil,
+                                    size: 15,
+                                  ),
+                                ),
                               ],
                             )
                           ),

@@ -111,7 +111,7 @@ class DragonService {
         userDragonsData[dragonId] = ['egg'];
       }
 
-      final dragon = _createDragonFromAsset(asset, dragonId);
+      final dragon = _createDragonFromAsset(userDragonsData[dragonId], asset, dragonId);
       if (dragon != null) {
         dragons[dragonId] = dragon;
       }
@@ -121,7 +121,7 @@ class DragonService {
   }
 
   /// Create Dragon object from asset data
-  Dragon? _createDragonFromAsset(Map<String, dynamic> asset, String dragonId) {
+  Dragon? _createDragonFromAsset(Map<String, dynamic> userDragonInfo, Map<String, dynamic> asset, String dragonId) {
     try {
       final stages = asset['stages'] as Map<String, dynamic>?;
       if (stages == null) {
@@ -139,13 +139,13 @@ class DragonService {
 
       return Dragon(
         id: dragonId,
-        speciesName: asset['name']?.toString() ?? 'Unnamed Dragon',
+        speciesName: asset['name']?.toString() ?? 'Unknown Species',
         moduleId: moduleId,
         phaseImages: images,
         phaseOrder: phaseOrder,
-        preferredEnvironment: 'Mountain', // Default value
-        favoriteItem: asset['favorite_item']?.toString() ?? 'Ice Cream',
-        name: asset['name']?.toString() ?? 'Unnamed Dragon',
+        preferredEnvironment: asset['favorite_item']?.toString() ?? 'Unknown', // Default value
+        favoriteItem: asset['favorite_item']?.toString() ?? 'Unknown',
+        name: userDragonInfo['name']?.toString() ?? 'Unnamed',
       );
     } catch (e) {
       print('❌ Error creating dragon from asset: $e');
@@ -191,8 +191,11 @@ class DragonService {
     }
 
     // Filter user dragons to only include those in this class
-    userDragonsData.forEach((key, phases) {
-      if (phases is List && classDragonIds.contains(key)) {
+    userDragonsData.forEach((key, data) {
+
+      final phases = data['phases']; // Dragon's name is in this data too.
+
+      if (phases != null && phases is List && classDragonIds.contains(key)) {
         classUnlockedPhases[key] = phases.cast<String>();
       }
     });
@@ -210,7 +213,7 @@ class DragonService {
   ) async {
     // Ask Course Service for lesson progress
     LessonProgress? lessonProgress = await _courseService
-        .getSingleLessonProgress(userId, lessonId);
+        .getLessonProgress(userId, lessonId);
 
     if (lessonProgress == null) {
       throw DragonServiceException(
@@ -278,6 +281,33 @@ class DragonService {
 
   Future<Map<String, String>> loadUserPreferredPhases(String userId) async {
     return await _repository.fetchUserPreferredPhases(userId);
+  }
+
+  /// Update dragon name
+  Future<void> updateDragonName(
+    String userId,
+    String dragonId,
+    String newName,
+  ) async {
+    try {
+      // Validate name
+      final trimmedName = newName.trim();
+      if (trimmedName.isEmpty) {
+        throw DragonServiceException('Dragon name cannot be empty');
+      }
+
+      // Limit name length to 10 characters
+      if (trimmedName.length > 10) {
+        throw DragonServiceException(
+          'Dragon name cannot be longer than 10 characters',
+        );
+      }
+
+      // Update name in repository
+      await _repository.updateDragonName(userId, dragonId, trimmedName);
+    } catch (e) {
+      throw DragonServiceException('Failed to update dragon name: $e');
+    }
   }
 }
 
