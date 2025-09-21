@@ -12,7 +12,12 @@ class DragonRepository {
   DragonRepository({SupabaseClient? supabase})
     : _supabase = supabase ?? SupabaseConfig.client;
 
-  // === Raw Dragon Data ===
+
+  // ---------------- CREATE ----------------
+
+
+  // ---------------- READ ----------------
+
 
   /// Fetch all dragons from the dragons table
   Future<List<Map<String, dynamic>>> fetchAllDragons() async {
@@ -28,17 +33,15 @@ class DragonRepository {
     }
   }
 
-  // === User Dragon Data ===
-
   /// Get user's dragon progress and unlocked phases
   Future<Map<String, dynamic>> fetchUserDragons(String userId) async {
     try {
       final response =
-          await _supabase
-              .from('Users')
-              .select('dragons')
-              .eq('id', userId)
-              .single();
+      await _supabase
+          .from('Users')
+          .select('dragons')
+          .eq('id', userId)
+          .single();
 
       return response['dragons'] ?? {};
     } catch (e) {
@@ -52,11 +55,11 @@ class DragonRepository {
   Future<List<Map<String, dynamic>>> fetchClassAssets(String classId) async {
     try {
       final response =
-          await _supabase
-              .from('classes')
-              .select('assets')
-              .eq('id', classId)
-              .single();
+      await _supabase
+          .from('classes')
+          .select('assets')
+          .eq('id', classId)
+          .single();
 
       return List<Map<String, dynamic>>.from(response['assets'] ?? []);
     } catch (e) {
@@ -70,11 +73,11 @@ class DragonRepository {
   Future<String?> fetchCurrentEnvironment(String userId) async {
     try {
       final response =
-          await _supabase
-              .from('Users')
-              .select('dragons')
-              .eq('id', userId)
-              .single();
+      await _supabase
+          .from('Users')
+          .select('dragons')
+          .eq('id', userId)
+          .single();
 
       return response['dragons']?['current_dragon_env'];
     } catch (e) {
@@ -84,7 +87,28 @@ class DragonRepository {
     }
   }
 
-  // === Update Operations ===
+  /// Get preferred phases for dragons
+  Future<Map<String, String>> fetchUserPreferredPhases(String userId) async {
+    try {
+      final response = await _supabase
+          .from('Users')
+          .select('dragon_preferred_phases')
+          .eq('id', userId)
+          .single();
+
+      final phases = Map<String, String>.from(
+        response['dragon_preferred_phases'] ?? {},
+      );
+
+      return phases;
+    }
+    catch (e) {
+      throw DragonRepositoryException('Failed to get preferred phases for user $userId: $e');
+    }
+  }
+
+
+  // ---------------- UPDATE ----------------
 
   /// Update user's dragon phases
   Future<void> updateUserDragonPhases(String userId, String dragonId, List<String> phases) async {
@@ -106,6 +130,7 @@ class DragonRepository {
     }
   }
 
+  // Update preferred dragon phase
   Future<void> updateUserPreferredPhase(String userId, String dragonId, String phase) async {
     try {
       final response = await _supabase
@@ -136,31 +161,8 @@ class DragonRepository {
     }
   }
 
-  Future<Map<String, String>> fetchUserPreferredPhases(String userId) async {
-    try {
-      final response = await _supabase
-          .from('Users')
-          .select('dragon_preferred_phases')
-          .eq('id', userId)
-          .single();
-
-      final phases = Map<String, String>.from(
-        response['dragon_preferred_phases'] ?? {},
-      );
-
-      return phases;
-    }
-    catch (e) {
-      throw DragonRepositoryException('Failed to get preferred phases for user $userId: $e');
-    }
-  }
-
   /// Update dragon name in the user's dragons data
-  Future<void> updateDragonName(
-      String userId,
-      String dragonId,
-      String newName,
-      ) async {
+  Future<void> updateDragonName(String userId, String dragonId, String newName,) async {
     try {
       // Get current dragon data
       final currentData = await fetchUserDragons(userId);
@@ -191,23 +193,9 @@ class DragonRepository {
   }
 
 
-  /// Save multiple dragon phases at once
-  // Future<void> saveAllUserDragonPhases(String userId, Map<String, List<String>> dragonPhases) async {
-  //   try {
-  //     final data = <String, dynamic>{...dragonPhases};
-  //
-  //     // if (environment != null) {
-  //     //   data['current_dragon_env'] = environment;
-  //     // }
-  //
-  //     await _supabase
-  //         .from('Users')
-  //         .update({'dragons': data})
-  //         .eq('id', userId);
-  //   } catch (e) {
-  //     throw DragonRepositoryException('Failed to save dragon phases for $userId: $e');
-  //   }
-  // }
+  // ---------------- DELETE ----------------
+
+
 }
 
 /// Custom exception for repository operations
