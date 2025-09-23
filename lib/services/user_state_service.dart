@@ -54,15 +54,16 @@ class UserStateService {
       _userProfile = response;
 
       // Update current user with modules data
+      // TODO: module progress in user table is now reading_progress. Quiz attempts are a separate table
       if (_supabaseUser != null) {
         _currentUser = User.fromSupabaseUser(
           _supabaseUser!,
-          modules: response['modules'],
+          modules: response['reading_progress'],
         );
 
       }
     } catch (e) {
-      print('❌ Error loading user profile: $e');
+      print('loadUserProfile: ❌ Error loading user profile: $e');
       _userProfile = null;
     }
   }
@@ -89,51 +90,6 @@ class UserStateService {
     } catch (e) {
       print('❌ Error getting username: $e');
       return null;
-    }
-  }
-
-  Future<void> saveQuizProgress({required String moduleId, required String quizType /* 'preQuiz' or 'postQuiz'*/, required int totalQuestions, required int correctAnswers, required double scorePercentage, required List<List<int>> userAnswers,}) async {
-    if (_userId == null) {
-      print('❌ Error: UserStateService saveQuizProgress No user logged in, skipping quiz progress save');
-      return;
-    }
-
-    try {
-      // Get current user's modules data
-      final response =
-          await SupabaseConfig.client
-              .from('Users')
-              .select('modules')
-              .eq('id', _userId!)
-              .single();
-
-      Map<String, dynamic> modules = response['modules'] ?? {};
-
-      // Initialize module if it doesn't exist
-      if (!modules.containsKey(moduleId)) {
-        modules[moduleId] = {};
-      }
-
-      // Add or update the quiz data
-      modules[moduleId][quizType] = {
-        'score': scorePercentage,
-        'answers': userAnswers,
-        'completed_at': DateTime.now().toIso8601String(),
-        'correct_answers': correctAnswers,
-        'total_questions': totalQuestions,
-        'spent': false, // Initialize spent flag as false
-      };
-
-      // Update the modules data in the database
-      await SupabaseConfig.client
-          .from('Users')
-          .update({'modules': modules})
-          .eq('id', _userId!);
-
-      // Update local user state
-      await loadUserProfile();
-    } catch (e) {
-      print('❌ Error saving quiz progress: $e');
     }
   }
 

@@ -177,8 +177,11 @@ class CourseRepository {
   /// Get a specific module by ID
   Future<Map<String, dynamic>?> getModuleById(String moduleId) async {
     try {
-      final moduleResponse =
-      await _supabase.from('modules').select().eq('id', moduleId).single();
+      final moduleResponse = await _supabase
+          .from('modules')
+          .select()
+          .eq('id', moduleId)
+          .single();
 
       return Map<String, dynamic>.from(moduleResponse);
     } catch (e) {
@@ -204,24 +207,22 @@ class CourseRepository {
     }
   }
 
-  // === User Progress Operations ===
-
   /// Get all user progress data
-  Future<Map<String, dynamic>?> getUserProgressData(String userId) async {
+  Future<Map<String, dynamic>?> getUserReadingProgress(String userId) async {
     try {
-      final response =
-      await _supabase
+      final response = await _supabase
           .from('Users')
-          .select('modules')
+          .select('reading_progress')
           .eq('id', userId)
           .single();
 
-      return response['modules'];
+      return response['reading_progress'];
     } catch (e) {
       throw Exception('Failed to get user progress: $e');
     }
   }
 
+  /// Get all the user's quiz attempts for a lesson
   Future<List<Map<String, dynamic>>> getUserQuizAttempts(String userId, String lessonId) async {
     try {
       final response = await _supabase
@@ -248,43 +249,27 @@ class CourseRepository {
       final response =
       await _supabase
           .from('Users')
-          .select('modules')
+          .select('reading_progress')
           .eq('id', userId)
           .single();
 
-      Map<String, dynamic> modulesData = {};
-      if (response['modules'] != null) {
-        modulesData = Map<String, dynamic>.from(response['modules']);
+      Map<String, dynamic> readingData = {};
+      if (response['reading_progress'] != null) {
+        readingData = Map<String, dynamic>.from(response['reading_progress']);
       }
 
-      if (!modulesData.containsKey(lessonId)) {
-        modulesData[lessonId] = {
+      if (!readingData.containsKey(lessonId)) {
+        readingData[lessonId] = {
           'reading': {
             'completed': false,
             'completed_at': null,
             'bookmarks': [],
-          },
-          'preQuiz': {
-            'score': 0,
-            'spent': false,
-            'answers': [],
-            'completed_at': null,
-            'correct_answers': 0,
-            'total_questions': 0,
-          },
-          'postQuiz': {
-            'score': 0,
-            'spent': false,
-            'answers': [],
-            'completed_at': null,
-            'correct_answers': 0,
-            'total_questions': 0,
-          },
+          }
         };
       }
 
       // Update reading progress while preserving other fields
-      final currentModule = modulesData[lessonId] as Map<String, dynamic>;
+      final currentModule = readingData[lessonId] as Map<String, dynamic>;
       currentModule['reading'] = {
         'completed': true,
         'completed_at': DateTime.now().toIso8601String(),
@@ -293,7 +278,7 @@ class CourseRepository {
 
       await _supabase
           .from('Users')
-          .update({'modules': modulesData})
+          .update({'reading_progress': readingData})
           .eq('id', userId);
     } catch (e) {
       throw Exception('Failed to save reading progress: $e');
