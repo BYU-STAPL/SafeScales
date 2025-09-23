@@ -341,9 +341,6 @@ class _ShopScreenState extends State<ShopScreen> {
                                 name: items[i].name,
                                 cost: items[i].cost.toString() ?? '1',
                                 isSelected: selectedIndex == i,
-                                // isOwned:
-                                // selectedTab == 0 ? acquiredAccessories.contains(items[i].id.toString(),)
-                                //     : acquiredEnvironments.contains(items[i]['id'].toString(),),
                                 highlight: highlight,
                                 onTap: () {
                                   setState(() {
