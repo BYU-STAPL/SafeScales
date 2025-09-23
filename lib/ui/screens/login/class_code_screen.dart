@@ -144,22 +144,6 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                   'completed_at': null,
                   'bookmarks': [],
                 },
-                'preQuiz': {
-                  'score': 0,
-                  'answers': [],
-                  'completed_at': null,
-                  'correct_answers': 0,
-                  'total_questions': 0,
-                  'spent': false,
-                },
-                'postQuiz': {
-                  'score': 0,
-                  'answers': [],
-                  'completed_at': null,
-                  'correct_answers': 0,
-                  'total_questions': 0,
-                  'spent': false,
-                },
               };
             }
           }
@@ -179,8 +163,7 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                     'dragon_preferred_phases': {},
                     'dragon_environments': {},
                     'dragon_dressup': {},
-                    'quizzes': {},
-                    'modules': initialModules,
+                    'reading_progress': initialModules,
                   })
                   .select()
                   .single();
