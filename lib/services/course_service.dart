@@ -127,7 +127,7 @@ class CourseService {
 
       // Get lessons in class to filter progress
       final lessonsInClass = await _repository.getLessonOrder(classData['id']);
-      final progressData = await _repository.getUserProgressData(userId);
+      final progressData = await _repository.getUserReadingProgress(userId);
 
       if (progressData == null) {
         return {};
@@ -176,7 +176,7 @@ class CourseService {
 
       // Get the User's reading data
       //TODO: Replace with better reading data table access
-      final progressData = await _repository.getUserProgressData(userId);
+      final progressData = await _repository.getUserReadingProgress(userId);
       if (progressData == null || !progressData.containsKey(lessonId)) {
         throw CourseServiceException('Lesson data for lesson $lessonId in class ${classId} is null or no matching lesson id');
       }

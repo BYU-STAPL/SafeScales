@@ -96,6 +96,7 @@ class _ShopScreenState extends State<ShopScreen> {
       if (!passedReviewSet) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
+            duration: Duration(seconds: 2),
             content: Text('Review set not completed. Purchase cancelled.'),
           ),
         );
@@ -158,6 +159,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            duration: Duration(seconds: 2),
             content: Text(
               'The Teacher has not created a review set for this lesson',
               style: TextStyle(
