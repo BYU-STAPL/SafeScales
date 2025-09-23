@@ -11,6 +11,7 @@ import '../../../providers/course_provider.dart';
 import '../../../providers/dragon_provider.dart';
 import '../../../themes/app_theme.dart';
 import '../../widgets/dragon_image_widget.dart';
+import '../review_set/review_screen.dart';
 
 class LessonScreen extends StatefulWidget {
   final String moduleId;
@@ -308,6 +309,10 @@ class _LessonScreenState extends State<LessonScreen> {
                                       _lessonProgress!.isReadingComplete,
                                 ),
                               ],
+                              ... [
+                                const SizedBox(height: 20),
+                                _buildReviewCard(isUnlocked: _lessonProgress!.isPostQuizComplete()),
+                              ],
                             ],
                           ),
                         ),
@@ -319,16 +324,7 @@ class _LessonScreenState extends State<LessonScreen> {
     );
   }
 
-  Widget _buildQuizCard({
-    required String title,
-    required String description,
-    required VoidCallback onTap,
-    required IconData icon,
-    required Color color,
-    required bool isCompleted,
-    required bool isUnlocked,
-    double? score,
-  }) {
+  Widget _buildQuizCard({required String title, required String description, required VoidCallback onTap, required IconData icon, required Color color, required bool isCompleted, required bool isUnlocked, double? score,}) {
     ThemeData theme = Theme.of(context);
 
     return Container(
@@ -634,6 +630,268 @@ class _LessonScreenState extends State<LessonScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildReviewCard({required bool isUnlocked}) {
+    ThemeData theme = Theme.of(context);
+    final Color cardBg = theme.colorScheme.surface;
+    final Color textColor = theme.colorScheme.onSurface;
+    final Color primary = theme.colorScheme.primary;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBg, //_lessonProgress!.isPostQuizComplete() ? theme.colorScheme.green.withValues(alpha: 0.1) : cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: primary.withValues(alpha: 0.5), //_lessonProgress!.isPostQuizComplete ? theme.colorScheme.green : primary.withValues(alpha: 0.5),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _lessonProgress!.isPostQuizComplete() ? () async {
+
+            await _startReviewSet(widget.moduleId);
+
+          }
+              : () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Please complete the Post-Quiz activity first',
+                  style: TextStyle(
+                    color:
+                    Theme.of(context).colorScheme.onInverseSurface,
+                  ),
+                ),
+                backgroundColor:
+                Theme.of(context).colorScheme.inverseSurface,
+              ),
+            );
+            return;
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: primary.withValues(alpha: 0.1),
+                    child: Icon(Icons.menu_book, size: 24, color: primary),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Review Set',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontSize: 18,
+                              ),
+                            ),
+                            // if (_lessonProgress!.isReadingComplete) ...[
+                            //   const SizedBox(width: 10),
+                            //   Icon(
+                            //     Icons.check_circle,
+                            //     color: theme.colorScheme.green,
+                            //     size: 18,
+                            //   ),
+                            // ],
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          'Complete review questions and earn an item for your dragon',
+                          style: theme.textTheme.labelSmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  if (!isUnlocked)
+                    Image.asset(
+                      'assets/images/other/lock.png',
+                      width: 50,
+                      height: 50,
+                      color: textColor.withValues(alpha: 0.5),
+                    )
+                  else
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 15,
+                      color: textColor.withValues(alpha: 0.5),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _startReviewSet(String lessonId) async {
+    try {
+      final courseProvider = Provider.of<CourseProvider>(context, listen: false);
+
+      // Get the review question set for the lesson using the course provider/service
+      final questionSet = await courseProvider.getReviewQuestionSetForLesson(lessonId);
+
+      if (questionSet == null || questionSet.questions.isEmpty) {
+        // Clear loading state before showing error
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: Duration(seconds: 2),
+            content: Text(
+              'The Teacher has not created a review set for this lesson',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onInverseSurface,
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.inverseSurface,
+          ),
+        );
+        return; // Exit early
+      }
+
+      setState(() {
+        _isLoading = true; // Show loading state
+      });
+
+      // Navigate to ReviewScreen
+      final completed = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ReviewScreen(
+            questionSet: questionSet,
+          ),
+        ),
+      );
+
+      // Handle completion
+      if (completed == true) {
+        bool dialogShown = false;
+
+        // Show loading dialog
+        if (mounted) {
+          dialogShown = true;
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return Center(
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Updating progress...',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        }
+
+        try {
+          // final courseProvider = Provider.of<CourseProvider>(
+          //   context,
+          //   listen: false,
+          // );
+          //
+          // await courseProvider.loadSingleLessonProgress(widget.moduleId);
+          //
+          // Success case - dismiss dialog and clear loading state
+          if (mounted) {
+            if (dialogShown) {
+              Navigator.of(context).pop(); // Close loading dialog
+            }
+            setState(() {
+              _isLoading = false;
+            });
+          }
+
+        } catch (e) {
+          // print("Error in courseProvider.loadSingleLessonProgress: $e");
+
+          // Error case - dismiss dialog and clear loading state
+          if (mounted) {
+            if (dialogShown) {
+              Navigator.of(context).pop(); // Close loading dialog
+            }
+            setState(() {
+              _isLoading = false;
+            });
+
+            // Show error snack bar
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error updating progress: $e'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
+          }
+        }
+      } else {
+        // User didn't complete the review - clear loading state
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+
+    } catch (e) {
+      debugPrint('Error starting review set: $e');
+
+      // Clear loading state on any error
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not load review set')),
+        );
+      }
+    }
   }
 
   void _startQuiz(QuestionSet quiz) {

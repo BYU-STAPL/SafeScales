@@ -21,11 +21,19 @@ class ReviewResultsScreen extends StatelessWidget {
         width: size,
         height: size,
         color: Theme.of(context).colorScheme.surface,
-        child: Icon(
-          Icons.shopping_bag,
-          size: size,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
+        child: Column(
+          children: [
+            Text('No reward selected'),
+            Icon(
+              Icons.shopping_bag,
+              size: 250,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ],
+        )
+
+
+
       );
     }
 
@@ -100,7 +108,7 @@ class ReviewResultsScreen extends StatelessWidget {
                     foregroundColor: theme.colorScheme.onSecondary,
                   ),
                   child: Text(
-                    'Return to Shop'.toUpperCase(),
+                    'Return'.toUpperCase(),
                     style: TextStyle(
                       fontSize: theme.textTheme.bodyMedium?.fontSize,
                     ),
