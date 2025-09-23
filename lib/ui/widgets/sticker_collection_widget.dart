@@ -19,7 +19,7 @@ class StickerCollectionWidget extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHigh,
         borderRadius: const BorderRadius.only(
@@ -37,97 +37,100 @@ class StickerCollectionWidget extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'Drag items onto your dragon',
-            style: theme.textTheme.bodyMedium,
+            'Long press items to drag them onto your dragon',
+            style: theme.textTheme.labelSmall,
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 10),
           _isLoadingAccessories
               ? const Center(child: CircularProgressIndicator())
               : userAccessories.isEmpty
               ? Center(
-                child: Column(
-                  children: [
-                    // Icon(
-                    //   Icons.shopping_bag_outlined,
-                    //   size: 48,
-                    //   color: colorScheme.primary.withValues(alpha: 0.5),
-                    // ),
-                    const SizedBox(height: 5),
-                    Text(
-                      'No items yet.\nVisit the shop to earn some!',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 5),
-                  ],
+            child: Column(
+              children: [
+                // Icon(
+                //   Icons.shopping_bag_outlined,
+                //   size: 48,
+                //   color: colorScheme.primary.withValues(alpha: 0.5),
+                // ),
+                const SizedBox(height: 5),
+                Text(
+                  'No items yet.\nVisit the shop to earn some!',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-              )
-              : SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children:
-                      userAccessories.map((item) {
-                        return Draggable<Map<String, dynamic>>(
-                          data: {
-                            'id': item.id,
-                            'image': item.imageUrl,
-                            'name': item.name,
-                          },
-                          feedback: Material(
-                            color: Colors.transparent,
-                            child: Image.network(
-                              item.imageUrl,
-                              width: 48,
-                              height: 48,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                          childWhenDragging: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Image.network(
-                              item.imageUrl,
-                              width: 36,
-                              height: 36,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: colorScheme.primary.withValues(
-                                  alpha: 0.3,
-                                ),
-                                width: 2,
-                              ),
-                            ),
-                            child: Image.network(
-                              item.imageUrl,
-                              width: 36,
-                              height: 36,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                ),
+                const SizedBox(height: 5),
+              ],
+            ),
+          )
+              : SizedBox(
+            height: 85, // Set a fixed height for the grid
+            child: GridView.builder(
+              scrollDirection: Axis.vertical,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 5, // 4 items per row
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                childAspectRatio: 1, // Square items
               ),
-          const SizedBox(height: 15),
-          Text(
-            'Long press a item to remove it',
-            style: theme.textTheme.labelMedium,
+              itemCount: userAccessories.length,
+              itemBuilder: (context, index) {
+                final item = userAccessories[index];
+                return
+                  LongPressDraggable<Map<String, dynamic>>(
+                    data: {
+                      'id': item.id,
+                      'image': item.imageUrl,
+                      'name': item.name,
+                    },
+                    feedback: Material(
+                      color: Colors.transparent,
+                      child: Image.network(
+                        item.imageUrl,
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    childWhenDragging: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Image.network(
+                        item.imageUrl,
+                        width: 36,
+                        height: 36,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: colorScheme.primary.withValues(
+                            alpha: 0.3,
+                          ),
+                          width: 2,
+                        ),
+                      ),
+                      child: Image.network(
+                        item.imageUrl,
+                        width: 36,
+                        height: 36,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  );
+              },
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 15),
         ],
       ),
     );

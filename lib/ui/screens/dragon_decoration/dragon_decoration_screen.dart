@@ -190,6 +190,11 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                       'Environment: ${_getEnvironmentDisplayName(dragonDecorationProvider)}',
                       style: theme.textTheme.bodySmall,
                     ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Long press an item to remove it',
+                      style: theme.textTheme.labelSmall,
+                    ),
                   ],
                 ),
               ),
