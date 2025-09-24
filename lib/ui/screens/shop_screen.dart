@@ -59,15 +59,6 @@ class _ShopScreenState extends State<ShopScreen> {
   Future<void> _handlePurchase() async {
     if (selectedIndex == null) return;
 
-    // User can't see shop unless logged in
-    // final userId = _userState.currentUser?.id;
-    // if (userId == null) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(content: Text('Please log in to purchase items')),
-    //   );
-    //   return;
-    // }
-
     // Show completed modules popup first
     setState(() {
       showLessonDialog = true;
@@ -259,6 +250,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       ),
 
                       const SizedBox(height: 20),
+
                       // Toggle Buttons
                       Row(
                         children: [
@@ -323,16 +315,15 @@ class _ShopScreenState extends State<ShopScreen> {
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 24),
+
                       // Shop Items Grid
                       Expanded(
-                        child:
-                        // isLoading
-                        //     ? const Center(child: CircularProgressIndicator()) :
-                        GridView.count(
+                        child: GridView.count(
                           crossAxisCount: 2,
-                          mainAxisSpacing: 24,
-                          crossAxisSpacing: 24,
+                          mainAxisSpacing: 20,
+                          crossAxisSpacing: 20,
                           childAspectRatio: 0.95,
                           children: [
                             for (int i = 0; i < items.length; i++)
@@ -351,6 +342,7 @@ class _ShopScreenState extends State<ShopScreen> {
                           ],
                         ),
                       ),
+
                       if (selectedIndex != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
@@ -453,7 +445,6 @@ class _ShopScreenState extends State<ShopScreen> {
         );
       },
     );
-
   }
 
   GestureDetector _buildLessonCardForReview(Lesson lesson) {

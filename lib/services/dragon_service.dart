@@ -284,11 +284,7 @@ class DragonService {
   }
 
   /// Update dragon name
-  Future<void> updateDragonName(
-    String userId,
-    String dragonId,
-    String newName,
-  ) async {
+  Future<void> updateDragonName(String userId, String dragonId, String newName, int maxNameLength,) async {
     try {
       // Validate name
       final trimmedName = newName.trim();
@@ -297,9 +293,9 @@ class DragonService {
       }
 
       // Limit name length to 10 characters
-      if (trimmedName.length > 10) {
+      if (trimmedName.length > maxNameLength) {
         throw DragonServiceException(
-          'Dragon name cannot be longer than 10 characters',
+          'Dragon name cannot be longer than $maxNameLength characters',
         );
       }
 

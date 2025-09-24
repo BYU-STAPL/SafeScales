@@ -1,6 +1,5 @@
 import 'dart:core';
 import 'package:flutter/cupertino.dart';
-import 'package:path/path.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/models/dragon.dart';
 import '../services/dragon_service.dart';
@@ -27,6 +26,9 @@ class DragonProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   bool _isInitialized = false;
+
+  // === Constant ===
+  final int maxNameLength = 10;
 
   // === Dragon Data ===
   Map<String, Dragon> _dragons = {};
@@ -210,7 +212,7 @@ class DragonProvider extends ChangeNotifier {
 
 
   /// Update dragon name
-  Future<void> updateDragonName(String dragonId, String newName) async {
+  Future<void> updateDragonName(String dragonId, String newName,) async {
     try {
       final user = _userState.currentUser;
       if (user == null) {
@@ -218,7 +220,7 @@ class DragonProvider extends ChangeNotifier {
         return;
       }
 
-      await _dragonService.updateDragonName(user.id, dragonId, newName);
+      await _dragonService.updateDragonName(user.id, dragonId, newName, maxNameLength);
 
       // Update local dragon data
       if (_dragons.containsKey(dragonId)) {

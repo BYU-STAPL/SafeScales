@@ -75,14 +75,14 @@ class _DragonIdCardState extends State<DragonIdCard> {
                     decoration: InputDecoration(
                       // labelText: 'Dragon Name',
                       hintText: 'Enter Your Dragon\'s Name',
-                      counterText: '${nameController.text.length}/10',
+                      counterText: '${nameController.text.length}/${dragonProvider.maxNameLength}',
                       errorText:
-                      nameController.text.length > 10
-                          ? 'Name cannot be longer than 10 characters'
+                      nameController.text.length > dragonProvider.maxNameLength
+                          ? 'Name cannot be longer than ${dragonProvider.maxNameLength} characters'
                           : null,
                     ),
                     autofocus: true,
-                    maxLength: 10,
+                    maxLength: dragonProvider.maxNameLength,
                     onChanged: (value) {
                       setState(() {}); // Update counter and error text
                     },
@@ -97,7 +97,7 @@ class _DragonIdCardState extends State<DragonIdCard> {
                 TextButton(
                   onPressed:
                   nameController.text.trim().isEmpty ||
-                      nameController.text.length > 10
+                      nameController.text.length > dragonProvider.maxNameLength
                       ? null // Disable button if name is empty or too long
                       : () async {
                     try {
@@ -232,30 +232,39 @@ class _DragonIdCardState extends State<DragonIdCard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Name'.toTitleCase(),
-                            style: theme.textTheme.labelMedium,
+
+                          Row(
+                            children: [
+                              Text(
+                                'Name'.toTitleCase(),
+                                style: theme.textTheme.labelLarge,
+                              ),
+
+                              //TODO: Enable when dragon names can be saved
+                              IconButton(
+                                onPressed: _showNameDialog,
+                                icon: Icon(
+                                  FontAwesomeIcons.pencil,
+                                  size: 15,
+                                ),
+                              ),
+                            ],
                           ),
+
 
                           // SizedBox(height: 2),
 
                           Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
+                              padding: EdgeInsets.symmetric(horizontal: 12),
                             child: Row(
                               children: [
                                 Text(
                                   widget.name,
-                                  style: theme.textTheme.headlineSmall,
+                                  style: theme.textTheme.headlineSmall?.copyWith(
+                                    fontSize: theme.textTheme.bodyMedium?.fontSize,
+                                  )
                                 ),
 
-                                //TODO: Enable when dragon names can be saved
-                                IconButton(
-                                  onPressed: _showNameDialog,
-                                  icon: Icon(
-                                    FontAwesomeIcons.pencil,
-                                    size: 15,
-                                  ),
-                                ),
                               ],
                             )
                           ),
@@ -270,7 +279,7 @@ class _DragonIdCardState extends State<DragonIdCard> {
                           SizedBox(height: 3),
 
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            padding: EdgeInsets.symmetric(horizontal: 12),
                             child: Text(
                               widget.species,
                               style: theme.textTheme.bodyMedium?.copyWith(
