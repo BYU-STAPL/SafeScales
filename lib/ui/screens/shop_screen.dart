@@ -170,6 +170,7 @@ class _ShopScreenState extends State<ShopScreen> {
             builder: (context) => ReviewScreen(
               questionSet: questionSet,
               image: selectedItem?.imageUrl,
+              isComingFromShopRoute: true,
             ),
           ),
         );
