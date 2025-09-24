@@ -39,15 +39,7 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
 
     // Check if user has any joined classes
     try {
-      final response = await SupabaseConfig.client
-          .from('Users')
-          .select('joined_classes')
-          .eq('id', currentUser.id)
-          .single();
-
-      final joinedClasses = response['joined_classes'] as List<dynamic>?;
-
-      if (joinedClasses != null && joinedClasses.isNotEmpty) {
+      if (await authService.isUserInAnyClasses(currentUser.id)) {
         // User has joined classes, go to initialization screen
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(

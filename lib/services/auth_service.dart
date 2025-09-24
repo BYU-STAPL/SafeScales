@@ -10,6 +10,8 @@ class AuthService {
 
   supabase.User? get currentUser => _userState.supabaseUser;
 
+  // ---------------- CREATE ----------------
+
   Future<supabase.AuthResponse> signUp({
     required String username,
     required String email,
@@ -36,6 +38,9 @@ class AuthService {
       rethrow;
     }
   }
+
+  // ---------------- READ ----------------
+
 
   Future<bool> signIn({required String email, required String password}) async {
     try {
@@ -89,8 +94,19 @@ class AuthService {
     }
   }
 
+  Future<bool> isUserInAnyClasses(String userId) async {
+    List<dynamic> classes = await userRepository.getUsersJoinedClasses(userId);
+
+    return classes.isNotEmpty;
+  }
+
+  // ---------------- UPDATE ----------------
+
   Future<bool> joinClass(String userId, String classId) async {
     return await userRepository.joinClass(userId, classId);
   }
+
+  // ---------------- DELETE ----------------
+
 
 }

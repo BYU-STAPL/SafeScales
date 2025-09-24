@@ -56,7 +56,22 @@ class UserRepository {
     }
   }
 
+  Future<List<dynamic>> getUsersJoinedClasses(String userId) async {
+    try {
+      final response = await SupabaseConfig.client
+          .from('Users')
+          .select('joined_classes')
+          .eq('id', userId)
+          .single();
 
+      final joinedClasses = response['joined_classes'] as List<dynamic>?;
+
+      return joinedClasses ?? [];
+    }
+    catch (e) {
+      throw UserRepositoryException(e.toString());
+    }
+  }
 
 
   // ---------------- UPDATE ----------------
