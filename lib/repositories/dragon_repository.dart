@@ -36,8 +36,7 @@ class DragonRepository {
   /// Get user's dragon progress and unlocked phases
   Future<Map<String, dynamic>> fetchUserDragons(String userId) async {
     try {
-      final response =
-      await _supabase
+      final response = await _supabase
           .from('Users')
           .select('dragons')
           .eq('id', userId)
@@ -117,6 +116,15 @@ class DragonRepository {
       final currentData = await fetchUserDragons(userId);
 
       // Update specific dragon phases
+
+      // Create a default dragon set up
+      if (currentData[dragonId] == null) {
+        currentData[dragonId] = {
+          'name': 'no name',
+          'phases': ['egg'],
+        };
+      }
+
       currentData[dragonId]["phases"] = phases;
 
       // Save back to database
