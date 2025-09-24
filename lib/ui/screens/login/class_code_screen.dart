@@ -127,18 +127,17 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
           // User doesn't already exist
 
           // Get modules for the class
-          final classResponse =
-              await SupabaseConfig.client
+          final classResponse = await SupabaseConfig.client
                   .from('classes')
                   .select('course_modules')
                   .eq('id', classId)
                   .single();
 
           // Initialize empty progress for each module
-          Map<String, dynamic> initialModules = {};
+          Map<String, dynamic> initialReadingProgress = {};
           if (classResponse['course_modules'] != null) {
             for (var moduleId in classResponse['course_modules']) {
-              initialModules[moduleId] = {
+              initialReadingProgress[moduleId] = {
                 'reading': {
                   'completed': false,
                   'completed_at': null,
@@ -147,6 +146,31 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
               };
             }
           }
+
+          // Initialize dragons for each module
+          final classAssetsResponse = await SupabaseConfig.client
+              .from('classes')
+              .select('assets')
+              .eq('id', classId)
+              .single();
+
+          final classAssetList = List<Map<String, dynamic>>.from(classAssetsResponse['assets'] ?? []);
+
+
+          Map<String, dynamic> initialDragonData = {};
+
+          for (final asset in classAssetList) {
+            if (asset['type'] != 'dragon') continue;
+
+            final dragonId = asset['id'] as String?;
+            if (dragonId == null) continue;
+
+            initialDragonData[dragonId] = {
+              'name': 'no name',
+              'phases': ['egg'],
+            };
+          }
+
 
           // Create new user with initialized modules
           final newUserResponse =
@@ -157,13 +181,13 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                     'role': 'student',
                     'joined_classes': [classId],
                     'settings': {"fontSize": 1.0, "isDarkMode": false},
-                    'dragons': {},
+                    'dragons': initialDragonData,
                     'acquired_accessories': [],
                     'acquired_environments': [],
                     'dragon_preferred_phases': {},
                     'dragon_environments': {},
                     'dragon_dressup': {},
-                    'reading_progress': initialModules,
+                    'reading_progress': initialReadingProgress,
                   })
                   .select()
                   .single();

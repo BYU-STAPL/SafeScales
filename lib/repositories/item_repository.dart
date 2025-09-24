@@ -24,24 +24,24 @@ class ItemRepository {
       List<dynamic> acquiredItems = [];
       List<dynamic> acquiredEnvs = [];
 
-      final response = await _supabase
+      final respItems = await _supabase
           .from('Users')
           .select('acquired_accessories')
           .eq('id', userId)
           .single();
 
-      if (response['acquired_accessories'] != null) {
-        acquiredItems = response['acquired_accessories'];
+      if (respItems['acquired_accessories'] != null && respItems['acquired_accessories'].isNotEmpty) {
+        acquiredItems = respItems['acquired_accessories'];
       }
 
-      final response2 = await _supabase
+      final respEnvironments = await _supabase
           .from('Users')
           .select('acquired_environments')
           .eq('id', userId)
           .single();
 
-      if (response2['acquired_environments'] != null) {
-        acquiredEnvs = response2['acquired_environments'];
+      if (respEnvironments['acquired_environments'] != null && respEnvironments['acquired_environments'].isNotEmpty) {
+        acquiredEnvs = respEnvironments['acquired_environments'];
       }
 
       List<dynamic> userItemAndEnvIds = acquiredItems + acquiredEnvs;

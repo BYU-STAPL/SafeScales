@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:safe_scales/services/auth_service.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/ui/screens/app_initialization_screen.dart'; // Import the new screen
@@ -16,6 +17,7 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
   bool isLoading = true;
   List<Map<String, dynamic>> classes = [];
   String? error;
+  final authService = AuthService();
   final _userState = UserStateService();
 
   @override
@@ -37,16 +39,7 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
 
     // Check if user has any joined classes
     try {
-      final response =
-      await SupabaseConfig.client
-          .from('Users')
-          .select('joined_classes')
-          .eq('id', currentUser.id)
-          .single();
-
-      final joinedClasses = response['joined_classes'] as List<dynamic>?;
-
-      if (joinedClasses != null && joinedClasses.isNotEmpty) {
+      if (await authService.isUserInAnyClasses(currentUser.id)) {
         // User has joined classes, go to initialization screen
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
@@ -70,8 +63,7 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
     try {
       final response = await SupabaseConfig.client
           .from('classes')
-          .select()
-          .eq('instructor_id', '6eacec45-30fa-4755-b21c-35bc2af187e7');
+          .select();
 
       setState(() {
         classes = List<Map<String, dynamic>>.from(response);
@@ -97,27 +89,7 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
         throw Exception('Please log in to join a class');
       }
 
-      // Get current user's joined classes
-      final response =
-      await SupabaseConfig.client
-          .from('Users')
-          .select('joined_classes')
-          .eq('id', user.id)
-          .single();
-
-      List<String> joinedClasses = List<String>.from(
-        response['joined_classes'] ?? [],
-      );
-
-      // Add new class if not already joined
-      if (!joinedClasses.contains(classId)) {
-        joinedClasses.add(classId);
-
-        // Update user's joined classes
-        await SupabaseConfig.client
-            .from('Users')
-            .update({'joined_classes': joinedClasses})
-            .eq('id', user.id);
+      if (await authService.joinClass(user.id, classId)) {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

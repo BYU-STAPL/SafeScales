@@ -121,7 +121,6 @@ class _DragonsScreenState extends State<DragonsScreen> {
           );
         }
     );
-
   }
 
   List<Widget> _buildDragonCards() {
@@ -133,7 +132,6 @@ class _DragonsScreenState extends State<DragonsScreen> {
     return dragons.map((dragon) {
 
       final isUnlocked = dragonProvider.isPlayUnlocked(dragon.id);
-
 
       // TODO: Eventually use preferred phase for setting up the id card image
       Widget dragonImageWidget = DragonImageWidget(dragonId: dragon.id, size: 180);
@@ -149,12 +147,6 @@ class _DragonsScreenState extends State<DragonsScreen> {
         onTapPlayButton: () {
           navigateToDressUp(dragon.id);
         },
-        // TODO: Add backend to change dragon name
-        // onNameChanged: (newName) {
-        //   setState(() {
-        //     dragonName = newName;
-        //   });
-        // },
       );
     }).toList();
   }

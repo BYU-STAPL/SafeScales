@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
+import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/ui/screens/review_set/review_results_screen.dart';
 
+import '../../../providers/shop_provider.dart';
 import '../../widgets/progress_bar.dart';
 import '../../../models/question.dart';
 import '../../widgets/question_widget.dart';
+import '../../widgets/shop_item_card.dart';
 
 class ReviewScreen extends StatefulWidget {
   final QuestionSet questionSet;
-  final String? image;
+  String? image;
+  final bool isComingFromShopRoute;
 
-  const ReviewScreen({
-    super.key, required this.questionSet, this.image,
+  ReviewScreen({
+    super.key, required this.questionSet, this.image, required this.isComingFromShopRoute,
   });
 
   @override
@@ -24,16 +29,41 @@ class _ReviewScreenState extends State<ReviewScreen> {
   bool isStarted = false;
 
   bool isCurrentQuestionCorrect = false;
-  // bool showAnswerMessage = false;
   List<List<List<int>>> attempts = [];
 
   bool isResponseLocked = false;
+
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
     userAnswers = List.generate(widget.questionSet.questions.length, (_) => []);
     attempts = List.generate(widget.questionSet.questions.length, (_) => []);
+
+    // Use addPostFrameCallback to ensure initialization happens after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeData();
+    });
+
+  }
+
+  Future<void> _initializeData() async {
+    if (_isInitialized) return;
+
+    final shopProvider = Provider.of<ShopProvider>(context, listen: false);
+
+    try {
+      // Only initialize if not already initialized
+      // Since AppDependencies already calls initialize(), we might not need this
+      if (!shopProvider.isLoading) {
+        await shopProvider.initialize();
+      }
+
+      _isInitialized = true;
+    } catch (e) {
+      debugPrint('Initialization error: $e');
+    }
   }
 
   void _startReview() {
@@ -46,21 +76,90 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
     if (!mounted) return;
 
-    // Show results screen and then return to previous screen
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => ReviewResultsScreen(
-          image: widget.image,
+    // if (widget.isComingFromShopRoute) {
+      // Show results screen and then return to previous screen
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => ReviewResultsScreen(
+            image: widget.image,
+          ),
         ),
-      ),
-    );
+      );
+    // }
+    // else {
+      // Show the item selection dialog then the results
+      // _openShopPopUp();
+    // }
 
     if (!mounted) return;
 
     // Return to previous screen with completion status
     Navigator.pop(context, true);
+  }
+
+  Future<void> _openShopPopUp() async {
+    //TODO: Not working need to think more about this
+    // TODO: Maybe the results screen should show a shop if no image is given
+
+    print("DEBUG: Open shop popup");
+
+    final shopProvider = Provider.of<ShopProvider>(context, listen: false);
+
+    final items = shopProvider.availableItems;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Pick a Reward"),
+          content: Expanded(
+            child: GridView.count(
+              crossAxisCount: 2,
+              mainAxisSpacing: 20,
+              crossAxisSpacing: 20,
+              childAspectRatio: 0.95,
+              children: [
+                for (int i = 0; i < items.length; i++)
+                  ShopItemCard(
+                    image: items[i].imageUrl,
+                    name: items[i].name,
+                    cost: items[i].cost.toString() ?? '1',
+                    isSelected: false, //selectedIndex == i,
+                    highlight: Theme.of(context).colorScheme.green.withValues(alpha: 0.25),
+                    onTap: () {
+                      // setState(() {
+                      //   selectedIndex = i;
+                      // });
+                    },
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+
+                // TODO: Add handle purchase logic like in shop
+
+
+                // Set widget.image to the item
+
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: const Text("Save Choice"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   bool _isAnswerCorrect(int questionIndex) {
@@ -116,14 +215,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
       _finishReview();
     }
   }
-
-  // void _previousQuestion() {
-  //   if (currentQuestionIndex > 0) {
-  //     setState(() {
-  //       currentQuestionIndex--;
-  //     });
-  //   }
-  // }
 
   Container _buildNavigationBar() {
 
@@ -269,44 +360,51 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
     final progress = (currentQuestionIndex + 1) / widget.questionSet.questions.length;
 
-    return Scaffold(
-      appBar: appBar,
-      body: Column(
-        children: [
 
-          ProgressBar(
-            progress: progress,
-            currentSlideIndex: currentQuestionIndex,
-            slideLength: widget.questionSet.questions.length,
-            slideName: 'questions',
-          ),
+    return Consumer<ShopProvider>(
+        builder: (context, shopProvider, child) {
+          return Scaffold(
+            appBar: appBar,
+            body: Column(
+              children: [
 
-          // showAnswerMessage ? _buildAnswerCheckCard() : SizedBox.shrink(),
+                ProgressBar(
+                  progress: progress,
+                  currentSlideIndex: currentQuestionIndex,
+                  slideLength: widget.questionSet.questions.length,
+                  slideName: 'questions',
+                ),
 
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-              child: QuestionWidget(
-                question: widget.questionSet.questions[currentQuestionIndex],
-                selectedAnswers: userAnswers[currentQuestionIndex],
-                onAnswerChanged: (answers) {
-                  setState(() {
-                    userAnswers[currentQuestionIndex] = answers;
-                  });
-                },
-                showCorrectAnswer: widget.questionSet.showCorrectAnswers,
-                showExplanation: widget.questionSet.showExplanations,
-                isResponseLocked: isResponseLocked,
-              ),
+                // showAnswerMessage ? _buildAnswerCheckCard() : SizedBox.shrink(),
+
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                    child: QuestionWidget(
+                      question: widget.questionSet.questions[currentQuestionIndex],
+                      selectedAnswers: userAnswers[currentQuestionIndex],
+                      onAnswerChanged: (answers) {
+                        setState(() {
+                          userAnswers[currentQuestionIndex] = answers;
+                        });
+                      },
+                      showCorrectAnswer: widget.questionSet.showCorrectAnswers,
+                      showExplanation: widget.questionSet.showExplanations,
+                      isResponseLocked: isResponseLocked,
+                    ),
+                  ),
+                ),
+
+                _buildNavigationBar(),
+
+                SizedBox(height: 20),
+              ],
             ),
-          ),
-
-          _buildNavigationBar(),
-
-          SizedBox(height: 20),
-        ],
-      ),
+          );
+        }
     );
+
+
   }
 
   void showAnswerCheckMessage() {

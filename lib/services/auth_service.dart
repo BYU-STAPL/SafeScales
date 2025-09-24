@@ -1,10 +1,16 @@
+import 'package:safe_scales/repositories/user_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 
 class AuthService {
+  UserRepository userRepository = UserRepository();
   final supabaseClient = SupabaseConfig.client;
   final _userState = UserStateService();
+
+  supabase.User? get currentUser => _userState.supabaseUser;
+
+  // ---------------- CREATE ----------------
 
   Future<supabase.AuthResponse> signUp({
     required String username,
@@ -19,13 +25,8 @@ class AuthService {
       );
 
       if (authResponse.user != null) {
-        // Then add the user to our custom Users table
-        await supabaseClient.from('Users').insert({
-          'id': authResponse.user!.id,
-          'Username': username,
-          'Email': email,
-          'password': password, // Store plain password
-        });
+        // Add user to database
+        await userRepository.signUpUser(authResponse.user!.id, username, email, password);
 
         // Set the current user in UserStateService
         _userState.setUser(authResponse.user);
@@ -38,42 +39,34 @@ class AuthService {
     }
   }
 
+  // ---------------- READ ----------------
+
+
   Future<bool> signIn({required String email, required String password}) async {
     try {
-      // Get all users with matching email
-      final response = await supabaseClient
-          .from('Users')
-          .select()
-          .eq('Email', email);
+      Map<String, String> userInfo = await userRepository.loginWithEmail(email, password);
 
-      if (response.isEmpty) {
-        print('No user found with email: $email');
+      if (userInfo.isEmpty) {
         return false;
       }
+      else {
+        final supabaseUser = supabase.User(
+          id: userInfo['id']!,
+          email: userInfo['email'],
+          createdAt: userInfo['created_at']!,
+          appMetadata: {},
+          userMetadata: {},
+          aud: 'authenticated',
+          role: 'authenticated',
+        );
 
-      // Check all matching users for password match
-      for (var user in response) {
-        if (user['password'] == password) {
-          // Create a simple user object with the necessary data
-          final supabaseUser = supabase.User(
-            id: user['id'],
-            email: user['Email'],
-            createdAt: user['created_at'],
-            appMetadata: {},
-            userMetadata: {},
-            aud: 'authenticated',
-            role: 'authenticated',
-          );
+        // Set the current user in UserStateService
+        _userState.setUser(supabaseUser);
+        _userState.setUserProfile(userInfo);
 
-          // Set the current user in UserStateService
-          _userState.setUser(supabaseUser);
-          _userState.setUserProfile(user);
-
-          return true;
-        }
+        return true;
       }
 
-      return false;
     } catch (e) {
       print('❌Error signing in: $e');
       print('❌Error type: ${e.runtimeType}');
@@ -101,5 +94,19 @@ class AuthService {
     }
   }
 
-  supabase.User? get currentUser => _userState.supabaseUser;
+  Future<bool> isUserInAnyClasses(String userId) async {
+    List<dynamic> classes = await userRepository.getUsersJoinedClasses(userId);
+
+    return classes.isNotEmpty;
+  }
+
+  // ---------------- UPDATE ----------------
+
+  Future<bool> joinClass(String userId, String classId) async {
+    return await userRepository.joinClass(userId, classId);
+  }
+
+  // ---------------- DELETE ----------------
+
+
 }
