@@ -63,8 +63,7 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
     try {
       final response = await SupabaseConfig.client
           .from('classes')
-          .select()
-          .eq('instructor_id', '6eacec45-30fa-4755-b21c-35bc2af187e7');
+          .select();
 
       setState(() {
         classes = List<Map<String, dynamic>>.from(response);
