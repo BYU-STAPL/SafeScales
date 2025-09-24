@@ -119,6 +119,65 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
             .update({'joined_classes': joinedClasses})
             .eq('id', user.id);
 
+
+        // Get modules for the class
+        final classResponse = await SupabaseConfig.client
+            .from('classes')
+            .select('course_modules')
+            .eq('id', classId)
+            .single();
+
+        // Initialize empty progress for each module
+        Map<String, dynamic> initialReadingProgress = {};
+        if (classResponse['course_modules'] != null) {
+          for (var moduleId in classResponse['course_modules']) {
+            initialReadingProgress[moduleId] = {
+              'reading': {
+                'completed': false,
+                'completed_at': null,
+                'bookmarks': [],
+              },
+            };
+          }
+        }
+
+        // Insert default class data
+        await SupabaseConfig.client
+            .from('Users')
+            .update({'reading_progress': initialReadingProgress})
+            .eq('id', user.id);
+
+
+        // Initialize dragons for each module
+        final classAssetsResponse = await SupabaseConfig.client
+            .from('classes')
+            .select('assets')
+            .eq('id', classId)
+            .single();
+
+        final classAssetList = List<Map<String, dynamic>>.from(classAssetsResponse['assets'] ?? []);
+
+        Map<String, dynamic> initialDragonData = {};
+
+        for (final asset in classAssetList) {
+          if (asset['type'] != 'dragon') continue;
+
+          final dragonId = asset['id'] as String?;
+          if (dragonId == null) continue;
+
+          initialDragonData[dragonId] = {
+            'name': 'no name',
+            'phases': ['egg'],
+          };
+        }
+
+        // Insert default class data
+        await SupabaseConfig.client
+            .from('Users')
+            .update({'dragons': initialDragonData})
+            .eq('id', user.id);
+
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
