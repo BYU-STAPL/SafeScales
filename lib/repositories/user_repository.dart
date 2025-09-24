@@ -3,7 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 
 /// Repository responsible for all user-related sign up and login database operations
-/// This layer only handles data access - no business logic
 class UserRepository {
   final SupabaseClient _supabase;
 
@@ -58,7 +57,119 @@ class UserRepository {
   }
 
 
+
+
   // ---------------- UPDATE ----------------
+
+  Future<bool> joinClass(String userId, String classId) async {
+    try {
+      // Get current user's joined classes
+      final response = await SupabaseConfig.client
+          .from('Users')
+          .select('joined_classes')
+          .eq('id', userId)
+          .single();
+
+      List<String> joinedClasses = List<String>.from(
+        response['joined_classes'] ?? [],
+      );
+
+      // User has already joined exit
+      if (joinedClasses.contains(classId)) {
+        return false;
+      }
+
+      // Add class
+      joinedClasses.add(classId);
+
+      // Update user's joined classes
+      await SupabaseConfig.client
+          .from('Users')
+          .update({'joined_classes': joinedClasses})
+          .eq('id', userId);
+
+
+      // Add Initial Data
+      await insertInitialReadingProgressData(userId, classId);
+      await insertInitialDragonData(userId, classId);
+
+      return true;
+    }
+    catch (e) {
+      throw UserRepositoryException(e.toString());
+    }
+  }
+
+
+  Future<void> insertInitialReadingProgressData(String userId, String classId) async {
+    try {
+      // Get modules for the class
+      final classResponse = await _supabase
+          .from('classes')
+          .select('course_modules')
+          .eq('id', classId)
+          .single();
+
+      // Initialize empty progress for each module
+      Map<String, dynamic> initialReadingProgress = {};
+      if (classResponse['course_modules'] != null) {
+        for (var moduleId in classResponse['course_modules']) {
+          initialReadingProgress[moduleId] = {
+            'reading': {
+              'completed': false,
+              'completed_at': null,
+              'bookmarks': [],
+            },
+          };
+        }
+      }
+
+      // Insert default class data
+      await _supabase
+          .from('Users')
+          .update({'reading_progress': initialReadingProgress})
+          .eq('id', userId);
+    }
+    catch (e) {
+      throw UserRepositoryException(e.toString());
+    }
+  }
+
+  Future<void> insertInitialDragonData(String userId, String classId) async {
+    try {
+      // Initialize dragons for each module
+      final classAssetsResponse = await SupabaseConfig.client
+          .from('classes')
+          .select('assets')
+          .eq('id', classId)
+          .single();
+
+      final classAssetList = List<Map<String, dynamic>>.from(classAssetsResponse['assets'] ?? []);
+
+      Map<String, dynamic> initialDragonData = {};
+
+      for (final asset in classAssetList) {
+        if (asset['type'] != 'dragon') continue;
+
+        final dragonId = asset['id'] as String?;
+        if (dragonId == null) continue;
+
+        initialDragonData[dragonId] = {
+          'name': 'no name',
+          'phases': ['egg'],
+        };
+      }
+
+      // Insert default class data
+      await SupabaseConfig.client
+          .from('Users')
+          .update({'dragons': initialDragonData})
+          .eq('id', userId);
+    }
+    catch (e) {
+      throw UserRepositoryException(e.toString());
+    }
+  }
 
 
 // ---------------- DELETE ----------------

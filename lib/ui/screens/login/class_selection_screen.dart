@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:safe_scales/services/auth_service.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/ui/screens/app_initialization_screen.dart'; // Import the new screen
@@ -16,6 +17,7 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
   bool isLoading = true;
   List<Map<String, dynamic>> classes = [];
   String? error;
+  final authService = AuthService();
   final _userState = UserStateService();
 
   @override
@@ -37,8 +39,7 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
 
     // Check if user has any joined classes
     try {
-      final response =
-      await SupabaseConfig.client
+      final response = await SupabaseConfig.client
           .from('Users')
           .select('joined_classes')
           .eq('id', currentUser.id)
@@ -97,86 +98,7 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
         throw Exception('Please log in to join a class');
       }
 
-      // Get current user's joined classes
-      final response =
-      await SupabaseConfig.client
-          .from('Users')
-          .select('joined_classes')
-          .eq('id', user.id)
-          .single();
-
-      List<String> joinedClasses = List<String>.from(
-        response['joined_classes'] ?? [],
-      );
-
-      // Add new class if not already joined
-      if (!joinedClasses.contains(classId)) {
-        joinedClasses.add(classId);
-
-        // Update user's joined classes
-        await SupabaseConfig.client
-            .from('Users')
-            .update({'joined_classes': joinedClasses})
-            .eq('id', user.id);
-
-
-        // Get modules for the class
-        final classResponse = await SupabaseConfig.client
-            .from('classes')
-            .select('course_modules')
-            .eq('id', classId)
-            .single();
-
-        // Initialize empty progress for each module
-        Map<String, dynamic> initialReadingProgress = {};
-        if (classResponse['course_modules'] != null) {
-          for (var moduleId in classResponse['course_modules']) {
-            initialReadingProgress[moduleId] = {
-              'reading': {
-                'completed': false,
-                'completed_at': null,
-                'bookmarks': [],
-              },
-            };
-          }
-        }
-
-        // Insert default class data
-        await SupabaseConfig.client
-            .from('Users')
-            .update({'reading_progress': initialReadingProgress})
-            .eq('id', user.id);
-
-
-        // Initialize dragons for each module
-        final classAssetsResponse = await SupabaseConfig.client
-            .from('classes')
-            .select('assets')
-            .eq('id', classId)
-            .single();
-
-        final classAssetList = List<Map<String, dynamic>>.from(classAssetsResponse['assets'] ?? []);
-
-        Map<String, dynamic> initialDragonData = {};
-
-        for (final asset in classAssetList) {
-          if (asset['type'] != 'dragon') continue;
-
-          final dragonId = asset['id'] as String?;
-          if (dragonId == null) continue;
-
-          initialDragonData[dragonId] = {
-            'name': 'no name',
-            'phases': ['egg'],
-          };
-        }
-
-        // Insert default class data
-        await SupabaseConfig.client
-            .from('Users')
-            .update({'dragons': initialDragonData})
-            .eq('id', user.id);
-
+      if (await authService.joinClass(user.id, classId)) {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
