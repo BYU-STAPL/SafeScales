@@ -13,10 +13,10 @@ import '../../widgets/shop_item_card.dart';
 class ReviewScreen extends StatefulWidget {
   final QuestionSet questionSet;
   String? image;
-  final bool isComingFromShopRoute;
+  final bool needToShowShop;
 
   ReviewScreen({
-    super.key, required this.questionSet, this.image, required this.isComingFromShopRoute,
+    super.key, required this.questionSet, this.image, required this.needToShowShop,
   });
 
   @override
@@ -83,7 +83,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
         MaterialPageRoute(
           builder:
               (context) => ReviewResultsScreen(
-            image: widget.image,
+                image: widget.image,
+                needToShowShop: widget.needToShowShop,
           ),
         ),
       );
@@ -99,68 +100,68 @@ class _ReviewScreenState extends State<ReviewScreen> {
     Navigator.pop(context, true);
   }
 
-  Future<void> _openShopPopUp() async {
-    //TODO: Not working need to think more about this
-    // TODO: Maybe the results screen should show a shop if no image is given
-
-    print("DEBUG: Open shop popup");
-
-    final shopProvider = Provider.of<ShopProvider>(context, listen: false);
-
-    final items = shopProvider.availableItems;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Pick a Reward"),
-          content: Expanded(
-            child: GridView.count(
-              crossAxisCount: 2,
-              mainAxisSpacing: 20,
-              crossAxisSpacing: 20,
-              childAspectRatio: 0.95,
-              children: [
-                for (int i = 0; i < items.length; i++)
-                  ShopItemCard(
-                    image: items[i].imageUrl,
-                    name: items[i].name,
-                    cost: items[i].cost.toString() ?? '1',
-                    isSelected: false, //selectedIndex == i,
-                    highlight: Theme.of(context).colorScheme.green.withValues(alpha: 0.25),
-                    onTap: () {
-                      // setState(() {
-                      //   selectedIndex = i;
-                      // });
-                    },
-                  ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-              },
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-
-                // TODO: Add handle purchase logic like in shop
-
-
-                // Set widget.image to the item
-
-                Navigator.of(context).pop(); // Close dialog
-              },
-              child: const Text("Save Choice"),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  // Future<void> _openShopPopUp() async {
+  //   //TODO: Not working need to think more about this
+  //   // TODO: Maybe the results screen should show a shop if no image is given
+  //
+  //   print("DEBUG: Open shop popup");
+  //
+  //   final shopProvider = Provider.of<ShopProvider>(context, listen: false);
+  //
+  //   final items = shopProvider.availableItems;
+  //
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         title: const Text("Pick a Reward"),
+  //         content: Expanded(
+  //           child: GridView.count(
+  //             crossAxisCount: 2,
+  //             mainAxisSpacing: 20,
+  //             crossAxisSpacing: 20,
+  //             childAspectRatio: 0.95,
+  //             children: [
+  //               for (int i = 0; i < items.length; i++)
+  //                 ShopItemCard(
+  //                   image: items[i].imageUrl,
+  //                   name: items[i].name,
+  //                   cost: items[i].cost.toString() ?? '1',
+  //                   isSelected: false, //selectedIndex == i,
+  //                   highlight: Theme.of(context).colorScheme.green.withValues(alpha: 0.25),
+  //                   onTap: () {
+  //                     // setState(() {
+  //                     //   selectedIndex = i;
+  //                     // });
+  //                   },
+  //                 ),
+  //             ],
+  //           ),
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () {
+  //               Navigator.of(context).pop(); // Close dialog
+  //             },
+  //             child: const Text("Cancel"),
+  //           ),
+  //           ElevatedButton(
+  //             onPressed: () {
+  //
+  //               // TODO: Add handle purchase logic like in shop
+  //
+  //
+  //               // Set widget.image to the item
+  //
+  //               Navigator.of(context).pop(); // Close dialog
+  //             },
+  //             child: const Text("Save Choice"),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   bool _isAnswerCorrect(int questionIndex) {
     final question = widget.questionSet.questions[questionIndex];
@@ -261,11 +262,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // TextButton.icon(
-          //   onPressed: currentQuestionIndex > 0 ? _previousQuestion : null,
-          //   icon: const Icon(Icons.arrow_back_ios_rounded),
-          //   label: const Text('Previous'),
-          // ),
           Spacer(),
 
           TextButton.icon(

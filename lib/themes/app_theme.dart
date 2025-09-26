@@ -236,19 +236,22 @@ class AppTheme {
 
   static TextTheme getTextTheme(ColorScheme colorScheme) {
     return TextTheme(
+      // Don't use font size changes on headlines and labels, maybe some app text shouldn't change?
+      // TODO: Getting render errors depending on font size
+
       headlineLarge: GoogleFonts.poppins(
         color: colorScheme.onSurface,
-        fontSize: 30 * _fontSizeScale,
+        fontSize: 30, // * _fontSizeScale,
         fontWeight: FontWeight.bold,
       ),
       headlineMedium: GoogleFonts.poppins(
         color: colorScheme.onSurface,
-        fontSize: 25 * _fontSizeScale,
+        fontSize: 25, // * _fontSizeScale,
         fontWeight: FontWeight.bold,
       ),
       headlineSmall: GoogleFonts.poppins(
         color: colorScheme.onSurface,
-        fontSize: 22 * _fontSizeScale,
+        fontSize: 22, // * _fontSizeScale,
         fontWeight: FontWeight.bold,
       ),
 
@@ -268,19 +271,21 @@ class AppTheme {
         fontWeight: FontWeight.normal,
       ),
 
+
+
       labelLarge: GoogleFonts.poppins(
         color: colorScheme.onSurfaceVariant,
-        fontSize: 18 * _fontSizeScale,
+        fontSize: 18, // * _fontSizeScale,
         fontWeight: FontWeight.normal,
       ),
       labelMedium: GoogleFonts.poppins(
         color: colorScheme.onSurfaceVariant,
-        fontSize: 15 * _fontSizeScale,
+        fontSize: 15,
         fontWeight: FontWeight.normal,
       ),
       labelSmall: GoogleFonts.poppins(
         color: colorScheme.onSurfaceVariant,
-        fontSize: 12 * _fontSizeScale,
+        fontSize: 12,
         fontWeight: FontWeight.normal,
       ),
     );
@@ -303,16 +308,16 @@ class AppTheme {
         titleSpacing: 25,
         titleTextStyle: TextStyle(
           color: lightColorScheme.primary,
-          fontSize: 30 * _fontSizeScale,
+          fontSize: 30,
           fontWeight: FontWeight.bold,
         ),
         iconTheme: IconThemeData(
           color: lightColorScheme.primary,
-          size: 30 * _fontSizeScale,
+          size: 30
         ),
         actionsIconTheme: IconThemeData(
           color: lightColorScheme.primary,
-          size: 40 * _fontSizeScale,
+          size: 40,
         ),
         actionsPadding: EdgeInsets.only(right: 20),
       ),
