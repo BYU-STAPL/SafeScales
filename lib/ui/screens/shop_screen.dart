@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:safe_scales/providers/shop_provider.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/ui/screens/review_set/review_screen.dart';
-import 'package:safe_scales/models/question.dart';
 
 import '../../models/lesson.dart';
 import '../../models/sticker_item_model.dart';
@@ -20,7 +19,8 @@ class ShopScreen extends StatefulWidget {
 class _ShopScreenState extends State<ShopScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  int selectedTab = 0; // 0 = Accessories, 1 = Environments
+  bool isItemsTabSelected = true;
+
   int? selectedIndex; // Track selected item index
   String? selectedLessonIndex; // Track selected lesson in popup
 
@@ -100,7 +100,7 @@ class _ShopScreenState extends State<ShopScreen> {
       // Proceed with the purchase using the provider
       final PurchaseResult result = await shopProvider.purchaseItemByIndex(
         selectedIndex!,
-        selectedTab == 1, // true for environments, false for items
+        !isItemsTabSelected,
       );
 
       if (!mounted) return;
@@ -144,7 +144,7 @@ class _ShopScreenState extends State<ShopScreen> {
       final questionSet = await courseProvider.getReviewQuestionSetForLesson(lessonId);
 
       bool result = false;
-      Item? selectedItem = shopProvider.getItemByIndex(selectedIndex!, selectedTab == 1);
+      Item? selectedItem = shopProvider.getItemByIndex(selectedIndex!, !isItemsTabSelected);
 
       if (questionSet == null || questionSet.questions.isEmpty) {
 
@@ -170,7 +170,7 @@ class _ShopScreenState extends State<ShopScreen> {
             builder: (context) => ReviewScreen(
               questionSet: questionSet,
               image: selectedItem?.imageUrl,
-              isComingFromShopRoute: true,
+              needToShowShop: false,
             ),
           ),
         );
@@ -194,7 +194,7 @@ class _ShopScreenState extends State<ShopScreen> {
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
 
-    final Color primary = Theme.of(context).colorScheme.primary;
+    final Color primary = theme.colorScheme.primary;
     final Color selected = primary;
     final Color unselected = theme.colorScheme.lightBlue.withValues(alpha: 0.5,);
     final Color selectedText = Colors.white;
@@ -204,7 +204,7 @@ class _ShopScreenState extends State<ShopScreen> {
     return Consumer2<ShopProvider, CourseProvider>(
       builder: (context, shopProvider, courseProvider, child) {
 
-        final items = selectedTab == 0 ?  shopProvider.availableItems : shopProvider.availableEnvironments;
+        final items = isItemsTabSelected ?  shopProvider.availableItems : shopProvider.availableEnvironments;
 
         return Stack(
           children: [
@@ -253,96 +253,12 @@ class _ShopScreenState extends State<ShopScreen> {
                       const SizedBox(height: 20),
 
                       // Toggle Buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap:
-                                  () => setState(() {
-                                selectedTab = 0;
-                                selectedIndex = null;
-                              }),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: selectedTab == 0 ? selected : unselected,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'ITEMS (${shopProvider.availableItems.length})'.toUpperCase(),
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color:
-                                      selectedTab == 0
-                                          ? selectedText
-                                          : unselectedText,
-                                      letterSpacing: 1.1,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap:
-                                  () => setState(() {
-                                selectedTab = 1;
-                                selectedIndex = null;
-                              }),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: selectedTab == 1 ? selected : unselected,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'ENVIRONMENTS (${shopProvider.availableEnvironments.length})'.toUpperCase(),
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color:
-                                      selectedTab == 1
-                                          ? selectedText
-                                          : unselectedText,
-                                      letterSpacing: 1.1,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      _buildToggleButtons(context, shopProvider),
 
                       const SizedBox(height: 24),
 
                       // Shop Items Grid
-                      Expanded(
-                        child: GridView.count(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 20,
-                          crossAxisSpacing: 20,
-                          childAspectRatio: 0.95,
-                          children: [
-                            for (int i = 0; i < items.length; i++)
-                              ShopItemCard(
-                                image: items[i].imageUrl,
-                                name: items[i].name,
-                                cost: items[i].cost.toString() ?? '1',
-                                isSelected: selectedIndex == i,
-                                highlight: highlight,
-                                onTap: () {
-                                  setState(() {
-                                    selectedIndex = i;
-                                  });
-                                },
-                              ),
-                          ],
-                        ),
-                      ),
+                      _buildShop(items),
 
                       if (selectedIndex != null)
                         Padding(
@@ -447,6 +363,170 @@ class _ShopScreenState extends State<ShopScreen> {
       },
     );
   }
+
+  Expanded _buildShop(List<Item> items,) {
+
+    final Color highlight = Theme.of(context).colorScheme.green.withValues(alpha: 0.25);
+
+    return Expanded(
+      child: GridView.count(
+        crossAxisCount: 2,
+        mainAxisSpacing: 20,
+        crossAxisSpacing: 20,
+        childAspectRatio: 0.95,
+        children: [
+          for (int i = 0; i < items.length; i++)
+            ShopItemCard(
+              image: items[i].imageUrl,
+              name: items[i].name,
+              cost: items[i].cost.toString() ?? '1',
+              highlight: highlight,
+              onTap: () {
+                setState(() {
+                  selectedIndex = selectedIndex == i ? null : i;
+                });
+              },
+              isSelected: selectedIndex == i,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleButtons(BuildContext context, ShopProvider shopProvider) {
+
+    ThemeData theme = Theme.of(context);
+    final Color selected = theme.colorScheme.primary;
+    final Color unselected = theme.colorScheme.lightBlue.withValues(alpha: 0.5,);
+    final Color selectedText = Colors.white;
+    final Color unselectedText = theme.colorScheme.primary;
+
+    return Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap:
+                () => setState(() {
+              isItemsTabSelected = true;
+              selectedIndex = null;
+            }),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: isItemsTabSelected ? selected : unselected,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  'ITEMS (${shopProvider.availableItems.length})'.toUpperCase(),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color:
+                    isItemsTabSelected ? selectedText : unselectedText,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: GestureDetector(
+            onTap:
+                () => setState(() {
+              isItemsTabSelected = false;
+              selectedIndex = null;
+            }),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: !isItemsTabSelected ? selected : unselected,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  'ENVIRONMENTS (${shopProvider.availableEnvironments.length})'.toUpperCase(),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color:
+                    !isItemsTabSelected ? selectedText : unselectedText,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Row _buildToggleButtons(Color selected, Color unselected, ShopProvider shopProvider, ThemeData theme, Color selectedText, Color unselectedText) {
+  //   return Row(
+  //     children: [
+  //       Expanded(
+  //         child: GestureDetector(
+  //           onTap:
+  //               () => setState(() {
+  //             selectedTab = 0;
+  //             selectedIndex = null;
+  //           }),
+  //           child: AnimatedContainer(
+  //             duration: const Duration(milliseconds: 200),
+  //             padding: const EdgeInsets.symmetric(vertical: 10),
+  //             decoration: BoxDecoration(
+  //               color: selectedTab == 0 ? selected : unselected,
+  //               borderRadius: BorderRadius.circular(12),
+  //             ),
+  //             child: Center(
+  //               child: Text(
+  //                 'ITEMS (${shopProvider.availableItems.length})'.toUpperCase(),
+  //                 style: theme.textTheme.bodySmall?.copyWith(
+  //                   color:
+  //                   selectedTab == 0
+  //                       ? selectedText
+  //                       : unselectedText,
+  //                   letterSpacing: 1.1,
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //       const SizedBox(width: 12),
+  //       Expanded(
+  //         child: GestureDetector(
+  //           onTap:
+  //               () => setState(() {
+  //             selectedTab = 1;
+  //             selectedIndex = null;
+  //           }),
+  //           child: AnimatedContainer(
+  //             duration: const Duration(milliseconds: 200),
+  //             padding: const EdgeInsets.symmetric(vertical: 10),
+  //             decoration: BoxDecoration(
+  //               color: selectedTab == 1 ? selected : unselected,
+  //               borderRadius: BorderRadius.circular(12),
+  //             ),
+  //             child: Center(
+  //               child: Text(
+  //                 'ENVIRONMENTS (${shopProvider.availableEnvironments.length})'.toUpperCase(),
+  //                 style: theme.textTheme.bodySmall?.copyWith(
+  //                   color:
+  //                   selectedTab == 1
+  //                       ? selectedText
+  //                       : unselectedText,
+  //                   letterSpacing: 1.1,
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   GestureDetector _buildLessonCardForReview(Lesson lesson) {
 

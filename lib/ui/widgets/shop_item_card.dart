@@ -8,7 +8,6 @@ class ShopItemCard extends StatelessWidget {
   final String name;
   final String cost;
   final bool isSelected;
-  // final bool isOwned;
   final Color highlight;
   final VoidCallback onTap;
 
@@ -17,7 +16,6 @@ class ShopItemCard extends StatelessWidget {
     required this.name,
     required this.cost,
     required this.isSelected,
-    // required this.isOwned,
     required this.highlight,
     required this.onTap,
   });
@@ -89,23 +87,6 @@ class ShopItemCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // if (isOwned)
-                  //   Positioned(
-                  //     right: 0,
-                  //     top: 0,
-                  //     child: Container(
-                  //       padding: const EdgeInsets.all(4),
-                  //       decoration: BoxDecoration(
-                  //         color: green,
-                  //         borderRadius: BorderRadius.circular(8),
-                  //       ),
-                  //       child: Icon(
-                  //         Icons.check,
-                  //         size: 16 * AppTheme.fontSizeScale,
-                  //         color: Colors.white,
-                  //       ),
-                  //     ),
-                  //   ),
                 ],
               ),
               const SizedBox(height: 10),

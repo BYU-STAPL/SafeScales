@@ -73,7 +73,6 @@ class ItemService {
     try {
 
       final userItems = await _repository.fetchUserItemIDList(userId);
-      print(userItems);
       return userItems.contains(itemId);
     } catch (e) {
       throw ItemServiceException('Failed to check if user has item: $e');
