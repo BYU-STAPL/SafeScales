@@ -238,19 +238,51 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
 
                   // Handle Purchasing the item
 
+                  if (selectedIndex == null) {
+                    Navigator.pop(context, true);
+                  }
+                  else {
+                    try {
+                      // Proceed with the purchase using the provider
+                      final PurchaseResult result = await shopProvider.purchaseItemByIndex(
+                        selectedIndex!,
+                        !isItemsTabSelected,
+                      );
+
+                      if (!mounted) return;
+
+                      if (result.isSuccess) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(result.message)),
+                        );
+
+                        // Reset selected index since the item is no longer available
+                        setState(() {
+                          selectedIndex = null;
+                        });
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(result.message)),
+                        );
+                      }
+                    }
+                    catch (e) {
+                      print('❌ Purchasing item from Review Results Screen failed: ${e}');
+                    }
+                  }
 
                   Navigator.pop(context, true);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.secondary,
+                  backgroundColor: selectedIndex == null ? theme.colorScheme.primary : theme.colorScheme.secondary,
                   foregroundColor: theme.colorScheme.onSecondary,
                 ),
                 child: Text(
-                  'Return'.toUpperCase(),
+                    selectedIndex == null ? 'Return'.toUpperCase() : 'Confirm Item'.toUpperCase(),
                   style: TextStyle(
                     fontSize: theme.textTheme.bodyMedium?.fontSize,
                   ),
