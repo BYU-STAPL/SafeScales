@@ -784,7 +784,7 @@ class _LessonScreenState extends State<LessonScreen> {
         MaterialPageRoute(
           builder: (context) => ReviewScreen(
             questionSet: questionSet,
-            isComingFromShopRoute: false,
+            needToShowShop: true,
           ),
         ),
       );
