@@ -331,9 +331,7 @@ class _LessonScreenState extends State<LessonScreen> {
       decoration: BoxDecoration(
         color:
             isCompleted
-                ? theme.colorScheme.green.withValues(
-                  alpha: 0.1,
-                ) //secondary.withValues(alpha: 0.1)
+                ? theme.colorScheme.green.withValues(alpha: 0.1,)
                 : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
@@ -357,37 +355,31 @@ class _LessonScreenState extends State<LessonScreen> {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             child: Row(
               children: [
                 CircleAvatar(
-                  radius: 24,
+                  radius: 20,
                   backgroundColor: color.withValues(alpha: 0.1),
-                  child: Icon(icon, size: 24, color: color),
+                  child: Icon(
+                      isCompleted ? Icons.check_circle : icon,
+                      size: 20,
+                      color: isCompleted ? theme.colorScheme.green : color
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            title,
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontSize: 18 * AppTheme.fontSizeScale,
-                            ),
-                          ),
-                          if (isCompleted) ...[
-                            const SizedBox(width: 10),
-                            Icon(
-                              Icons.check_circle,
-                              color: theme.colorScheme.green,
-                              size: 18,
-                            ),
-                          ],
-                        ],
+
+                      Text(
+                        title,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                            fontSize: 18
+                        ),
                       ),
+
                       const SizedBox(height: 5),
                       Text(description, style: theme.textTheme.labelSmall),
                     ],
@@ -397,8 +389,8 @@ class _LessonScreenState extends State<LessonScreen> {
                 if (!isUnlocked)
                   Image.asset(
                     'assets/images/other/lock.png',
-                    width: 50,
-                    height: 50,
+                    width: 40,
+                    height: 40,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   )
                 else
@@ -422,7 +414,7 @@ class _LessonScreenState extends State<LessonScreen> {
     final Color primary = theme.colorScheme.primary;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       decoration: BoxDecoration(
         color:
             _lessonProgress!.isReadingComplete
@@ -574,34 +566,29 @@ class _LessonScreenState extends State<LessonScreen> {
               Row(
                 children: [
                   CircleAvatar(
-                    radius: 24,
+                    radius: 20,
                     backgroundColor: primary.withValues(alpha: 0.1),
-                    child: Icon(Icons.menu_book, size: 24, color: primary),
+                    child: Icon(
+                        _lessonProgress!.isReadingComplete ? Icons.check_circle : Icons.menu_book,
+                        size: 20,
+                        color: _lessonProgress!.isReadingComplete ? theme.colorScheme.green : primary
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Text(
-                              'Reading Activity',
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontSize: 18,
-                              ),
-                            ),
-                            if (_lessonProgress!.isReadingComplete) ...[
-                              const SizedBox(width: 10),
-                              Icon(
-                                Icons.check_circle,
-                                color: theme.colorScheme.green,
-                                size: 18,
-                              ),
-                            ],
-                          ],
+
+                        Text(
+                          'Reading Activity',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontSize: 18,
+                          ),
                         ),
+
                         const SizedBox(height: 5),
+
                         Text(
                           'Learn about ${widget.topic ?? _lesson!.title}',
                           style: theme.textTheme.labelSmall,
@@ -613,8 +600,8 @@ class _LessonScreenState extends State<LessonScreen> {
                   if (!isUnlocked)
                     Image.asset(
                       'assets/images/other/lock.png',
-                      width: 50,
-                      height: 50,
+                      width: 40,
+                      height: 40,
                       color: textColor.withValues(alpha: 0.5),
                     )
                   else
@@ -639,7 +626,7 @@ class _LessonScreenState extends State<LessonScreen> {
     final Color primary = theme.colorScheme.primary;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       decoration: BoxDecoration(
         color: cardBg, //_lessonProgress!.isPostQuizComplete() ? theme.colorScheme.green.withValues(alpha: 0.1) : cardBg,
         borderRadius: BorderRadius.circular(12),
@@ -686,9 +673,9 @@ class _LessonScreenState extends State<LessonScreen> {
               Row(
                 children: [
                   CircleAvatar(
-                    radius: 24,
+                    radius: 20,
                     backgroundColor: primary.withValues(alpha: 0.1),
-                    child: Icon(Icons.menu_book, size: 24, color: primary),
+                    child: Icon(Icons.menu_book, size: 20, color: primary),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -725,8 +712,8 @@ class _LessonScreenState extends State<LessonScreen> {
                   if (!isUnlocked)
                     Image.asset(
                       'assets/images/other/lock.png',
-                      width: 50,
-                      height: 50,
+                      width: 40,
+                      height: 40,
                       color: textColor.withValues(alpha: 0.5),
                     )
                   else
@@ -1042,6 +1029,6 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   Widget _getDragonImage(DragonProvider dragonProvider) {
-    return DragonImageWidget(moduleId: widget.moduleId, size: 250);
+    return DragonImageWidget(moduleId: widget.moduleId, size: 220);
   }
 }
