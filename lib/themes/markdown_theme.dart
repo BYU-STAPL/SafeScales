@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+
 /// Creates a MarkdownStyleSheet that matches our app theme
 MarkdownStyleSheet createMarkdownTheme(ThemeData theme) {
   final colorScheme = theme.colorScheme;

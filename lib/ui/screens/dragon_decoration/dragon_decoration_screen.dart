@@ -299,82 +299,77 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
               // Dragon area with drop zone
               Expanded(
                 child: Center(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Environment background
-                      if (userEnvironmentImages.isNotEmpty &&
-                          selectedEnvironment < userEnvironmentImages.length)
-                        Container(
-                          width: environmentSize.width,
-                          height: environmentSize.height,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(24),
-                            image: DecorationImage(
-                              image: NetworkImage(
-                                userEnvironmentImages[selectedEnvironment],
-                              ),
-                              fit: BoxFit.cover,
-                            ),
+                  child: DragTarget<Map<String, dynamic>>(
+                    builder: (context, candidateData, rejectedData) {
+                      return Container(
+                        width: stickerEnvironmentSize.width,
+                        height: stickerEnvironmentSize.height,
+                        decoration: BoxDecoration(
+                          color:
+                              candidateData.isNotEmpty
+                                  ? colorScheme.primary.withValues(alpha: 0.1)
+                                  : Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color:
+                                candidateData.isNotEmpty
+                                    ? colorScheme.primary
+                                    : colorScheme.primary.withValues(
+                                      alpha: 0.2,
+                                    ),
+                            width: candidateData.isNotEmpty ? 3 : 2,
                           ),
                         ),
-
-                      // Dragon Image
-                      DragonImageWidget(
-                        dragonId: widget.dragonId,
-                        size: dragonSize * 0.75,
-                        phase: selectedPhase,
-                      ),
-
-                      // Drop zone for dragon
-                      DragTarget<Map<String, dynamic>>(
-                        builder: (context, candidateData, rejectedData) {
-                          return Container(
-                            width: environmentSize.width,
-                            height: environmentSize.height,
-                            decoration: BoxDecoration(
-                              color:
-                                  candidateData.isNotEmpty
-                                      ? colorScheme.primary.withValues(
-                                        alpha: 0.1,
-                                      )
-                                      : Colors.transparent,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color:
-                                    candidateData.isNotEmpty
-                                        ? colorScheme.primary
-                                        : colorScheme.primary.withValues(
-                                          alpha: 0.2,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Stack(
+                            children: [
+                              // Environment background
+                              if (userEnvironmentImages.isNotEmpty &&
+                                  selectedEnvironment <
+                                      userEnvironmentImages.length)
+                                Positioned.fill(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20),
+                                      image: DecorationImage(
+                                        image: NetworkImage(
+                                          userEnvironmentImages[selectedEnvironment],
                                         ),
-                                width: candidateData.isNotEmpty ? 3 : 2,
-                              ),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: Stack(
-                                children: [
-                                  // Placed stickers
-                                  ...placedStickers.map((sticker) {
-                                    final isSelected =
-                                        selectedStickerId == sticker.id;
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                ),
 
-                                    return _buildSticker(
-                                      sticker,
-                                      isSelected,
-                                      stickerEnvironmentSize,
-                                    );
-                                  }),
-                                ],
+                              // Dragon Image - centered
+                              Center(
+                                child: DragonImageWidget(
+                                  dragonId: widget.dragonId,
+                                  size: dragonSize * 0.75,
+                                  phase: selectedPhase,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                        onAcceptWithDetails: (details) {
-                          setDetails(details, dragonSize, environmentSize);
-                        },
-                      ),
-                    ],
+
+                              // Placed stickers
+                              ...placedStickers.map((sticker) {
+                                final isSelected =
+                                    selectedStickerId == sticker.id;
+
+                                return _buildSticker(
+                                  sticker,
+                                  isSelected,
+                                  stickerEnvironmentSize,
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    onAcceptWithDetails: (details) {
+                      setDetails(details, dragonSize, stickerEnvironmentSize);
+                    },
                   ),
                 ),
               ),
@@ -584,11 +579,15 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     setState(() {
       final sticker = placedStickers.firstWhere((s) => s.id == id);
 
-      // Allow stickers to move in the expanded area
-      // Subtract an extra for padding
-      final clampedX = newPosition.dx.clamp(0, containerSize.width).toDouble();
-
-      final clampedY = newPosition.dy.clamp(0, containerSize.height).toDouble();
+      // Simple clamping to keep sticker within bounds
+      final double clampedX = newPosition.dx.clamp(
+        0,
+        containerSize.width - sticker.size,
+      );
+      final double clampedY = newPosition.dy.clamp(
+        0,
+        containerSize.height - sticker.size,
+      );
 
       sticker.position = Offset(clampedX, clampedY);
     });
@@ -619,36 +618,31 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       final user = userState.currentUser;
 
       if (user != null) {
-        // Get current dragon_dressup data, merge and update
-        final userResponse =
-            await SupabaseConfig.client
-                .from('Users')
-                .select('dragon_dressup')
-                .eq('id', user.id)
-                .single();
+        // Convert stickers to a simple list format
+        final List<Map<String, dynamic>> stickersData =
+            placedStickers
+                .map(
+                  (sticker) => {
+                    'id': sticker.id,
+                    'accessoryId': sticker.accessoryId,
+                    'x': sticker.position.dx,
+                    'y': sticker.position.dy,
+                    'size': sticker.size,
+                  },
+                )
+                .toList();
 
-        final Map<String, dynamic> dressUpData =
-            userResponse['dragon_dressup'] != null
-                ? Map<String, dynamic>.from(userResponse['dragon_dressup'])
-                : <String, dynamic>{};
-
-        // Build this dragon's accessories map: { accessoryId: { position: {x,y}, size } }
-        final Map<String, dynamic> accessoriesForDragon = {};
-        for (final sticker in placedStickers) {
-          accessoriesForDragon[sticker.accessoryId] = {
-            'position': {'x': sticker.position.dx, 'y': sticker.position.dy},
-            'size': sticker.size,
-          };
-        }
-
-        dressUpData[widget.dragonId] = accessoriesForDragon;
-
+        // Save as a simple JSON array
         await SupabaseConfig.client
             .from('Users')
-            .update({'dragon_dressup': dressUpData})
+            .update({
+              'dragon_dressup': {widget.dragonId: stickersData},
+            })
             .eq('id', user.id);
 
-        setState(() {});
+        print(
+          '✅ Saved ${stickersData.length} stickers for dragon ${widget.dragonId}',
+        );
       }
     } catch (e) {
       print('❌ Error saving dragon dress-up: $e');
@@ -675,42 +669,44 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                 : null;
 
         if (dressUpData != null && dressUpData.containsKey(widget.dragonId)) {
-          final Map<String, dynamic> dragonMap = Map<String, dynamic>.from(
-            dressUpData[widget.dragonId],
-          );
-
+          final List<dynamic> stickersList = dressUpData[widget.dragonId] ?? [];
           final List<StickerItem> restored = [];
 
-          dragonMap.forEach((accId, data) {
-            final Map<String, dynamic> d = Map<String, dynamic>.from(data);
-            final Map<String, dynamic> pos = Map<String, dynamic>.from(
-              d['position'] ?? {},
+          for (final stickerData in stickersList) {
+            final Map<String, dynamic> data = Map<String, dynamic>.from(
+              stickerData,
             );
+            final String accessoryId = data['accessoryId']?.toString() ?? '';
 
             // Find accessory image by ID
             final accessory = userAccessories.firstWhere(
-              (acc) => acc['id'].toString() == accId.toString(),
+              (acc) => acc['id'].toString() == accessoryId,
               orElse: () => {'image': '', 'name': ''},
             );
 
             restored.add(
               StickerItem(
-                id: 'acc_$accId',
+                id:
+                    data['id']?.toString() ??
+                    DateTime.now().millisecondsSinceEpoch.toString(),
                 imageUrl: accessory['image'] ?? '',
-                name: accessory['name']?.toString() ?? accId.toString(),
-                accessoryId: accId.toString(),
+                name: accessory['name']?.toString() ?? accessoryId,
+                accessoryId: accessoryId,
                 position: Offset(
-                  (pos['x'] ?? 0).toDouble(),
-                  (pos['y'] ?? 0).toDouble(),
+                  (data['x'] ?? 0).toDouble(),
+                  (data['y'] ?? 0).toDouble(),
                 ),
-                size: (d['size'] ?? 48).toDouble(),
+                size: (data['size'] ?? 48).toDouble(),
               ),
             );
-          });
+          }
 
           setState(() {
             placedStickers = restored;
           });
+          print(
+            '✅ Loaded ${restored.length} stickers for dragon ${widget.dragonId}',
+          );
         }
       }
     } catch (e) {
@@ -730,42 +726,17 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   ) {
     final data = details.data;
 
-    // Find the dragon container's position
-    final dragonBox = context.findRenderObject() as RenderBox;
-    final dragonPosition = dragonBox.localToGlobal(Offset.zero);
-    final screenSize = MediaQuery.of(context).size;
+    // The details.offset is the position where the user dropped the sticker
+    // We want the sticker to appear exactly where they dropped it
+    final double stickerSize = 48.0;
 
-    // Calculate position relative to drag target container (which is now larger)
-    final dragTargetLeft = (screenSize.width - environmentSize.width) / 2;
-    final dragTargetTop =
-        dragonPosition.dy +
-        (dragonBox.size.height - environmentSize.height) / 2;
+    // Use the drop position directly
+    final double x = details.offset.dx;
+    final double y = details.offset.dy;
 
-    // Calculate position relative to the actual dragon area within the drag target
-    final dragonOffsetX = (environmentSize.width - dragonSize) / 2;
-    final dragonOffsetY = (environmentSize.height - dragonSize) / 2;
-
-    final relativeX =
-        details.offset.dx -
-        dragTargetLeft -
-        dragonOffsetX -
-        24; // Adjust for icon size
-    final relativeY = details.offset.dy - dragTargetTop - dragonOffsetY - 24;
-
-    // Allow stickers to be placed in the expanded area
-    final expandedBoundsX =
-        environmentSize.width - 48; // Account for sticker size
-    final expandedBoundsY =
-        environmentSize.height - 48; // Account for sticker size
-
-    final clampedX =
-        relativeX
-            .clamp(-dragonOffsetX, expandedBoundsX - dragonOffsetX)
-            .toDouble();
-    final clampedY =
-        relativeY
-            .clamp(-dragonOffsetY, expandedBoundsY - dragonOffsetY)
-            .toDouble();
+    // Clamp to stay within bounds (accounting for sticker size)
+    final double clampedX = x.clamp(0, environmentSize.width - stickerSize);
+    final double clampedY = y.clamp(0, environmentSize.height - stickerSize);
 
     setState(() {
       final newSticker = StickerItem(
@@ -774,6 +745,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
         name: data['name'],
         accessoryId: data['id'].toString(),
         position: Offset(clampedX, clampedY),
+        size: stickerSize,
       );
       placedStickers.add(newSticker);
     });
