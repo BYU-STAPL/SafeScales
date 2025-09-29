@@ -10,6 +10,9 @@ import 'package:safe_scales/ui/screens/reading/reading_results_screen.dart';
 import '../../../providers/course_provider.dart';
 import '../../../repositories/course_repository.dart';
 import '../../widgets/progress_bar.dart';
+import '../../widgets/styled_markdown.dart';
+import '../../widgets/voice_button.dart';
+import '../../../services/tts_service.dart';
 
 class ReadingActivityScreen extends StatefulWidget {
   final String moduleId;
@@ -25,6 +28,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
     with TickerProviderStateMixin {
   final CourseRepository _courseRepository = CourseRepository();
   final UserStateService _userState = UserStateService();
+  final TtsService _ttsService = TtsService();
 
   List<Map<String, dynamic>> _slides = [];
   int _currentSlideIndex = 0;
@@ -43,6 +47,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
   void initState() {
     super.initState();
     _loadSlides();
+    _ttsService.initialize();
     // _pageController = AnimationController(
     //   duration: const Duration(milliseconds: 300),
     //   vsync: this,
@@ -57,6 +62,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
 
   @override
   void dispose() {
+    _ttsService.dispose();
     // _pageController.dispose();
     super.dispose();
   }
@@ -234,6 +240,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
 
   void _nextSlide() {
     if (_currentSlideIndex < _slides.length - 1) {
+      _ttsService.stop(); // Stop TTS when changing pages
       _pageFlipKey.currentState?.nextPage();
     } else {
       _markAsCompleted();
@@ -242,6 +249,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
 
   void _previousSlide() {
     if (_currentSlideIndex > 0) {
+      _ttsService.stop(); // Stop TTS when changing pages
       _pageFlipKey.currentState?.previousPage();
     }
   }
@@ -326,6 +334,10 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
 
   Widget _buildPageContentFor(int index) {
     final theme = Theme.of(context);
+    final headline = _slides[index]['headline'] ?? 'Reading Content';
+    final content = _slides[index]['content'] ?? '';
+    final fullText = '$headline\n\n$content';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
       child: Column(
@@ -340,40 +352,52 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
                   fontStyle: FontStyle.italic,
                 ),
               ),
-              IconButton(
-                iconSize: 22,
-                icon: Icon(
-                  _bookmarkedPages.contains(index)
-                      ? FontAwesomeIcons.solidBookmark
-                      : FontAwesomeIcons.bookmark,
-                  color:
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Voice button
+                  VoiceButton(
+                    text: fullText,
+                    pageIndex: index,
+                    size: 36,
+                    onStateChanged: () {
+                      setState(() {
+                        // Trigger rebuild to update UI state
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  // Bookmark button
+                  IconButton(
+                    iconSize: 22,
+                    icon: Icon(
                       _bookmarkedPages.contains(index)
-                          ? theme.colorScheme.primary
-                          : null,
-                ),
-                onPressed: () {
-                  setState(() {
-                    if (_bookmarkedPages.contains(index)) {
-                      _bookmarkedPages.remove(index);
-                    } else {
-                      _bookmarkedPages.add(index);
-                    }
-                  });
-                  _saveBookmarks();
-                },
+                          ? FontAwesomeIcons.solidBookmark
+                          : FontAwesomeIcons.bookmark,
+                      color:
+                          _bookmarkedPages.contains(index)
+                              ? theme.colorScheme.primary
+                              : null,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        if (_bookmarkedPages.contains(index)) {
+                          _bookmarkedPages.remove(index);
+                        } else {
+                          _bookmarkedPages.add(index);
+                        }
+                      });
+                      _saveBookmarks();
+                    },
+                  ),
+                ],
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Text(
-            _slides[index]['headline'] ?? 'Reading Content',
-            style: theme.textTheme.headlineMedium,
-          ),
+          Text(headline, style: theme.textTheme.headlineMedium),
           const SizedBox(height: 24),
-          Text(
-            _slides[index]['content'] ?? '',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.8),
-          ),
+          StyledMarkdown(data: content),
         ],
       ),
     );
@@ -446,6 +470,8 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
                                     Theme.of(context).colorScheme.surface,
                                 duration: const Duration(milliseconds: 550),
                                 onPageFlipped: (page) {
+                                  _ttsService
+                                      .stop(); // Stop TTS when page is flipped
                                   setState(() {
                                     _currentSlideIndex = page;
                                   });

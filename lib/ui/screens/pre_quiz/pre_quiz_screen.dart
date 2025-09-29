@@ -61,14 +61,14 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
           context,
           listen: false,
         ).saveQuizProgress(
-          // userId: user.id,
           quizId: widget.questionSet.id,
           userAnswers: userAnswers,
           correctAnswers: correctAnswers,
           totalQuestions: totalQuestions,
         );
+        print('✅ Pre-quiz progress saved successfully');
       } else {
-        print('No user logged in, skipping pre-quiz progress save');
+        print('❌ No user logged in, skipping pre-quiz progress save');
       }
     } catch (e) {
       print('❌ Error saving pre-quiz progress: $e');

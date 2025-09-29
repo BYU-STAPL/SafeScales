@@ -136,7 +136,14 @@ class CourseRepository {
               .eq('id', userId)
               .single();
 
-      return response['modules'];
+      // Safely cast the modules data to the correct type
+      final modulesData = response['modules'];
+      if (modulesData == null) {
+        return null;
+      }
+
+      // Cast to the correct type to avoid type errors
+      return Map<String, dynamic>.from(modulesData as Map);
     } catch (e) {
       throw Exception('Failed to get user progress: $e');
     }
@@ -157,23 +164,9 @@ class CourseRepository {
       final response =
           await _supabase
               .from('Users')
-              .select('quizzes, modules')
+              .select('modules')
               .eq('id', userId)
               .single();
-
-      // Update legacy quizzes column
-      Map<String, dynamic> quizzes = {};
-      if (response['quizzes'] != null) {
-        quizzes = Map<String, dynamic>.from(response['quizzes']);
-      }
-
-      quizzes[quizId] = {
-        'score': score,
-        'answers': answers,
-        'completed_at': DateTime.now().toIso8601String(),
-        'correct_answers': correctAnswers,
-        'total_questions': totalQuestions,
-      };
 
       // Update modules column
       Map<String, dynamic> modules = {};
@@ -234,7 +227,7 @@ class CourseRepository {
       // Save to database
       await _supabase
           .from('Users')
-          .update({'quizzes': quizzes, 'modules': modules})
+          .update({'modules': modules})
           .eq('id', userId);
     } catch (e) {
       throw Exception('Failed to save quiz progress: $e');

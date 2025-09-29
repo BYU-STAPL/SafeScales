@@ -104,29 +104,9 @@ class CourseProvider extends ChangeNotifier {
     }
 
     await _executeWithErrorHandling(() async {
-      // Get raw progress data from database
-      final progressData = await _courseService.getUserProgressData(
-        currentUser!.id,
-      );
-      print('DEBUG: Raw progress data: $progressData');
-
-      // Convert raw progress data to LessonProgress objects
-      Map<String, LessonProgress> progress = {};
-
-      // For each lesson in the course, create a LessonProgress object
-      for (var lessonId in _lessons.keys) {
-        final lesson = _lessons[lessonId]!;
-        final moduleProgress = progressData?[lessonId];
-
-        // Create LessonProgress whether the module exists in progress or not
-        progress[lessonId] = LessonProgress(
-          lessonId: lessonId,
-          isReadingComplete: moduleProgress?['reading']?['completed'] ?? false,
-          requiredPassingScore: lesson.postQuiz.passingScore,
-          postQuizAttempts: [], // Will be populated if exists
-          preQuizAttempt: null, // Will be populated if exists
-        );
-      }
+      // Get complete progress data using the service method that properly builds LessonProgress objects
+      final progress = await _courseService.getUserProgress(currentUser!.id);
+      print('DEBUG: Loaded progress data: $progress');
 
       _lessonProgress = progress;
       notifyListeners();

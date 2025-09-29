@@ -98,7 +98,11 @@ class CourseService {
       // Process progress for each lesson in the class
       for (var lessonId in lessonsInClass) {
         if (lessonId != 'legacy') {
-          final moduleData = progressData[lessonId] ?? {};
+          final rawModuleData = progressData[lessonId];
+          final moduleData =
+              rawModuleData != null
+                  ? Map<String, dynamic>.from(rawModuleData as Map)
+                  : <String, dynamic>{};
           final lessonProgress = await _buildLessonProgress(
             lessonId,
             moduleData,
@@ -139,11 +143,10 @@ class CourseService {
         return null;
       }
 
-      return await _buildLessonProgress(
-        lessonId,
-        progressData[lessonId],
-        classData['id'],
-      );
+      final rawModuleData = progressData[lessonId];
+      final moduleData = Map<String, dynamic>.from(rawModuleData as Map);
+
+      return await _buildLessonProgress(lessonId, moduleData, classData['id']);
     } catch (e) {
       throw CourseServiceException('Failed to load lesson progress: $e');
     }
@@ -234,14 +237,18 @@ class CourseService {
 
       // Process reading progress
       if (moduleData.containsKey('reading')) {
-        final readingData = moduleData['reading'] as Map<String, dynamic>;
+        final readingData = Map<String, dynamic>.from(
+          moduleData['reading'] as Map,
+        );
         isReadingComplete = readingData['completed'] ?? false;
         print('DEBUG: Reading complete: $isReadingComplete');
       }
 
       // Process pre-quiz progress
       if (moduleData.containsKey('preQuiz') && moduleData['preQuiz'] != null) {
-        final preQuizData = moduleData['preQuiz'] as Map<String, dynamic>;
+        final preQuizData = Map<String, dynamic>.from(
+          moduleData['preQuiz'] as Map,
+        );
         if (preQuizData['spent'] == true) {
           preQuizAttempt = _createQuizAttempt(
             lessonId,
@@ -256,7 +263,9 @@ class CourseService {
       // Process post-quiz progress
       if (moduleData.containsKey('postQuiz') &&
           moduleData['postQuiz'] != null) {
-        final postQuizData = moduleData['postQuiz'] as Map<String, dynamic>;
+        final postQuizData = Map<String, dynamic>.from(
+          moduleData['postQuiz'] as Map,
+        );
         if (postQuizData['spent'] == true) {
           final attempt = _createQuizAttempt(
             lessonId,
@@ -333,22 +342,6 @@ class CourseService {
     );
   }
 
-  /// Parse activity type from string
-  ActivityType _parseActivityType(String type) {
-    switch (type) {
-      case 'preQuiz':
-        return ActivityType.preQuiz;
-      case 'postQuiz':
-        return ActivityType.postQuiz;
-      case 'review':
-        return ActivityType.review;
-      case 'reading':
-        return ActivityType.reading;
-      default:
-        return ActivityType.reading;
-    }
-  }
-
   /// Parse responses from dynamic data
   List<List<int>> _parseResponses(List<dynamic> answers) {
     List<List<int>> responses = [];
@@ -374,8 +367,10 @@ class CourseService {
   }
 
   QuestionSet _createPreQuiz(Map<String, dynamic> lessonMap) {
-    final preQuizMap = lessonMap['pre_quiz'];
-    final questions = _createQuestionsFromList(preQuizMap['questions']);
+    final preQuizMap = Map<String, dynamic>.from(lessonMap['pre_quiz'] as Map);
+    final questions = _createQuestionsFromList(
+      List<dynamic>.from(preQuizMap['questions'] as List),
+    );
     final String quizId = '${lessonMap['id']}_preQuiz';
 
     return QuestionSet(
@@ -389,8 +384,12 @@ class CourseService {
   }
 
   QuestionSet _createPostQuiz(Map<String, dynamic> lessonMap) {
-    final postQuizMap = lessonMap['post_quiz'];
-    final questions = _createQuestionsFromList(postQuizMap['questions']);
+    final postQuizMap = Map<String, dynamic>.from(
+      lessonMap['post_quiz'] as Map,
+    );
+    final questions = _createQuestionsFromList(
+      List<dynamic>.from(postQuizMap['questions'] as List),
+    );
     final String quizId = '${lessonMap['id']}_postQuiz';
 
     return QuestionSet(
@@ -407,7 +406,7 @@ class CourseService {
   List<Question> _createQuestionsFromList(List<dynamic> questionsData) {
     List<Question> questions = [];
     for (var q in questionsData) {
-      questions.add(_createSingleQuestion(q));
+      questions.add(_createSingleQuestion(Map<String, dynamic>.from(q as Map)));
     }
     return questions;
   }
@@ -431,12 +430,14 @@ class CourseService {
   }
 
   List<ReadingSlide> _createReadingSlides(Map<String, dynamic> lessonMap) {
-    final revision = lessonMap['revision'];
-    final slides = revision['slides'];
+    final revision = Map<String, dynamic>.from(lessonMap['revision'] as Map);
+    final slides = List<dynamic>.from(revision['slides'] as List);
     List<ReadingSlide> reading = [];
 
     for (var slideData in slides) {
-      final slide = _createSingleReadingSlide(slideData);
+      final slide = _createSingleReadingSlide(
+        Map<String, dynamic>.from(slideData as Map),
+      );
       reading.add(slide);
     }
     return reading;
