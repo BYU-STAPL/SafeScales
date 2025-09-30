@@ -244,6 +244,7 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
 
                   if (selectedIndex == null) {
                     Navigator.pop(context, true);
+                    return; // include return to avoid popping twice, there's another pop statement after the if branch
                   }
                   else {
                     try {
@@ -282,7 +283,7 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
                   foregroundColor: theme.colorScheme.onSecondary,
                 ),
                 child: Text(
-                    selectedIndex == null ? 'Return'.toUpperCase() : 'Confirm Item'.toUpperCase(),
+                    selectedIndex == null ? 'Skip'.toUpperCase() : 'Confirm Item'.toUpperCase(),
                   style: TextStyle(
                     fontSize: theme.textTheme.bodyMedium?.fontSize,
                   ),

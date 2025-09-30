@@ -95,7 +95,7 @@ class CourseProvider extends ChangeNotifier {
     });
   }
 
-  // Load Single ReviewSet
+  /// Load Single ReviewSet
   Future<QuestionSet?> getReviewQuestionSetForLesson(String lessonId) async {
     try {
       final currentUser = _userStateService.currentUser;
@@ -120,8 +120,6 @@ class CourseProvider extends ChangeNotifier {
       return null;
     }
   }
-
-
 
   /// Load user progress for all lessons
   Future<void> loadUserProgress() async {
