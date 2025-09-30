@@ -74,13 +74,13 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     final double dragonSize = MediaQuery.of(context).size.width * 0.75;
 
     final environmentSize = (
-      width: dragonSize * 1.25,
-      height: dragonSize * 1.75,
+    width: dragonSize * 1.25,
+    height: dragonSize * 1.75,
     );
 
     final stickerEnvironmentSize = (
-      width: environmentSize.width - 10,
-      height: environmentSize.height - 10,
+    width: environmentSize.width - 10,
+    height: environmentSize.height - 10,
     );
 
     return Consumer2<DragonDecorationProvider, DragonProvider>(
@@ -524,9 +524,9 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                       hintText: 'Enter Your Dragon\'s Name',
                       counterText: '${nameController.text.length}/10',
                       errorText:
-                          nameController.text.length > 10
-                              ? 'Name cannot be longer than 10 characters'
-                              : null,
+                      nameController.text.length > 10
+                          ? 'Name cannot be longer than 10 characters'
+                          : null,
                     ),
                     autofocus: true,
                     maxLength: 10,
@@ -543,24 +543,24 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                 ),
                 TextButton(
                   onPressed:
-                      nameController.text.trim().isEmpty ||
-                              nameController.text.length > 10
-                          ? null // Disable button if name is empty or too long
-                          : () async {
-                            try {
-                              await dragonProvider.updateDragonName(
-                                widget.dragonId,
-                                nameController.text,
-                              );
-                              if (mounted) Navigator.pop(context);
-                            } catch (e) {
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(e.toString())),
-                                );
-                              }
-                            }
-                          },
+                  nameController.text.trim().isEmpty ||
+                      nameController.text.length > 10
+                      ? null // Disable button if name is empty or too long
+                      : () async {
+                    try {
+                      await dragonProvider.updateDragonName(
+                        widget.dragonId,
+                        nameController.text,
+                      );
+                      if (mounted) Navigator.pop(context);
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.toString())),
+                        );
+                      }
+                    }
+                  },
                   child: const Text('Save'),
                 ),
               ],

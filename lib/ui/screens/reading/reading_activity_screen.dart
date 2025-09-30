@@ -10,6 +10,9 @@ import 'package:safe_scales/ui/screens/reading/reading_results_screen.dart';
 import '../../../models/lesson.dart';
 import '../../../providers/course_provider.dart';
 import '../../widgets/progress_bar.dart';
+import '../../widgets/styled_markdown.dart';
+import '../../widgets/voice_button.dart';
+import '../../../services/tts_service.dart';
 
 class ReadingActivityScreen extends StatefulWidget {
   final String moduleId;
@@ -22,8 +25,9 @@ class ReadingActivityScreen extends StatefulWidget {
 
 class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
   final PageController _pageController = PageController(initialPage: 0);
+  final TtsService _ttsService = TtsService();
 
-  // List<Map<String, dynamic>> _slides = [];
+  List<Map<String, dynamic>> _slides = [];
   List<ReadingSlide> _readingSlides = [];
   int _currentSlideIndex = 0;
   bool _isLoading = true;
@@ -44,6 +48,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
   @override
   void dispose() {
+    _ttsService.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -133,13 +138,12 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
   void _nextSlide() {
     if (_currentSlideIndex < _readingSlides.length - 1) {
+      _ttsService.stop(); // Stop Audio when changing pages
+
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-
-      // _pageFlipKey.currentState?.nextPage();
-
     } else {
       _markAsCompleted();
     }
@@ -147,6 +151,8 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
   void _previousSlide() {
     if (_currentSlideIndex > 0) {
+      _ttsService.stop(); // Stop Audio when changing pages
+
       _pageController.previousPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -159,6 +165,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
   void _onPageChanged(int index) {
     setState(() {
+      _ttsService.stop(); // Stop TTS when page is flipped
       _currentSlideIndex = index;
     });
   }
@@ -218,12 +225,15 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
       if (_pageController.hasClients) {
         // Use jumpToPage for instant navigation without animation
         _pageController.jumpToPage(index);
+
+        //TODO: ??? Why not call this here ???
+        // _onPageChanged(index); // Don't call this function here, bc the audio stops working if you do,
+
       } else {
         // If PageController is not attached yet, just update the index
         // and close TOC. The PageView will be built with the correct initial page.
-        setState(() {
-          _currentSlideIndex = index;
-        });
+
+        _onPageChanged(index);
 
         // Use WidgetsBinding to ensure the PageView is built before jumping
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -282,59 +292,77 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
   }
 
   Widget _buildPageContentFor(int index) {
-      final theme = Theme.of(context);
+    final theme = Theme.of(context);
+
+    final headline = _readingSlides[index].title ?? 'Reading Content';
+    final content  = _readingSlides[index].content ?? 'No content for this slide';
+
+    // final headline = _slides[index]['headline'] ?? 'Reading Content';
+    // final content = _slides[index]['content'] ?? '';
+    final fullText = '$headline\n\n$content';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // TODO: Voice Controls need some find tuning
+          // VoiceControls(text: fullText),
+
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Page ${index + 1}',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontStyle: FontStyle.italic,
-                ),
+              // Voice button
+              VoiceButton(
+                text: fullText,
+                pageIndex: index,
+                size: 35,
+                onStateChanged: () {
+                  setState(() {
+                    // Trigger rebuild to update UI state
+                  });
+                },
               ),
+              const SizedBox(width: 20),
+              // Bookmark button
               IconButton(
-                iconSize: 22,
+                iconSize: 25,
                 icon: Icon(
                   _bookmarkedPages.contains(index)
                       ? FontAwesomeIcons.solidBookmark
                       : FontAwesomeIcons.bookmark,
-                  color: _bookmarkedPages.contains(index)
-                      ? theme.colorScheme.primary
-                      : null,
+                  color:
+                      _bookmarkedPages.contains(index)
+                          ? theme.colorScheme.primary
+                          : null,
                 ),
                 onPressed: () {
-                  _toggleBookmark(index);
+                  setState(() {
+                    if (_bookmarkedPages.contains(index)) {
+                      _bookmarkedPages.remove(index);
+                    } else {
+                      _bookmarkedPages.add(index);
+                    }
+                  });
+                  _saveBookmarks();
                 },
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            _readingSlides[index].title ?? 'Reading Content',
-            style: theme.textTheme.headlineMedium,
+          const SizedBox(height: 15),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Flexible(
+                child: Text(
+                  headline ?? 'Reading Content',
+                  style: theme.textTheme.headlineMedium,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          Column(
-            children: _readingSlides[index].content.map((content) {
-              if (content is TextContent) {
-                return Text(
-                  content.text,
-                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.8),
-                );
-              } else if (content is ImageContent) {
-                return Image.asset(
-                  content.imagePath,
-                  semanticLabel: content.altText,
-                );
-              }
-              return const SizedBox.shrink(); // fallback
-            }).toList(),
-          ),
+          const SizedBox(height: 20),
+          StyledMarkdown(data: content),
         ],
       ),
     );

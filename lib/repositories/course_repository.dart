@@ -94,8 +94,7 @@ class CourseRepository {
   /// Get the class that a user is enrolled in
   Future<Map<String, dynamic>?> getUserClass(String userId) async {
     try {
-      final userResponse =
-      await _supabase
+      final userResponse = await _supabase
           .from('Users')
           .select('joined_classes')
           .eq('id', userId)
@@ -121,8 +120,7 @@ class CourseRepository {
   /// Get all modules/lessons for a specific class
   Future<List<Map<String, dynamic>>> getClassModules(String classId) async {
     try {
-      final classResponse =
-      await _supabase
+      final classResponse = await _supabase
           .from('classes')
           .select('course_modules')
           .eq('id', classId)
@@ -148,8 +146,7 @@ class CourseRepository {
   /// Get lesson order for a class
   Future<List<String>> getLessonOrder(String classId) async {
     try {
-      final classResponse =
-      await _supabase
+      final classResponse = await _supabase
           .from('classes')
           .select('course_modules')
           .eq('id', classId)
@@ -192,8 +189,7 @@ class CourseRepository {
   /// Get class assets
   Future<List<dynamic>?> getClassAssets(String classId) async {
     try {
-      final classResponse =
-      await _supabase
+      final classResponse = await _supabase
           .from('classes')
           .select('assets')
           .eq('id', classId)
@@ -246,8 +242,7 @@ class CourseRepository {
   /// Save reading progress to database
   Future<void> saveReadingProgress({required String userId, required String lessonId, required Set<int> bookmarks,}) async {
     try {
-      final response =
-      await _supabase
+      final response = await _supabase
           .from('Users')
           .select('reading_progress')
           .eq('id', userId)

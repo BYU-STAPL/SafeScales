@@ -35,6 +35,9 @@ dependencies:
   page_flip: ^0.2.5+1
   page_flip_builder: ^0.1.4
   book_flip: ^1.0.0
+  flutter_markdown: ^0.6.18
+  url_launcher: ^6.2.5
+  flutter_tts: ^3.8.5
 
 dev_dependencies:
   flutter_test:
