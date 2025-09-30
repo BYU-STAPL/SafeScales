@@ -251,15 +251,8 @@ class DragonDecorationService {
     required Size containerSize,
     required double stickerSize,
   }) {
-    final clampedX = newPosition.dx.clamp(
-      0,
-      containerSize.width - stickerSize,
-    ).toDouble();
-
-    final clampedY = newPosition.dy.clamp(
-      0,
-      containerSize.height - stickerSize,
-    ).toDouble();
+    final clampedX = newPosition.dx.clamp(0, containerSize.width - stickerSize,).toDouble();
+    final clampedY = newPosition.dy.clamp(0, containerSize.height - stickerSize,).toDouble();
 
     return Offset(clampedX, clampedY);
   }
@@ -278,20 +271,48 @@ class DragonDecorationService {
     required Offset dragonPosition,
     double stickerSize = 48.0,
   }) {
+
+    /*
+    // The details.offset is the position where the user dropped the sticker
+    // We want the sticker to appear exactly where they dropped it
+    final double stickerSize = 48.0;
+
+    // Use the drop position directly
+    final double x = details.offset.dx;
+    final double y = details.offset.dy;
+
+    // Clamp to stay within bounds (accounting for sticker size)
+    // Use the constrain function that does this clamping
+    final double clampedX = x.clamp(0, environmentSize.width - stickerSize);
+    final double clampedY = y.clamp(0, environmentSize.height - stickerSize);
+
+    setState(() {
+      final newSticker = StickerItem(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        imageUrl: data['image'],
+        name: data['name'],
+        accessoryId: data['id'].toString(),
+        position: Offset(clampedX, clampedY),
+        size: stickerSize,
+      );
+      placedStickers.add(newSticker);
+    });
+     */
+
     // Calculate position relative to drag target container
-    final dragTargetLeft = (screenSize.width - environmentSize.width) / 2;
-    final dragTargetTop = dragonPosition.dy + (dragonSize.height - environmentSize.height) / 2;
-
-    // Calculate position relative to the actual dragon area within the drag target
-    final dragonOffsetX = (environmentSize.width - dragonSize.width) / 2;
-    final dragonOffsetY = (environmentSize.height - dragonSize.height) / 2;
-
-    final relativeX = screenOffset.dx - dragTargetLeft - dragonOffsetX - (stickerSize / 2);
-    final relativeY = screenOffset.dy - dragTargetTop - dragonOffsetY - (stickerSize / 2);
+    // final dragTargetLeft = (screenSize.width - environmentSize.width) / 2;
+    // final dragTargetTop = dragonPosition.dy + (dragonSize.height - environmentSize.height) / 2;
+    //
+    // // Calculate position relative to the actual dragon area within the drag target
+    // final dragonOffsetX = (environmentSize.width - dragonSize.width) / 2;
+    // final dragonOffsetY = (environmentSize.height - dragonSize.height) / 2;
+    //
+    // final relativeX = screenOffset.dx - dragTargetLeft - dragonOffsetX - (stickerSize / 2);
+    // final relativeY = screenOffset.dy - dragTargetTop - dragonOffsetY - (stickerSize / 2);
 
     // Constrain to environment bounds
     return constrainStickerPosition(
-      newPosition: Offset(relativeX, relativeY),
+      newPosition: screenOffset,
       containerSize: Size(
         environmentSize.width - stickerSize,
         environmentSize.height - stickerSize,

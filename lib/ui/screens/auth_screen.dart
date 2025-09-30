@@ -100,6 +100,53 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  Future<void> _developerLogin() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final success = await _authService.signIn(
+        email: 'khamad@byu.edu',
+        password: 'STPL@2025',
+      );
+
+      if (!success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Developer login failed'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          setState(() {
+            isLoading = false;
+          });
+        }
+        return;
+      }
+
+      // Navigate to class selection screen after successful login
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const ClassSelectionScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
@@ -129,21 +176,23 @@ class _AuthScreenState extends State<AuthScreen> {
           child: Center(
             child: Stack(
               children: [
-
                 // Add back button at the top
                 // Not using app bar, so that the linear gradient takes up whole screen
                 // More aesthetic
                 _authService.currentUser == null
                     ? Align(
-                  alignment: Alignment.topLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                )
+                      alignment: Alignment.topLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                          ),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ),
+                    )
                     : SizedBox.shrink(),
 
                 Center(
@@ -181,7 +230,8 @@ class _AuthScreenState extends State<AuthScreen> {
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide(
-                                        color: theme.colorScheme.surfaceContainer,
+                                        color:
+                                            theme.colorScheme.surfaceContainer,
                                       ),
                                     ),
                                   ),
@@ -275,12 +325,39 @@ class _AuthScreenState extends State<AuthScreen> {
                                     ),
                                   ),
                                   child:
-                                  isLoading
-                                      ? const CircularProgressIndicator()
-                                      : Text(
-                                    isLogin ? 'Login' : 'Sign Up',
+                                      isLoading
+                                          ? const CircularProgressIndicator()
+                                          : Text(
+                                            isLogin ? 'Login' : 'Sign Up',
+                                            style: TextStyle(
+                                              fontSize:
+                                                  16 * AppTheme.fontSizeScale,
+                                            ),
+                                          ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              // Developer login button
+                              SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: OutlinedButton(
+                                  onPressed: isLoading ? null : _developerLogin,
+                                  style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    side: BorderSide(
+                                      color: theme.colorScheme.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    '(div)',
                                     style: TextStyle(
                                       fontSize: 16 * AppTheme.fontSizeScale,
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
@@ -307,9 +384,9 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                     ),
                   ),
-                )
+                ),
               ],
-            )
+            ),
           ),
         ),
       ),
