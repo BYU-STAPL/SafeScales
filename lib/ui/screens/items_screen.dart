@@ -156,6 +156,8 @@ class _ItemsScreenState extends State<ItemsScreen> {
                   Expanded(
                     child: _buildItemsGrid(context, items, itemProvider),
                   ),
+
+                  const SizedBox(height: 5),
                 ],
               ),
             ),
@@ -278,7 +280,8 @@ class _ItemsScreenState extends State<ItemsScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
+        width: double.infinity, // Add this - simpler alternative
+        padding: const EdgeInsets.only(left: 30, right: 30, top: 15, bottom: 30),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -287,23 +290,24 @@ class _ItemsScreenState extends State<ItemsScreen> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Theme.of(context).colorScheme.onSurface, //Colors.grey[300],
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(height: 20),
+
             // Item image
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.network(
                 item.imageUrl,
-                width: 120,
-                height: 120,
-                fit: BoxFit.cover,
+                width: 300,
+                height: 300,
+                fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    width: 120,
-                    height: 120,
+                    width: 300,
+                    height: 300,
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
                       borderRadius: BorderRadius.circular(12),
@@ -313,6 +317,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
                 },
               ),
             ),
+
             const SizedBox(height: 16),
             // Item name
             Text(
@@ -321,7 +326,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             // Item type
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -338,30 +343,32 @@ class _ItemsScreenState extends State<ItemsScreen> {
               ),
             ),
             const SizedBox(height: 24),
+
+            // TODO: Actions button Not needed right now, maybe later?
             // Action buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Close'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Handle equip/use action
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${item.name} equipped!')),
-                      );
-                    },
-                    child: Text(type == 'accessory' ? 'Equip' : 'Set Active'),
-                  ),
-                ),
-              ],
-            ),
+            // Row(
+            //   children: [
+            //     Expanded(
+            //       child: OutlinedButton(
+            //         onPressed: () => Navigator.pop(context),
+            //         child: const Text('Close'),
+            //       ),
+            //     ),
+            //     const SizedBox(width: 12),
+            //     Expanded(
+            //       child: ElevatedButton(
+            //         onPressed: () {
+            //           // Handle equip/use action
+            //           Navigator.pop(context);
+            //           ScaffoldMessenger.of(context).showSnackBar(
+            //             SnackBar(content: Text('${item.name} equipped!')),
+            //           );
+            //         },
+            //         child: Text(type == 'accessory' ? 'Equip' : 'Set Active'),
+            //       ),
+            //     ),
+            //   ],
+            // ),
           ],
         ),
       ),

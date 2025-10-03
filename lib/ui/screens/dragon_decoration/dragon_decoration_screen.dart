@@ -75,12 +75,12 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
     final environmentSize = (
     width: dragonSize * 1.25,
-    height: dragonSize * 1.75,
+    height: dragonSize * 1.8,
     );
 
     final stickerEnvironmentSize = (
-    width: environmentSize.width - 10,
-    height: environmentSize.height - 10,
+      width: environmentSize.width - 10,
+      height: environmentSize.height - 10,
     );
 
     return Consumer2<DragonDecorationProvider, DragonProvider>(
@@ -176,21 +176,17 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
           ),
           body: Column(
             children: [
-              // Phase and Environment info
+              // Hint info
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                // padding: const EdgeInsets.symmetric(vertical: 5),
                 child: Column(
                   children: [
+                    SizedBox(height: 10,),
                     Text(
-                      'Phase: ${dragonProvider.getPhaseDisplayName(selectedPhase)}',
-                      style: theme.textTheme.bodySmall,
+                      'Tap an item to move and resize it',
+                      style: theme.textTheme.labelSmall,
                     ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Environment: ${_getEnvironmentDisplayName(dragonDecorationProvider)}',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    SizedBox(height: 10),
+                    SizedBox(height: 10,),
                     Text(
                       'Long press an item to remove it',
                       style: theme.textTheme.labelSmall,
