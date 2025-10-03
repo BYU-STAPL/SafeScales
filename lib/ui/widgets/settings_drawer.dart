@@ -173,32 +173,34 @@ class SettingsDrawer extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 10),
-                  // Tutorial
-                  ListTile(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-                    leading: Icon(
-                      FontAwesomeIcons.graduationCap,
-                      color: colorScheme.primary,
-                    ),
-                    title: Text(
-                      'Tutorial',
-                      style: TextStyle(fontSize: 18, color: colorScheme.onSurface),
-                    ),
-                    onTap: onTutorial,
-                  ),
-                  // Help
-                  ListTile(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-                    leading: Icon(
-                      FontAwesomeIcons.circleQuestion,
-                      color: colorScheme.primary,
-                    ),
-                    title: Text(
-                      'Help',
-                      style: TextStyle(fontSize: 18, color: colorScheme.onSurface),
-                    ),
-                    onTap: onHelp,
-                  ),
+
+                  // TODO: If we build a tutorial or help resources then we can add these back in
+                  // // Tutorial
+                  // ListTile(
+                  //   contentPadding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+                  //   leading: Icon(
+                  //     FontAwesomeIcons.graduationCap,
+                  //     color: colorScheme.primary,
+                  //   ),
+                  //   title: Text(
+                  //     'Tutorial',
+                  //     style: TextStyle(fontSize: 18, color: colorScheme.onSurface),
+                  //   ),
+                  //   onTap: onTutorial,
+                  // ),
+                  // // Help
+                  // ListTile(
+                  //   contentPadding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+                  //   leading: Icon(
+                  //     FontAwesomeIcons.circleQuestion,
+                  //     color: colorScheme.primary,
+                  //   ),
+                  //   title: Text(
+                  //     'Help',
+                  //     style: TextStyle(fontSize: 18, color: colorScheme.onSurface),
+                  //   ),
+                  //   onTap: onHelp,
+                  // ),
                   const Spacer(),
 
                   FutureBuilder<PackageInfo>(

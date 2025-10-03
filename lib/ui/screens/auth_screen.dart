@@ -100,16 +100,28 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  Future<void> _developerLogin() async {
+  Future<void> _developerLogin({required bool isKhaleel}) async {
     setState(() {
       isLoading = true;
     });
 
     try {
-      final success = await _authService.signIn(
-        email: 'khamad@byu.edu',
-        password: 'STPL@2025',
-      );
+
+      bool success;
+
+      if (isKhaleel) {
+        success = await _authService.signIn(
+          email: 'khamad@byu.edu',
+          password: 'STPL@2025',
+        );
+      }
+      else {
+        success = await _authService.signIn(
+          email: 'imapepsi@byu.edu',
+          password: 'password',
+        );
+      }
+
 
       if (!success) {
         if (mounted) {
@@ -336,13 +348,17 @@ class _AuthScreenState extends State<AuthScreen> {
                                           ),
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 20),
+
+                              //TODO: Remove before release
                               // Developer login button
                               SizedBox(
                                 width: double.infinity,
                                 height: 50,
                                 child: OutlinedButton(
-                                  onPressed: isLoading ? null : _developerLogin,
+                                  onPressed: isLoading ? null : () {
+                                    _developerLogin(isKhaleel: true);
+                                  },
                                   style: OutlinedButton.styleFrom(
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -353,7 +369,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                     ),
                                   ),
                                   child: Text(
-                                    '(div)',
+                                    'Dev: Khaleel',
                                     style: TextStyle(
                                       fontSize: 16 * AppTheme.fontSizeScale,
                                       color: theme.colorScheme.primary,
@@ -362,7 +378,38 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 16),
+
+                              const SizedBox(height: 20),
+
+                              SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: OutlinedButton(
+                                  onPressed: isLoading ? null : () {
+                                    _developerLogin(isKhaleel: false);
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    side: BorderSide(
+                                      color: theme.colorScheme.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Dev: Mia',
+                                    style: TextStyle(
+                                      fontSize: 16 * AppTheme.fontSizeScale,
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 20),
+
                               TextButton(
                                 onPressed: () {
                                   setState(() {

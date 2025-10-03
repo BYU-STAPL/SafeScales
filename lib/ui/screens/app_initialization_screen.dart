@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:safe_scales/providers/theme_provider.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/providers/course_provider.dart';
 import 'package:safe_scales/providers/dragon_provider.dart';
@@ -44,6 +45,8 @@ class _AppInitializationScreenState extends State<AppInitializationScreen> {
       });
 
       // Get providers
+      final themeProvider = Provider.of<ThemeNotifier>(context, listen: false);
+
       final courseProvider = Provider.of<CourseProvider>(context, listen: false);
       final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
       final itemProvider = Provider.of<ItemProvider>(context, listen: false);
@@ -82,6 +85,9 @@ class _AppInitializationScreenState extends State<AppInitializationScreen> {
       setState(() {
         _loadingMessage = 'Finalizing...';
       });
+
+      // Pull in User Preferred Settings
+      themeProvider.loadSettings();
 
       // Small delay to show completion
       await Future.delayed(const Duration(milliseconds: 500));

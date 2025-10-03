@@ -296,22 +296,20 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
     final headline = _readingSlides[index].title ?? 'Reading Content';
     final content  = _readingSlides[index].content ?? 'No content for this slide';
-
-    // final headline = _slides[index]['headline'] ?? 'Reading Content';
-    // final content = _slides[index]['content'] ?? '';
     final fullText = '$headline\n\n$content';
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(30),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // TODO: Voice Controls need some find tuning
-          // VoiceControls(text: fullText),
-
-          Row(
+    return Column(
+      children: [
+        // Control buttons row
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+
+              // TODO: Should Font adjustment just be for reading material?
+
+
               // Voice button
               VoiceButton(
                 text: fullText,
@@ -331,10 +329,9 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
                   _bookmarkedPages.contains(index)
                       ? FontAwesomeIcons.solidBookmark
                       : FontAwesomeIcons.bookmark,
-                  color:
-                      _bookmarkedPages.contains(index)
-                          ? theme.colorScheme.primary
-                          : null,
+                  color: _bookmarkedPages.contains(index)
+                      ? theme.colorScheme.primary
+                      : null,
                 ),
                 onPressed: () {
                   setState(() {
@@ -349,22 +346,27 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 15),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Flexible(
-                child: Text(
-                  headline ?? 'Reading Content',
+        ),
+
+        // Scrollable content - wrapped in Expanded
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  headline,
                   style: theme.textTheme.headlineMedium,
                 ),
-              ),
-            ],
+                const SizedBox(height: 20),
+                StyledMarkdown(data: content),
+                const SizedBox(height: 30), // Bottom padding for scroll
+              ],
+            ),
           ),
-          const SizedBox(height: 20),
-          StyledMarkdown(data: content),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -424,8 +426,6 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
             ),
 
             // Main content
-            //TODO: When reading a user can scroll through the reading slides by swiping or clicking the next button
-            // TODO: Is it better to only have one method of navigating through the slides?
             Expanded(
               child: _showTableOfContents
                   ? _buildTableOfContents()
@@ -438,27 +438,6 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
                 },
               ),
             ),
-
-            // Expanded(
-            //   child:
-            //   _showTableOfContents
-            //       ? _buildTableOfContents()
-            //       : PageFlipWidget(
-            //     key: _pageFlipKey,
-            //     backgroundColor:
-            //     Theme.of(context).colorScheme.surface,
-            //     duration: const Duration(milliseconds: 550),
-            //     onPageFlipped: (page) {
-            //       setState(() {
-            //         _currentSlideIndex = page;
-            //       });
-            //     },
-            //     children: List.generate(
-            //       _slides.length,
-            //           (index) => _buildPageContent(index),
-            //     ),
-            //   ),
-            // ),
 
             // Navigation controls
             _buildNavigationBar(),
