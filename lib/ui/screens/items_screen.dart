@@ -290,7 +290,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Theme.of(context).colorScheme.onSurface, //Colors.grey[300],
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -301,13 +301,13 @@ class _ItemsScreenState extends State<ItemsScreen> {
               borderRadius: BorderRadius.circular(12),
               child: Image.network(
                 item.imageUrl,
-                width: 150,
-                height: 150,
+                width: 300,
+                height: 300,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    width: 150,
-                    height: 150,
+                    width: 300,
+                    height: 300,
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
                       borderRadius: BorderRadius.circular(12),
@@ -326,7 +326,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             // Item type
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
