@@ -60,7 +60,19 @@ class _QuestionWidgetState extends State<QuestionWidget> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            Spacer(),
+            // If no extra text place spacer before question - for centering or to push question to the bottom
+            if (question.text == null)
+              const Spacer(),
+
+            if (question.text != null) ...[
+              // Extra Text exists, show it first, then do spacer, then question
+              Text(
+                question.text!,
+                style: theme.textTheme.bodyMedium,
+              ),
+
+              const Spacer(),
+            ],
 
             Text(
               question.questionText,
@@ -68,6 +80,10 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+
+            // If no extra text place spacer after question too - for centering
+            if (question.text == null)
+              const Spacer(),
 
             SizedBox(height: 20,),
 
