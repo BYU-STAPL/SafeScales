@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
 import 'package:safe_scales/models/question.dart';
@@ -292,7 +293,7 @@ class _LessonScreenState extends State<LessonScreen> {
                                   title: 'Post-Quiz',
                                   description: 'Test what you\'ve learned',
                                   onTap: () => _startQuiz(_lesson!.postQuiz),
-                                  icon: Icons.assignment,
+                                  icon: FontAwesomeIcons.penRuler,
                                   color: theme.colorScheme.primary,
                                   isCompleted:
                                       _lessonProgress!.isPostQuizComplete(),
@@ -569,7 +570,7 @@ class _LessonScreenState extends State<LessonScreen> {
                     radius: 20,
                     backgroundColor: primary.withValues(alpha: 0.1),
                     child: Icon(
-                        _lessonProgress!.isReadingComplete ? Icons.check_circle : Icons.menu_book,
+                        _lessonProgress!.isReadingComplete ? Icons.check_circle : FontAwesomeIcons.book,
                         size: 20,
                         color: _lessonProgress!.isReadingComplete ? theme.colorScheme.green : primary
                     ),
@@ -675,7 +676,7 @@ class _LessonScreenState extends State<LessonScreen> {
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: primary.withValues(alpha: 0.1),
-                    child: Icon(Icons.menu_book, size: 20, color: primary),
+                    child: Icon(FontAwesomeIcons.repeat, size: 20, color: primary),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -690,14 +691,6 @@ class _LessonScreenState extends State<LessonScreen> {
                                 fontSize: 18,
                               ),
                             ),
-                            // if (_lessonProgress!.isReadingComplete) ...[
-                            //   const SizedBox(width: 10),
-                            //   Icon(
-                            //     Icons.check_circle,
-                            //     color: theme.colorScheme.green,
-                            //     size: 18,
-                            //   ),
-                            // ],
                           ],
                         ),
                         const SizedBox(height: 5),
