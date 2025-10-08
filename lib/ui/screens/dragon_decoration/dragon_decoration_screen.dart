@@ -36,7 +36,10 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   }
 
   Future<void> _initializeData() async {
-    final dragonDecorationProvider = Provider.of<DragonDecorationProvider>(context, listen: false);
+    final dragonDecorationProvider = Provider.of<DragonDecorationProvider>(
+      context,
+      listen: false,
+    );
 
     try {
       // Initialize the decoration provider if not already done
@@ -45,7 +48,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       }
 
       await _loadCurrentPhase();
-
     } catch (e) {
       debugPrint('Initialization error: $e');
     }
@@ -58,7 +60,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     final phase = await dragonProvider.getUserPreferredPhase(widget.dragonId);
 
     try {
-      final availablePhases = dragonProvider.unlockedDragonPhases[widget.dragonId];
+      final availablePhases =
+          dragonProvider.unlockedDragonPhases[widget.dragonId];
       if (availablePhases != null && availablePhases.contains(phase)) {
         setState(() => selectedPhase = phase);
       }
@@ -74,8 +77,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     final double dragonSize = MediaQuery.of(context).size.width * 0.75;
 
     final environmentSize = (
-    width: dragonSize * 1.25,
-    height: dragonSize * 1.8,
+      width: dragonSize * 1.25,
+      height: dragonSize * 1.8,
     );
 
     final stickerEnvironmentSize = (
@@ -93,9 +96,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
               centerTitle: true,
               backgroundColor: colorScheme.surface,
             ),
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -156,21 +157,22 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                   if (value == 'env') _showEnvironmentDialog();
                   if (value == 'clear') _clearAllStickers();
                 },
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'phase',
-                    child: Text('Select Dragon Phase'),
-                  ),
-                  PopupMenuItem(
-                    value: 'env',
-                    child: Text('Select Environment'),
-                  ),
-                  PopupMenuDivider(),
-                  PopupMenuItem(
-                    value: 'clear',
-                    child: Text('Clear All Items'),
-                  ),
-                ],
+                itemBuilder:
+                    (context) => [
+                      PopupMenuItem(
+                        value: 'phase',
+                        child: Text('Select Dragon Phase'),
+                      ),
+                      PopupMenuItem(
+                        value: 'env',
+                        child: Text('Select Environment'),
+                      ),
+                      PopupMenuDivider(),
+                      PopupMenuItem(
+                        value: 'clear',
+                        child: Text('Clear All Items'),
+                      ),
+                    ],
               ),
             ],
           ),
@@ -181,12 +183,12 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                 // padding: const EdgeInsets.symmetric(vertical: 5),
                 child: Column(
                   children: [
-                    SizedBox(height: 10,),
+                    SizedBox(height: 10),
                     Text(
                       'Tap an item to move and resize it',
                       style: theme.textTheme.labelSmall,
                     ),
-                    SizedBox(height: 10,),
+                    SizedBox(height: 10),
                     Text(
                       'Long press an item to remove it',
                       style: theme.textTheme.labelSmall,
@@ -202,7 +204,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                     alignment: Alignment.center,
                     children: [
                       // Environment background
-                      if (dragonDecorationProvider.getCurrentEnvironment() != null)
+                      if (dragonDecorationProvider.getCurrentEnvironment() !=
+                          null)
                         Container(
                           width: environmentSize.width,
                           height: environmentSize.height,
@@ -210,7 +213,9 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                             borderRadius: BorderRadius.circular(24),
                             image: DecorationImage(
                               image: NetworkImage(
-                                dragonDecorationProvider.getCurrentEnvironment()!.imageUrl,
+                                dragonDecorationProvider
+                                    .getCurrentEnvironment()!
+                                    .imageUrl,
                               ),
                               fit: BoxFit.cover,
                             ),
@@ -227,44 +232,64 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                       // Drop zone for dragon
                       DragTarget<Map<String, dynamic>>(
                         builder: (context, candidateData, rejectedData) {
-                          return Container(
-                            width: environmentSize.width,
-                            height: environmentSize.height,
-                            decoration: BoxDecoration(
-                              color: candidateData.isNotEmpty
-                                  ? colorScheme.primary.withValues(alpha: 0.1)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: candidateData.isNotEmpty
-                                    ? colorScheme.primary
-                                    : colorScheme.primary.withValues(alpha: 0.2),
-                                width: candidateData.isNotEmpty ? 3 : 2,
+                          return GestureDetector(
+                            onTap: () {
+                              // Deselect any currently selected sticker when tapping background
+                              dragonDecorationProvider.selectSticker(null);
+                            },
+                            child: Container(
+                              width: environmentSize.width,
+                              height: environmentSize.height,
+                              decoration: BoxDecoration(
+                                color:
+                                    candidateData.isNotEmpty
+                                        ? colorScheme.primary.withValues(
+                                          alpha: 0.1,
+                                        )
+                                        : Colors.transparent,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color:
+                                      candidateData.isNotEmpty
+                                          ? colorScheme.primary
+                                          : colorScheme.primary.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                  width: candidateData.isNotEmpty ? 3 : 2,
+                                ),
                               ),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: Stack(
-                                children: [
-                                  // Placed stickers from provider
-                                  ...dragonDecorationProvider.placedStickers.map((sticker) {
-                                    final isSelected =
-                                        dragonDecorationProvider.selectedStickerId == sticker.id;
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Stack(
+                                  children: [
+                                    // Placed stickers from provider
+                                    ...dragonDecorationProvider.placedStickers
+                                        .map((sticker) {
+                                          final isSelected =
+                                              dragonDecorationProvider
+                                                  .selectedStickerId ==
+                                              sticker.id;
 
-                                    return _buildSticker(
-                                      sticker,
-                                      isSelected,
-                                      stickerEnvironmentSize,
-                                      dragonDecorationProvider,
-                                    );
-                                  }),
-                                ],
+                                          return _buildSticker(
+                                            sticker,
+                                            isSelected,
+                                            stickerEnvironmentSize,
+                                            dragonDecorationProvider,
+                                          );
+                                        }),
+                                  ],
+                                ),
                               ),
                             ),
                           );
                         },
                         onAcceptWithDetails: (details) {
-                          _handleStickerDrop(details, dragonSize, environmentSize, dragonDecorationProvider);
+                          _handleStickerDrop(
+                            details,
+                            dragonSize,
+                            environmentSize,
+                            dragonDecorationProvider,
+                          );
                         },
                       ),
                     ],
@@ -274,7 +299,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
               // Accessory picker
               StickerCollectionWidget(
-                isLoadingAccessories: dragonDecorationProvider.isLoadingAccessories,
+                isLoadingAccessories:
+                    dragonDecorationProvider.isLoadingAccessories,
                 userAccessories: dragonDecorationProvider.userItems,
               ),
             ],
@@ -301,51 +327,60 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   void _showPhaseDialog() async {
     final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
 
-    final availablePhases = dragonProvider.unlockedDragonPhases[widget.dragonId];
+    final availablePhases =
+        dragonProvider.unlockedDragonPhases[widget.dragonId];
     if (availablePhases == null) {
       return;
     }
 
     int? choice = await showDialog<int>(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: const Text('Select Dragon Phase'),
-        children: List.generate(
-          availablePhases.length,
+      builder:
+          (context) => SimpleDialog(
+            title: const Text('Select Dragon Phase'),
+            children: List.generate(
+              availablePhases.length,
               (i) => SimpleDialogOption(
-            onPressed: () => Navigator.pop(context, i),
-            child: Text(
-              dragonProvider.getPhaseDisplayName(availablePhases[i]),
+                onPressed: () => Navigator.pop(context, i),
+                child: Text(
+                  dragonProvider.getPhaseDisplayName(availablePhases[i]),
+                ),
+              ),
             ),
           ),
-        ),
-      ),
     );
 
     if (choice != null && choice < availablePhases.length) {
       setState(() => selectedPhase = availablePhases[choice]);
       // Note: For now, we're just updating the UI.
       // When you implement user preference saving, you would call:
-      await dragonProvider.updateUserPreferredPhase(widget.dragonId, availablePhases[choice]);
+      await dragonProvider.updateUserPreferredPhase(
+        widget.dragonId,
+        availablePhases[choice],
+      );
     }
   }
 
   void _showEnvironmentDialog() async {
-    final decorationProvider = Provider.of<DragonDecorationProvider>(context, listen: false);
+    final decorationProvider = Provider.of<DragonDecorationProvider>(
+      context,
+      listen: false,
+    );
 
     if (decorationProvider.isLoadingEnvironments) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Loading environments...')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Loading environments...')));
       return;
     }
 
     int? choice = await showDialog<int>(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: const Text('Select Environment'),
-        children: _buildEnvironmentList(decorationProvider),
-      ),
+      builder:
+          (context) => SimpleDialog(
+            title: const Text('Select Environment'),
+            children: _buildEnvironmentList(decorationProvider),
+          ),
     );
 
     if (choice != null) {
@@ -354,27 +389,30 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       // Save environment selection
       if (choice != -1 && choice < decorationProvider.userEnvironments.length) {
         final environmentId = decorationProvider.userEnvironments[choice].id;
-        await decorationProvider.saveEnvironmentSelection(widget.dragonId, environmentId);
-      }
-      else {
+        await decorationProvider.saveEnvironmentSelection(
+          widget.dragonId,
+          environmentId,
+        );
+      } else {
         await decorationProvider.saveEnvironmentSelection(widget.dragonId, "");
-
       }
     }
   }
 
-  List<Widget> _buildEnvironmentList(DragonDecorationProvider decorationProvider) {
+  List<Widget> _buildEnvironmentList(
+    DragonDecorationProvider decorationProvider,
+  ) {
     List<Widget> envOptions = [
       SimpleDialogOption(
         onPressed: () => Navigator.pop(context, -1),
         child: Text('None'),
-      )
+      ),
     ];
 
     envOptions.addAll(
       List.generate(
         decorationProvider.userEnvironments.length,
-            (i) => SimpleDialogOption(
+        (i) => SimpleDialogOption(
           onPressed: () => Navigator.pop(context, i),
           child: Text(decorationProvider.userEnvironments[i].name),
         ),
@@ -384,9 +422,12 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     return envOptions;
   }
 
-
-
-  Positioned _buildSticker(StickerItem sticker, bool isSelected, ({double width, double height}) stickerEnvironmentSize, DragonDecorationProvider provider,) {
+  Positioned _buildSticker(
+    StickerItem sticker,
+    bool isSelected,
+    ({double width, double height}) stickerEnvironmentSize,
+    DragonDecorationProvider provider,
+  ) {
     ThemeData theme = Theme.of(context);
 
     return Positioned(
@@ -394,7 +435,8 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
       top: sticker.position.dy,
       child: GestureDetector(
         onTap: () {
-          provider.selectSticker(isSelected ? null : sticker.id);
+          // Only select the sticker, don't toggle
+          provider.selectSticker(sticker.id);
         },
         onLongPress: () => _removeSticker(sticker.id, provider),
         child: Stack(
@@ -409,7 +451,10 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                   provider.updateStickerPosition(
                     stickerId: sticker.id,
                     newPosition: newPosition,
-                    containerSize: Size(stickerEnvironmentSize.width, stickerEnvironmentSize.height),
+                    containerSize: Size(
+                      stickerEnvironmentSize.width,
+                      stickerEnvironmentSize.height,
+                    ),
                   );
                 }
               },
@@ -417,7 +462,10 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isSelected ? theme.colorScheme.primary : Colors.transparent,
+                    color:
+                        isSelected
+                            ? theme.colorScheme.primary
+                            : Colors.transparent,
                     width: isSelected ? 3 : 1,
                   ),
                 ),
@@ -459,11 +507,19 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   }
 
   void _clearAllStickers() {
-    final provider = Provider.of<DragonDecorationProvider>(context, listen: false);
+    final provider = Provider.of<DragonDecorationProvider>(
+      context,
+      listen: false,
+    );
     provider.clearAllStickers();
   }
 
-  void _handleStickerDrop(DragTargetDetails details, double dragonSize, ({double height, double width}) environmentSize, DragonDecorationProvider provider,) {
+  void _handleStickerDrop(
+    DragTargetDetails details,
+    double dragonSize,
+    ({double height, double width}) environmentSize,
+    DragonDecorationProvider provider,
+  ) {
     final data = details.data;
 
     // Calculate the drop position using the provider's utility method
@@ -490,11 +546,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
     );
 
     // Add the sticker using the provider
-    provider.addSticker(
-      item: item,
-      position: dropPosition,
-      size: 48.0,
-    );
+    provider.addSticker(item: item, position: dropPosition, size: 48.0);
   }
 
   void _showNameDialog(DragonProvider dragonProvider) {
@@ -520,9 +572,9 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                       hintText: 'Enter Your Dragon\'s Name',
                       counterText: '${nameController.text.length}/10',
                       errorText:
-                      nameController.text.length > 10
-                          ? 'Name cannot be longer than 10 characters'
-                          : null,
+                          nameController.text.length > 10
+                              ? 'Name cannot be longer than 10 characters'
+                              : null,
                     ),
                     autofocus: true,
                     maxLength: 10,
@@ -539,24 +591,24 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                 ),
                 TextButton(
                   onPressed:
-                  nameController.text.trim().isEmpty ||
-                      nameController.text.length > 10
-                      ? null // Disable button if name is empty or too long
-                      : () async {
-                    try {
-                      await dragonProvider.updateDragonName(
-                        widget.dragonId,
-                        nameController.text,
-                      );
-                      if (mounted) Navigator.pop(context);
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(e.toString())),
-                        );
-                      }
-                    }
-                  },
+                      nameController.text.trim().isEmpty ||
+                              nameController.text.length > 10
+                          ? null // Disable button if name is empty or too long
+                          : () async {
+                            try {
+                              await dragonProvider.updateDragonName(
+                                widget.dragonId,
+                                nameController.text,
+                              );
+                              if (mounted) Navigator.pop(context);
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString())),
+                                );
+                              }
+                            }
+                          },
                   child: const Text('Save'),
                 ),
               ],

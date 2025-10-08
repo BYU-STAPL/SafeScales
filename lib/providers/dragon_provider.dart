@@ -19,8 +19,8 @@ class DragonProvider extends ChangeNotifier {
     UserStateService? userState,
     required CourseService courseService,
   }) : _dragonService = dragonService,
-        _userState = userState ?? UserStateService(),
-        _courseService = courseService;
+       _userState = userState ?? UserStateService(),
+       _courseService = courseService;
 
   // === State ===
   bool _isLoading = false;
@@ -134,7 +134,6 @@ class DragonProvider extends ChangeNotifier {
       }
 
       await _loadDragonData(user.id, courseId);
-
     } catch (e) {
       _setError('Failed to load user dragons: $e');
       print('❌ DragonProvider: Error loading user dragons: $e');
@@ -161,7 +160,6 @@ class DragonProvider extends ChangeNotifier {
 
       // Refresh local data
       await _refreshUnlockedPhases(user.id);
-
     } catch (e) {
       _setError('Failed to update dragon phases: $e');
       print('❌ DragonProvider: Error updating dragon progress: $e');
@@ -203,16 +201,14 @@ class DragonProvider extends ChangeNotifier {
       preferredPhases[dragonId] = normalPhase;
 
       await _dragonService.updateUserPreferredPhase(user.id, dragonId, phase);
-    }
-    catch (e) {
+    } catch (e) {
       _setError('Failed to update preferred dragon phase: $e');
       print('❌ DragonProvider: Error updating preferred dragon phase: $e');
     }
   }
 
-
   /// Update dragon name
-  Future<void> updateDragonName(String dragonId, String newName,) async {
+  Future<void> updateDragonName(String dragonId, String newName) async {
     try {
       final user = _userState.currentUser;
       if (user == null) {
@@ -220,7 +216,12 @@ class DragonProvider extends ChangeNotifier {
         return;
       }
 
-      await _dragonService.updateDragonName(user.id, dragonId, newName, maxNameLength);
+      await _dragonService.updateDragonName(
+        user.id,
+        dragonId,
+        newName,
+        maxNameLength,
+      );
 
       // Update local dragon data
       if (_dragons.containsKey(dragonId)) {
@@ -249,21 +250,55 @@ class DragonProvider extends ChangeNotifier {
 
   /// Load all dragon-related data for a user
   Future<void> _loadDragonData(String userId, String classId) async {
-    // Get raw data
-    final userDragonsData = await _dragonService.getUserDragonsData(userId);
-    final classAssets = await _dragonService.getClassAssets(classId);
+    try {
+      // Get raw data
+      final userDragonsData = await _dragonService.getUserDragonsData(userId);
+      final classAssets = await _dragonService.getClassAssets(classId);
 
-    // Process data using service business logic
-    _dragons = _dragonService.processUserDragons(userDragonsData, classAssets);
-    _dragons = _dragonService.sortDragonsByModuleId(_dragons);
+      // Process data using service business logic - back to using class assets
+      _dragons = _dragonService.processUserDragons(
+        userDragonsData,
+        classAssets,
+      );
+      _dragons = _dragonService.sortDragonsByModuleId(_dragons);
 
-    _dragonsByModuleId = _dragonService.createDragonsByModuleMap(_dragons);
-    _unlockedDragonPhases = _dragonService.extractClassDragonPhases(
-      userDragonsData,
-      classAssets,
-    );
+      _dragonsByModuleId = _dragonService.createDragonsByModuleMap(_dragons);
 
-    notifyListeners();
+      // Extract unlocked phases from class assets
+      _unlockedDragonPhases = _dragonService.extractClassDragonPhases(
+        userDragonsData,
+        classAssets,
+      );
+      notifyListeners();
+    } catch (e) {
+      print('❌ Error in _loadDragonData: $e');
+      _setError('Failed to load dragon data: $e');
+      rethrow;
+    }
+  }
+
+  /// Extract unlocked phases from user data (simplified approach)
+  Map<String, List<String>> _extractUnlockedPhasesFromUserData(
+    Map<String, dynamic> userDragonsData,
+  ) {
+    final unlockedPhases = <String, List<String>>{};
+
+    for (final entry in userDragonsData.entries) {
+      final dragonId = entry.key;
+      final dragonData = entry.value;
+
+      if (dragonData is Map && dragonData.containsKey('phases')) {
+        final phases = dragonData['phases'];
+        if (phases is List) {
+          unlockedPhases[dragonId] = phases.cast<String>();
+        }
+      } else if (dragonData is List) {
+        // Legacy format
+        unlockedPhases[dragonId] = dragonData.cast<String>();
+      }
+    }
+
+    return unlockedPhases;
   }
 
   /// Refresh unlocked phases data
@@ -271,21 +306,24 @@ class DragonProvider extends ChangeNotifier {
     final user = _userState.currentUser;
     if (user == null) return;
 
-    String? courseId = await CourseService().getUserCourseId(user.id);
-    if (courseId == null) {
-      return;
+    try {
+      String? courseId = await CourseService().getUserCourseId(user.id);
+      if (courseId == null) {
+        return;
+      }
+
+      final userDragonsData = await _dragonService.getUserDragonsData(userId);
+      final classAssets = await _dragonService.getClassAssets(courseId);
+
+      _unlockedDragonPhases = _dragonService.extractClassDragonPhases(
+        userDragonsData,
+        classAssets,
+      );
+      notifyListeners();
+    } catch (e) {
+      print('❌ Error refreshing unlocked phases: $e');
+      // Don't throw here, just log the error
     }
-
-    final userDragonsData = await _dragonService.getUserDragonsData(userId);
-    final classAssets = await _dragonService.getClassAssets(
-      courseId,
-    );
-
-    _unlockedDragonPhases = _dragonService.extractClassDragonPhases(
-      userDragonsData,
-      classAssets,
-    );
-    notifyListeners();
   }
 
   /// Set loading state

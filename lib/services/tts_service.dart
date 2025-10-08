@@ -26,8 +26,7 @@ class TtsService {
       // Set language
       await _flutterTts.setLanguage("en-US");
 
-      // Set more natural speech rate (slower for better comprehension)
-      await _flutterTts.setSpeechRate(0.4);
+      // Note: Speech rate will be set by VoiceButton to respect global speed settings
 
       // Set volume (0.0 to 1.0)
       await _flutterTts.setVolume(0.9);
@@ -119,7 +118,9 @@ class TtsService {
 
   Future<void> setSpeechRate(double rate) async {
     try {
-      await _flutterTts.setSpeechRate(rate.clamp(0.0, 1.0));
+      final clampedRate = rate.clamp(0.0, 2.0);
+      await _flutterTts.setSpeechRate(clampedRate);
+      debugPrint('TTS Speech rate set to: $clampedRate');
     } catch (e) {
       debugPrint('Error setting speech rate: $e');
     }
@@ -214,7 +215,7 @@ class TtsService {
   Future<void> setEnhancedSpeechSettings() async {
     try {
       // More natural settings for human-like speech
-      await _flutterTts.setSpeechRate(0.4); // Slower for clarity
+      // Note: Speech rate will be set separately to respect global speed settings
       await _flutterTts.setPitch(0.95); // Slightly lower pitch
       await _flutterTts.setVolume(0.9); // Higher volume
 

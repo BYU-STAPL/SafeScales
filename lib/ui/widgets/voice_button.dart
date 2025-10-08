@@ -29,6 +29,11 @@ class _VoiceButtonState extends State<VoiceButton>
   late Animation<double> _scaleAnimation;
   TtsState _currentState = TtsState.stopped;
 
+  // Global speed control - shared across all VoiceButton instances
+  static final List<double> speedOptions = [1.0, 1.25, 1.5, 1.75, 2.0];
+  static int globalSpeedIndex = 0;
+  static final Set<_VoiceButtonState> _activeInstances = <_VoiceButtonState>{};
+
   @override
   void initState() {
     super.initState();
@@ -40,14 +45,18 @@ class _VoiceButtonState extends State<VoiceButton>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
-    // Initialize TTS service
-    _ttsService.initialize();
-    _currentState = _ttsService.state;
+    // Initialize TTS service and apply current speed
+    _initializeTtsAndApplySpeed();
+
+    // Register this instance for global speed updates
+    _activeInstances.add(this);
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    // Unregister this instance
+    _activeInstances.remove(this);
     super.dispose();
   }
 
@@ -85,6 +94,52 @@ class _VoiceButtonState extends State<VoiceButton>
       _currentState = _ttsService.state;
     });
     widget.onStateChanged?.call();
+  }
+
+  Future<void> _initializeTtsAndApplySpeed() async {
+    // Initialize TTS service
+    await _ttsService.initialize();
+    _currentState = _ttsService.state;
+
+    // Apply the current global speed setting
+    await _setCurrentSpeed();
+  }
+
+  void _onSpeedPressed() async {
+    // Cycle to next speed
+    globalSpeedIndex = (globalSpeedIndex + 1) % speedOptions.length;
+    await _setCurrentSpeed();
+
+    // Notify all active instances to update their UI
+    _notifyAllInstances();
+
+    setState(() {});
+  }
+
+  Future<void> _setCurrentSpeed() async {
+    final speed = speedOptions[globalSpeedIndex];
+    debugPrint(
+      'VoiceButton: Setting speed to $speed (index: $globalSpeedIndex)',
+    );
+    await _ttsService.setSpeechRate(speed);
+  }
+
+  /// Notify all active VoiceButton instances to update their UI
+  static void _notifyAllInstances() {
+    for (final instance in _activeInstances) {
+      if (instance.mounted) {
+        instance.setState(() {});
+      }
+    }
+  }
+
+  String _getSpeedText() {
+    final speed = speedOptions[globalSpeedIndex];
+    if (speed == speed.toInt()) {
+      return '${speed.toInt()}x';
+    } else {
+      return '${speed}x';
+    }
   }
 
   IconData _getIcon() {
@@ -151,7 +206,6 @@ class _VoiceButtonState extends State<VoiceButton>
               ),
             ),
             const SizedBox(width: 30),
-
           ],
 
           // Main voice button
@@ -192,7 +246,57 @@ class _VoiceButtonState extends State<VoiceButton>
             },
           ),
 
+          const SizedBox(width: 20),
 
+          // Speed control button
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _onSpeedPressed,
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: theme.colorScheme.onSecondaryContainer.withOpacity(
+                      0.3,
+                    ),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      FontAwesomeIcons.gauge,
+                      size: 14,
+                      color: theme.colorScheme.onSecondaryContainer,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _getSpeedText(),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSecondaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -217,7 +321,6 @@ class VoiceControls extends StatefulWidget {
 
 class _VoiceControlsState extends State<VoiceControls> {
   final TtsService _ttsService = TtsService();
-  double _speechRate = 0.5;
   double _volume = 0.8;
   bool _showControls = true;
 
@@ -234,11 +337,29 @@ class _VoiceControlsState extends State<VoiceControls> {
   }
 
   void _updateSpeechRate(double rate) async {
-    setState(() {
-      _speechRate = rate;
-    });
+    // Find the closest speed option index
+    int closestIndex = 0;
+    double minDifference = double.infinity;
+    for (int i = 0; i < _VoiceButtonState.speedOptions.length; i++) {
+      double difference = (rate - _VoiceButtonState.speedOptions[i]).abs();
+      if (difference < minDifference) {
+        minDifference = difference;
+        closestIndex = i;
+      }
+    }
+
+    // Update global speed state
+    _VoiceButtonState.globalSpeedIndex = closestIndex;
     await _ttsService.setSpeechRate(rate);
+
+    // Notify all VoiceButton instances to update their UI
+    _VoiceButtonState._notifyAllInstances();
+
+    setState(() {});
   }
+
+  double get _speechRate =>
+      _VoiceButtonState.speedOptions[_VoiceButtonState.globalSpeedIndex];
 
   void _updateVolume(double volume) async {
     setState(() {

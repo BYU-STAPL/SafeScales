@@ -111,7 +111,39 @@ class DragonService {
         userDragonsData[dragonId] = ['egg'];
       }
 
-      final dragon = _createDragonFromAsset(userDragonsData[dragonId], asset, dragonId);
+      final dragon = _createDragonFromAsset(
+        userDragonsData[dragonId],
+        asset,
+        dragonId,
+      );
+      if (dragon != null) {
+        dragons[dragonId] = dragon;
+      }
+    }
+    return dragons;
+  }
+
+  /// Process dragons from Supabase dragons table into Dragon objects
+  Map<String, Dragon> processDragonsFromSupabase(
+    Map<String, dynamic> userDragonsData,
+    List<Map<String, dynamic>> supabaseDragons,
+  ) {
+    final dragons = <String, Dragon>{};
+
+    // Process each dragon from Supabase
+    for (final dragonData in supabaseDragons) {
+      final dragonId = dragonData['id']?.toString();
+      if (dragonId == null || dragonId.isEmpty) continue;
+
+      // Initialize phases list for new dragons
+      if (!userDragonsData.containsKey(dragonId)) {
+        userDragonsData[dragonId] = ['egg'];
+      }
+
+      // Get user dragon info, handling both Map and List formats
+      final userDragonInfo = userDragonsData[dragonId];
+
+      final dragon = _createDragonFromSupabaseData(userDragonInfo, dragonData);
       if (dragon != null) {
         dragons[dragonId] = dragon;
       }
@@ -121,7 +153,11 @@ class DragonService {
   }
 
   /// Create Dragon object from asset data
-  Dragon? _createDragonFromAsset(Map<String, dynamic> userDragonInfo, Map<String, dynamic> asset, String dragonId) {
+  Dragon? _createDragonFromAsset(
+    dynamic userDragonInfo,
+    Map<String, dynamic> asset,
+    String dragonId,
+  ) {
     try {
       final stages = asset['stages'] as Map<String, dynamic>?;
       if (stages == null) {
@@ -137,18 +173,82 @@ class DragonService {
 
       final moduleId = asset['moduleId']?.toString() ?? '';
 
+      // Handle different user dragon info formats
+      String dragonName = 'Unnamed';
+      if (userDragonInfo is Map<String, dynamic>) {
+        dragonName = userDragonInfo['name']?.toString() ?? 'Unnamed';
+      } else if (userDragonInfo is List) {
+        // Legacy format - just phases list, no name
+        dragonName = 'Unnamed';
+      }
+
       return Dragon(
         id: dragonId,
         speciesName: asset['name']?.toString() ?? 'Unknown Species',
         moduleId: moduleId,
         phaseImages: images,
         phaseOrder: phaseOrder,
-        preferredEnvironment: asset['favorite_item']?.toString() ?? 'Unknown', // Default value
+        preferredEnvironment:
+            asset['favorite_item']?.toString() ?? 'Unknown', // Default value
         favoriteItem: asset['favorite_item']?.toString() ?? 'Unknown',
-        name: userDragonInfo['name']?.toString() ?? 'Unnamed',
+        name: dragonName,
       );
     } catch (e) {
       print('❌ Error creating dragon from asset: $e');
+      return null;
+    }
+  }
+
+  /// Create Dragon object from Supabase dragons table data
+  Dragon? _createDragonFromSupabaseData(
+    dynamic userDragonInfo,
+    Map<String, dynamic> dragonData,
+  ) {
+    try {
+      final dragonId = dragonData['id']?.toString() ?? '';
+      if (dragonId.isEmpty) return null;
+
+      print('🐉 Creating dragon for ID: $dragonId');
+      print('🐉 Raw dragon data: $dragonData');
+
+      // Extract image URLs from Supabase storage
+      final images = <String, String>{
+        'egg': dragonData['egg_image']?.toString() ?? '',
+        'stage1': dragonData['stage1_image']?.toString() ?? '',
+        'stage2': dragonData['stage2_image']?.toString() ?? '',
+        'final': dragonData['final_stage_image']?.toString() ?? '',
+      };
+
+      print('🐉 Extracted images: $images');
+
+      // Handle different user dragon info formats
+      String dragonName = 'Unnamed';
+      if (userDragonInfo is Map<String, dynamic>) {
+        dragonName = userDragonInfo['name']?.toString() ?? 'Unnamed';
+      } else if (userDragonInfo is List) {
+        // Legacy format - just phases list, no name
+        dragonName = 'Unnamed';
+      }
+
+      final dragon = Dragon(
+        id: dragonId,
+        speciesName:
+            dragonData['species_name']?.toString() ?? 'Unknown Species',
+        moduleId: dragonData['module_id']?.toString() ?? '',
+        phaseImages: images,
+        phaseOrder: phaseOrder,
+        preferredEnvironment:
+            dragonData['preferred_environment']?.toString() ?? 'Unknown',
+        favoriteItem: dragonData['favorite_item']?.toString() ?? 'Unknown',
+        name: dragonName,
+      );
+
+      print('🐉 Created dragon: ${dragon.speciesName}');
+      print('🐉 Dragon phase images: ${dragon.phaseImages}');
+
+      return dragon;
+    } catch (e) {
+      print('❌ Error creating dragon from Supabase data: $e');
       return null;
     }
   }
@@ -192,14 +292,25 @@ class DragonService {
 
     // Filter user dragons to only include those in this class
     userDragonsData.forEach((key, data) {
+      if (classDragonIds.contains(key)) {
+        List<String> phases = [];
 
-      final phases = data['phases']; // Dragon's name is in this data too.
+        if (data is List) {
+          // Legacy format - data is directly the phases list
+          phases = data.cast<String>();
+        } else if (data is Map && data.containsKey('phases')) {
+          // New format - phases are in a 'phases' key
+          final phasesData = data['phases'];
+          if (phasesData is List) {
+            phases = phasesData.cast<String>();
+          }
+        }
 
-      if (phases != null && phases is List && classDragonIds.contains(key)) {
-        classUnlockedPhases[key] = phases.cast<String>();
+        if (phases.isNotEmpty) {
+          classUnlockedPhases[key] = phases;
+        }
       }
     });
-
     return classUnlockedPhases;
   }
 
@@ -212,8 +323,10 @@ class DragonService {
     String lessonId,
   ) async {
     // Ask Course Service for lesson progress
-    LessonProgress? lessonProgress = await _courseService
-        .getLessonProgress(userId, lessonId);
+    LessonProgress? lessonProgress = await _courseService.getLessonProgress(
+      userId,
+      lessonId,
+    );
 
     if (lessonProgress == null) {
       throw DragonServiceException(
@@ -271,12 +384,18 @@ class DragonService {
     return await _repository.fetchClassAssets(classId);
   }
 
-  Future<void> updateUserPreferredPhase(String userId, String dragonId, String phase) async {
-
+  Future<void> updateUserPreferredPhase(
+    String userId,
+    String dragonId,
+    String phase,
+  ) async {
     String normalizedPhase = normalizePhase(phase);
 
-    return await _repository.updateUserPreferredPhase(userId, dragonId, normalizedPhase);
-
+    return await _repository.updateUserPreferredPhase(
+      userId,
+      dragonId,
+      normalizedPhase,
+    );
   }
 
   Future<Map<String, String>> loadUserPreferredPhases(String userId) async {
@@ -284,7 +403,12 @@ class DragonService {
   }
 
   /// Update dragon name
-  Future<void> updateDragonName(String userId, String dragonId, String newName, int maxNameLength,) async {
+  Future<void> updateDragonName(
+    String userId,
+    String dragonId,
+    String newName,
+    int maxNameLength,
+  ) async {
     try {
       // Validate name
       final trimmedName = newName.trim();
