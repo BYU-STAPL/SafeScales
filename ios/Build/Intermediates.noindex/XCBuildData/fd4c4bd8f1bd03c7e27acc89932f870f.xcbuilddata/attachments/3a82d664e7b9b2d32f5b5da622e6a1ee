@@ -1,4 +1,0 @@
-
-module flutter_tts.__Swift {
-  exclude header "flutter_tts-Swift.h"
-}
