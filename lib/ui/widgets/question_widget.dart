@@ -26,10 +26,8 @@ class QuestionWidget extends StatefulWidget {
 }
 
 class _QuestionWidgetState extends State<QuestionWidget> {
-
   final double optionPadding = 15;
   final double optionMargin = 10;
-
 
   @override
   Widget build(BuildContext context) {
@@ -57,49 +55,53 @@ class _QuestionWidgetState extends State<QuestionWidget> {
     }
 
     return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // If no extra text place spacer before question - for centering or to push question to the bottom
+        if (question.text == null) const Spacer(),
 
-            // If no extra text place spacer before question - for centering or to push question to the bottom
-            if (question.text == null)
-              const Spacer(),
+        if (question.text != null) ...[
+          // Extra Text exists, show it first, then do spacer, then question
+          Text(question.text!, style: theme.textTheme.bodyMedium),
 
-            if (question.text != null) ...[
-              // Extra Text exists, show it first, then do spacer, then question
-              Text(
-                question.text!,
-                style: theme.textTheme.bodyMedium,
-              ),
+          const Spacer(),
+        ],
 
-              const Spacer(),
-            ],
+        Text(
+          question.questionText,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
 
-            Text(
-              question.questionText,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+        // If no extra text place spacer after question too - for centering
+        if (question.text == null) const Spacer(),
 
-            // If no extra text place spacer after question too - for centering
-            if (question.text == null)
-              const Spacer(),
+        SizedBox(height: 20),
 
-            SizedBox(height: 20,),
+        instructionText,
 
-            instructionText,
+        buildScrollableOptions(),
+        // buildConstrainedScrollableOptions(),
 
-            buildScrollableOptions(),
-            // buildConstrainedScrollableOptions(),
-
-          ],
-        );
+        // Show explanation after user answers (when response is locked or we have answers)
+        if (widget.showExplanation &&
+            question.explanation.isNotEmpty &&
+            (widget.isResponseLocked || widget.selectedAnswers.isNotEmpty))
+          _buildExplanationSection(),
+      ],
+    );
     //   ),
     // );
   }
 
-  GestureDetector buildOption(List<int> selectedAnswers, Question question, bool isSelected, int index, String option) {
-
+  GestureDetector buildOption(
+    List<int> selectedAnswers,
+    Question question,
+    bool isSelected,
+    int index,
+    String option,
+  ) {
     ThemeData theme = Theme.of(context);
 
     return GestureDetector(
@@ -146,9 +148,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
               color:
                   isSelected || !widget.isResponseLocked
                       ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface.withValues(
-                        alpha: 0.4,
-                      ),
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.4),
             ),
             SizedBox(width: 12),
             Expanded(
@@ -158,9 +158,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                   color:
                       isSelected || !widget.isResponseLocked
                           ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurface.withValues(
-                            alpha: 0.4,
-                          ),
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
               ),
             ),
@@ -171,25 +169,26 @@ class _QuestionWidgetState extends State<QuestionWidget> {
   }
 
   Widget buildScrollableOptions() {
-    double optionFontSize = Theme.of(context).textTheme.bodyMedium?.fontSize ?? 18;
+    double optionFontSize =
+        Theme.of(context).textTheme.bodyMedium?.fontSize ?? 18;
 
     double fontScale = AppTheme.fontSizeScale;
     double maxHeight = 250;
 
-
     // Estimate average option height (you'll need to tune this based on your buildOption implementation)
     // 30 from the 15 all around padding around the text
     // 20 for the vertical margin between options
-    double estimatedOptionHeight = (optionFontSize + optionPadding*2 + optionMargin*2) * fontScale; // Adjust this value
-    double estimatedTotalHeight = widget.question.options.length * estimatedOptionHeight;
+    double estimatedOptionHeight =
+        (optionFontSize + optionPadding * 2 + optionMargin * 2) *
+        fontScale; // Adjust this value
+    double estimatedTotalHeight =
+        widget.question.options.length * estimatedOptionHeight;
 
     bool hasOverflow = estimatedTotalHeight > maxHeight;
 
     return Container(
       height: hasOverflow ? maxHeight : null,
-      constraints: BoxConstraints(
-        maxHeight: maxHeight,
-      ),
+      constraints: BoxConstraints(maxHeight: maxHeight),
       child: Stack(
         children: [
           ListView.builder(
@@ -201,7 +200,13 @@ class _QuestionWidgetState extends State<QuestionWidget> {
             itemBuilder: (context, index) {
               final option = widget.question.options[index];
               final isSelected = widget.selectedAnswers.contains(index);
-              return buildOption(widget.selectedAnswers, widget.question, isSelected, index, option);
+              return buildOption(
+                widget.selectedAnswers,
+                widget.question,
+                isSelected,
+                index,
+                option,
+              );
             },
           ),
 
@@ -218,7 +223,9 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                     end: Alignment.topCenter,
                     colors: [
                       Theme.of(context).colorScheme.surface,
-                      Theme.of(context).colorScheme.surface.withValues(alpha: 0.0),
+                      Theme.of(
+                        context,
+                      ).colorScheme.surface.withValues(alpha: 0.0),
                     ],
                   ),
                 ),
@@ -243,6 +250,52 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExplanationSection() {
+    ThemeData theme = Theme.of(context);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.lightbulb_outline,
+                size: 20,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Explanation:',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.question.explanation,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
         ],
       ),
     );
