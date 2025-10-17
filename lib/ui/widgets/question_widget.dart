@@ -74,8 +74,8 @@ class _QuestionWidgetState extends State<QuestionWidget> {
           ),
         ),
 
-        // If no extra text place spacer after question too - for centering
-        if (question.text == null) const Spacer(),
+        // // If no extra text place spacer after question too - for centering
+        // if (question.text == null) const Spacer(),
 
         SizedBox(height: 20),
 
