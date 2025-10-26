@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -34,11 +36,33 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        val keystoreProperties = Properties()
+        val keystorePropertiesFile = rootProject.file("key.properties")
+        
+        if (keystorePropertiesFile.exists()) {
+            // Load local keystore properties if available (for local builds)
+            keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+        }
+        
+        create("release") {
+            // Use local keystore if available, otherwise use environment variables (for CI)
+            storeFile = file(
+                if (keystorePropertiesFile.exists()) {
+                    keystoreProperties["storeFile"] as String
+                } else {
+                    System.getenv("KEYSTORE_FILE") ?: "keystore.jks"
+                }
+            )
+            storePassword = keystoreProperties["storePassword"] as String? ?: System.getenv("KEYSTORE_PASSWORD") ?: ""
+            keyAlias = keystoreProperties["keyAlias"] as String? ?: System.getenv("KEY_ALIAS") ?: ""
+            keyPassword = keystoreProperties["keyPassword"] as String? ?: System.getenv("KEY_PASSWORD") ?: ""
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }

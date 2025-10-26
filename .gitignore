@@ -96,6 +96,12 @@ google-services.json
 GoogleService-Info.plist
 firebase_options.dart
 
+# Android Keystore files
+*.jks
+*.keystore
+key.properties
+android/app/key.properties
+
 # Generated files
 *.g.dart
 *.freezed.dart
