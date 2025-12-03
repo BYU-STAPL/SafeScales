@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:safe_scales/models/question.dart';
 
 class LessonProgress {
@@ -56,7 +54,6 @@ class LessonProgress {
     return highScore;
   }
 
-
   double getProgressPercent() {
     double progress = 0;
 
@@ -110,7 +107,8 @@ class QuizAttempt {
   // final int attemptNumber;
   // final bool passed; // based on passing threshold
 
-  double get score => ((correctAnswers / totalQuestions) * 100).round().toDouble();
+  double get score =>
+      ((correctAnswers / totalQuestions) * 100).round().toDouble();
 
   QuizAttempt({
     required this.id,

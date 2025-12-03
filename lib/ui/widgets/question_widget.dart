@@ -28,6 +28,28 @@ class QuestionWidget extends StatefulWidget {
 class _QuestionWidgetState extends State<QuestionWidget> {
   final double optionPadding = 15;
   final double optionMargin = 10;
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(QuestionWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reset scroll position when question changes
+    if (oldWidget.question != widget.question) {
+      _scrollController.jumpTo(0);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -192,6 +214,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
       child: Stack(
         children: [
           ListView.builder(
+            controller: _scrollController,
             shrinkWrap: !hasOverflow,
             padding: EdgeInsets.only(
               bottom: hasOverflow ? (25 * fontScale) : (10 * fontScale),
