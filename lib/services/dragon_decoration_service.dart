@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:safe_scales/models/sticker_item_model.dart';
 import 'package:safe_scales/repositories/dragon_decoration_repository.dart';
@@ -21,6 +20,7 @@ class DragonDecorationService {
       accessoriesForDragon[sticker.accessoryId] = {
         'position': {'x': sticker.position.dx, 'y': sticker.position.dy},
         'size': sticker.size,
+        'isBehindDragon': sticker.isBehindDragon,
       };
     }
     return accessoriesForDragon;
@@ -80,6 +80,7 @@ class DragonDecorationService {
             (pos['y'] ?? 0).toDouble(),
           ),
           size: (d['size'] ?? 48).toDouble(),
+          isBehindDragon: (d['isBehindDragon'] ?? false) as bool,
         ),
       );
     });
@@ -223,6 +224,7 @@ class DragonDecorationService {
     required Item item,
     required Offset position,
     double size = 48.0,
+    bool isBehindDragon = false,
   }) {
     // DEBUG: Print item being used for sticker
     debugPrint('🔍 Creating sticker from item: ${item.name} (${item.id}) - URL: "${item.imageUrl}"');
@@ -242,6 +244,7 @@ class DragonDecorationService {
       accessoryId: item.id,
       position: position,
       size: size,
+      isBehindDragon: isBehindDragon,
     );
   }
 
@@ -311,11 +314,13 @@ class DragonDecorationService {
     // final relativeY = screenOffset.dy - dragTargetTop - dragonOffsetY - (stickerSize / 2);
 
     // Constrain to environment bounds
+    // Note: constrainStickerPosition already accounts for stickerSize in its clamp logic,
+    // so we pass the full containerSize
     return constrainStickerPosition(
       newPosition: screenOffset,
       containerSize: Size(
-        environmentSize.width - stickerSize,
-        environmentSize.height - stickerSize,
+        environmentSize.width,
+        environmentSize.height,
       ),
       stickerSize: stickerSize,
     );

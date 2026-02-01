@@ -27,9 +27,9 @@ class SupabaseConfig {
         supabaseUrl = config['SUPABASE_URL'];
         supabaseAnonKey = config['SUPABASE_ANON_KEY'];
       } else {
-        // In non-web environment, load from .env file
-        debugPrint('Non-web environment detected, loading .env file...');
-        await dotenv.load(fileName: ".env");
+        // In non-web environment, .env file should already be loaded in main.dart
+        // Access the values directly from the loaded .env file
+        debugPrint('Non-web environment detected, reading .env file...');
         supabaseUrl = dotenv.env['SUPABASE_URL'];
         supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
       }

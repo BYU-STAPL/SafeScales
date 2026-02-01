@@ -56,6 +56,10 @@ class CourseService {
         lessonOrder: lessonOrder,
       );
     } catch (e) {
+      // Re-throw DeletedClassException as-is so it can be handled upstream
+      if (e is DeletedClassException) {
+        rethrow;
+      }
       throw CourseServiceException('Failed to load course data: $e');
     }
   }
@@ -512,23 +516,41 @@ class CourseService {
   List<Question> _createQuestionsFromList(List<dynamic> questionsData) {
     List<Question> questions = [];
     for (var q in questionsData) {
-      questions.add(_createSingleQuestion(Map<String, dynamic>.from(q as Map)));
+      final questionMap = Map<String, dynamic>.from(q as Map);
+      
+      // Skip questions with empty questionText before processing
+      final String questionText = (questionMap['question'] ?? '').toString().trim();
+      if (questionText.isEmpty) {
+        continue; // Skip invalid questions
+      }
+      
+      final question = _createSingleQuestion(questionMap);
+      if (question != null) {
+        questions.add(question);
+      }
     }
     return questions;
   }
 
-  Question _createSingleQuestion(Map<String, dynamic> questionData) {
-    final List<String> choices = List<String>.from(questionData['choices']);
+  Question? _createSingleQuestion(Map<String, dynamic> questionData) {
+    // Validate questionText is not empty
+    final String questionText = (questionData['question'] ?? '').toString().trim();
+    if (questionText.isEmpty) {
+      return null; // Skip questions with empty questionText
+    }
+
+    final List<String> choices = List<String>.from(questionData['choices'] ?? []);
 
     List<String> filteredList = choices.where((s) => s.isNotEmpty).toList();
 
+    // Skip questions with no valid options
     if (filteredList.isEmpty) {
-      filteredList.add("Option");
+      return null;
     }
 
     return Question.singleAnswer(
       id: '',
-      questionText: questionData['question'],
+      questionText: questionText,
       options: filteredList,
       correctAnswerIndex: int.parse(questionData['answer']),
       explanation: '',
@@ -579,10 +601,23 @@ class CourseService {
     final List<Question> questions = [];
     for (int i = 0; i < rawQuestions.length; i++) {
       final q = rawQuestions[i] as Map<String, dynamic>;
-      final String questionText = (q['question'] ?? '').toString();
+      final String questionText = (q['question'] ?? '').toString().trim();
+      
+      // Skip questions with empty questionText
+      if (questionText.isEmpty) {
+        continue;
+      }
+      
+      // Filter out empty options
       final List<String> options = List<String>.from(
         q['choices']?.map((c) => c.toString()) ?? [],
-      );
+      ).where((s) => s.isNotEmpty).toList();
+      
+      // Skip questions with no valid options
+      if (options.isEmpty) {
+        continue;
+      }
+      
       // answer could be a string index like "0" or an int
       final dynamic answerRaw = q['answer'];
       int correctIndex = 0;

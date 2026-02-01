@@ -204,14 +204,25 @@
         <p class="subtitle">Gamified education app for teaching social media literacy and safety</p>
         <p class="version">Version 0.9.2</p>
         
-        <a href="https://github.com/YOUR_USERNAME/YOUR_REPO/releases/latest/download/app-release.apk" 
+        <a href="https://github.com/khalilFadi/safeScales-App/releases/latest/download/app-release.apk" 
            class="download-button" 
-           download="safe-scales.apk">
+           download="safe-scales.apk"
+           id="download-button">
             📱 Download for Android
         </a>
         
+        <a href="#" 
+           id="pwa-download-button"
+           style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); margin-left: 10px;">
+            🌐 Install Web App (PWA)
+        </a>
+        
         <div class="warning">
-            <strong>⚠️ Note:</strong> You may need to allow "Install from Unknown Sources" in your Android settings when installing the APK file.
+            <strong>⚠️ Android Note:</strong> You may need to allow "Install from Unknown Sources" in your Android settings when installing the APK file.
+        </div>
+        
+        <div class="warning ios-warning" style="background: #e3f2fd; border-left-color: #2196F3; color: #1565C0; display: none;">
+            <strong>🍎 iOS Note:</strong> iOS distribution requires TestFlight or App Store. Click the iOS button for more information.
         </div>
         
         <div class="features">
@@ -235,19 +246,24 @@
             </ol>
         </div>
         
-        <a href="https://github.com/YOUR_USERNAME/YOUR_REPO/releases" class="github-link">
+        <a href="https://github.com/khalilFadi/safeScales-App/releases" class="github-link">
             View all releases on GitHub →
         </a>
     </div>
     
     <script>
         // Replace placeholders with actual repository details
-        const repoOwner = 'YOUR_USERNAME';
-        const repoName = 'YOUR_REPO';
+        const repoOwner = 'khalilFadi';
+        const repoName = 'safeScales-App';
         
         // Fetch latest release info
         fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/releases/latest`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.tag_name) {
                     document.querySelector('.version').textContent = `Version ${data.tag_name}`;
@@ -255,15 +271,54 @@
                     // Find APK asset
                     const apkAsset = data.assets.find(asset => asset.name.includes('.apk'));
                     if (apkAsset) {
-                        const downloadLink = document.querySelector('.download-button');
+                        const downloadLink = document.getElementById('download-button');
                         downloadLink.href = apkAsset.browser_download_url;
+                        console.log('Updated download link to:', apkAsset.browser_download_url);
+                    } else {
+                        console.warn('No APK asset found in latest release');
+                        // Keep the default link which should work if releases exist
                     }
                 }
             })
             .catch(error => {
                 console.error('Could not fetch release info:', error);
-                // Fallback to hardcoded version if API fails
+                console.log('Using fallback download link');
+                // The default href should still work if there are releases
+                // If no releases exist, the user will see a 404, which is expected
             });
+        
+        // Handle iOS download button
+        document.getElementById('ios-download-button').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Show iOS warning
+            document.querySelector('.ios-warning').style.display = 'block';
+            
+            // Show iOS distribution options
+            const iosInfo = `
+                <div style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px; text-align: left;">
+                    <h4 style="color: #333; margin-bottom: 15px;">iOS Distribution Options:</h4>
+                    <ol style="color: #666; line-height: 1.6;">
+                        <li><strong>TestFlight (Recommended):</strong> Beta testing platform - requires Apple Developer Account ($99/year)</li>
+                        <li><strong>App Store:</strong> Official distribution - requires App Store review and Apple Developer Account</li>
+                        <li><strong>Enterprise:</strong> Internal distribution only - requires Enterprise Developer Account</li>
+                    </ol>
+                    <p style="margin-top: 15px; color: #666;">
+                        <strong>Current Status:</strong> iOS app builds successfully but requires code signing for distribution.
+                        <br><strong>Next Step:</strong> Set up Apple Developer Account and TestFlight for iOS distribution.
+                    </p>
+                </div>
+            `;
+            
+            // Insert iOS info after the warning
+            const warningDiv = document.querySelector('.ios-warning');
+            if (!warningDiv.nextElementSibling || !warningDiv.nextElementSibling.classList.contains('ios-info')) {
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'ios-info';
+                infoDiv.innerHTML = iosInfo;
+                warningDiv.parentNode.insertBefore(infoDiv, warningDiv.nextSibling);
+            }
+        });
     </script>
 </body>
 </html>

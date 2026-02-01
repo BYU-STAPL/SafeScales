@@ -7,36 +7,37 @@ class UserRepository {
   final SupabaseClient _supabase;
 
   UserRepository({SupabaseClient? supabase})
-      : _supabase = supabase ?? SupabaseConfig.client;
-
+    : _supabase = supabase ?? SupabaseConfig.client;
 
   // ---------------- CREATE ----------------
 
-  Future<void> signUpUser(String userId, String username, String email, String password) async {
+  Future<void> signUpUser(
+    String userId,
+    String username,
+    String email,
+    String password,
+  ) async {
     try {
-      await _supabase
-          .from('Users')
-          .insert({
-            'id': userId,
-            'Username': username,
-            'Email': email,
-          'password': password, // Store plain password
-        });
-    }
-    catch (e) {
+      await _supabase.from('Users').insert({
+        'id': userId,
+        'Username': username,
+        'Email': email,
+        'password': password, // Store plain password
+      });
+    } catch (e) {
       throw UserRepositoryException(e.toString());
     }
   }
 
   // ---------------- READ ----------------
 
-  Future<Map<String, String>> loginWithEmail(String email, String password) async {
+  Future<Map<String, String>> loginWithEmail(
+    String email,
+    String password,
+  ) async {
     try {
-      final response = await _supabase
-          .from('Users')
-          .select()
-          .eq('Email', email)
-          .single();
+      final response =
+          await _supabase.from('Users').select().eq('Email', email).single();
 
       // Check email again
       // Check password after
@@ -48,42 +49,40 @@ class UserRepository {
         };
       }
 
-
       return {};
-    }
-    catch (e) {
+    } catch (e) {
       throw UserRepositoryException(e.toString());
     }
   }
 
   Future<List<dynamic>> getUsersJoinedClasses(String userId) async {
     try {
-      final response = await SupabaseConfig.client
-          .from('Users')
-          .select('joined_classes')
-          .eq('id', userId)
-          .single();
+      final response =
+          await SupabaseConfig.client
+              .from('Users')
+              .select('joined_classes')
+              .eq('id', userId)
+              .single();
 
       final joinedClasses = response['joined_classes'] as List<dynamic>?;
 
       return joinedClasses ?? [];
-    }
-    catch (e) {
+    } catch (e) {
       throw UserRepositoryException(e.toString());
     }
   }
-
 
   // ---------------- UPDATE ----------------
 
   Future<bool> joinClass(String userId, String classId) async {
     try {
       // Get current user's joined classes
-      final response = await SupabaseConfig.client
-          .from('Users')
-          .select('joined_classes')
-          .eq('id', userId)
-          .single();
+      final response =
+          await SupabaseConfig.client
+              .from('Users')
+              .select('joined_classes')
+              .eq('id', userId)
+              .single();
 
       List<String> joinedClasses = List<String>.from(
         response['joined_classes'] ?? [],
@@ -103,27 +102,28 @@ class UserRepository {
           .update({'joined_classes': joinedClasses})
           .eq('id', userId);
 
-
       // Add Initial Data
       await insertInitialReadingProgressData(userId, classId);
       await insertInitialDragonData(userId, classId);
 
       return true;
-    }
-    catch (e) {
+    } catch (e) {
       throw UserRepositoryException(e.toString());
     }
   }
 
-
-  Future<void> insertInitialReadingProgressData(String userId, String classId) async {
+  Future<void> insertInitialReadingProgressData(
+    String userId,
+    String classId,
+  ) async {
     try {
       // Get modules for the class
-      final classResponse = await _supabase
-          .from('classes')
-          .select('course_modules')
-          .eq('id', classId)
-          .single();
+      final classResponse =
+          await _supabase
+              .from('classes')
+              .select('course_modules')
+              .eq('id', classId)
+              .single();
 
       // Initialize empty progress for each module
       Map<String, dynamic> initialReadingProgress = {};
@@ -144,8 +144,7 @@ class UserRepository {
           .from('Users')
           .update({'reading_progress': initialReadingProgress})
           .eq('id', userId);
-    }
-    catch (e) {
+    } catch (e) {
       throw UserRepositoryException(e.toString());
     }
   }
@@ -153,13 +152,16 @@ class UserRepository {
   Future<void> insertInitialDragonData(String userId, String classId) async {
     try {
       // Initialize dragons for each module
-      final classAssetsResponse = await SupabaseConfig.client
-          .from('classes')
-          .select('assets')
-          .eq('id', classId)
-          .single();
+      final classAssetsResponse =
+          await SupabaseConfig.client
+              .from('classes')
+              .select('assets')
+              .eq('id', classId)
+              .single();
 
-      final classAssetList = List<Map<String, dynamic>>.from(classAssetsResponse['assets'] ?? []);
+      final classAssetList = List<Map<String, dynamic>>.from(
+        classAssetsResponse['assets'] ?? [],
+      );
 
       Map<String, dynamic> initialDragonData = {};
 
@@ -180,16 +182,12 @@ class UserRepository {
           .from('Users')
           .update({'dragons': initialDragonData})
           .eq('id', userId);
-    }
-    catch (e) {
+    } catch (e) {
       throw UserRepositoryException(e.toString());
     }
   }
 
-
-// ---------------- DELETE ----------------
-
-
+  // ---------------- DELETE ----------------
 }
 
 /// Custom exception for repository operations

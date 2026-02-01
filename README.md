@@ -4,7 +4,7 @@ A gamified education app for teaching social media literacy and safety.
 
 ## Download
 
-📱 [Download for Android](https://YOUR_USERNAME.github.io/YOUR_REPO/) - Download the latest version directly to your Android device.
+📱 [Download for Android](https://khalilfadi.github.io/safeScales-App/) - Download the latest version directly to your Android device.
 
 ## Development
 
@@ -18,8 +18,8 @@ A gamified education app for teaching social media literacy and safety.
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-cd SafeScales
+git clone https://github.com/khalilfadi/safeScales-App.git
+cd safeScales-App
 ```
 
 2. Install dependencies:
@@ -96,7 +96,7 @@ To host the download page:
 
 Your download page will be available at:
 ```
-https://YOUR_USERNAME.github.io/YOUR_REPO/
+https://khalilfadi.github.io/safeScales-App/
 ```
 
 ## Building Locally

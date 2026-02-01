@@ -103,6 +103,35 @@ class _AppInitializationScreenState extends State<AppInitializationScreen> {
 
     } catch (e) {
       print('❌ App initialization failed: $e');
+      
+      // Check if the error is due to a deleted class
+      final errorString = e.toString();
+      if (errorString.contains('DeletedClassException') || 
+          errorString.contains('deleted') ||
+          (errorString.contains('PGRST116') && errorString.contains('0 rows'))) {
+        // Class was deleted - clear user session and redirect to class selection
+        print('⚠️ User\'s class was deleted, clearing session and redirecting...');
+        
+        final userState = UserStateService();
+        await userState.clearUserSession();
+        userState.setUser(null);
+        
+        if (mounted) {
+          setState(() {
+            _isInitializing = false;
+            _errorMessage = 'The class you were enrolled in has been deleted. Please join a new class.';
+          });
+          
+          // Show a dialog or navigate after a short delay
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) {
+              _navigateToSelection();
+            }
+          });
+        }
+        return;
+      }
+      
       setState(() {
         _isInitializing = false;
         _errorMessage = 'Failed to load app data: ${e.toString()}';
@@ -156,14 +185,14 @@ class _AppInitializationScreenState extends State<AppInitializationScreen> {
                   Icon(
                     Icons.school,
                     size: 80,
-                    color: Colors.white,
+                    color: theme.colorScheme.onPrimary,
                   ),
                   const SizedBox(height: 32),
 
                   Text(
                     'SafeScales',
                     style: theme.textTheme.headlineLarge?.copyWith(
-                      color: Colors.white,
+                      color: theme.colorScheme.onPrimary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -171,15 +200,15 @@ class _AppInitializationScreenState extends State<AppInitializationScreen> {
 
                   if (_isInitializing) ...[
                     // Loading indicator
-                    const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
                     ),
                     const SizedBox(height: 24),
 
                     Text(
                       _loadingMessage,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: Colors.white,
+                        color: theme.colorScheme.onPrimary,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -188,7 +217,7 @@ class _AppInitializationScreenState extends State<AppInitializationScreen> {
                     Icon(
                       Icons.error_outline,
                       size: 48,
-                      color: Colors.red[300],
+                      color: theme.colorScheme.errorContainer,
                     ),
                     const SizedBox(height: 16),
 
@@ -211,7 +240,7 @@ class _AppInitializationScreenState extends State<AppInitializationScreen> {
                         TextButton(
                           onPressed: _navigateToSelection,
                           style: TextButton.styleFrom(
-                            foregroundColor: Colors.white,
+                            foregroundColor: theme.colorScheme.onPrimary,
                           ),
                           child: const Text('Back to Login'),
                         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/sticker_item_model.dart';
+import '../screens/shop_screen.dart';
 
 class StickerCollectionWidget extends StatelessWidget {
   const StickerCollectionWidget({
@@ -16,10 +17,16 @@ class StickerCollectionWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
     ColorScheme colorScheme = theme.colorScheme;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+      padding: EdgeInsets.only(
+        top: 20,
+        bottom: 20 + bottomPadding,
+        left: 20,
+        right: 20,
+      ),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHigh,
         borderRadius: const BorderRadius.only(
@@ -44,30 +51,45 @@ class StickerCollectionWidget extends StatelessWidget {
           _isLoadingAccessories
               ? const Center(child: CircularProgressIndicator())
               : userAccessories.isEmpty
-              ? Center(
-            child: Column(
-              children: [
-                // Icon(
-                //   Icons.shopping_bag_outlined,
-                //   size: 48,
-                //   color: colorScheme.primary.withValues(alpha: 0.5),
-                // ),
-                const SizedBox(height: 5),
-                Text(
-                  'No items yet.\nVisit the shop to earn some!',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  textAlign: TextAlign.center,
+              ? GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ShopScreen(),
                 ),
-                const SizedBox(height: 5),
-              ],
+              );
+            },
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.shopping_bag_outlined,
+                    size: 48,
+                    color: colorScheme.primary.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'No items yet.\nTap to visit the shop!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 5),
+                ],
+              ),
             ),
           )
-              : SizedBox(
-            height: 85, // Set a fixed height for the grid
-            child: GridView.builder(
+              : LayoutBuilder(
+            builder: (context, constraints) {
+              // Make height responsive based on screen size
+              final screenHeight = MediaQuery.of(context).size.height;
+              final gridHeight = (screenHeight * 0.12).clamp(85.0, 120.0);
+              return SizedBox(
+                height: gridHeight,
+                child: GridView.builder(
               scrollDirection: Axis.vertical,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 5, // 4 items per row
@@ -97,7 +119,7 @@ class StickerCollectionWidget extends StatelessWidget {
                     childWhenDragging: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.grey.withValues(alpha: 0.3),
+                        color: theme.colorScheme.outline.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Image.network(
@@ -129,6 +151,8 @@ class StickerCollectionWidget extends StatelessWidget {
                   );
               },
             ),
+              );
+            },
           ),
           const SizedBox(height: 15),
         ],

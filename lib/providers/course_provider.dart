@@ -255,16 +255,25 @@ class CourseProvider extends ChangeNotifier {
 
   /// Load complete course data
   Future<void> _loadCourseData() async {
-    final courseData = await _courseService.getUserCourseData(currentUser!.id);
+    try {
+      final courseData = await _courseService.getUserCourseData(currentUser!.id);
 
-    if (courseData != null) {
-      _courseId = courseData.courseId;
-      _className = courseData.className;
-      _description = courseData.description;
-      _lessons = courseData.lessons;
-      _lessonOrder = courseData.lessonOrder;
-    } else {
-      _clearData();
+      if (courseData != null) {
+        _courseId = courseData.courseId;
+        _className = courseData.className;
+        _description = courseData.description;
+        _lessons = courseData.lessons;
+        _lessonOrder = courseData.lessonOrder;
+      } else {
+        _clearData();
+      }
+    } catch (e) {
+      // Re-throw DeletedClassException so it can be handled in app initialization
+      if (e.toString().contains('DeletedClassException')) {
+        rethrow;
+      }
+      // For other errors, let _executeWithErrorHandling handle it
+      rethrow;
     }
   }
 

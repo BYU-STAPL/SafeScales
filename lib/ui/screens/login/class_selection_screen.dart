@@ -46,7 +46,7 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
             MaterialPageRoute(
               builder: (context) => const AppInitializationScreen(),
             ),
-                (route) => false, // Remove all previous routes
+            (route) => false, // Remove all previous routes
           );
         }
         return;
@@ -61,9 +61,7 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
 
   Future<void> _fetchClasses() async {
     try {
-      final response = await SupabaseConfig.client
-          .from('classes')
-          .select();
+      final response = await SupabaseConfig.client.from('classes').select();
 
       setState(() {
         classes = List<Map<String, dynamic>>.from(response);
@@ -90,12 +88,12 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
       }
 
       if (await authService.joinClass(user.id, classId)) {
-
         if (mounted) {
+          final theme = Theme.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Successfully joined class!'),
-              backgroundColor: Colors.green,
+              backgroundColor: theme.colorScheme.secondaryContainer,
             ),
           );
 
@@ -104,23 +102,28 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
             MaterialPageRoute(
               builder: (context) => const AppInitializationScreen(),
             ),
-                (route) => false, // Remove all previous routes
+            (route) => false, // Remove all previous routes
           );
         }
       } else {
         if (mounted) {
+          final theme = Theme.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('You have already joined this class'),
-              backgroundColor: Colors.orange,
+              backgroundColor: theme.colorScheme.tertiaryContainer,
             ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
+        final theme = Theme.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: theme.colorScheme.errorContainer,
+          ),
         );
       }
     } finally {
@@ -157,86 +160,90 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color: theme.colorScheme.onPrimary,
+                    ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ),
               ),
 
               Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 30),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 30),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 100),
 
-                        SizedBox(height: 100),
-
-                        Text(
-                          'Available Classes',
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            color: Colors.white,
-                          ),
+                      Text(
+                        'Available Classes',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          color: theme.colorScheme.onPrimary,
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Select a class to join',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                              color: Colors.white
-                          ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Select a class to join',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: Colors.white,
                         ),
-                        const SizedBox(height: 25),
-                        if (isLoading)
-                          const Center(child: CircularProgressIndicator())
-                        else if (error != null)
-                          Center(
-                            child: Text(
-                              'Error: $error',
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                          )
-                        else if (classes.isEmpty)
-                            const Center(
-                              child: Text(
-                                'No classes available',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            )
-                          else
-                            Expanded(
-                              child: ListView.builder(
-                                itemCount: classes.length,
-                                itemBuilder: (context, index) {
-                                  final classData = classes[index];
-                                  return Card(
-                                    margin: const EdgeInsets.only(bottom: 16),
-                                    child: ListTile(
-                                      contentPadding: const EdgeInsets.all(16),
-                                      title: Text(
-                                        classData['name'] ?? 'Unnamed Class',
-                                        style: theme.textTheme.headlineSmall?.copyWith(
+                      ),
+                      const SizedBox(height: 25),
+                      if (isLoading)
+                        const Center(child: CircularProgressIndicator())
+                      else if (error != null)
+                        Center(
+                          child: Text(
+                            'Error: $error',
+                            style: TextStyle(color: theme.colorScheme.error),
+                          ),
+                        )
+                      else if (classes.isEmpty)
+                        const Center(
+                          child: Text(
+                            'No classes available',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        )
+                      else
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: classes.length,
+                            itemBuilder: (context, index) {
+                              final classData = classes[index];
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 16),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.all(16),
+                                  title: Text(
+                                    classData['name'] ?? 'Unnamed Class',
+                                    style: theme.textTheme.headlineSmall
+                                        ?.copyWith(
                                           fontSize: 18 * AppTheme.fontSizeScale,
                                         ),
-                                      ),
-                                      subtitle: Text(
-                                        classData['description'] ??
-                                            'No description available',
-                                        style: theme.textTheme.bodySmall,
-                                      ),
-                                      trailing: ElevatedButton(
-                                        onPressed: () => _joinClass(classData['id']),
-                                        child: Text('Join Class'.toUpperCase()),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                      ],
-                    ),
-                  )
-              )
+                                  ),
+                                  subtitle: Text(
+                                    classData['description'] ??
+                                        'No description available',
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                  trailing: ElevatedButton(
+                                    onPressed:
+                                        () => _joinClass(classData['id']),
+                                    child: Text('Join Class'.toUpperCase()),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),

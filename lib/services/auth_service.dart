@@ -26,7 +26,12 @@ class AuthService {
 
       if (authResponse.user != null) {
         // Add user to database
-        await userRepository.signUpUser(authResponse.user!.id, username, email, password);
+        await userRepository.signUpUser(
+          authResponse.user!.id,
+          username,
+          email,
+          password,
+        );
 
         // Set the current user in UserStateService
         _userState.setUser(authResponse.user);
@@ -41,15 +46,16 @@ class AuthService {
 
   // ---------------- READ ----------------
 
-
   Future<bool> signIn({required String email, required String password}) async {
     try {
-      Map<String, String> userInfo = await userRepository.loginWithEmail(email, password);
+      Map<String, String> userInfo = await userRepository.loginWithEmail(
+        email,
+        password,
+      );
 
       if (userInfo.isEmpty) {
         return false;
-      }
-      else {
+      } else {
         final supabaseUser = supabase.User(
           id: userInfo['id']!,
           email: userInfo['email'],
@@ -66,7 +72,6 @@ class AuthService {
 
         return true;
       }
-
     } catch (e) {
       print('❌Error signing in: $e');
       print('❌Error type: ${e.runtimeType}');
@@ -107,6 +112,4 @@ class AuthService {
   }
 
   // ---------------- DELETE ----------------
-
-
 }

@@ -69,55 +69,6 @@ class SettingsDrawer extends StatelessWidget {
                   ),
                   Divider(height: 32, color: colorScheme.outlineVariant),
 
-                  // Font size control
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Font Size',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-
-                        Row(
-                          children: [
-                            Text(
-                              'A',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                            Expanded(
-                              child: Slider(
-                                value: themeNotifier.fontSize,
-                                min: 0.8,
-                                max: 1.4,
-                                divisions: 6,
-                                onChanged: (value) {
-                                  AppTheme.setFontSizeScale(value);
-                                  themeNotifier.updateFontSize(value);
-                                },
-                                activeColor: colorScheme.primary,
-                              ),
-                            ),
-                            Text(
-                              'A',
-                              style: TextStyle(
-                                fontSize: 28,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
                   // Color mode toggle
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
@@ -167,6 +118,104 @@ class SettingsDrawer extends StatelessWidget {
                           inactiveThumbColor: colorScheme.outline,
                           inactiveTrackColor: colorScheme.surfaceContainerHigh,
                           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // App Theme Selector
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'App Theme',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 80,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              _buildThemeOption(
+                                context,
+                                colorScheme,
+                                themeNotifier,
+                                AppThemeType.classicBlue,
+                                'Classic Blue',
+                                [const Color(0xff2E83E8), const Color(0xff0DB563)],
+                              ),
+                              const SizedBox(width: 12),
+                              _buildThemeOption(
+                                context,
+                                colorScheme,
+                                themeNotifier,
+                                AppThemeType.forestGreen,
+                                'Forest Green',
+                                [const Color(0xff059669), const Color(0xff10B981)],
+                              ),
+                              const SizedBox(width: 12),
+                              _buildThemeOption(
+                                context,
+                                colorScheme,
+                                themeNotifier,
+                                AppThemeType.sunsetOrange,
+                                'Sunset Orange',
+                                [const Color(0xffEA580C), const Color(0xffF97316)],
+                              ),
+                              const SizedBox(width: 12),
+                              _buildThemeOption(
+                                context,
+                                colorScheme,
+                                themeNotifier,
+                                AppThemeType.oceanTeal,
+                                'Ocean Teal',
+                                [const Color(0xff0891B2), const Color(0xff06B6D4)],
+                              ),
+                              const SizedBox(width: 12),
+                              _buildThemeOption(
+                                context,
+                                colorScheme,
+                                themeNotifier,
+                                AppThemeType.royalPurple,
+                                'Royal Purple',
+                                [const Color(0xff7C3AED), const Color(0xff8B5CF6)],
+                              ),
+                              const SizedBox(width: 12),
+                              _buildThemeOption(
+                                context,
+                                colorScheme,
+                                themeNotifier,
+                                AppThemeType.rosePink,
+                                'Rose Pink',
+                                [const Color(0xffE11D48), const Color(0xffF43F5E)],
+                              ),
+                              const SizedBox(width: 12),
+                              _buildThemeOption(
+                                context,
+                                colorScheme,
+                                themeNotifier,
+                                AppThemeType.indigoNavy,
+                                'Indigo Navy',
+                                [const Color(0xff4338CA), const Color(0xff4F46E5)],
+                              ),
+                              const SizedBox(width: 12),
+                              _buildThemeOption(
+                                context,
+                                colorScheme,
+                                themeNotifier,
+                                AppThemeType.amberGold,
+                                'Amber Gold',
+                                [const Color(0xffD97706), const Color(0xffF59E0B)],
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -239,6 +288,87 @@ class SettingsDrawer extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildThemeOption(
+    BuildContext context,
+    ColorScheme colorScheme,
+    ThemeNotifier themeNotifier,
+    AppThemeType themeType,
+    String themeName,
+    List<Color> previewColors,
+  ) {
+    final isSelected = themeNotifier.themeType == themeType;
+    
+    return GestureDetector(
+      onTap: () {
+        themeNotifier.updateThemeType(themeType);
+      },
+      child: Container(
+        width: 70,
+        decoration: BoxDecoration(
+          color: isSelected
+              ? colorScheme.primaryContainer.withValues(alpha: 0.3)
+              : colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? colorScheme.primary
+                : colorScheme.outlineVariant,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Color preview swatches
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: previewColors.map((color) {
+                return Container(
+                  width: 20,
+                  height: 20,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: colorScheme.outlineVariant,
+                      width: 0.5,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 6),
+            // Theme name
+            Text(
+              themeName,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            // Selected indicator
+            if (isSelected)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Icon(
+                  Icons.check_circle,
+                  size: 16,
+                  color: colorScheme.primary,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

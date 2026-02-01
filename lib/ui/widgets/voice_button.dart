@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import '../../services/tts_service.dart';
+import '../../providers/theme_provider.dart';
 
 class VoiceButton extends StatefulWidget {
   final String text;
@@ -30,8 +32,8 @@ class _VoiceButtonState extends State<VoiceButton>
   TtsState _currentState = TtsState.stopped;
 
   // Global speed control - shared across all VoiceButton instances
-  static final List<double> speedOptions = [1.0, 1.25, 1.5, 1.75, 2.0];
-  static int globalSpeedIndex = 0;
+  // Display options from 1.0 to 2.5 with 0.5 intervals (backend receives -0.5)
+  static final List<double> speedOptions = [1.0, 1.5, 2.0, 2.5];
   static final Set<_VoiceButtonState> _activeInstances = <_VoiceButtonState>{};
 
   @override
@@ -45,11 +47,18 @@ class _VoiceButtonState extends State<VoiceButton>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
-    // Initialize TTS service and apply current speed
-    _initializeTtsAndApplySpeed();
+    // Initialize TTS service
+    _initializeTts();
 
     // Register this instance for global speed updates
     _activeInstances.add(this);
+    
+    // Apply speed from provider after widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _applySpeedFromProvider();
+      }
+    });
   }
 
   @override
@@ -71,6 +80,11 @@ class _VoiceButtonState extends State<VoiceButton>
 
     switch (_currentState) {
       case TtsState.stopped:
+        // Apply current speed before speaking (subtract 0.5 so displayed 1.0x becomes backend 0.5)
+        if (mounted) {
+          final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
+          await _ttsService.setSpeechRate(themeNotifier.readingSpeed - 0.5);
+        }
         await _ttsService.speak(widget.text, pageIndex: widget.pageIndex);
         break;
       case TtsState.playing:
@@ -96,32 +110,51 @@ class _VoiceButtonState extends State<VoiceButton>
     widget.onStateChanged?.call();
   }
 
-  Future<void> _initializeTtsAndApplySpeed() async {
+  Future<void> _initializeTts() async {
     // Initialize TTS service
     await _ttsService.initialize();
     _currentState = _ttsService.state;
-
-    // Apply the current global speed setting
-    await _setCurrentSpeed();
   }
 
-  void _onSpeedPressed() async {
-    // Cycle to next speed
-    globalSpeedIndex = (globalSpeedIndex + 1) % speedOptions.length;
-    await _setCurrentSpeed();
+  Future<void> _applySpeedFromProvider() async {
+    if (!mounted) return;
+    try {
+      final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
+      final speed = themeNotifier.readingSpeed;
+      debugPrint('VoiceButton: Applying speed from provider: $speed (TTS: ${speed - 0.5})');
+      await _ttsService.setSpeechRate(speed - 0.5);
+    } catch (e) {
+      debugPrint('VoiceButton: Error applying speed from provider: $e');
+      // Fallback to default speed (0.5 = 1.0 - 0.5)
+      await _ttsService.setSpeechRate(0.5);
+    }
+  }
 
+  Future<void> _onSpeedChanged(double newSpeed) async {
+    if (!mounted) return;
+    final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
+    themeNotifier.updateReadingSpeed(newSpeed);
+    // Subtract 0.5 so displayed 1.0x becomes backend 0.5 for TTS
+    await _ttsService.setSpeechRate(newSpeed - 0.5);
+    
     // Notify all active instances to update their UI
     _notifyAllInstances();
-
+    
     setState(() {});
   }
 
-  Future<void> _setCurrentSpeed() async {
-    final speed = speedOptions[globalSpeedIndex];
-    debugPrint(
-      'VoiceButton: Setting speed to $speed (index: $globalSpeedIndex)',
-    );
-    await _ttsService.setSpeechRate(speed);
+  int _getSpeedIndex(double speed) {
+    // Find the closest speed option index
+    int closestIndex = 0;
+    double minDifference = double.infinity;
+    for (int i = 0; i < speedOptions.length; i++) {
+      double difference = (speed - speedOptions[i]).abs();
+      if (difference < minDifference) {
+        minDifference = difference;
+        closestIndex = i;
+      }
+    }
+    return closestIndex;
   }
 
   /// Notify all active VoiceButton instances to update their UI
@@ -133,8 +166,7 @@ class _VoiceButtonState extends State<VoiceButton>
     }
   }
 
-  String _getSpeedText() {
-    final speed = speedOptions[globalSpeedIndex];
+  String _getSpeedText(double speed) {
     if (speed == speed.toInt()) {
       return '${speed.toInt()}x';
     } else {
@@ -191,7 +223,7 @@ class _VoiceButtonState extends State<VoiceButton>
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: theme.colorScheme.shadow.withOpacity(0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 1),
                       ),
@@ -228,7 +260,7 @@ class _VoiceButtonState extends State<VoiceButton>
                         border: Border.all(color: _getColor(context), width: 2),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: theme.colorScheme.shadow.withOpacity(0.1),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -248,24 +280,18 @@ class _VoiceButtonState extends State<VoiceButton>
 
           const SizedBox(width: 20),
 
-          // Speed control button
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: _onSpeedPressed,
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
+          // Speed control dropdown
+          Consumer<ThemeNotifier>(
+            builder: (context, themeNotifier, child) {
+              final currentSpeed = themeNotifier.readingSpeed;
+              final currentIndex = _getSpeedIndex(currentSpeed);
+              
+              return Container(
                 decoration: BoxDecoration(
                   color: theme.colorScheme.secondaryContainer,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: theme.colorScheme.onSecondaryContainer.withOpacity(
-                      0.3,
-                    ),
+                    color: theme.colorScheme.onSecondaryContainer.withOpacity(0.3),
                     width: 1,
                   ),
                   boxShadow: [
@@ -276,26 +302,61 @@ class _VoiceButtonState extends State<VoiceButton>
                     ),
                   ],
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.gauge,
-                      size: 14,
-                      color: theme.colorScheme.onSecondaryContainer,
+                child: PopupMenuButton<double>(
+                  initialValue: speedOptions[currentIndex],
+                  onSelected: _onSpeedChanged,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _getSpeedText(),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSecondaryContainer,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          FontAwesomeIcons.gauge,
+                          size: 14,
+                          color: theme.colorScheme.onSecondaryContainer,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _getSpeedText(currentSpeed),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSecondaryContainer,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_drop_down,
+                          size: 16,
+                          color: theme.colorScheme.onSecondaryContainer,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                  itemBuilder: (BuildContext context) {
+                    return speedOptions.map((speed) {
+                      return PopupMenuItem<double>(
+                        value: speed,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(_getSpeedText(speed)),
+                            if ((speed - currentSpeed).abs() < 0.01)
+                              Icon(
+                                Icons.check,
+                                size: 16,
+                                color: theme.colorScheme.primary,
+                              ),
+                          ],
+                        ),
+                      );
+                    }).toList();
+                  },
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ],
       ),
@@ -337,20 +398,24 @@ class _VoiceControlsState extends State<VoiceControls> {
   }
 
   void _updateSpeechRate(double rate) async {
-    // Find the closest speed option index
-    int closestIndex = 0;
+    // Find the closest speed option
+    double closestSpeed = _VoiceButtonState.speedOptions[0];
     double minDifference = double.infinity;
-    for (int i = 0; i < _VoiceButtonState.speedOptions.length; i++) {
-      double difference = (rate - _VoiceButtonState.speedOptions[i]).abs();
+    for (final speed in _VoiceButtonState.speedOptions) {
+      double difference = (rate - speed).abs();
       if (difference < minDifference) {
         minDifference = difference;
-        closestIndex = i;
+        closestSpeed = speed;
       }
     }
 
-    // Update global speed state
-    _VoiceButtonState.globalSpeedIndex = closestIndex;
-    await _ttsService.setSpeechRate(rate);
+    // Update speed in theme provider
+    if (mounted) {
+      final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
+      themeNotifier.updateReadingSpeed(closestSpeed);
+    }
+    // Subtract 0.5 so displayed 1.0x becomes backend 0.5 for TTS
+    await _ttsService.setSpeechRate(closestSpeed - 0.5);
 
     // Notify all VoiceButton instances to update their UI
     _VoiceButtonState._notifyAllInstances();
@@ -358,8 +423,13 @@ class _VoiceControlsState extends State<VoiceControls> {
     setState(() {});
   }
 
-  double get _speechRate =>
-      _VoiceButtonState.speedOptions[_VoiceButtonState.globalSpeedIndex];
+  double get _speechRate {
+    if (mounted) {
+      final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
+      return themeNotifier.readingSpeed;
+    }
+    return 1.0; // Default fallback (displays as 1.0, backend gets 0.5)
+  }
 
   void _updateVolume(double volume) async {
     setState(() {
@@ -416,14 +486,14 @@ class _VoiceControlsState extends State<VoiceControls> {
                       Expanded(
                         child: Slider(
                           value: _speechRate,
-                          min: 0.1,
-                          max: 1.0,
-                          divisions: 9,
+                          min: 1.0,
+                          max: 2.5,
+                          divisions: 3,
                           onChanged: _updateSpeechRate,
                         ),
                       ),
                       Text(
-                        '${(_speechRate * 100).round()}%',
+                        '${_speechRate.toStringAsFixed(1)}x',
                         style: theme.textTheme.labelSmall,
                       ),
                     ],

@@ -106,11 +106,39 @@ class CourseRepository {
       }
 
       final classId = (userResponse['joined_classes'] as List).first;
-      final classResponse =
-      await _supabase.from('classes').select().eq('id', classId).single();
-
-      return Map<String, dynamic>.from(classResponse);
+      
+      try {
+        final classResponse =
+            await _supabase.from('classes').select().eq('id', classId).single();
+        return Map<String, dynamic>.from(classResponse);
+      } catch (e) {
+        // Check if the error is because the class doesn't exist (deleted class)
+        final errorString = e.toString();
+        if (errorString.contains('PGRST116') || 
+            errorString.contains('The result contains 0 rows') ||
+            errorString.contains('multiple (or no) rows returned')) {
+          // Class was deleted - remove it from user's joined_classes
+          print('⚠️ Class $classId was deleted, removing from user\'s joined classes');
+          
+          final joinedClasses = List<String>.from(userResponse['joined_classes'] as List);
+          joinedClasses.remove(classId);
+          
+          // Update user's joined_classes to remove the deleted class
+          await _supabase
+              .from('Users')
+              .update({'joined_classes': joinedClasses})
+              .eq('id', userId);
+          
+          // Throw a specific exception that can be caught upstream
+          throw DeletedClassException('The class you were enrolled in has been deleted. Please join a new class.');
+        }
+        // Re-throw other errors
+        rethrow;
+      }
     } catch (e) {
+      if (e is DeletedClassException) {
+        rethrow; // Re-throw deleted class exception as-is
+      }
       throw Exception('Failed to get user class: $e');
     }
   }
@@ -287,4 +315,13 @@ class CourseRepository {
 
 
 
+}
+
+/// Exception thrown when a user's class has been deleted
+class DeletedClassException implements Exception {
+  final String message;
+  DeletedClassException(this.message);
+
+  @override
+  String toString() => 'DeletedClassException: $message';
 }

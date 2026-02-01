@@ -83,10 +83,11 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
             _userState.setUserProfile(existingUserResponse);
 
             if (mounted) {
+              final theme = Theme.of(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text('Welcome back! Signed in successfully.'),
-                  backgroundColor: Colors.green,
+                  backgroundColor: theme.colorScheme.secondaryContainer,
                 ),
               );
 
@@ -121,13 +122,12 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
 
           _userState.setUser(supabaseUser);
           _userState.setUserProfile(existingUserResponse);
-        }
-        else {
-
+        } else {
           // User doesn't already exist
 
           // Get modules for the class
-          final classResponse = await SupabaseConfig.client
+          final classResponse =
+              await SupabaseConfig.client
                   .from('classes')
                   .select('course_modules')
                   .eq('id', classId)
@@ -148,14 +148,16 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
           }
 
           // Initialize dragons for each module
-          final classAssetsResponse = await SupabaseConfig.client
-              .from('classes')
-              .select('assets')
-              .eq('id', classId)
-              .single();
+          final classAssetsResponse =
+              await SupabaseConfig.client
+                  .from('classes')
+                  .select('assets')
+                  .eq('id', classId)
+                  .single();
 
-          final classAssetList = List<Map<String, dynamic>>.from(classAssetsResponse['assets'] ?? []);
-
+          final classAssetList = List<Map<String, dynamic>>.from(
+            classAssetsResponse['assets'] ?? [],
+          );
 
           Map<String, dynamic> initialDragonData = {};
 
@@ -170,7 +172,6 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
               'phases': ['egg'],
             };
           }
-
 
           // Create new user with initialized modules
           final newUserResponse =
@@ -208,10 +209,11 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
         }
 
         if (mounted) {
+          final theme = Theme.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Successfully joined class!'),
-              backgroundColor: Colors.green,
+              backgroundColor: theme.colorScheme.secondaryContainer,
             ),
           );
 
@@ -225,8 +227,12 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
         }
       } catch (e) {
         if (mounted) {
+          final theme = Theme.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(e.toString()),
+              backgroundColor: theme.colorScheme.errorContainer,
+            ),
           );
         }
       } finally {
@@ -264,7 +270,10 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color: theme.colorScheme.onPrimary,
+                    ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ),
@@ -293,6 +302,7 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                             const SizedBox(height: 25),
                             TextFormField(
                               controller: _classCodeController,
+                              keyboardType: TextInputType.number,
                               decoration: InputDecoration(
                                 labelText: 'Class Code',
                                 prefixIcon: Icon(

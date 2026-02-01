@@ -28,7 +28,6 @@ dependencies:
   path: ^1.8.3
   sign_in_with_apple: ^7.0.1
   supabase_flutter: ^2.9.0
-  firebase_core: ^3.3.0
   flutter_launcher_icons: ^0.13.1
   provider: ^6.0.5
   package_info_plus: ^8.0.0
@@ -36,8 +35,10 @@ dependencies:
   page_flip_builder: ^0.1.4
   book_flip: ^1.0.0
   flutter_markdown: ^0.6.18
+  markdown: ^7.0.0
   url_launcher: ^6.2.5
   flutter_tts: ^3.8.5
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:

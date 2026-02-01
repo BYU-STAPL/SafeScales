@@ -296,12 +296,14 @@ class DragonDecorationProvider extends ChangeNotifier {
     required Item item,
     required Offset position,
     double size = 48.0,
+    bool isBehindDragon = false,
   }) async {
     try {
       final newSticker = _service.createSticker(
         item: item,
         position: position,
         size: size,
+        isBehindDragon: isBehindDragon,
       );
 
       _placedStickers.add(newSticker);
@@ -336,6 +338,7 @@ class DragonDecorationProvider extends ChangeNotifier {
         accessoryId: sticker.accessoryId,
         position: constrainedPosition,
         size: sticker.size,
+        isBehindDragon: sticker.isBehindDragon,
       );
 
       notifyListeners();
@@ -360,6 +363,7 @@ class DragonDecorationProvider extends ChangeNotifier {
         accessoryId: sticker.accessoryId,
         position: sticker.position,
         size: constrainedSize,
+        isBehindDragon: sticker.isBehindDragon,
       );
 
       notifyListeners();
@@ -373,6 +377,29 @@ class DragonDecorationProvider extends ChangeNotifier {
     if (_selectedStickerId != stickerId) {
       _selectedStickerId = stickerId;
       notifyListeners();
+    }
+  }
+
+  void toggleStickerLayer(String stickerId) {
+    try {
+      final stickerIndex = _placedStickers.indexWhere((s) => s.id == stickerId);
+      if (stickerIndex == -1) return;
+
+      final sticker = _placedStickers[stickerIndex];
+      _placedStickers[stickerIndex] = StickerItem(
+        id: sticker.id,
+        imageUrl: sticker.imageUrl,
+        name: sticker.name,
+        accessoryId: sticker.accessoryId,
+        position: sticker.position,
+        size: sticker.size,
+        isBehindDragon: !sticker.isBehindDragon,
+      );
+
+      notifyListeners();
+      _saveDecoration();
+    } catch (e) {
+      _setError('Failed to toggle sticker layer: $e');
     }
   }
 

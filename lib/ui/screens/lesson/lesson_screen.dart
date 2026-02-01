@@ -118,11 +118,9 @@ class _LessonScreenState extends State<LessonScreen> {
                   : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(height: 10,),
+                      SizedBox(height: 10),
                       // Dragon image container
-                      Center(
-                        child: _getDragonImage(dragonProvider),
-                      ),
+                      Center(child: _getDragonImage(dragonProvider)),
 
                       Padding(
                         padding: const EdgeInsets.only(
@@ -146,15 +144,19 @@ class _LessonScreenState extends State<LessonScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-
                             Container(
                               width: statBoxWidth,
                               padding: EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1), //Colors.white.withValues(alpha: 0.1),
+                                color: theme.colorScheme.primaryContainer
+                                    .withValues(
+                                      alpha: 0.1,
+                                    ), //Colors.white.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.2,
+                                  ),
                                   width: 1,
                                 ),
                               ),
@@ -185,24 +187,28 @@ class _LessonScreenState extends State<LessonScreen> {
                                   SizedBox(height: 6),
                                   Text(
                                     "${_lessonProgress?.getMostRecentPostQuizScore().toInt()}%",
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                      fontSize: 15,
-                                    ),
+                                    style: theme.textTheme.headlineSmall
+                                        ?.copyWith(fontSize: 15),
                                   ),
                                 ],
                               ),
                             ),
 
-                            SizedBox(width: 40,),
+                            SizedBox(width: 40),
 
                             Container(
                               width: statBoxWidth,
                               padding: EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1), //Colors.white.withValues(alpha: 0.1),
+                                color: theme.colorScheme.primaryContainer
+                                    .withValues(
+                                      alpha: 0.1,
+                                    ), //Colors.white.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.2,
+                                  ),
                                   width: 1,
                                 ),
                               ),
@@ -233,9 +239,8 @@ class _LessonScreenState extends State<LessonScreen> {
                                   SizedBox(height: 6),
                                   Text(
                                     "${_lessonProgress?.getHighestPostQuizScore().toInt()}%",
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                      fontSize: 15,
-                                    ),
+                                    style: theme.textTheme.headlineSmall
+                                        ?.copyWith(fontSize: 15),
                                   ),
                                 ],
                               ),
@@ -243,7 +248,6 @@ class _LessonScreenState extends State<LessonScreen> {
                           ],
                         ),
                       ),
-
 
                       Padding(
                         padding: const EdgeInsets.only(
@@ -310,9 +314,12 @@ class _LessonScreenState extends State<LessonScreen> {
                                       _lessonProgress!.isReadingComplete,
                                 ),
                               ],
-                              ... [
+                              ...[
                                 const SizedBox(height: 20),
-                                _buildReviewCard(isUnlocked: _lessonProgress!.isPostQuizComplete()),
+                                _buildReviewCard(
+                                  isUnlocked:
+                                      _lessonProgress!.isPostQuizComplete(),
+                                ),
                               ],
                             ],
                           ),
@@ -325,14 +332,23 @@ class _LessonScreenState extends State<LessonScreen> {
     );
   }
 
-  Widget _buildQuizCard({required String title, required String description, required VoidCallback onTap, required IconData icon, required Color color, required bool isCompleted, required bool isUnlocked, double? score,}) {
+  Widget _buildQuizCard({
+    required String title,
+    required String description,
+    required VoidCallback onTap,
+    required IconData icon,
+    required Color color,
+    required bool isCompleted,
+    required bool isUnlocked,
+    double? score,
+  }) {
     ThemeData theme = Theme.of(context);
 
     return Container(
       decoration: BoxDecoration(
         color:
             isCompleted
-                ? theme.colorScheme.green.withValues(alpha: 0.1,)
+                ? theme.colorScheme.green.withValues(alpha: 0.1)
                 : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
@@ -363,9 +379,9 @@ class _LessonScreenState extends State<LessonScreen> {
                   radius: 20,
                   backgroundColor: color.withValues(alpha: 0.1),
                   child: Icon(
-                      isCompleted ? Icons.check_circle : icon,
-                      size: 20,
-                      color: isCompleted ? theme.colorScheme.green : color
+                    isCompleted ? Icons.check_circle : icon,
+                    size: 20,
+                    color: isCompleted ? theme.colorScheme.green : color,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -373,11 +389,10 @@ class _LessonScreenState extends State<LessonScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
                       Text(
                         title,
                         style: theme.textTheme.headlineSmall?.copyWith(
-                            fontSize: 18
+                          fontSize: 18,
                         ),
                       ),
 
@@ -473,7 +488,8 @@ class _LessonScreenState extends State<LessonScreen> {
                                     borderRadius: BorderRadius.circular(16),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
+                                        color: theme.colorScheme.shadow
+                                            .withOpacity(0.1),
                                         blurRadius: 10,
                                         offset: const Offset(0, 4),
                                       ),
@@ -482,15 +498,34 @@ class _LessonScreenState extends State<LessonScreen> {
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const CircularProgressIndicator(),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        'Updating progress...',
-                                        style:
-                                            Theme.of(
-                                              context,
-                                            ).textTheme.bodyLarge,
+                                      // Title and close button row
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              'Updating progress...',
+                                              style:
+                                                  Theme.of(
+                                                    context,
+                                                  ).textTheme.bodyLarge,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: Icon(Icons.close),
+                                            onPressed:
+                                                () =>
+                                                    Navigator.of(context).pop(),
+                                            padding: EdgeInsets.zero,
+                                            constraints: BoxConstraints(),
+                                          ),
+                                        ],
                                       ),
+                                      const SizedBox(height: 16),
+                                      const CircularProgressIndicator(),
                                     ],
                                   ),
                                 ),
@@ -570,9 +605,14 @@ class _LessonScreenState extends State<LessonScreen> {
                     radius: 20,
                     backgroundColor: primary.withValues(alpha: 0.1),
                     child: Icon(
-                        _lessonProgress!.isReadingComplete ? Icons.check_circle : FontAwesomeIcons.book,
-                        size: 20,
-                        color: _lessonProgress!.isReadingComplete ? theme.colorScheme.green : primary
+                      _lessonProgress!.isReadingComplete
+                          ? Icons.check_circle
+                          : FontAwesomeIcons.book,
+                      size: 20,
+                      color:
+                          _lessonProgress!.isReadingComplete
+                              ? theme.colorScheme.green
+                              : primary,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -580,7 +620,6 @@ class _LessonScreenState extends State<LessonScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-
                         Text(
                           'Reading Activity',
                           style: theme.textTheme.headlineSmall?.copyWith(
@@ -629,10 +668,13 @@ class _LessonScreenState extends State<LessonScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       decoration: BoxDecoration(
-        color: cardBg, //_lessonProgress!.isPostQuizComplete() ? theme.colorScheme.green.withValues(alpha: 0.1) : cardBg,
+        color:
+            cardBg, //_lessonProgress!.isPostQuizComplete() ? theme.colorScheme.green.withValues(alpha: 0.1) : cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: primary.withValues(alpha: 0.5), //_lessonProgress!.isPostQuizComplete ? theme.colorScheme.green : primary.withValues(alpha: 0.5),
+          color: primary.withValues(
+            alpha: 0.5,
+          ), //_lessonProgress!.isPostQuizComplete ? theme.colorScheme.green : primary.withValues(alpha: 0.5),
           width: 2,
         ),
         boxShadow: [
@@ -646,27 +688,27 @@ class _LessonScreenState extends State<LessonScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: _lessonProgress!.isPostQuizComplete() ? () async {
-
-            await _startReviewSet(widget.moduleId);
-
-          }
-              : () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Please complete the Post-Quiz activity first',
-                  style: TextStyle(
-                    color:
-                    Theme.of(context).colorScheme.onInverseSurface,
-                  ),
-                ),
-                backgroundColor:
-                Theme.of(context).colorScheme.inverseSurface,
-              ),
-            );
-            return;
-          },
+          onTap:
+              _lessonProgress!.isPostQuizComplete()
+                  ? () async {
+                    await _startReviewSet(widget.moduleId);
+                  }
+                  : () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Please complete the Post-Quiz activity first',
+                          style: TextStyle(
+                            color:
+                                Theme.of(context).colorScheme.onInverseSurface,
+                          ),
+                        ),
+                        backgroundColor:
+                            Theme.of(context).colorScheme.inverseSurface,
+                      ),
+                    );
+                    return;
+                  },
           borderRadius: BorderRadius.circular(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -676,7 +718,11 @@ class _LessonScreenState extends State<LessonScreen> {
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: primary.withValues(alpha: 0.1),
-                    child: Icon(FontAwesomeIcons.repeat, size: 20, color: primary),
+                    child: Icon(
+                      FontAwesomeIcons.repeat,
+                      size: 20,
+                      color: primary,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -726,10 +772,15 @@ class _LessonScreenState extends State<LessonScreen> {
 
   Future<void> _startReviewSet(String lessonId) async {
     try {
-      final courseProvider = Provider.of<CourseProvider>(context, listen: false);
+      final courseProvider = Provider.of<CourseProvider>(
+        context,
+        listen: false,
+      );
 
       // Get the review question set for the lesson using the course provider/service
-      final questionSet = await courseProvider.getReviewQuestionSetForLesson(lessonId);
+      final questionSet = await courseProvider.getReviewQuestionSetForLesson(
+        lessonId,
+      );
 
       if (questionSet == null || questionSet.questions.isEmpty) {
         // Clear loading state before showing error
@@ -762,10 +813,9 @@ class _LessonScreenState extends State<LessonScreen> {
       final completed = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ReviewScreen(
-            questionSet: questionSet,
-            needToShowShop: true,
-          ),
+          builder:
+              (context) =>
+                  ReviewScreen(questionSet: questionSet, needToShowShop: true),
         ),
       );
 
@@ -797,12 +847,27 @@ class _LessonScreenState extends State<LessonScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Updating progress...',
-                        style: Theme.of(context).textTheme.bodyLarge,
+                      // Title and close button row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Updating progress...',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.close),
+                            onPressed: () => Navigator.of(context).pop(),
+                            padding: EdgeInsets.zero,
+                            constraints: BoxConstraints(),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 16),
+                      const CircularProgressIndicator(),
                     ],
                   ),
                 ),
@@ -828,7 +893,6 @@ class _LessonScreenState extends State<LessonScreen> {
               _isLoading = false;
             });
           }
-
         } catch (e) {
           // print("Error in courseProvider.loadSingleLessonProgress: $e");
 
@@ -858,7 +922,6 @@ class _LessonScreenState extends State<LessonScreen> {
           });
         }
       }
-
     } catch (e) {
       debugPrint('Error starting review set: $e');
 
@@ -970,12 +1033,27 @@ class _LessonScreenState extends State<LessonScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Updating progress...',
-                        style: Theme.of(context).textTheme.bodyLarge,
+                      // Title and close button row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Updating progress...',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.close),
+                            onPressed: () => Navigator.of(context).pop(),
+                            padding: EdgeInsets.zero,
+                            constraints: BoxConstraints(),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 16),
+                      const CircularProgressIndicator(),
                     ],
                   ),
                 ),

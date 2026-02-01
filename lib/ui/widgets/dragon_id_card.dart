@@ -357,7 +357,7 @@ class _DragonIdCardState extends State<DragonIdCard> {
                           child: _buildStatItem(
                             context: context,
                             icon: Icons.landscape,
-                            label: 'Environment',
+                            label: 'Habitat',
                             value: widget.favoriteEnvironment,
                           ),
                         ),

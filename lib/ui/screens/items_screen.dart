@@ -47,20 +47,18 @@ class _ItemsScreenState extends State<ItemsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Color primary = Theme.of(context).colorScheme.primary;
+    final ThemeData theme = Theme.of(context);
+    final Color primary = theme.colorScheme.primary;
     final Color selected = primary;
-    final Color unselected = Colors.blue[100]!;
-    final Color selectedText = Colors.white;
+    final Color unselected = theme.colorScheme.primary.withValues(alpha: 0.5);
+    final Color selectedText = theme.colorScheme.onPrimary;
     final Color unselectedText = primary;
-
-    ThemeData theme = Theme.of(context);
 
     return Consumer<ItemProvider>(
       builder: (context, itemProvider, child) {
         // Move the items logic inside the consumer so it rebuilds when provider changes
-        final items = selectedTab == 0
-            ? itemProvider.items
-            : itemProvider.environments;
+        final items =
+            selectedTab == 0 ? itemProvider.items : itemProvider.environments;
 
         return Scaffold(
           key: _scaffoldKey,
@@ -76,22 +74,26 @@ class _ItemsScreenState extends State<ItemsScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          'This is your current collection of\nitems and environments',
+                          'This is your current collection of\nitems and habitats',
                           style: theme.textTheme.labelMedium,
                         ),
                       ),
                       // Refresh button
                       IconButton(
-                        onPressed: itemProvider.isLoading
-                            ? null
-                            : () => itemProvider.refresh(),
-                        icon: itemProvider.isLoading
-                            ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                            : const Icon(Icons.refresh),
+                        onPressed:
+                            itemProvider.isLoading
+                                ? null
+                                : () => itemProvider.refresh(),
+                        icon:
+                            itemProvider.isLoading
+                                ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : const Icon(Icons.refresh),
                         tooltip: 'Refresh items',
                       ),
                     ],
@@ -112,11 +114,13 @@ class _ItemsScreenState extends State<ItemsScreen> {
                             ),
                             child: Center(
                               child: Text(
-                                'ITEMS (${itemProvider.items.length})',
+                                'ITEMS (${itemProvider.items.length})'
+                                    .toUpperCase(),
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: selectedTab == 0
-                                      ? selectedText
-                                      : unselectedText,
+                                  color:
+                                      selectedTab == 0
+                                          ? selectedText
+                                          : unselectedText,
                                   letterSpacing: 1.1,
                                 ),
                               ),
@@ -137,11 +141,13 @@ class _ItemsScreenState extends State<ItemsScreen> {
                             ),
                             child: Center(
                               child: Text(
-                                'ENVIRONMENTS (${itemProvider.environments.length})',
+                                'HABITATS (${itemProvider.environments.length})'
+                                    .toUpperCase(),
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: selectedTab == 1
-                                      ? selectedText
-                                      : unselectedText,
+                                  color:
+                                      selectedTab == 1
+                                          ? selectedText
+                                          : unselectedText,
                                   letterSpacing: 1.1,
                                 ),
                               ),
@@ -167,7 +173,11 @@ class _ItemsScreenState extends State<ItemsScreen> {
     );
   }
 
-  Widget _buildItemsGrid(BuildContext context, List items, ItemProvider itemProvider) {
+  Widget _buildItemsGrid(
+    BuildContext context,
+    List items,
+    ItemProvider itemProvider,
+  ) {
     final Color primary = Theme.of(context).colorScheme.primary;
     final ThemeData theme = Theme.of(context);
 
@@ -221,28 +231,17 @@ class _ItemsScreenState extends State<ItemsScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              selectedTab == 0 ? 'No accessories yet' : 'No environments yet',
+              selectedTab == 0 ? 'No accessories yet' : 'No habitats yet',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 10),
             Text(
-              selectedTab == 0
-                  ? 'Complete reviews set from the shop page to earn items and environments'
-                  : 'Complete lessons and quizzes to\nunlock beautiful environments!',
+              'Complete review sets from the shop page to earn items and habitats',
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
-            if (selectedTab == 1)
-              ElevatedButton(
-                onPressed: () {
-                  // Navigate to lessons or shop
-                  // Navigator.pushNamed(context, '/lessons');
-                },
-                child: const Text('Start Learning'),
-              ),
           ],
         ),
       );
@@ -263,7 +262,11 @@ class _ItemsScreenState extends State<ItemsScreen> {
               name: item.name,
               onTap: () {
                 // Handle item tap
-                _showItemDetails(context, item, selectedTab == 0 ? 'accessory' : 'environment');
+                _showItemDetails(
+                  context,
+                  item,
+                  selectedTab == 0 ? 'accessory' : 'habitat',
+                );
               },
             ),
         ],
@@ -279,99 +282,129 @@ class _ItemsScreenState extends State<ItemsScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        width: double.infinity, // Add this - simpler alternative
-        padding: const EdgeInsets.only(left: 30, right: 30, top: 15, bottom: 30),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurface, //Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
+      builder:
+          (context) => Container(
+            width: double.infinity, // Add this - simpler alternative
+            padding: const EdgeInsets.only(
+              left: 30,
+              right: 30,
+              top: 15,
+              bottom: 30,
             ),
-            const SizedBox(height: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar and close button row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Handle bar
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color:
+                            Theme.of(
+                              context,
+                            ).colorScheme.onSurface, //Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    // Close button
+                    IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
 
-            // Item image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                item.imageUrl,
-                width: 300,
-                height: 300,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
+                // Item image
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    item.imageUrl,
                     width: 300,
                     height: 300,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.image_not_supported),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 16),
-            // Item name
-            Text(
-              item.name,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 10),
-            // Item type
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                type.toUpperCase(),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.bold,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 300,
+                        height: 300,
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.image_not_supported),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 24),
 
-            // TODO: Actions button Not needed right now, maybe later?
-            // Action buttons
-            // Row(
-            //   children: [
-            //     Expanded(
-            //       child: OutlinedButton(
-            //         onPressed: () => Navigator.pop(context),
-            //         child: const Text('Close'),
-            //       ),
-            //     ),
-            //     const SizedBox(width: 12),
-            //     Expanded(
-            //       child: ElevatedButton(
-            //         onPressed: () {
-            //           // Handle equip/use action
-            //           Navigator.pop(context);
-            //           ScaffoldMessenger.of(context).showSnackBar(
-            //             SnackBar(content: Text('${item.name} equipped!')),
-            //           );
-            //         },
-            //         child: Text(type == 'accessory' ? 'Equip' : 'Set Active'),
-            //       ),
-            //     ),
-            //   ],
-            // ),
-          ],
-        ),
-      ),
+                const SizedBox(height: 16),
+                // Item name
+                Text(
+                  item.name,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                // Item type
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    type.toUpperCase(),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // TODO: Actions button Not needed right now, maybe later?
+                // Action buttons
+                // Row(
+                //   children: [
+                //     Expanded(
+                //       child: OutlinedButton(
+                //         onPressed: () => Navigator.pop(context),
+                //         child: const Text('Close'),
+                //       ),
+                //     ),
+                //     const SizedBox(width: 12),
+                //     Expanded(
+                //       child: ElevatedButton(
+                //         onPressed: () {
+                //           // Handle equip/use action
+                //           Navigator.pop(context);
+                //           ScaffoldMessenger.of(context).showSnackBar(
+                //             SnackBar(content: Text('${item.name} equipped!')),
+                //           );
+                //         },
+                //         child: Text(type == 'accessory' ? 'Equip' : 'Set Active'),
+                //       ),
+                //     ),
+                //   ],
+                // ),
+              ],
+            ),
+          ),
     );
   }
 }

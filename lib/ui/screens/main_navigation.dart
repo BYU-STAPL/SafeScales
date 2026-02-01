@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -38,7 +40,11 @@ class _MainNavigationState extends State<MainNavigation> {
 
     _pages = <Widget>[
       // Hard code shop index here, that way this information doesn't need to be shared across files
-      HomeScreen(onNavigateToShop: () {_navigateToTab(3);}),
+      HomeScreen(
+        onNavigateToShop: () {
+          _navigateToTab(3);
+        },
+      ),
       DragonsScreen(),
       ItemsScreen(),
       ShopScreen(),
@@ -80,10 +86,12 @@ class _MainNavigationState extends State<MainNavigation> {
       }
     } catch (e) {
       if (mounted) {
+        final theme = Theme.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error logging out: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: theme.colorScheme.errorContainer,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -122,58 +130,64 @@ class _MainNavigationState extends State<MainNavigation> {
         onLogout: _handleLogout,
       ),
       body: _pages[_selectedIndex],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: barColor,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        bottom: Platform.isAndroid, // Only apply bottom padding on Android
+        child: Container(
+          decoration: BoxDecoration(
+            color: barColor,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.shadow.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            type: BottomNavigationBarType.fixed,
+            selectedItemColor: primary,
+            unselectedItemColor: theme.colorScheme.onSurface.withValues(
+              alpha: 0.5,
             ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: primary,
-          unselectedItemColor: Colors.blue[100],
-          showUnselectedLabels: true,
-          items: [
-            const BottomNavigationBarItem(
-              icon: FaIcon(FontAwesomeIcons.graduationCap),
-              label: 'Home',
-            ),
-            const BottomNavigationBarItem(
-              icon: FaIcon(FontAwesomeIcons.dragon),
-              label: 'Dragons',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.extension),
-              label: 'Items',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.storefront),
-              label: 'Shop',
-            ),
+            showUnselectedLabels: true,
+            items: [
+              const BottomNavigationBarItem(
+                icon: FaIcon(FontAwesomeIcons.graduationCap),
+                label: 'Home',
+              ),
+              const BottomNavigationBarItem(
+                icon: FaIcon(FontAwesomeIcons.dragon),
+                label: 'Dragons',
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.extension),
+                label: 'Items',
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.storefront),
+                label: 'Shop',
+              ),
 
-            //TODO: Remove later
-            // const BottomNavigationBarItem(
-            //   icon: Icon(Icons.device_hub),
-            //   label: 'Dev',
-            // ),
-          ],
+              //TODO: Remove later
+              // const BottomNavigationBarItem(
+              //   icon: Icon(Icons.device_hub),
+              //   label: 'Dev',
+              // ),
+            ],
+          ),
         ),
       ),
     );

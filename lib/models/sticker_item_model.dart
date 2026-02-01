@@ -28,6 +28,7 @@ class StickerItem {
   final String accessoryId;
   Offset position;
   double size;
+  bool isBehindDragon;
 
   StickerItem({
     required this.id,
@@ -36,5 +37,6 @@ class StickerItem {
     required this.accessoryId,
     required this.position,
     this.size = 48.0,
+    this.isBehindDragon = false,
   });
 }

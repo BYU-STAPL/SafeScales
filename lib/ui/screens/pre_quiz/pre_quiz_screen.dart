@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_results_screen.dart';
 import 'package:safe_scales/models/question.dart';
-import 'package:safe_scales/services/user_state_service.dart';
 
 import '../../../providers/course_provider.dart';
 import '../../widgets/progress_bar.dart';
 import '../../widgets/question_widget.dart';
+import '../../widgets/tts_progress_bar.dart';
+import '../../widgets/voice_button.dart';
+import '../../../services/tts_service.dart';
 
 class PreQuizScreen extends StatefulWidget {
   final String moduleId;
@@ -30,6 +32,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   int currentQuestionIndex = 0;
   List<List<int>> userAnswers = [];
   bool isStarted = false;
+  final TtsService _ttsService = TtsService();
 
   late DateTime _quizStartTime;
   late DateTime _quizEndTime;
@@ -38,6 +41,31 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   void initState() {
     super.initState();
     userAnswers = List.generate(widget.questionSet.questions.length, (_) => []);
+    _ttsService.initialize();
+  }
+
+  @override
+  void dispose() {
+    _ttsService.dispose();
+    super.dispose();
+  }
+
+  String _buildQuestionTextForTTS(int questionIndex) {
+    final question = widget.questionSet.questions[questionIndex];
+    final buffer = StringBuffer();
+
+    buffer.write('Question: ${question.questionText}');
+    if (question.text != null && question.text!.isNotEmpty) {
+      buffer.write('. ${question.text}');
+    }
+    buffer.write('. Options: ');
+
+    for (int i = 0; i < question.options.length; i++) {
+      final letter = String.fromCharCode(65 + i); // A, B, C, D...
+      buffer.write('$letter) ${question.options[i]}. ');
+    }
+
+    return buffer.toString();
   }
 
   void _startPreQuiz() {
@@ -48,7 +76,6 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   }
 
   void _finishPreQuiz() async {
-
     setState(() {
       _quizEndTime = DateTime.now();
     });
@@ -63,7 +90,6 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
 
     // Save quiz progress
     try {
-
       await Provider.of<CourseProvider>(
         context,
         listen: false,
@@ -76,7 +102,6 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
         startTime: _quizStartTime,
         endTime: _quizEndTime,
       );
-
     } catch (e) {
       print('❌ Error saving pre-quiz progress: $e');
       // Continue to show results even if saving fails
@@ -122,6 +147,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   }
 
   void _nextQuestion() {
+    _ttsService.stop(); // Stop TTS when changing questions
     if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
       setState(() {
         currentQuestionIndex++;
@@ -132,6 +158,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   }
 
   void _previousQuestion() {
+    _ttsService.stop(); // Stop TTS when changing questions
     if (currentQuestionIndex > 0) {
       setState(() {
         currentQuestionIndex--;
@@ -139,44 +166,52 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
     }
   }
 
-  Container _buildNavigationBar() {
+  Widget _buildNavigationBar() {
     ThemeData theme = Theme.of(context);
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextButton.icon(
-            onPressed: currentQuestionIndex > 0 ? _previousQuestion : null,
-            icon: const Icon(Icons.arrow_back_ios_rounded),
-            label: const Text('Previous'),
-          ),
-
-          TextButton.icon(
-            iconAlignment: IconAlignment.end,
-            onPressed:
-                userAnswers[currentQuestionIndex].isNotEmpty
-                    ? _nextQuestion
-                    : null,
-            label: Text(
-              currentQuestionIndex == widget.questionSet.questions.length - 1
-                  ? 'Complete'
-                  : 'Next',
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: EdgeInsets.only(bottom: bottomPadding > 0 ? 0 : 10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.shadow.withValues(alpha: 0.1),
+              blurRadius: 4,
+              offset: const Offset(0, -2),
             ),
-            icon: Icon(Icons.arrow_forward_ios_rounded),
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton.icon(
+                onPressed: currentQuestionIndex > 0 ? _previousQuestion : null,
+                icon: const Icon(Icons.arrow_back_ios_rounded),
+                label: const Text('Previous'),
+              ),
+
+              TextButton.icon(
+                iconAlignment: IconAlignment.end,
+                onPressed:
+                    userAnswers[currentQuestionIndex].isNotEmpty
+                        ? _nextQuestion
+                        : null,
+                label: Text(
+                  currentQuestionIndex ==
+                          widget.questionSet.questions.length - 1
+                      ? 'Complete'
+                      : 'Next',
+                ),
+                icon: Icon(Icons.arrow_forward_ios_rounded),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -209,11 +244,6 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
                       SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(
-                            Icons.help_outline,
-                            color: theme.colorScheme.secondary,
-                          ),
-                          SizedBox(width: 8),
                           Text(
                             '${widget.questionSet.questions.length} questions',
                           ),
@@ -222,11 +252,6 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
                       SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: theme.colorScheme.secondary,
-                          ),
-                          SizedBox(width: 8),
                           Expanded(child: Text(widget.questionSet.description)),
                         ],
                       ),
@@ -275,24 +300,55 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
           Expanded(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-              child: QuestionWidget(
-                question: widget.questionSet.questions[currentQuestionIndex],
-                selectedAnswers: userAnswers[currentQuestionIndex],
-                onAnswerChanged: (answers) {
-                  setState(() {
-                    userAnswers[currentQuestionIndex] = answers;
-                  });
-                },
-                showCorrectAnswer: widget.questionSet.showCorrectAnswers,
-                showExplanation: widget.questionSet.showExplanations,
-                isResponseLocked: false,
+              child: Column(
+                children: [
+                  // Voice button for read aloud (spacing matches image-at-top layout)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 22),
+                    child: VoiceButton(
+                      text: _buildQuestionTextForTTS(currentQuestionIndex),
+                      pageIndex: currentQuestionIndex,
+                      size: 35,
+                      onStateChanged: () {
+                        setState(() {
+                          // Trigger rebuild to update UI state
+                        });
+                      },
+                      margin: EdgeInsets.zero,
+                    ),
+                  ),
+                  // Question widget
+                  Expanded(
+                    child: QuestionWidget(
+                      key: ValueKey(
+                        widget.questionSet.questions[currentQuestionIndex].id,
+                      ),
+                      question:
+                          widget.questionSet.questions[currentQuestionIndex],
+                      selectedAnswers: userAnswers[currentQuestionIndex],
+                      onAnswerChanged: (answers) {
+                        setState(() {
+                          userAnswers[currentQuestionIndex] = answers;
+                        });
+                      },
+                      showCorrectAnswer: widget.questionSet.showCorrectAnswers,
+                      showExplanation: widget.questionSet.showExplanations,
+                      isResponseLocked: false,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
 
-          _buildNavigationBar(),
+          TtsProgressBar(
+            ttsService: _ttsService,
+            cleanText: TtsService.cleanTextForProgress(
+              _buildQuestionTextForTTS(currentQuestionIndex),
+            ),
+          ),
 
-          SizedBox(height: 15),
+          _buildNavigationBar(),
         ],
       ),
     );

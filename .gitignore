@@ -47,6 +47,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+*.apk
+*.aab
+*.ipa
 
 # iOS/XCode related
 **/ios/**/*.mode1v3
@@ -75,7 +78,7 @@ app.*.map.json
 **/ios/Flutter/flutter_export_environment.sh
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
-
+**/ios/
 # macOS
 **/macos/Flutter/GeneratedPluginRegistrant.swift
 **/macos/Flutter/Flutter-Debug.xcconfig

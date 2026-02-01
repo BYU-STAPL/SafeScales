@@ -13,37 +13,33 @@ class ReviewResultsScreen extends StatefulWidget {
   String? image;
   final bool needToShowShop;
 
-  ReviewResultsScreen({
-    super.key, this.image, required this.needToShowShop,
-  });
+  ReviewResultsScreen({super.key, this.image, required this.needToShowShop});
 
   @override
   _ReviewResultsScreen createState() => _ReviewResultsScreen();
 }
 
 class _ReviewResultsScreen extends State<ReviewResultsScreen> {
-
   bool isItemsTabSelected = true;
   int? selectedIndex; // Track selected item index
 
   @override
   Widget build(BuildContext context) {
-
     // Show shop if needed
     if (widget.needToShowShop) {
       return Consumer<ShopProvider>(
-          builder: (context, shopProvider, child) {
-            return Scaffold(
-              appBar: AppBar(
-                title: Text('Quiz Complete'),
-                elevation: 0,
-                backgroundColor: Colors.transparent,
-              ),
-              body: _buildShopScreen(context, shopProvider),
-            );
-          });
-    }
-    else {
+        builder: (context, shopProvider, child) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text('Quiz Complete'),
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+            ),
+            body: _buildShopScreen(context, shopProvider),
+          );
+        },
+      );
+    } else {
       return Scaffold(
         appBar: AppBar(
           title: Text('Quiz Complete'),
@@ -53,16 +49,13 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
         body: _buildRewardScreen(context),
       );
     }
-
   }
 
-
   Widget _buildToggleButtons(BuildContext context, ShopProvider shopProvider) {
-
     ThemeData theme = Theme.of(context);
     final Color selected = theme.colorScheme.primary;
-    final Color unselected = theme.colorScheme.lightBlue.withValues(alpha: 0.5,);
-    final Color selectedText = Colors.white;
+    final Color unselected = theme.colorScheme.primary.withValues(alpha: 0.5);
+    final Color selectedText = theme.colorScheme.onPrimary;
     final Color unselectedText = theme.colorScheme.primary;
 
     return Row(
@@ -73,7 +66,7 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
                 () => setState(() {
                   isItemsTabSelected = true;
                   selectedIndex = null;
-            }),
+                }),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -85,8 +78,7 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
                 child: Text(
                   'ITEMS (${shopProvider.availableItems.length})'.toUpperCase(),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color:
-                    isItemsTabSelected ? selectedText : unselectedText,
+                    color: isItemsTabSelected ? selectedText : unselectedText,
                     letterSpacing: 1.1,
                   ),
                 ),
@@ -101,7 +93,7 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
                 () => setState(() {
                   isItemsTabSelected = false;
                   selectedIndex = null;
-            }),
+                }),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -111,10 +103,10 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
               ),
               child: Center(
                 child: Text(
-                  'ENVIRONMENTS (${shopProvider.availableEnvironments.length})'.toUpperCase(),
+                  'HABITATS (${shopProvider.availableEnvironments.length})'
+                      .toUpperCase(),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color:
-                    !isItemsTabSelected ? selectedText : unselectedText,
+                    color: !isItemsTabSelected ? selectedText : unselectedText,
                     letterSpacing: 1.1,
                   ),
                 ),
@@ -126,9 +118,10 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
     );
   }
 
-  Widget _buildShop(BuildContext context, List<Item> items,) {
-
-    final Color highlight = Theme.of(context).colorScheme.green.withValues(alpha: 0.25);
+  Widget _buildShop(BuildContext context, List<Item> items) {
+    final Color highlight = Theme.of(
+      context,
+    ).colorScheme.green.withValues(alpha: 0.25);
 
     return Expanded(
       child: GridView.count(
@@ -148,32 +141,33 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
                   selectedIndex = selectedIndex == i ? null : i;
                 });
               },
-              isSelected: selectedIndex == i, // This must come after we set the value of selected index to null or i
+              isSelected:
+                  selectedIndex ==
+                  i, // This must come after we set the value of selected index to null or i
             ),
         ],
       ),
     );
   }
 
-
   Widget _buildImageWidget(BuildContext context) {
     double size = 300;
 
     if (widget.image == null || widget.image == "") {
       return Container(
-          width: size,
-          height: size,
-          color: Theme.of(context).colorScheme.surface,
-          child: Column(
-            children: [
-              Text('No reward selected'),
-              Icon(
-                Icons.shopping_bag,
-                size: 250,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ],
-          )
+        width: size,
+        height: size,
+        color: Theme.of(context).colorScheme.surface,
+        child: Column(
+          children: [
+            Text('No reward selected'),
+            Icon(
+              Icons.shopping_bag,
+              size: 250,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ],
+        ),
       );
     }
 
@@ -197,9 +191,7 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
     return imageWidget;
   }
 
-
   Widget _buildShopScreen(BuildContext context, ShopProvider shopProvider) {
-
     ThemeData theme = Theme.of(context);
 
     return SafeArea(
@@ -218,7 +210,7 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
             SizedBox(height: 15),
 
             Text(
-              'Pick a item or environment you\'d like to add to your collection',
+              'Pick a item or habitat you\'d like to add to your collection',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium,
             ),
@@ -229,61 +221,70 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
 
             SizedBox(height: 15),
 
-            _buildShop(context, isItemsTabSelected ? shopProvider.availableItems: shopProvider.availableEnvironments),
+            _buildShop(
+              context,
+              isItemsTabSelected
+                  ? shopProvider.availableItems
+                  : shopProvider.availableEnvironments,
+            ),
 
             SizedBox(height: 15),
 
             // Spacer(),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
-
                   // Handle Purchasing the item
 
                   if (selectedIndex == null) {
                     Navigator.pop(context, true);
                     return; // include return to avoid popping twice, there's another pop statement after the if branch
-                  }
-                  else {
+                  } else {
                     try {
                       // Proceed with the purchase using the provider
-                      final PurchaseResult result = await shopProvider.purchaseItemByIndex(
-                        selectedIndex!,
-                        !isItemsTabSelected,
-                      );
+                      final PurchaseResult result = await shopProvider
+                          .purchaseItemByIndex(
+                            selectedIndex!,
+                            !isItemsTabSelected,
+                          );
 
                       if (!mounted) return;
 
                       if (result.isSuccess) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(result.message)),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(result.message)));
 
                         // Reset selected index since the item is no longer available
                         setState(() {
                           selectedIndex = null;
                         });
                       } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(result.message)),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(result.message)));
                       }
-                    }
-                    catch (e) {
-                      print('❌ Purchasing item from Review Results Screen failed: ${e}');
+                    } catch (e) {
+                      print(
+                        '❌ Purchasing item from Review Results Screen failed: ${e}',
+                      );
                     }
                   }
 
                   Navigator.pop(context, true);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: selectedIndex == null ? theme.colorScheme.primary : theme.colorScheme.secondary,
+                  backgroundColor:
+                      selectedIndex == null
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.secondary,
                   foregroundColor: theme.colorScheme.onSecondary,
                 ),
                 child: Text(
-                    selectedIndex == null ? 'Skip'.toUpperCase() : 'Confirm Item'.toUpperCase(),
+                  selectedIndex == null
+                      ? 'Skip'.toUpperCase()
+                      : 'Confirm Item'.toUpperCase(),
                   style: TextStyle(
                     fontSize: theme.textTheme.bodyMedium?.fontSize,
                   ),
@@ -296,9 +297,7 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
     );
   }
 
-
   Widget _buildRewardScreen(BuildContext context) {
-
     ThemeData theme = Theme.of(context);
 
     return SafeArea(

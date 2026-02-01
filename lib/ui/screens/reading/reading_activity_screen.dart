@@ -9,9 +9,12 @@ import 'package:safe_scales/ui/screens/reading/reading_results_screen.dart';
 
 import '../../../models/lesson.dart';
 import '../../../providers/course_provider.dart';
+import '../../../providers/theme_provider.dart';
+import '../../widgets/clickable_text_scrubber.dart';
 import '../../widgets/progress_bar.dart';
-import '../../widgets/styled_markdown.dart';
+import '../../widgets/tts_progress_bar.dart';
 import '../../widgets/voice_button.dart';
+import '../../widgets/reading_font_adjustment_dialog.dart';
 import '../../../services/tts_service.dart';
 
 class ReadingActivityScreen extends StatefulWidget {
@@ -26,8 +29,10 @@ class ReadingActivityScreen extends StatefulWidget {
 class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
   final PageController _pageController = PageController(initialPage: 0);
   final TtsService _ttsService = TtsService();
+  final Map<int, ScrollController> _scrollControllers = {};
+  final Map<int, bool> _canScrollDown = {};
+  final Map<int, bool> _canScrollUp = {};
 
-  List<Map<String, dynamic>> _slides = [];
   List<ReadingSlide> _readingSlides = [];
   int _currentSlideIndex = 0;
   bool _isLoading = true;
@@ -39,6 +44,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
   // final GlobalKey<PageFlipWidgetState> _pageFlipKey = GlobalKey<PageFlipWidgetState>();
 
   bool _isCompleted = false;
+  bool _isCompleting = false; // Prevent multiple taps on Complete button
 
   @override
   void initState() {
@@ -50,21 +56,62 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
   void dispose() {
     _ttsService.dispose();
     _pageController.dispose();
+    for (var controller in _scrollControllers.values) {
+      controller.dispose();
+    }
+    _scrollControllers.clear();
     super.dispose();
+  }
+
+  ScrollController _getScrollController(int index) {
+    if (!_scrollControllers.containsKey(index)) {
+      final controller = ScrollController();
+      controller.addListener(() {
+        if (mounted && _currentSlideIndex == index) {
+          final canScrollDown =
+              controller.position.pixels <
+              controller.position.maxScrollExtent - 10;
+          final canScrollUp = controller.position.pixels > 10;
+          setState(() {
+            _canScrollDown[index] = canScrollDown;
+            _canScrollUp[index] = canScrollUp;
+          });
+        }
+      });
+      _scrollControllers[index] = controller;
+      // Initialize scroll state
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && controller.hasClients) {
+          final canScrollDown =
+              controller.position.pixels <
+              controller.position.maxScrollExtent - 10;
+          final canScrollUp = controller.position.pixels > 10;
+          setState(() {
+            _canScrollDown[index] = canScrollDown;
+            _canScrollUp[index] = canScrollUp;
+          });
+        }
+      });
+    }
+    return _scrollControllers[index]!;
   }
 
   Future<void> _loadReading() async {
     try {
-      CourseProvider courseProvider = Provider.of<CourseProvider>(context, listen: false);
+      CourseProvider courseProvider = Provider.of<CourseProvider>(
+        context,
+        listen: false,
+      );
 
       // Get Lesson
       Lesson? lesson = courseProvider.getLesson(widget.moduleId);
-      LessonProgress? lessonProgress = courseProvider.getLessonProgress(widget.moduleId);
+      LessonProgress? lessonProgress = courseProvider.getLessonProgress(
+        widget.moduleId,
+      );
 
       if (lesson == null || lessonProgress == null) {
         throw Exception("No Lesson Found for ${widget.moduleId}");
-      }
-      else {
+      } else {
         setState(() {
           _readingSlides = lesson.reading;
           _bookmarkedPages = lessonProgress.bookmarks;
@@ -81,12 +128,14 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
   Future<void> _saveBookmarks() async {
     try {
-
-      CourseProvider courseProvider = Provider.of<CourseProvider>(context, listen: false);
+      CourseProvider courseProvider = Provider.of<CourseProvider>(
+        context,
+        listen: false,
+      );
 
       courseProvider.saveReadingProgress(
-          lessonId: widget.moduleId,
-          bookmarks: _bookmarkedPages,
+        lessonId: widget.moduleId,
+        bookmarks: _bookmarkedPages,
       );
     } catch (e) {
       print('❌Error saving bookmarks: $e');
@@ -94,12 +143,16 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
   }
 
   Future<void> _markAsCompleted() async {
-    try {
-      // final user = _userState.currentUser;
-      // if (user == null) return;
+    // Prevent multiple calls - set flag synchronously before any async work
+    // to close the race window where a second tap could get through
+    if (_isCompleting || _isCompleted) return;
+    if (!mounted) return;
+    _isCompleting = true;
+    setState(() {});
 
+    try {
       // Save progress immediately when reading is completed
-      await Provider.of<CourseProvider>(
+      final success = await Provider.of<CourseProvider>(
         context,
         listen: false,
       ).saveReadingProgress(
@@ -107,36 +160,61 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
         bookmarks: _bookmarkedPages,
       );
 
-      // Save isComplete flag.
-      _isCompleted = true;
+      // Only proceed if save was successful
+      if (!success) {
+        if (mounted) {
+          setState(() {
+            _isCompleting = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error saving progress. Please try again.'),
+              backgroundColor: Theme.of(context).colorScheme.errorContainer,
+            ),
+          );
+        }
+        return;
+      }
 
-      // Navigate to results screen and wait for it to return
-      final shouldPopReading = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ReadingResultScreen(modeuleId: widget.moduleId),
-        ),
-      );
+      // Save isComplete flag only after successful save
+      if (mounted) {
+        setState(() {
+          _isCompleted = true;
+          _isCompleting = false;
+        });
 
-      // Only pop the reading screen if the results screen returned true
-      // (meaning the user wants to go back to the lesson)
-      if (mounted && shouldPopReading == true) {
-        Navigator.pop(context, true);
+        // Navigate to results screen and wait for it to return
+        final shouldPopReading = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => ReadingResultScreen(modeuleId: widget.moduleId),
+          ),
+        );
+
+        // Only pop the reading screen if the results screen returned true
+        // (meaning the user wants to go back to the lesson)
+        if (mounted && shouldPopReading == true) {
+          Navigator.pop(context, true);
+        }
       }
     } catch (e) {
       print('❌Error marking reading as completed: $e');
       if (mounted) {
+        setState(() {
+          _isCompleting = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error saving progress: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.errorContainer,
           ),
         );
       }
     }
   }
 
-  void _nextSlide() {
+  Future<void> _nextSlide() async {
     if (_currentSlideIndex < _readingSlides.length - 1) {
       _ttsService.stop(); // Stop Audio when changing pages
 
@@ -145,7 +223,8 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      _markAsCompleted();
+      // Properly await the completion process
+      await _markAsCompleted();
     }
   }
 
@@ -159,7 +238,6 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
       );
 
       // _pageFlipKey.currentState?.previousPage();
-
     }
   }
 
@@ -168,18 +246,38 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
       _ttsService.stop(); // Stop TTS when page is flipped
       _currentSlideIndex = index;
     });
+    // Update scroll indicators for new page
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final controller = _scrollControllers[index];
+      if (controller != null && controller.hasClients && mounted) {
+        final canScrollDown =
+            controller.position.pixels <
+            controller.position.maxScrollExtent - 10;
+        final canScrollUp = controller.position.pixels > 10;
+        setState(() {
+          _canScrollDown[index] = canScrollDown;
+          _canScrollUp[index] = canScrollUp;
+        });
+      }
+    });
   }
 
   Container _buildNavigationBar() {
     ThemeData theme = Theme.of(context);
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 10,
+        bottom: 10 + bottomPadding,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),
@@ -195,13 +293,25 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
           ),
           TextButton.icon(
             iconAlignment: IconAlignment.end,
-            onPressed: _nextSlide,
+            onPressed: _isCompleting ? null : _nextSlide,
             label: Text(
               _currentSlideIndex < _readingSlides.length - 1
                   ? 'Next'.toUpperCase()
                   : 'Complete'.toUpperCase(),
             ),
-            icon: Icon(Icons.arrow_forward_ios_rounded),
+            icon:
+                _isCompleting
+                    ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    )
+                    : Icon(Icons.arrow_forward_ios_rounded),
           ),
         ],
       ),
@@ -228,7 +338,6 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
         //TODO: ??? Why not call this here ???
         // _onPageChanged(index); // Don't call this function here, bc the audio stops working if you do,
-
       } else {
         // If PageController is not attached yet, just update the index
         // and close TOC. The PageView will be built with the correct initial page.
@@ -244,7 +353,6 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
       }
 
       // _pageFlipKey.currentState?.goToPage(index);
-
 
       setState(() {
         _showTableOfContents = false;
@@ -267,9 +375,8 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
                 isBookmarked
                     ? FontAwesomeIcons.solidBookmark
                     : FontAwesomeIcons.bookmark,
-                color: isBookmarked
-                    ? Theme.of(context).colorScheme.primary
-                    : null,
+                color:
+                    isBookmarked ? Theme.of(context).colorScheme.primary : null,
               ),
               onPressed: () {
                 _toggleBookmark(index);
@@ -277,12 +384,12 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
             ),
             title: Text(
               'P${index + 1}: ${_readingSlides[index].title ?? 'Page ${index + 1}'}',
-              style: index == _currentSlideIndex
-                  ? Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontSize: 18)
-                  : Theme.of(context).textTheme.bodyMedium,
+              style:
+                  index == _currentSlideIndex
+                      ? Theme.of(
+                        context,
+                      ).textTheme.headlineSmall?.copyWith(fontSize: 18)
+                      : Theme.of(context).textTheme.bodyMedium,
             ),
             onTap: () => _jumpToPage(index),
           );
@@ -295,7 +402,8 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
     final theme = Theme.of(context);
 
     final headline = _readingSlides[index].title ?? 'Reading Content';
-    final content  = _readingSlides[index].content ?? 'No content for this slide';
+    final content =
+        _readingSlides[index].content ?? 'No content for this slide';
     final fullText = '$headline\n\n$content';
 
     return Column(
@@ -306,19 +414,14 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-
-              // TODO: Should Font adjustment just be for reading material?
-
-
               // Voice button
               VoiceButton(
                 text: fullText,
                 pageIndex: index,
                 size: 35,
                 onStateChanged: () {
-                  setState(() {
-                    // Trigger rebuild to update UI state
-                  });
+                  // Trigger rebuild to update progress bar
+                  setState(() {});
                 },
               ),
               const SizedBox(width: 20),
@@ -329,9 +432,10 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
                   _bookmarkedPages.contains(index)
                       ? FontAwesomeIcons.solidBookmark
                       : FontAwesomeIcons.bookmark,
-                  color: _bookmarkedPages.contains(index)
-                      ? theme.colorScheme.primary
-                      : null,
+                  color:
+                      _bookmarkedPages.contains(index)
+                          ? theme.colorScheme.primary
+                          : null,
                 ),
                 onPressed: () {
                   setState(() {
@@ -350,24 +454,153 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
         // Scrollable content - wrapped in Expanded
         Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  headline,
-                  style: theme.textTheme.headlineMedium,
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                controller: _getScrollController(index),
+                padding: const EdgeInsets.symmetric(horizontal: 30),
+                child: Consumer<ThemeNotifier>(
+                  builder: (context, themeNotifier, child) {
+                    final fullText =
+                        '$headline\n\n${content.isNotEmpty ? content : 'No content available'}';
+                    final cleanText =
+                        _ttsService.currentText != null &&
+                                _ttsService.currentText!.isNotEmpty &&
+                                _ttsService.currentPageIndex == index
+                            ? _ttsService.currentText!
+                            : TtsService.cleanTextForProgress(fullText);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Use ClickableTextScrubber for word-level highlighting during TTS
+                        ClickableTextScrubber(
+                          markdownData: fullText,
+                          cleanText: cleanText,
+                          currentWordStart:
+                              _ttsService.currentPageIndex == index
+                                  ? _ttsService.currentWordStart
+                                  : null,
+                          currentWordEnd:
+                              _ttsService.currentPageIndex == index
+                                  ? _ttsService.currentWordEnd
+                                  : null,
+                          wordsRead:
+                              _ttsService.currentPageIndex == index
+                                  ? _ttsService.wordsRead
+                                  : {},
+                          onWordTap:
+                              (position) => _ttsService.seekToPosition(
+                                position,
+                                pageIndex: index,
+                              ),
+                          fontSizeScale: themeNotifier.readingFontSize,
+                          ttsService: _ttsService,
+                        ),
+                        // Extra padding at bottom
+                        const SizedBox(height: 30),
+                      ],
+                    );
+                  },
                 ),
-                const SizedBox(height: 20),
-                StyledMarkdown(data: content),
-                const SizedBox(height: 30), // Bottom padding for scroll
-              ],
-            ),
+              ),
+              // Top scroll indicator
+              if (_canScrollUp[index] ?? false)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          theme.colorScheme.surface,
+                          theme.colorScheme.surface.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.keyboard_arrow_up,
+                            size: 18,
+                            color: theme.colorScheme.outline,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            "Scroll up",
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.outline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              // Bottom scroll indicator
+              if (_canScrollDown[index] ?? false)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          theme.colorScheme.surface,
+                          theme.colorScheme.surface.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.keyboard_arrow_down,
+                            size: 18,
+                            color: theme.colorScheme.outline,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            "Scroll for more",
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.outline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ],
     );
+  }
+
+  String _getCleanTextForCurrentSlide() {
+    if (_readingSlides.isEmpty) return '';
+    final slide = _readingSlides[_currentSlideIndex];
+    final headline = slide.title;
+    final content = slide.content;
+    final fullText =
+        '$headline\n\n${content.isNotEmpty ? content : 'No content available'}';
+    if (_ttsService.currentText != null &&
+        _ttsService.currentText!.isNotEmpty &&
+        _ttsService.currentPageIndex == _currentSlideIndex) {
+      return _ttsService.currentText!;
+    }
+    return TtsService.cleanTextForProgress(fullText);
   }
 
   @override
@@ -394,6 +627,16 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
           centerTitle: true,
           actions: [
             IconButton(
+              icon: Icon(Icons.format_size),
+              iconSize: 25,
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => const ReadingFontAdjustmentDialog(),
+                );
+              },
+            ),
+            IconButton(
               icon: Icon(
                 _showTableOfContents ? Icons.close : FontAwesomeIcons.list,
               ),
@@ -406,45 +649,53 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
             ),
           ],
         ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _readingSlides.isEmpty
-            ? Center(
-          child: Text(
-            'No reading content available',
-            style: theme.textTheme.labelMedium,
-          ),
-        )
-            : Column(
-          children: [
-            // Progress bar
-            ProgressBar(
-              progress: progress,
-              currentSlideIndex: _currentSlideIndex,
-              slideLength: _readingSlides.length,
-              slideName: 'page',
-            ),
+        body:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _readingSlides.isEmpty
+                ? Center(
+                  child: Text(
+                    'No reading content available',
+                    style: theme.textTheme.labelMedium,
+                  ),
+                )
+                : Column(
+                  children: [
+                    // Progress bar
+                    ProgressBar(
+                      progress: progress,
+                      currentSlideIndex: _currentSlideIndex,
+                      slideLength: _readingSlides.length,
+                      slideName: 'page',
+                    ),
 
-            // Main content
-            Expanded(
-              child: _showTableOfContents
-                  ? _buildTableOfContents()
-                  : PageView.builder(
-                controller: _pageController,
-                onPageChanged: _onPageChanged,
-                itemCount: _readingSlides.length,
-                itemBuilder: (context, index) {
-                  return _buildPageContentFor(index);
-                },
-              ),
-            ),
+                    // Main content
+                    Expanded(
+                      child:
+                          _showTableOfContents
+                              ? _buildTableOfContents()
+                              : PageView.builder(
+                                controller: _pageController,
+                                onPageChanged: _onPageChanged,
+                                itemCount: _readingSlides.length,
+                                itemBuilder: (context, index) {
+                                  return _buildPageContentFor(index);
+                                },
+                              ),
+                    ),
 
-            // Navigation controls
-            _buildNavigationBar(),
+                    // TTS progress bar at scaffold level (stable, not rebuilt with pages)
+                    TtsProgressBar(
+                      ttsService: _ttsService,
+                      cleanText: _getCleanTextForCurrentSlide(),
+                      onPositionChanged: () => setState(() {}),
+                      pageIndex: _currentSlideIndex,
+                    ),
 
-            SizedBox(height: 15),
-          ],
-        ),
+                    // Navigation controls
+                    _buildNavigationBar(),
+                  ],
+                ),
       ),
     );
   }

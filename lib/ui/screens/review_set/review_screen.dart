@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
-import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/ui/screens/review_set/review_results_screen.dart';
 
 import '../../../providers/shop_provider.dart';
 import '../../widgets/progress_bar.dart';
 import '../../../models/question.dart';
 import '../../widgets/question_widget.dart';
-import '../../widgets/shop_item_card.dart';
+import '../../widgets/tts_progress_bar.dart';
+import '../../widgets/voice_button.dart';
+import '../../../services/tts_service.dart';
 
 class ReviewScreen extends StatefulWidget {
   final QuestionSet questionSet;
@@ -16,7 +17,10 @@ class ReviewScreen extends StatefulWidget {
   final bool needToShowShop;
 
   ReviewScreen({
-    super.key, required this.questionSet, this.image, required this.needToShowShop,
+    super.key,
+    required this.questionSet,
+    this.image,
+    required this.needToShowShop,
   });
 
   @override
@@ -27,6 +31,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   int currentQuestionIndex = 0;
   List<List<int>> userAnswers = [];
   bool isStarted = false;
+  final TtsService _ttsService = TtsService();
 
   bool isCurrentQuestionCorrect = false;
   List<List<List<int>>> attempts = [];
@@ -40,12 +45,36 @@ class _ReviewScreenState extends State<ReviewScreen> {
     super.initState();
     userAnswers = List.generate(widget.questionSet.questions.length, (_) => []);
     attempts = List.generate(widget.questionSet.questions.length, (_) => []);
+    _ttsService.initialize();
 
     // Use addPostFrameCallback to ensure initialization happens after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeData();
     });
+  }
 
+  @override
+  void dispose() {
+    _ttsService.dispose();
+    super.dispose();
+  }
+
+  String _buildQuestionTextForTTS(int questionIndex) {
+    final question = widget.questionSet.questions[questionIndex];
+    final buffer = StringBuffer();
+
+    buffer.write('Question: ${question.questionText}');
+    if (question.text != null && question.text!.isNotEmpty) {
+      buffer.write('. ${question.text}');
+    }
+    buffer.write('. Options: ');
+
+    for (int i = 0; i < question.options.length; i++) {
+      final letter = String.fromCharCode(65 + i); // A, B, C, D...
+      buffer.write('$letter) ${question.options[i]}. ');
+    }
+
+    return buffer.toString();
   }
 
   Future<void> _initializeData() async {
@@ -73,25 +102,24 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   void _finishReview() async {
-
     if (!mounted) return;
 
     // if (widget.isComingFromShopRoute) {
-      // Show results screen and then return to previous screen
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder:
-              (context) => ReviewResultsScreen(
-                image: widget.image,
-                needToShowShop: widget.needToShowShop,
-          ),
-        ),
-      );
+    // Show results screen and then return to previous screen
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => ReviewResultsScreen(
+              image: widget.image,
+              needToShowShop: widget.needToShowShop,
+            ),
+      ),
+    );
     // }
     // else {
-      // Show the item selection dialog then the results
-      // _openShopPopUp();
+    // Show the item selection dialog then the results
+    // _openShopPopUp();
     // }
 
     if (!mounted) return;
@@ -189,8 +217,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         // showAnswerMessage = true; // Currently using snack-bar function: showAnswerCheckMessage
         isResponseLocked = true;
       });
-    }
-    else {
+    } else {
       isCurrentQuestionCorrect = false;
       setState(() {
         isCurrentQuestionCorrect = false;
@@ -200,11 +227,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
     }
 
     showAnswerCheckMessage();
-
   }
 
-
   void _nextQuestion() {
+    _ttsService.stop(); // Stop TTS when changing questions
     if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
       setState(() {
         currentQuestionIndex++;
@@ -218,7 +244,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   Container _buildNavigationBar() {
-
     ThemeData theme = Theme.of(context);
 
     //Decide what button to show and what function
@@ -227,14 +252,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
     if (!isCurrentQuestionCorrect) {
       // Show check if not correct
       forwardButtonText = 'Check';
-
-    }
-    else if (currentQuestionIndex == widget.questionSet.questions.length - 1) {
+    } else if (currentQuestionIndex ==
+        widget.questionSet.questions.length - 1) {
       // Answer is correct, check if at end of review set
       forwardButtonText = 'Complete';
     }
     forwardButtonText.toTitleCase();
-
 
     //Decide what button function if user has an answer selected
     Function() onForwardTap;
@@ -242,8 +265,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     if (!isCurrentQuestionCorrect) {
       // Check Question if not correct
       onForwardTap = _checkQuestion;
-    }
-    else {
+    } else {
       onForwardTap = _nextQuestion;
     }
 
@@ -253,7 +275,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),
@@ -266,10 +288,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
           TextButton.icon(
             iconAlignment: IconAlignment.end,
-            onPressed: userAnswers[currentQuestionIndex].isNotEmpty ? onForwardTap : null,
-            label: Text(
-                forwardButtonText
-            ),
+            onPressed:
+                userAnswers[currentQuestionIndex].isNotEmpty
+                    ? onForwardTap
+                    : null,
+            label: Text(forwardButtonText),
             icon: Icon(Icons.arrow_forward_ios_rounded),
           ),
         ],
@@ -305,11 +328,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(
-                            Icons.help_outline,
-                            color: theme.colorScheme.secondary,
-                          ),
-                          SizedBox(width: 8),
                           Text(
                             '${widget.questionSet.questions.length} questions',
                           ),
@@ -318,11 +336,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: theme.colorScheme.secondary,
-                          ),
-                          SizedBox(width: 8),
                           Expanded(child: Text(widget.questionSet.description)),
                         ],
                       ),
@@ -354,62 +367,102 @@ class _ReviewScreenState extends State<ReviewScreen> {
       );
     }
 
-    final progress = (currentQuestionIndex + 1) / widget.questionSet.questions.length;
-
+    final progress =
+        (currentQuestionIndex + 1) / widget.questionSet.questions.length;
 
     return Consumer<ShopProvider>(
-        builder: (context, shopProvider, child) {
-          return Scaffold(
-            appBar: appBar,
-            body: Column(
-              children: [
+      builder: (context, shopProvider, child) {
+        return Scaffold(
+          appBar: appBar,
+          body: Column(
+            children: [
+              ProgressBar(
+                progress: progress,
+                currentSlideIndex: currentQuestionIndex,
+                slideLength: widget.questionSet.questions.length,
+                slideName: 'questions',
+              ),
 
-                ProgressBar(
-                  progress: progress,
-                  currentSlideIndex: currentQuestionIndex,
-                  slideLength: widget.questionSet.questions.length,
-                  slideName: 'questions',
-                ),
-
-                // showAnswerMessage ? _buildAnswerCheckCard() : SizedBox.shrink(),
-
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-                    child: QuestionWidget(
-                      question: widget.questionSet.questions[currentQuestionIndex],
-                      selectedAnswers: userAnswers[currentQuestionIndex],
-                      onAnswerChanged: (answers) {
-                        setState(() {
-                          userAnswers[currentQuestionIndex] = answers;
-                        });
-                      },
-                      showCorrectAnswer: widget.questionSet.showCorrectAnswers,
-                      showExplanation: widget.questionSet.showExplanations,
-                      isResponseLocked: isResponseLocked,
-                    ),
+              // showAnswerMessage ? _buildAnswerCheckCard() : SizedBox.shrink(),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                  child: Column(
+                    children: [
+                      // Voice button for read aloud
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: VoiceButton(
+                          text: _buildQuestionTextForTTS(currentQuestionIndex),
+                          pageIndex: currentQuestionIndex,
+                          size: 35,
+                          onStateChanged: () {
+                            setState(() {
+                              // Trigger rebuild to update UI state
+                            });
+                          },
+                          margin: EdgeInsets.zero,
+                        ),
+                      ),
+                      // Question widget
+                      Expanded(
+                        child: QuestionWidget(
+                          key: ValueKey(
+                            widget
+                                .questionSet
+                                .questions[currentQuestionIndex]
+                                .id,
+                          ),
+                          question:
+                              widget
+                                  .questionSet
+                                  .questions[currentQuestionIndex],
+                          selectedAnswers: userAnswers[currentQuestionIndex],
+                          onAnswerChanged: (answers) {
+                            setState(() {
+                              userAnswers[currentQuestionIndex] = answers;
+                            });
+                          },
+                          showCorrectAnswer:
+                              widget.questionSet.showCorrectAnswers,
+                          showExplanation: widget.questionSet.showExplanations,
+                          isResponseLocked: isResponseLocked,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+              ),
 
-                _buildNavigationBar(),
+              TtsProgressBar(
+                ttsService: _ttsService,
+                cleanText: TtsService.cleanTextForProgress(
+                  _buildQuestionTextForTTS(currentQuestionIndex),
+                ),
+              ),
 
-                SizedBox(height: 20),
-              ],
-            ),
-          );
-        }
+              _buildNavigationBar(),
+
+              SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
     );
-
-
   }
 
   void showAnswerCheckMessage() {
-
     ThemeData theme = Theme.of(context);
 
     // Secondary Color is green, so correct -> green
-    Color color = isCurrentQuestionCorrect ? theme.colorScheme.secondary : theme.colorScheme.error;
-    Color bgColor = isCurrentQuestionCorrect ? theme.colorScheme.secondaryContainer : theme.colorScheme.errorContainer;
+    Color color =
+        isCurrentQuestionCorrect
+            ? theme.colorScheme.secondary
+            : theme.colorScheme.error;
+    Color bgColor =
+        isCurrentQuestionCorrect
+            ? theme.colorScheme.secondaryContainer
+            : theme.colorScheme.errorContainer;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -422,9 +475,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
             SizedBox(width: 10),
             Text(
               isCurrentQuestionCorrect ? 'Correct!' : 'Incorrect, try again.',
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: color,
-              ),
+              style: theme.textTheme.labelLarge?.copyWith(color: color),
             ),
           ],
         ),
@@ -472,5 +523,4 @@ class _ReviewScreenState extends State<ReviewScreen> {
   //         ),
   //       );
   // }
-
 }

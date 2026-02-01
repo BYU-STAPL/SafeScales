@@ -233,7 +233,7 @@ class PurchaseResult {
   factory PurchaseResult.success(Item item) {
     return PurchaseResult._(
       isSuccess: true,
-      message: 'Purchase successful!',
+      message: 'Unlock successful!',
       item: item,
     );
   }

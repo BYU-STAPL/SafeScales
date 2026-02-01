@@ -1,5 +1,0 @@
-
-module flutter_tts.Swift {
-  header "flutter_tts-Swift.h"
-  requires objc
-}

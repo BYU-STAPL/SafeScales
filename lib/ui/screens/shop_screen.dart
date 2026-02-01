@@ -78,9 +78,7 @@ class _ShopScreenState extends State<ShopScreen> {
       });
 
       // Start the revision quiz for the selected module
-      final bool passedReviewSet = await _startReviewSet(
-        selectedLessonIndex!,
-      );
+      final bool passedReviewSet = await _startReviewSet(selectedLessonIndex!);
 
       if (!mounted) return;
 
@@ -88,7 +86,7 @@ class _ShopScreenState extends State<ShopScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             duration: Duration(seconds: 2),
-            content: Text('Review set not completed. Purchase cancelled.'),
+            content: Text('Review set not completed. Unlock cancelled.'),
           ),
         );
         setState(() {
@@ -106,18 +104,18 @@ class _ShopScreenState extends State<ShopScreen> {
       if (!mounted) return;
 
       if (result.isSuccess) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.message)));
 
         // Reset selected index since the item is no longer available
         setState(() {
           selectedIndex = null;
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.message)));
       }
 
       setState(() {
@@ -125,9 +123,9 @@ class _ShopScreenState extends State<ShopScreen> {
       });
     } catch (e) {
       debugPrint('Error during purchase: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
 
       setState(() {
         selectedLessonIndex = null;
@@ -138,16 +136,23 @@ class _ShopScreenState extends State<ShopScreen> {
   Future<bool> _startReviewSet(String lessonId) async {
     try {
       final shopProvider = Provider.of<ShopProvider>(context, listen: false);
-      final courseProvider = Provider.of<CourseProvider>(context, listen: false);
+      final courseProvider = Provider.of<CourseProvider>(
+        context,
+        listen: false,
+      );
 
       // Get the review question set for the lesson using the course provider/service
-      final questionSet = await courseProvider.getReviewQuestionSetForLesson(lessonId);
+      final questionSet = await courseProvider.getReviewQuestionSetForLesson(
+        lessonId,
+      );
 
       bool result = false;
-      Item? selectedItem = shopProvider.getItemByIndex(selectedIndex!, !isItemsTabSelected);
+      Item? selectedItem = shopProvider.getItemByIndex(
+        selectedIndex!,
+        !isItemsTabSelected,
+      );
 
       if (questionSet == null || questionSet.questions.isEmpty) {
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             duration: Duration(seconds: 2),
@@ -162,23 +167,22 @@ class _ShopScreenState extends State<ShopScreen> {
         );
 
         return false;
-
       } else {
         result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ReviewScreen(
-              questionSet: questionSet,
-              image: selectedItem?.imageUrl,
-              needToShowShop: false,
-            ),
+            builder:
+                (context) => ReviewScreen(
+                  questionSet: questionSet,
+                  image: selectedItem?.imageUrl,
+                  needToShowShop: false,
+                ),
           ),
         );
       }
 
       // ReviewScreen returns true on completion
       return result == true;
-
     } catch (e) {
       debugPrint('Error starting review set: $e');
       if (mounted) {
@@ -196,15 +200,17 @@ class _ShopScreenState extends State<ShopScreen> {
 
     final Color primary = theme.colorScheme.primary;
     final Color selected = primary;
-    final Color unselected = theme.colorScheme.lightBlue.withValues(alpha: 0.5,);
-    final Color selectedText = Colors.white;
+    final Color unselected = theme.colorScheme.primary.withValues(alpha: 0.5);
+    final Color selectedText = theme.colorScheme.onPrimary;
     final Color unselectedText = primary;
     final Color highlight = theme.colorScheme.green.withValues(alpha: 0.25);
 
     return Consumer2<ShopProvider, CourseProvider>(
       builder: (context, shopProvider, courseProvider, child) {
-
-        final items = isItemsTabSelected ?  shopProvider.availableItems : shopProvider.availableEnvironments;
+        final items =
+            isItemsTabSelected
+                ? shopProvider.availableItems
+                : shopProvider.availableEnvironments;
 
         return Stack(
           children: [
@@ -213,7 +219,10 @@ class _ShopScreenState extends State<ShopScreen> {
               backgroundColor: Theme.of(context).colorScheme.surface,
               body: SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 25,
+                    vertical: 10,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -224,7 +233,7 @@ class _ShopScreenState extends State<ShopScreen> {
                           // Subtitle
                           Expanded(
                             child: Text(
-                              'Earn new items and environments for your dragons by completing review sets from finished lessons.',
+                              'Earn new items and habitats for your dragons by completing review sets from finished lessons.',
                               style: theme.textTheme.labelMedium,
                             ),
                           ),
@@ -233,16 +242,20 @@ class _ShopScreenState extends State<ShopScreen> {
                           Consumer<ShopProvider>(
                             builder: (context, shopProvider, child) {
                               return IconButton(
-                                onPressed: shopProvider.isLoading
-                                    ? null
-                                    : () => shopProvider.refresh(),
-                                icon: shopProvider.isLoading
-                                    ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                                    : const Icon(Icons.refresh),
+                                onPressed:
+                                    shopProvider.isLoading
+                                        ? null
+                                        : () => shopProvider.refresh(),
+                                icon:
+                                    shopProvider.isLoading
+                                        ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                        : const Icon(Icons.refresh),
                                 tooltip: 'Refresh items',
                               );
                             },
@@ -262,14 +275,17 @@ class _ShopScreenState extends State<ShopScreen> {
 
                       if (selectedIndex != null)
                         Padding(
-                          padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
+                          padding: const EdgeInsets.only(
+                            top: 12.0,
+                            bottom: 8.0,
+                          ),
                           child: Center(
                             child: ElevatedButton(
                               onPressed: _handlePurchase,
                               child: Text(
-                                'PURCHASE'.toUpperCase(),
+                                'UNLOCK'.toUpperCase(),
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: Colors.white,
+                                  color: theme.colorScheme.onPrimary,
                                 ),
                               ),
                             ),
@@ -285,17 +301,19 @@ class _ShopScreenState extends State<ShopScreen> {
                 child: GestureDetector(
                   onTap: () => setState(() => showLessonDialog = false),
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.3),
+                    color: theme.colorScheme.shadow.withValues(alpha: 0.3),
                     child: Center(
                       child: Container(
                         width: 320,
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: theme.colorScheme.surfaceContainer,
                           borderRadius: BorderRadius.circular(18),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
+                              color: theme.colorScheme.shadow.withValues(
+                                alpha: 0.08,
+                              ),
                               blurRadius: 16,
                               offset: const Offset(0, 8),
                             ),
@@ -305,23 +323,47 @@ class _ShopScreenState extends State<ShopScreen> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Select a lesson to review',
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontSize: 18 * AppTheme.fontSizeScale,
-                              ),
+                            // Title and close button row
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'Select a lesson to review',
+                                    style: theme.textTheme.headlineSmall
+                                        ?.copyWith(
+                                          fontSize: 18 * AppTheme.fontSizeScale,
+                                        ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.close),
+                                  onPressed:
+                                      () => setState(
+                                        () => showLessonDialog = false,
+                                      ),
+                                  padding: EdgeInsets.zero,
+                                  constraints: BoxConstraints(),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 18),
                             ConstrainedBox(
                               constraints: BoxConstraints(
-                                maxHeight: MediaQuery.of(context).size.height * 0.5,
+                                maxHeight:
+                                    MediaQuery.of(context).size.height * 0.5,
                               ),
                               child: ListView(
                                 shrinkWrap: true,
                                 children:
-                                  courseProvider.getAllCompletedLessons().map((lesson) {
-                                    return _buildLessonCardForReview(lesson);
-                                  }).toList(),
+                                    courseProvider.getAllCompletedLessons().map(
+                                      (lesson) {
+                                        return _buildLessonCardForReview(
+                                          lesson,
+                                        );
+                                      },
+                                    ).toList(),
                               ),
                             ),
                             const SizedBox(height: 10),
@@ -330,8 +372,9 @@ class _ShopScreenState extends State<ShopScreen> {
                               children: [
                                 TextButton(
                                   onPressed:
-                                      () =>
-                                      setState(() => showLessonDialog = false),
+                                      () => setState(
+                                        () => showLessonDialog = false,
+                                      ),
                                   child: Text(
                                     'CANCEL'.toUpperCase(),
                                     style: TextStyle(
@@ -342,11 +385,11 @@ class _ShopScreenState extends State<ShopScreen> {
                                 const SizedBox(width: 8),
                                 ElevatedButton(
                                   onPressed:
-                                  selectedLessonIndex != null
-                                      ? () {
-                                    _completePurchase();
-                                  }
-                                      : null,
+                                      selectedLessonIndex != null
+                                          ? () {
+                                            _completePurchase();
+                                          }
+                                          : null,
                                   child: Text('SELECT'.toUpperCase()),
                                 ),
                               ],
@@ -364,9 +407,10 @@ class _ShopScreenState extends State<ShopScreen> {
     );
   }
 
-  Expanded _buildShop(List<Item> items,) {
-
-    final Color highlight = Theme.of(context).colorScheme.green.withValues(alpha: 0.25);
+  Expanded _buildShop(List<Item> items) {
+    final Color highlight = Theme.of(
+      context,
+    ).colorScheme.green.withValues(alpha: 0.25);
 
     return Expanded(
       child: GridView.count(
@@ -394,11 +438,10 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Widget _buildToggleButtons(BuildContext context, ShopProvider shopProvider) {
-
     ThemeData theme = Theme.of(context);
     final Color selected = theme.colorScheme.primary;
-    final Color unselected = theme.colorScheme.lightBlue.withValues(alpha: 0.5,);
-    final Color selectedText = Colors.white;
+    final Color unselected = theme.colorScheme.primary.withValues(alpha: 0.5);
+    final Color selectedText = theme.colorScheme.onPrimary;
     final Color unselectedText = theme.colorScheme.primary;
 
     return Row(
@@ -407,9 +450,9 @@ class _ShopScreenState extends State<ShopScreen> {
           child: GestureDetector(
             onTap:
                 () => setState(() {
-              isItemsTabSelected = true;
-              selectedIndex = null;
-            }),
+                  isItemsTabSelected = true;
+                  selectedIndex = null;
+                }),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -421,8 +464,7 @@ class _ShopScreenState extends State<ShopScreen> {
                 child: Text(
                   'ITEMS (${shopProvider.availableItems.length})'.toUpperCase(),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color:
-                    isItemsTabSelected ? selectedText : unselectedText,
+                    color: isItemsTabSelected ? selectedText : unselectedText,
                     letterSpacing: 1.1,
                   ),
                 ),
@@ -435,9 +477,9 @@ class _ShopScreenState extends State<ShopScreen> {
           child: GestureDetector(
             onTap:
                 () => setState(() {
-              isItemsTabSelected = false;
-              selectedIndex = null;
-            }),
+                  isItemsTabSelected = false;
+                  selectedIndex = null;
+                }),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -447,10 +489,10 @@ class _ShopScreenState extends State<ShopScreen> {
               ),
               child: Center(
                 child: Text(
-                  'ENVIRONMENTS (${shopProvider.availableEnvironments.length})'.toUpperCase(),
+                  'HABITATS (${shopProvider.availableEnvironments.length})'
+                      .toUpperCase(),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color:
-                    !isItemsTabSelected ? selectedText : unselectedText,
+                    color: !isItemsTabSelected ? selectedText : unselectedText,
                     letterSpacing: 1.1,
                   ),
                 ),
@@ -529,7 +571,6 @@ class _ShopScreenState extends State<ShopScreen> {
   // }
 
   GestureDetector _buildLessonCardForReview(Lesson lesson) {
-
     ThemeData theme = Theme.of(context);
     Color selectionColor = theme.colorScheme.primary;
 
@@ -541,17 +582,12 @@ class _ShopScreenState extends State<ShopScreen> {
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(
-          vertical: 12,
-          horizontal: 14,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
         decoration: BoxDecoration(
           color:
               selectedLessonIndex == lesson.lessonId
-                  ? selectionColor.withValues(
-                    alpha: 0.12,
-                  )
-                  : Colors.grey[100],
+                  ? selectionColor.withValues(alpha: 0.12)
+                  : theme.colorScheme.surfaceDim,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color:
@@ -562,17 +598,10 @@ class _ShopScreenState extends State<ShopScreen> {
           ),
         ),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Text(
-              lesson.title,
-              style: theme.textTheme.bodyMedium,
-            ),
-          ],
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [Text(lesson.title, style: theme.textTheme.bodyMedium)],
         ),
       ),
     );
   }
 }
-

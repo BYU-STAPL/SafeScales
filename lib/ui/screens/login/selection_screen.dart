@@ -2,13 +2,78 @@ import 'package:flutter/material.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/ui/screens/auth_screen.dart';
 import 'package:safe_scales/ui/screens/login/class_code_screen.dart';
+import 'package:safe_scales/ui/screens/app_initialization_screen.dart';
+import 'package:safe_scales/services/user_state_service.dart';
 
-class SelectionScreen extends StatelessWidget {
+class SelectionScreen extends StatefulWidget {
   const SelectionScreen({super.key});
+
+  @override
+  State<SelectionScreen> createState() => _SelectionScreenState();
+}
+
+class _SelectionScreenState extends State<SelectionScreen> {
+  bool _isCheckingSession = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAndRestoreSession();
+  }
+
+  Future<void> _checkAndRestoreSession() async {
+    try {
+      final userState = UserStateService();
+      final restored = await userState.restoreUserSession();
+
+      if (restored && userState.isLoggedIn) {
+        // Session restored successfully, navigate to app initialization
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const AppInitializationScreen(),
+            ),
+          );
+          return;
+        }
+      }
+    } catch (e) {
+      print('❌ Error checking session: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCheckingSession = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
+
+    // Show loading indicator while checking for saved session
+    if (_isCheckingSession) {
+      return Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).colorScheme.primary,
+                theme.colorScheme.lightBlue,
+              ],
+            ),
+          ),
+          child: Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: Container(
@@ -32,14 +97,14 @@ class SelectionScreen extends StatelessWidget {
                   Text(
                     'Welcome to SafeScales',
                     style: theme.textTheme.headlineLarge?.copyWith(
-                      color: Colors.white,
+                      color: theme.colorScheme.onPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Choose your learning path',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.white,
+                      color: theme.colorScheme.onPrimary,
                     ),
                   ),
                   const SizedBox(height: 48),

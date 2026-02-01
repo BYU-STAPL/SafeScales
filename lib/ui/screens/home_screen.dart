@@ -141,10 +141,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Lessons'.toTitleCase(),
-                          style: theme.textTheme.headlineSmall,
+                        Expanded(
+                          child: Text(
+                            'Lessons'.toTitleCase(),
+                            style: theme.textTheme.headlineSmall,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
+                        const SizedBox(width: 10),
                         Builder(
                           builder: (context) {
                             // Count completed modules (100% progress)
@@ -160,10 +164,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                     )
                                     .length;
 
-                            return Text(
-                              '$completedCount/${courseProvider.lessonOrder.length} Completed'
-                                  .toTitleCase(),
-                              style: theme.textTheme.labelMedium,
+                            return Flexible(
+                              child: Text(
+                                '$completedCount/${courseProvider.lessonOrder.length} Completed'
+                                    .toTitleCase(),
+                                style: theme.textTheme.labelMedium,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.end,
+                              ),
                             );
                           },
                         ),

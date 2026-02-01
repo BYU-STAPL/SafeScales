@@ -1,10 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/ui/widgets/dragon_image_widget.dart';
 
-class ReadingResultScreen extends StatelessWidget {
+class ReadingResultScreen extends StatefulWidget {
   const ReadingResultScreen({super.key, required this.modeuleId});
 
   final String modeuleId;
+
+  @override
+  State<ReadingResultScreen> createState() => _ReadingResultScreenState();
+}
+
+class _ReadingResultScreenState extends State<ReadingResultScreen> {
+  bool _isNavigating = false;
+
+  void _handleReturnToLesson() {
+    // Prevent multiple taps - use sync flag only (no setState before pop)
+    // setState before Navigator.pop can cause race conditions where the widget
+    // is disposed during a scheduled rebuild, leading to inconsistent behavior
+    if (_isNavigating || !mounted) return;
+    _isNavigating = true;
+
+    Navigator.pop(context, true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +58,7 @@ class ReadingResultScreen extends StatelessWidget {
               SizedBox(height: 30),
 
               DragonImageWidget(
-                moduleId: modeuleId,
+                moduleId: widget.modeuleId,
                 phase: 'stage2',
                 size: 300,
               ),
@@ -61,9 +78,7 @@ class ReadingResultScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context, true);
-                  },
+                  onPressed: _isNavigating ? null : _handleReturnToLesson,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.secondary,
                     foregroundColor: theme.colorScheme.onSecondary,
