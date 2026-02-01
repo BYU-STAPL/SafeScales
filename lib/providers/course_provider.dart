@@ -1,7 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import '../models/lesson.dart';
 import '../models/lesson_progress.dart';
 import '../models/question.dart';
+import '../models/review_set_entry.dart';
 import '../models/user.dart';
 import '../services/course_service.dart';
 import '../services/user_state_service.dart';
@@ -110,11 +113,13 @@ class CourseProvider extends ChangeNotifier {
       }
 
       // Get the lesson from the course service
-      final lesson = await _courseService.getLessonFromClass(courseId, lessonId);
+      final lesson = await _courseService.getLessonFromClass(
+        courseId,
+        lessonId,
+      );
 
       // Extract review questions from the lesson's revision_questions field
       return _extractReviewQuestionSet(lesson);
-
     } catch (e) {
       debugPrint('Error getting review question set: $e');
       return null;
@@ -134,7 +139,6 @@ class CourseProvider extends ChangeNotifier {
       _lessonProgress = progress;
     });
   }
-
 
   /// Load progress for a specific lesson
   Future<void> loadSingleLessonProgress(String lessonId) async {
@@ -213,15 +217,13 @@ class CourseProvider extends ChangeNotifier {
 
   // === Helper Methods ===
 
-  QuestionSet? _extractReviewQuestionSet(Lesson lesson,) {
+  QuestionSet? _extractReviewQuestionSet(Lesson lesson) {
     try {
-
       if (lesson.review == null) {
         return null;
       }
 
       return lesson.review;
-
     } catch (e) {
       debugPrint('Error extracting review question set: $e');
       return null;
@@ -256,7 +258,9 @@ class CourseProvider extends ChangeNotifier {
   /// Load complete course data
   Future<void> _loadCourseData() async {
     try {
-      final courseData = await _courseService.getUserCourseData(currentUser!.id);
+      final courseData = await _courseService.getUserCourseData(
+        currentUser!.id,
+      );
 
       if (courseData != null) {
         _courseId = courseData.courseId;
@@ -345,10 +349,8 @@ class CourseProvider extends ChangeNotifier {
     return (completedLessons / _lessonOrder.length) * 100;
   }
 
-
   /// Get list of completed lessons (to unlock for review)
   List<Lesson> getAllCompletedLessons() {
-
     // Get Id's of completed lessons
     List<String> completedLessonIds = [];
 
@@ -370,7 +372,94 @@ class CourseProvider extends ChangeNotifier {
     return completedLessons;
   }
 
+  /// Check if post-quiz is complete for a lesson (unlocks the review set)
+  bool _isPostQuizCompleteForLesson(String lessonId) {
+    final progress = _lessonProgress[lessonId];
+    if (progress == null) return false;
+    return progress.isPostQuizComplete();
+  }
 
+  /// Get all review set entries for the Review List screen.
+  /// Includes optional "Random" entry at top, then per-lesson review sets.
+  List<ReviewSetEntry> getReviewSetEntries() {
+    final List<ReviewSetEntry> entries = [];
+    final random = Random();
+
+    // Build per-lesson entries and collect questions for Random
+    final List<Question> allUnlockedQuestions = [];
+    for (final lessonId in _lessonOrder) {
+      final lesson = _lessons[lessonId];
+      if (lesson == null) continue;
+
+      final questionSet = _extractReviewQuestionSet(lesson);
+      final isUnlocked = _isPostQuizCompleteForLesson(lessonId);
+
+      if (questionSet != null && questionSet.questions.isNotEmpty) {
+        if (isUnlocked) {
+          allUnlockedQuestions.addAll(questionSet.questions);
+        }
+        entries.add(
+          ReviewSetEntry(
+            lessonId: lessonId,
+            title: lesson.title,
+            questionSet: questionSet,
+            isUnlocked: isUnlocked,
+            isRandom: false,
+          ),
+        );
+      }
+      // Skip lessons with no review set - they don't appear in the list
+    }
+
+    // Add Random entry at top if we have at least one unlocked review set
+    if (allUnlockedQuestions.isNotEmpty) {
+      final shuffled = List<Question>.from(allUnlockedQuestions)
+        ..shuffle(random);
+      const maxRandomQuestions = 10;
+      final selectedQuestions = shuffled.take(maxRandomQuestions).toList();
+      // Ensure unique ids for combined set
+      final questionsWithIds =
+          selectedQuestions.asMap().entries.map((e) {
+            final q = e.value;
+            return Question(
+              id: 'random_${e.key}_${q.id}',
+              text: q.text,
+              questionText: q.questionText,
+              options: q.options,
+              correctAnswerIndices: q.correctAnswerIndices,
+              isMultipleAnswer: q.isMultipleAnswer,
+              explanation: q.explanation,
+            );
+          }).toList();
+
+      final randomSet = QuestionSet(
+        id: 'random',
+        title: 'Random',
+        description: 'Mixed Topics',
+        activityType: ActivityType.review,
+        subject: 'General',
+        passingScore: 0,
+        showResults: true,
+        showCorrectAnswers: true,
+        showExplanations: true,
+        allowRetakes: true,
+        questions: questionsWithIds,
+      );
+
+      entries.insert(
+        0,
+        ReviewSetEntry(
+          lessonId: null,
+          title: 'Random',
+          questionSet: randomSet,
+          isUnlocked: true,
+          isRandom: true,
+        ),
+      );
+    }
+
+    return entries;
+  }
 
   /// Get the next available lesson (for navigation)
   String? getNextAvailableLesson() {

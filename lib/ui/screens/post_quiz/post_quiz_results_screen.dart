@@ -34,7 +34,6 @@ class PostQuizResultScreen extends StatefulWidget {
 }
 
 class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
-
   Future<void> _handleQuizAction(QuizAction action) async {
     switch (action) {
       case QuizAction.retake:
@@ -57,7 +56,11 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PostQuizScreen(moduleId: widget.moduleId, questionSet: widget.questionSet),
+        builder:
+            (context) => PostQuizScreen(
+              moduleId: widget.moduleId,
+              questionSet: widget.questionSet,
+            ),
       ),
     );
 
@@ -75,16 +78,16 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
         builder: (context) => ReadingActivityScreen(moduleId: widget.moduleId),
       ),
     );
-    }
+  }
 
   void _goToDragon() {
     // Navigate to dragon screen
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (context) => MainNavigation(initialIndex: 1),
+        builder: (context) => MainNavigation(initialIndex: kDragonsTabIndex),
       ),
-          (route) => false,
+      (route) => false,
     );
   }
 
@@ -100,17 +103,17 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
     ThemeData theme = Theme.of(context);
 
     String readinessLevel =
-    score >= passingScore
-        ? 'Passed'
-        : score >= 50
-        ? 'Needs Retake'
-        : 'Needs to Re-read';
+        score >= passingScore
+            ? 'Passed'
+            : score >= 50
+            ? 'Needs Retake'
+            : 'Needs to Re-read';
     Color readinessColor =
-    score >= passingScore
-        ? theme.colorScheme.green
-        : score < passingScore
-        ? theme.colorScheme.orange
-        : theme.colorScheme.red;
+        score >= passingScore
+            ? theme.colorScheme.green
+            : score < passingScore
+            ? theme.colorScheme.orange
+            : theme.colorScheme.red;
 
     return Scaffold(
       appBar: AppBar(
@@ -149,7 +152,9 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                       Text(
                         'Quiz Score',
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.7,
+                          ),
                         ),
                       ),
                       SizedBox(height: 8),
@@ -184,7 +189,9 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                       Text(
                         '$correctAnswers out of $totalQuestions questions correct',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.7,
+                          ),
                         ),
                       ),
                     ],
@@ -201,12 +208,13 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => PostQuizActionsScreen(
-                            moduleId: widget.moduleId,
-                            score: score,
-                            passingScore: widget.questionSet.passingScore,
-                            handleAction: _handleQuizAction,
-                          ),
+                          builder:
+                              (context) => PostQuizActionsScreen(
+                                moduleId: widget.moduleId,
+                                score: score,
+                                passingScore: widget.questionSet.passingScore,
+                                handleAction: _handleQuizAction,
+                              ),
                         ),
                       );
 

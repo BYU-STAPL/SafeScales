@@ -12,7 +12,15 @@ import 'package:safe_scales/ui/widgets/settings_drawer.dart';
 import 'package:safe_scales/ui/screens/home_screen.dart';
 import 'package:safe_scales/ui/screens/dragons_screen.dart';
 import 'package:safe_scales/ui/screens/items_screen.dart';
+import 'package:safe_scales/ui/screens/review_list/review_list_screen.dart';
 import 'package:safe_scales/ui/screens/shop_screen.dart';
+
+/// Tab indices for main navigation. Used when navigating programmatically.
+const int kHomeTabIndex = 0;
+const int kReviewTabIndex = 1;
+const int kDragonsTabIndex = 2;
+const int kItemsTabIndex = 3;
+const int kShopTabIndex = 4;
 
 class MainNavigation extends StatefulWidget {
   final int initialIndex;
@@ -39,28 +47,29 @@ class _MainNavigationState extends State<MainNavigation> {
     _selectedIndex = widget.initialIndex;
 
     _pages = <Widget>[
-      // Hard code shop index here, that way this information doesn't need to be shared across files
       HomeScreen(
         onNavigateToShop: () {
-          _navigateToTab(3);
+          _navigateToTab(kShopTabIndex);
         },
       ),
+      const ReviewListScreen(),
       DragonsScreen(),
       ItemsScreen(),
       ShopScreen(),
-      // DevTestingPage(), //TODO: Remove later
     ];
   }
 
   String _getAppBarTitle(int index) {
     switch (index) {
-      case 0:
+      case kHomeTabIndex:
         return 'Safe Scales';
-      case 1:
+      case kReviewTabIndex:
+        return 'Review';
+      case kDragonsTabIndex:
         return 'Dragons';
-      case 2:
+      case kItemsTabIndex:
         return 'Items';
-      case 3:
+      case kShopTabIndex:
         return 'Shop';
       default:
         return '';
@@ -163,29 +172,27 @@ class _MainNavigationState extends State<MainNavigation> {
               alpha: 0.5,
             ),
             showUnselectedLabels: true,
-            items: [
-              const BottomNavigationBarItem(
+            items: const [
+              BottomNavigationBarItem(
                 icon: FaIcon(FontAwesomeIcons.graduationCap),
                 label: 'Home',
               ),
-              const BottomNavigationBarItem(
+              BottomNavigationBarItem(
+                icon: FaIcon(FontAwesomeIcons.bullseye),
+                label: 'Review',
+              ),
+              BottomNavigationBarItem(
                 icon: FaIcon(FontAwesomeIcons.dragon),
                 label: 'Dragons',
               ),
-              const BottomNavigationBarItem(
+              BottomNavigationBarItem(
                 icon: Icon(Icons.extension),
                 label: 'Items',
               ),
-              const BottomNavigationBarItem(
+              BottomNavigationBarItem(
                 icon: Icon(Icons.storefront),
                 label: 'Shop',
               ),
-
-              //TODO: Remove later
-              // const BottomNavigationBarItem(
-              //   icon: Icon(Icons.device_hub),
-              //   label: 'Dev',
-              // ),
             ],
           ),
         ),
