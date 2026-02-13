@@ -1,0 +1,12 @@
+# Copy this file to key.properties and fill in your values.
+# key.properties is gitignored - never commit it.
+#
+# storeFile: Path to your .jks or .keystore file (use absolute path)
+# storePassword: Keystore password
+# keyAlias: Key alias (e.g. "upload")
+# keyPassword: Key password (can match storePassword)
+#
+storeFile=/absolute/path/to/your/upload-keystore.jks
+storePassword=your_store_password
+keyAlias=upload
+keyPassword=your_key_password
