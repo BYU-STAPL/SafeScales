@@ -35,12 +35,12 @@ class DragonService {
   // Note: Progress uses full percent not decimals
   // - egg: Always unlocked (0%)
   // - stage1 (baby): Unlocks at pre-quiz completion (33.33%)
-  // - stage2 (teen): Unlocks at pre-quiz completion (33.33%)
+  // - stage2 (teen): Unlocks at reading completion (66.67%)
   // - final (adult): Unlocks at post-quiz completion (100%)
   static const Map<String, double> phaseThresholds = {
     'egg': 0.0,
     'stage1': 33.33,
-    'stage2': 33.33,
+    'stage2': 66.67,
     'final': 100.0,
   };
 
