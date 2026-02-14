@@ -10,8 +10,7 @@ enum AppThemeType {
   oceanTeal,
   royalPurple,
   rosePink,
-  indigoNavy,
-  amberGold,
+  sepiaNeutral,
 }
 
 /* Color Library */
@@ -821,37 +820,37 @@ final ColorScheme darkRosePinkScheme = _createColorScheme(
   inversePrimary: const Color(0xffBE185D),
 );
 
-// Indigo Navy Theme - Light
-final ColorScheme lightIndigoNavyScheme = _createColorScheme(
+// Sepia/Neutral Theme - Light (warm grays and tans for a neutral scheme)
+final ColorScheme lightSepiaNeutralScheme = _createColorScheme(
   brightness: Brightness.light,
-  primary: const Color(0xff4338CA), // Indigo
-  secondary: const Color(0xff4F46E5), // Bright indigo
-  tertiary: const Color(0xff6366F1), // Light indigo
+  primary: const Color(0xff6B5B4F), // Warm gray-brown
+  secondary: const Color(0xff8B7355), // Sepia tan
+  tertiary: const Color(0xff9C8B7A), // Light sepia
   error: const Color(0xffDC2626),
   onPrimary: Colors.white,
   onSecondary: Colors.white,
   onTertiary: Colors.white,
   onError: Colors.white,
-  primaryContainer: const Color(0xffE0E7FF), // Pale indigo
-  secondaryContainer: const Color(0xffE0E7FF), // Light indigo
-  tertiaryContainer: const Color(0xffEEF2FF), // Very pale indigo
+  primaryContainer: const Color(0xffE8E2DB), // Warm off-white
+  secondaryContainer: const Color(0xffDED6CC), // Pale tan
+  tertiaryContainer: const Color(0xffF5F0E8), // Cream
   errorContainer: const Color(0xffFEE2E2),
-  onPrimaryContainer: const Color(0xff312E81), // Dark indigo
-  onSecondaryContainer: const Color(0xff3730A3),
-  onTertiaryContainer: const Color(0xff4338CA),
+  onPrimaryContainer: const Color(0xff4A3F36), // Dark warm gray
+  onSecondaryContainer: const Color(0xff5D4E42),
+  onTertiaryContainer: const Color(0xff5D4E42),
   onErrorContainer: const Color(0xff991B1B),
-  primaryFixed: const Color(0xffE0E7FF),
-  primaryFixedDim: const Color(0xffC7D2FE),
-  secondaryFixed: const Color(0xffC7D2FE),
-  secondaryFixedDim: const Color(0xffA5B4FC),
-  tertiaryFixed: const Color(0xffEEF2FF),
-  tertiaryFixedDim: const Color(0xffE0E7FF),
-  onPrimaryFixed: const Color(0xff312E81),
-  onPrimaryFixedVariant: const Color(0xff3730A3),
-  onSecondaryFixed: const Color(0xff3730A3),
-  onSecondaryFixedVariant: const Color(0xff4338CA),
-  onTertiaryFixed: const Color(0xff4338CA),
-  onTertiaryFixedVariant: const Color(0xff4F46E5),
+  primaryFixed: const Color(0xffE8E2DB),
+  primaryFixedDim: const Color(0xffDED6CC),
+  secondaryFixed: const Color(0xffDED6CC),
+  secondaryFixedDim: const Color(0xffC9BEB2),
+  tertiaryFixed: const Color(0xffF5F0E8),
+  tertiaryFixedDim: const Color(0xffE8E2DB),
+  onPrimaryFixed: const Color(0xff4A3F36),
+  onPrimaryFixedVariant: const Color(0xff5D4E42),
+  onSecondaryFixed: const Color(0xff5D4E42),
+  onSecondaryFixedVariant: const Color(0xff6B5B4F),
+  onTertiaryFixed: const Color(0xff5D4E42),
+  onTertiaryFixedVariant: const Color(0xff6B5B4F),
   surfaceDim: AppColors.lmSurfaceDim,
   surface: AppColors.lmSurface,
   surfaceBright: AppColors.lmSurfaceBright,
@@ -868,40 +867,40 @@ final ColorScheme lightIndigoNavyScheme = _createColorScheme(
   surfaceContainerHighest: AppColors.lmSurfaceContainerHighest,
   scrim: AppColors.lmScrim,
   shadow: AppColors.lmShadow,
-  inversePrimary: const Color(0xffA5B4FC),
+  inversePrimary: const Color(0xffC9BEB2),
 );
 
-// Indigo Navy Theme - Dark
-final ColorScheme darkIndigoNavyScheme = _createColorScheme(
+// Sepia/Neutral Theme - Dark
+final ColorScheme darkSepiaNeutralScheme = _createColorScheme(
   brightness: Brightness.dark,
-  primary: const Color(0xff818CF8), // Bright indigo
-  secondary: const Color(0xffA5B4FC), // Light indigo
-  tertiary: const Color(0xffC7D2FE), // Very light indigo
+  primary: const Color(0xffA89888), // Warm tan
+  secondary: const Color(0xffC4B5A4), // Light sepia
+  tertiary: const Color(0xffD4C4B4), // Lighter warm gray
   error: const Color(0xffF87171),
-  onPrimary: const Color(0xff1E1B4B), // Very dark indigo
-  onSecondary: const Color(0xff312E81),
-  onTertiary: const Color(0xff3730A3),
+  onPrimary: const Color(0xff3D352D), // Dark warm gray
+  onSecondary: const Color(0xff4A3F36),
+  onTertiary: const Color(0xff4A3F36),
   onError: const Color(0xff991B1B),
-  primaryContainer: const Color(0xff4F46E5), // Dark indigo
-  secondaryContainer: const Color(0xff4338CA), // Darker indigo
-  tertiaryContainer: const Color(0xff3730A3),
+  primaryContainer: const Color(0xff5D4E42), // Dark sepia
+  secondaryContainer: const Color(0xff4A3F36), // Darker warm gray
+  tertiaryContainer: const Color(0xff3D352D),
   errorContainer: const Color(0xff7F1D1D),
-  onPrimaryContainer: const Color(0xffE0E7FF),
-  onSecondaryContainer: const Color(0xffC7D2FE),
-  onTertiaryContainer: const Color(0xffEEF2FF),
+  onPrimaryContainer: const Color(0xffE8E2DB),
+  onSecondaryContainer: const Color(0xffDED6CC),
+  onTertiaryContainer: const Color(0xffE8E2DB),
   onErrorContainer: const Color(0xffFEE2E2),
-  primaryFixed: const Color(0xff4F46E5),
-  primaryFixedDim: const Color(0xff4338CA),
-  secondaryFixed: const Color(0xff4338CA),
-  secondaryFixedDim: const Color(0xff3730A3),
-  tertiaryFixed: const Color(0xff3730A3),
-  tertiaryFixedDim: const Color(0xff312E81),
-  onPrimaryFixed: const Color(0xffE0E7FF),
-  onPrimaryFixedVariant: const Color(0xffC7D2FE),
-  onSecondaryFixed: const Color(0xffC7D2FE),
-  onSecondaryFixedVariant: const Color(0xffA5B4FC),
-  onTertiaryFixed: const Color(0xffEEF2FF),
-  onTertiaryFixedVariant: const Color(0xffE0E7FF),
+  primaryFixed: const Color(0xff5D4E42),
+  primaryFixedDim: const Color(0xff4A3F36),
+  secondaryFixed: const Color(0xff4A3F36),
+  secondaryFixedDim: const Color(0xff3D352D),
+  tertiaryFixed: const Color(0xff3D352D),
+  tertiaryFixedDim: const Color(0xff4A3F36),
+  onPrimaryFixed: const Color(0xffE8E2DB),
+  onPrimaryFixedVariant: const Color(0xffDED6CC),
+  onSecondaryFixed: const Color(0xffDED6CC),
+  onSecondaryFixedVariant: const Color(0xffC9BEB2),
+  onTertiaryFixed: const Color(0xffE8E2DB),
+  onTertiaryFixedVariant: const Color(0xffDED6CC),
   surfaceDim: AppColors.dmSurfaceDim,
   surface: AppColors.dmSurface,
   surfaceBright: AppColors.dmSurfaceBright,
@@ -918,107 +917,7 @@ final ColorScheme darkIndigoNavyScheme = _createColorScheme(
   surfaceContainerHighest: AppColors.dmSurfaceContainerHighest,
   scrim: AppColors.dmScrim,
   shadow: AppColors.dmShadow,
-  inversePrimary: const Color(0xff4F46E5),
-);
-
-// Amber Gold Theme - Light
-final ColorScheme lightAmberGoldScheme = _createColorScheme(
-  brightness: Brightness.light,
-  primary: const Color(0xffD97706), // Amber
-  secondary: const Color(0xffF59E0B), // Bright amber
-  tertiary: const Color(0xffFCD34D), // Gold
-  error: const Color(0xffDC2626),
-  onPrimary: Colors.white,
-  onSecondary: Colors.white,
-  onTertiary: Colors.black87,
-  onError: Colors.white,
-  primaryContainer: const Color(0xffFEF3C7), // Pale amber
-  secondaryContainer: const Color(0xffFEF9C3), // Pale gold
-  tertiaryContainer: const Color(0xffFFFBEB), // Very pale gold
-  errorContainer: const Color(0xffFEE2E2),
-  onPrimaryContainer: const Color(0xff92400E), // Dark amber
-  onSecondaryContainer: const Color(0xffB45309),
-  onTertiaryContainer: const Color(0xff78350F),
-  onErrorContainer: const Color(0xff991B1B),
-  primaryFixed: const Color(0xffFEF3C7),
-  primaryFixedDim: const Color(0xffFDE68A),
-  secondaryFixed: const Color(0xffFEF9C3),
-  secondaryFixedDim: const Color(0xffFEF08A),
-  tertiaryFixed: const Color(0xffFFFBEB),
-  tertiaryFixedDim: const Color(0xffFEF9C3),
-  onPrimaryFixed: const Color(0xff92400E),
-  onPrimaryFixedVariant: const Color(0xffB45309),
-  onSecondaryFixed: const Color(0xffB45309),
-  onSecondaryFixedVariant: const Color(0xffD97706),
-  onTertiaryFixed: const Color(0xff78350F),
-  onTertiaryFixedVariant: const Color(0xff92400E),
-  surfaceDim: AppColors.lmSurfaceDim,
-  surface: AppColors.lmSurface,
-  surfaceBright: AppColors.lmSurfaceBright,
-  inverseSurface: AppColors.lmInverseSurface,
-  onSurface: AppColors.lmOnSurface,
-  onSurfaceVariant: AppColors.lmOnSurfaceVariant,
-  onInverseSurface: AppColors.lmInverseOnSurface,
-  outline: AppColors.lmOutline,
-  outlineVariant: AppColors.lmOutlineVariant,
-  surfaceContainerLowest: AppColors.lmSurfaceContainerLowest,
-  surfaceContainerLow: AppColors.lmSurfaceContainerLow,
-  surfaceContainer: AppColors.lmSurfaceContainer,
-  surfaceContainerHigh: AppColors.lmSurfaceContainerHigh,
-  surfaceContainerHighest: AppColors.lmSurfaceContainerHighest,
-  scrim: AppColors.lmScrim,
-  shadow: AppColors.lmShadow,
-  inversePrimary: const Color(0xffFDE68A),
-);
-
-// Amber Gold Theme - Dark
-final ColorScheme darkAmberGoldScheme = _createColorScheme(
-  brightness: Brightness.dark,
-  primary: const Color(0xffFBBF24), // Bright amber
-  secondary: const Color(0xffFCD34D), // Light amber
-  tertiary: const Color(0xffFDE68A), // Very light gold
-  error: const Color(0xffF87171),
-  onPrimary: const Color(0xff78350F), // Very dark amber
-  onSecondary: const Color(0xff92400E),
-  onTertiary: const Color(0xff92400E),
-  onError: const Color(0xff991B1B),
-  primaryContainer: const Color(0xffB45309), // Dark amber
-  secondaryContainer: const Color(0xff92400E), // Darker amber
-  tertiaryContainer: const Color(0xff78350F),
-  errorContainer: const Color(0xff7F1D1D),
-  onPrimaryContainer: const Color(0xffFEF3C7),
-  onSecondaryContainer: const Color(0xffFEF9C3),
-  onTertiaryContainer: const Color(0xffFFFBEB),
-  onErrorContainer: const Color(0xffFEE2E2),
-  primaryFixed: const Color(0xffB45309),
-  primaryFixedDim: const Color(0xff92400E),
-  secondaryFixed: const Color(0xff92400E),
-  secondaryFixedDim: const Color(0xff78350F),
-  tertiaryFixed: const Color(0xff78350F),
-  tertiaryFixedDim: const Color(0xff92400E),
-  onPrimaryFixed: const Color(0xffFEF3C7),
-  onPrimaryFixedVariant: const Color(0xffFDE68A),
-  onSecondaryFixed: const Color(0xffFEF9C3),
-  onSecondaryFixedVariant: const Color(0xffFCD34D),
-  onTertiaryFixed: const Color(0xffFFFBEB),
-  onTertiaryFixedVariant: const Color(0xffFEF9C3),
-  surfaceDim: AppColors.dmSurfaceDim,
-  surface: AppColors.dmSurface,
-  surfaceBright: AppColors.dmSurfaceBright,
-  inverseSurface: AppColors.dmInverseSurface,
-  onSurface: AppColors.dmOnSurface,
-  onSurfaceVariant: AppColors.dmOnSurfaceVariant,
-  onInverseSurface: AppColors.dmInverseOnSurface,
-  outline: AppColors.dmOutline,
-  outlineVariant: AppColors.dmOutlineVariant,
-  surfaceContainerLowest: AppColors.dmSurfaceContainerLowest,
-  surfaceContainerLow: AppColors.dmSurfaceContainerLow,
-  surfaceContainer: AppColors.dmSurfaceContainer,
-  surfaceContainerHigh: AppColors.dmSurfaceContainerHigh,
-  surfaceContainerHighest: AppColors.dmSurfaceContainerHighest,
-  scrim: AppColors.dmScrim,
-  shadow: AppColors.dmShadow,
-  inversePrimary: const Color(0xffB45309),
+  inversePrimary: const Color(0xff5D4E42),
 );
 
 // Extension for any additional custom colors you might need
@@ -1067,10 +966,8 @@ class AppTheme {
         return isDarkMode ? darkRoyalPurpleScheme : lightRoyalPurpleScheme;
       case AppThemeType.rosePink:
         return isDarkMode ? darkRosePinkScheme : lightRosePinkScheme;
-      case AppThemeType.indigoNavy:
-        return isDarkMode ? darkIndigoNavyScheme : lightIndigoNavyScheme;
-      case AppThemeType.amberGold:
-        return isDarkMode ? darkAmberGoldScheme : lightAmberGoldScheme;
+      case AppThemeType.sepiaNeutral:
+        return isDarkMode ? darkSepiaNeutralScheme : lightSepiaNeutralScheme;
     }
   }
 

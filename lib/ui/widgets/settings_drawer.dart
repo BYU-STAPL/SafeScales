@@ -138,84 +138,10 @@ class SettingsDrawer extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        SizedBox(
-                          height: 80,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: [
-                              _buildThemeOption(
-                                context,
-                                colorScheme,
-                                themeNotifier,
-                                AppThemeType.classicBlue,
-                                'Classic Blue',
-                                [const Color(0xff2E83E8), const Color(0xff0DB563)],
-                              ),
-                              const SizedBox(width: 12),
-                              _buildThemeOption(
-                                context,
-                                colorScheme,
-                                themeNotifier,
-                                AppThemeType.forestGreen,
-                                'Forest Green',
-                                [const Color(0xff059669), const Color(0xff10B981)],
-                              ),
-                              const SizedBox(width: 12),
-                              _buildThemeOption(
-                                context,
-                                colorScheme,
-                                themeNotifier,
-                                AppThemeType.sunsetOrange,
-                                'Sunset Orange',
-                                [const Color(0xffEA580C), const Color(0xffF97316)],
-                              ),
-                              const SizedBox(width: 12),
-                              _buildThemeOption(
-                                context,
-                                colorScheme,
-                                themeNotifier,
-                                AppThemeType.oceanTeal,
-                                'Ocean Teal',
-                                [const Color(0xff0891B2), const Color(0xff06B6D4)],
-                              ),
-                              const SizedBox(width: 12),
-                              _buildThemeOption(
-                                context,
-                                colorScheme,
-                                themeNotifier,
-                                AppThemeType.royalPurple,
-                                'Royal Purple',
-                                [const Color(0xff7C3AED), const Color(0xff8B5CF6)],
-                              ),
-                              const SizedBox(width: 12),
-                              _buildThemeOption(
-                                context,
-                                colorScheme,
-                                themeNotifier,
-                                AppThemeType.rosePink,
-                                'Rose Pink',
-                                [const Color(0xffE11D48), const Color(0xffF43F5E)],
-                              ),
-                              const SizedBox(width: 12),
-                              _buildThemeOption(
-                                context,
-                                colorScheme,
-                                themeNotifier,
-                                AppThemeType.indigoNavy,
-                                'Indigo Navy',
-                                [const Color(0xff4338CA), const Color(0xff4F46E5)],
-                              ),
-                              const SizedBox(width: 12),
-                              _buildThemeOption(
-                                context,
-                                colorScheme,
-                                themeNotifier,
-                                AppThemeType.amberGold,
-                                'Amber Gold',
-                                [const Color(0xffD97706), const Color(0xffF59E0B)],
-                              ),
-                            ],
-                          ),
+                        _buildThemeGrid(
+                          context,
+                          colorScheme,
+                          themeNotifier,
                         ),
                       ],
                     ),
@@ -291,6 +217,53 @@ class SettingsDrawer extends StatelessWidget {
     );
   }
 
+  static final List<({AppThemeType type, String name, List<Color> colors})> _themeOptions = [
+    (type: AppThemeType.classicBlue, name: 'Classic', colors: [const Color(0xff2E83E8), const Color(0xff0DB563), const Color(0xff93C5FD), const Color(0xffDBEAFE)]),
+    (type: AppThemeType.forestGreen, name: 'Forest Green', colors: [const Color(0xff059669), const Color(0xff10B981), const Color(0xffD1FAE5), const Color(0xffA7F3D0)]),
+    (type: AppThemeType.sunsetOrange, name: 'Sunset Orange', colors: [const Color(0xffEA580C), const Color(0xffF97316), const Color(0xffFED7AA), const Color(0xffFEF9C3)]),
+    (type: AppThemeType.oceanTeal, name: 'Ocean Teal', colors: [const Color(0xff0891B2), const Color(0xff06B6D4), const Color(0xffCFFAFE), const Color(0xffA5F3FC)]),
+    (type: AppThemeType.royalPurple, name: 'Royal Purple', colors: [const Color(0xff7C3AED), const Color(0xff8B5CF6), const Color(0xffEDE9FE), const Color(0xffDDD6FE)]),
+    (type: AppThemeType.rosePink, name: 'Rose Pink', colors: [const Color(0xffE11D48), const Color(0xffF43F5E), const Color(0xffFCE7F3), const Color(0xffFDF2F8)]),
+    (type: AppThemeType.sepiaNeutral, name: 'Sepia', colors: [const Color(0xff6B5B4F), const Color(0xff8B7355), const Color(0xffE8E2DB), const Color(0xffDED6CC)]),
+  ];
+
+  Widget _buildThemeGrid(
+    BuildContext context,
+    ColorScheme colorScheme,
+    ThemeNotifier themeNotifier,
+  ) {
+    const int columns = 2;
+    final rows = <Widget>[];
+    for (var i = 0; i < _themeOptions.length; i += columns) {
+      final rowChildren = <Widget>[];
+      for (var j = 0; j < columns; j++) {
+        final index = i + j;
+        if (index < _themeOptions.length) {
+          final opt = _themeOptions[index];
+          rowChildren.add(
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(right: j == 0 ? 6 : 0, left: j == 1 ? 6 : 0),
+                child: _buildThemeOption(context, colorScheme, themeNotifier, opt.type, opt.name, opt.colors),
+              ),
+            ),
+          );
+        } else {
+          rowChildren.add(const Expanded(child: SizedBox.shrink()));
+        }
+      }
+      rows.add(Row(crossAxisAlignment: CrossAxisAlignment.start, children: rowChildren));
+      if (i + columns < _themeOptions.length) {
+        rows.add(const SizedBox(height: 12));
+      }
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
+    );
+  }
+
   Widget _buildThemeOption(
     BuildContext context,
     ColorScheme colorScheme,
@@ -306,40 +279,53 @@ class SettingsDrawer extends StatelessWidget {
         themeNotifier.updateThemeType(themeType);
       },
       child: Container(
-        width: 70,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? colorScheme.primaryContainer.withValues(alpha: 0.3)
+              ? colorScheme.primaryContainer.withValues(alpha: 0.5)
               : colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? colorScheme.primary
                 : colorScheme.outlineVariant,
-            width: isSelected ? 2 : 1,
+            width: isSelected ? 3 : 1,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: colorScheme.primary.withValues(alpha: 0.25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Color preview swatches
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: previewColors.map((color) {
-                return Container(
-                  width: 20,
-                  height: 20,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: colorScheme.outlineVariant,
-                      width: 0.5,
-                    ),
-                  ),
-                );
-              }).toList(),
+            // Color preview swatches (2x2 grid)
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildSwatch(colorScheme, previewColors.length > 0 ? previewColors[0] : colorScheme.primary),
+                    _buildSwatch(colorScheme, previewColors.length > 1 ? previewColors[1] : colorScheme.secondary),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildSwatch(colorScheme, previewColors.length > 2 ? previewColors[2] : colorScheme.primary),
+                    _buildSwatch(colorScheme, previewColors.length > 3 ? previewColors[3] : colorScheme.secondary),
+                  ],
+                ),
+              ],
             ),
             const SizedBox(height: 6),
             // Theme name
@@ -356,17 +342,23 @@ class SettingsDrawer extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            // Selected indicator
-            if (isSelected)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Icon(
-                  Icons.check_circle,
-                  size: 16,
-                  color: colorScheme.primary,
-                ),
-              ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSwatch(ColorScheme colorScheme, Color color) {
+    return Container(
+      width: 14,
+      height: 14,
+      margin: const EdgeInsets.all(1.5),
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: 0.5,
         ),
       ),
     );
