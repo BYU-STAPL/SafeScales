@@ -333,6 +333,7 @@ class TtsService extends ChangeNotifier {
   static String cleanTextForProgress(String text) {
     // Remove markdown formatting while preserving natural pauses
     String enhanced = text
+        .replaceAll(RegExp(r'!\[[^\]]*\]\s*\([^)]*\)'), ' ') // Images
         .replaceAll(RegExp(r'\*\*(.*?)\*\*'), r'$1') // Bold
         .replaceAll(RegExp(r'\*(.*?)\*'), r'$1') // Italic
         .replaceAll(RegExp(r'`(.*?)`'), r'$1') // Code

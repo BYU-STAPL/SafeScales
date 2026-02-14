@@ -6,17 +6,17 @@ import 'package:provider/provider.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
 import 'package:safe_scales/models/reading_slide.dart';
+import 'package:safe_scales/services/tts_service.dart';
 import 'package:safe_scales/ui/screens/reading/reading_results_screen.dart';
+import 'package:safe_scales/ui/widgets/tts_progress_bar.dart';
+import 'package:safe_scales/ui/widgets/voice_button.dart';
 
 import '../../../models/lesson.dart';
 import '../../../providers/course_provider.dart';
 import '../../../providers/theme_provider.dart';
-import '../../widgets/clickable_text_scrubber.dart';
 import '../../widgets/progress_bar.dart';
-import '../../widgets/tts_progress_bar.dart';
-import '../../widgets/voice_button.dart';
 import '../../widgets/reading_font_adjustment_dialog.dart';
-import '../../../services/tts_service.dart';
+import '../../widgets/styled_markdown.dart';
 
 class ReadingActivityScreen extends StatefulWidget {
   final String moduleId;
@@ -30,9 +30,6 @@ class ReadingActivityScreen extends StatefulWidget {
 class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
   final PageController _pageController = PageController(initialPage: 0);
   final TtsService _ttsService = TtsService();
-  final Map<int, ScrollController> _scrollControllers = {};
-  final Map<int, bool> _canScrollDown = {};
-  final Map<int, bool> _canScrollUp = {};
 
   List<ReadingSlide> _readingSlides = [];
   int _currentSlideIndex = 0;
@@ -51,50 +48,20 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
   void initState() {
     super.initState();
     _loadReading();
+    _ttsService.initialize();
+    _ttsService.addListener(_onTtsStateChanged);
+  }
+
+  void _onTtsStateChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    _ttsService.dispose();
+    _ttsService.removeListener(_onTtsStateChanged);
+    _ttsService.stop();
     _pageController.dispose();
-    for (var controller in _scrollControllers.values) {
-      controller.dispose();
-    }
-    _scrollControllers.clear();
     super.dispose();
-  }
-
-  ScrollController _getScrollController(int index) {
-    if (!_scrollControllers.containsKey(index)) {
-      final controller = ScrollController();
-      controller.addListener(() {
-        if (mounted && _currentSlideIndex == index) {
-          final canScrollDown =
-              controller.position.pixels <
-              controller.position.maxScrollExtent - 10;
-          final canScrollUp = controller.position.pixels > 10;
-          setState(() {
-            _canScrollDown[index] = canScrollDown;
-            _canScrollUp[index] = canScrollUp;
-          });
-        }
-      });
-      _scrollControllers[index] = controller;
-      // Initialize scroll state
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && controller.hasClients) {
-          final canScrollDown =
-              controller.position.pixels <
-              controller.position.maxScrollExtent - 10;
-          final canScrollUp = controller.position.pixels > 10;
-          setState(() {
-            _canScrollDown[index] = canScrollDown;
-            _canScrollUp[index] = canScrollUp;
-          });
-        }
-      });
-    }
-    return _scrollControllers[index]!;
   }
 
   Future<void> _loadReading() async {
@@ -217,8 +184,6 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
   Future<void> _nextSlide() async {
     if (_currentSlideIndex < _readingSlides.length - 1) {
-      _ttsService.stop(); // Stop Audio when changing pages
-
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -231,8 +196,6 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
   void _previousSlide() {
     if (_currentSlideIndex > 0) {
-      _ttsService.stop(); // Stop Audio when changing pages
-
       _pageController.previousPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -244,22 +207,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
   void _onPageChanged(int index) {
     setState(() {
-      _ttsService.stop(); // Stop TTS when page is flipped
       _currentSlideIndex = index;
-    });
-    // Update scroll indicators for new page
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final controller = _scrollControllers[index];
-      if (controller != null && controller.hasClients && mounted) {
-        final canScrollDown =
-            controller.position.pixels <
-            controller.position.maxScrollExtent - 10;
-        final canScrollUp = controller.position.pixels > 10;
-        setState(() {
-          _canScrollDown[index] = canScrollDown;
-          _canScrollUp[index] = canScrollUp;
-        });
-      }
     });
   }
 
@@ -336,9 +284,6 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
       if (_pageController.hasClients) {
         // Use jumpToPage for instant navigation without animation
         _pageController.jumpToPage(index);
-
-        //TODO: ??? Why not call this here ???
-        // _onPageChanged(index); // Don't call this function here, bc the audio stops working if you do,
       } else {
         // If PageController is not attached yet, just update the index
         // and close TOC. The PageView will be built with the correct initial page.
@@ -371,7 +316,8 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
           final isBookmarked = _bookmarkedPages.contains(index);
           final rawTitle = _readingSlides[index].title;
           final stripped = rawTitle.stripImageLinksForToc();
-          final displayTitle = stripped.isEmpty ? 'Page ${index + 1}' : stripped;
+          final displayTitle =
+              stripped.isEmpty ? 'Page ${index + 1}' : stripped;
           return ListTile(
             leading: IconButton(
               iconSize: 22,
@@ -407,28 +353,17 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
 
     final headline = _readingSlides[index].title;
     final content = _readingSlides[index].content;
-    final fullText = '$headline\n\n$content';
+    final fullText =
+        '$headline\n\n${content.isNotEmpty ? content : 'No content available'}';
 
     return Column(
       children: [
-        // Control buttons row
+        // Control buttons row: bookmark + read aloud
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Voice button
-              VoiceButton(
-                text: fullText,
-                pageIndex: index,
-                size: 35,
-                onStateChanged: () {
-                  // Trigger rebuild to update progress bar
-                  setState(() {});
-                },
-              ),
-              const SizedBox(width: 20),
-              // Bookmark button
               IconButton(
                 iconSize: 25,
                 icon: Icon(
@@ -451,159 +386,39 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
                   _saveBookmarks();
                 },
               ),
+              VoiceButton(
+                text: fullText,
+                pageIndex: index,
+                onStateChanged: () => setState(() {}),
+                margin: EdgeInsets.zero,
+                size: 40,
+              ),
             ],
           ),
         ),
 
-        // Scrollable content - wrapped in Expanded
+        // Content - wrapped in Expanded
         Expanded(
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                controller: _getScrollController(index),
-                padding: const EdgeInsets.symmetric(horizontal: 30),
-                child: Consumer<ThemeNotifier>(
-                  builder: (context, themeNotifier, child) {
-                    final fullText =
-                        '$headline\n\n${content.isNotEmpty ? content : 'No content available'}';
-                    final cleanText =
-                        _ttsService.currentText != null &&
-                                _ttsService.currentText!.isNotEmpty &&
-                                _ttsService.currentPageIndex == index
-                            ? _ttsService.currentText!
-                            : TtsService.cleanTextForProgress(fullText);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Use ClickableTextScrubber for word-level highlighting during TTS
-                        ClickableTextScrubber(
-                          markdownData: fullText,
-                          cleanText: cleanText,
-                          currentWordStart:
-                              _ttsService.currentPageIndex == index
-                                  ? _ttsService.currentWordStart
-                                  : null,
-                          currentWordEnd:
-                              _ttsService.currentPageIndex == index
-                                  ? _ttsService.currentWordEnd
-                                  : null,
-                          wordsRead:
-                              _ttsService.currentPageIndex == index
-                                  ? _ttsService.wordsRead
-                                  : {},
-                          onWordTap:
-                              (position) => _ttsService.seekToPosition(
-                                position,
-                                pageIndex: index,
-                              ),
-                          fontSizeScale: themeNotifier.readingFontSize,
-                          ttsService: _ttsService,
-                        ),
-                        // Extra padding at bottom
-                        const SizedBox(height: 30),
-                      ],
-                    );
-                  },
-                ),
-              ),
-              // Top scroll indicator
-              if (_canScrollUp[index] ?? false)
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          theme.colorScheme.surface,
-                          theme.colorScheme.surface.withValues(alpha: 0.0),
-                        ],
-                      ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Consumer<ThemeNotifier>(
+              builder: (context, themeNotifier, child) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    StyledMarkdown(
+                      data: fullText,
+                      fontSizeScale: themeNotifier.readingFontSize,
                     ),
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.keyboard_arrow_up,
-                            size: 18,
-                            color: theme.colorScheme.outline,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            "Scroll up",
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.outline,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              // Bottom scroll indicator
-              if (_canScrollDown[index] ?? false)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [
-                          theme.colorScheme.surface,
-                          theme.colorScheme.surface.withValues(alpha: 0.0),
-                        ],
-                      ),
-                    ),
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.keyboard_arrow_down,
-                            size: 18,
-                            color: theme.colorScheme.outline,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            "Scroll for more",
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.outline,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+                    const SizedBox(height: 30),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ],
     );
-  }
-
-  String _getCleanTextForCurrentSlide() {
-    if (_readingSlides.isEmpty) return '';
-    final slide = _readingSlides[_currentSlideIndex];
-    final headline = slide.title;
-    final content = slide.content;
-    final fullText =
-        '$headline\n\n${content.isNotEmpty ? content : 'No content available'}';
-    if (_ttsService.currentText != null &&
-        _ttsService.currentText!.isNotEmpty &&
-        _ttsService.currentPageIndex == _currentSlideIndex) {
-      return _ttsService.currentText!;
-    }
-    return TtsService.cleanTextForProgress(fullText);
   }
 
   @override
@@ -687,13 +502,18 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
                               ),
                     ),
 
-                    // TTS progress bar at scaffold level (stable, not rebuilt with pages)
-                    TtsProgressBar(
-                      ttsService: _ttsService,
-                      cleanText: _getCleanTextForCurrentSlide(),
-                      onPositionChanged: () => setState(() {}),
-                      pageIndex: _currentSlideIndex,
-                    ),
+                    // Read-aloud progress (only when this page is speaking)
+                    if (!_showTableOfContents &&
+                        _readingSlides.isNotEmpty &&
+                        _ttsService.currentPageIndex == _currentSlideIndex &&
+                        !_ttsService.isStopped)
+                      TtsProgressBar(
+                        ttsService: _ttsService,
+                        cleanText: TtsService.cleanTextForProgress(
+                          '${_readingSlides[_currentSlideIndex].title}\n\n${_readingSlides[_currentSlideIndex].content.isNotEmpty ? _readingSlides[_currentSlideIndex].content : 'No content available'}',
+                        ),
+                        pageIndex: _currentSlideIndex,
+                      ),
 
                     // Navigation controls
                     _buildNavigationBar(),
