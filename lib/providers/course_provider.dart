@@ -461,6 +461,19 @@ class CourseProvider extends ChangeNotifier {
     return entries;
   }
 
+  /// Get the lesson immediately after [currentLessonId] in sequence (for "Next Lesson" button)
+  String? getNextLessonInSequence(String currentLessonId) {
+    final index = _lessonOrder.indexOf(currentLessonId);
+    if (index == -1 || index >= _lessonOrder.length - 1) return null;
+    return _lessonOrder[index + 1];
+  }
+
+  /// Get the Lesson object for the next lesson in sequence, or null
+  Lesson? getNextLesson(String currentLessonId) {
+    final nextId = getNextLessonInSequence(currentLessonId);
+    return nextId != null ? _lessons[nextId] : null;
+  }
+
   /// Get the next available lesson (for navigation)
   String? getNextAvailableLesson() {
     for (final lessonId in _lessonOrder) {

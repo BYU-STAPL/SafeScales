@@ -6,11 +6,11 @@ import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_screen.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_screen.dart';
 import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
+import 'package:safe_scales/ui/screens/review_set/review_screen.dart';
 
 import '../../../models/lesson.dart';
 import '../../../providers/course_provider.dart';
 import '../../../providers/dragon_provider.dart';
-import '../../../themes/app_theme.dart';
 import '../../widgets/dragon_image_widget.dart';
 
 class LessonScreen extends StatefulWidget {
@@ -89,291 +89,256 @@ class _LessonScreenState extends State<LessonScreen> {
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
-    final screenSize = MediaQuery.of(context).size;
-
-    final double statBoxWidth = 155;
 
     return Consumer2<DragonProvider, CourseProvider>(
       builder: (context, dragonProvider, courseProvider, child) {
-        // Show loading if data is not ready
         if (_isLoading || _lesson == null || _lessonProgress == null) {
           return Scaffold(
             appBar: AppBar(
               title: Text(widget.topic ?? 'Loading...'),
               centerTitle: true,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              foregroundColor: theme.colorScheme.onSurface,
             ),
             body: const Center(child: CircularProgressIndicator()),
           );
         }
 
         return Scaffold(
+          backgroundColor: theme.colorScheme.surface,
           appBar: AppBar(
-            title: Text(widget.topic ?? _lesson!.title),
+            title: Text(
+              widget.topic ?? _lesson!.title,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.3,
+              ),
+            ),
             centerTitle: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            foregroundColor: theme.colorScheme.onSurface,
+            scrolledUnderElevation: 0,
           ),
-          body:
-              courseProvider.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          body: courseProvider.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      SizedBox(height: 10),
-                      // Dragon image container
-                      Center(child: _getDragonImage(dragonProvider)),
-
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          left: 20,
-                          right: 20,
-                          top: 20,
-                        ),
-                        child: Text(
-                          'Post Quiz Scores',
-                          style: theme.textTheme.headlineSmall,
+                      const SizedBox(height: 20),
+                      _buildLessonOverviewCard(dragonProvider),
+                      const SizedBox(height: 28),
+                      Text(
+                        'Activities',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurfaceVariant,
+                          letterSpacing: -0.2,
                         ),
                       ),
-
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          left: 20,
-                          right: 20,
-                          top: 20,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: statBoxWidth,
-                              padding: EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primaryContainer
-                                    .withValues(
-                                      alpha: 0.1,
-                                    ), //Colors.white.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.timer,
-                                        color: theme.colorScheme.primary,
-                                        size: 15,
-                                      ),
-                                      SizedBox(width: 10),
-                                      Text(
-                                        "Most Recent",
-                                        style: theme.textTheme.labelSmall,
-                                      ),
-                                      SizedBox(width: 10),
-                                      Icon(
-                                        Icons.timer,
-                                        color: theme.colorScheme.primary,
-                                        size: 15,
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 6),
-                                  Text(
-                                    "${_lessonProgress?.getMostRecentPostQuizScore().toInt()}%",
-                                    style: theme.textTheme.headlineSmall
-                                        ?.copyWith(fontSize: 15),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            SizedBox(width: 40),
-
-                            Container(
-                              width: statBoxWidth,
-                              padding: EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primaryContainer
-                                    .withValues(
-                                      alpha: 0.1,
-                                    ), //Colors.white.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.star,
-                                        color: theme.colorScheme.primary,
-                                        size: 15,
-                                      ),
-                                      SizedBox(width: 10),
-                                      Text(
-                                        "Highest",
-                                        style: theme.textTheme.labelSmall,
-                                      ),
-                                      SizedBox(width: 10),
-                                      Icon(
-                                        Icons.star,
-                                        color: theme.colorScheme.primary,
-                                        size: 15,
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 6),
-                                  Text(
-                                    "${_lessonProgress?.getHighestPostQuizScore().toInt()}%",
-                                    style: theme.textTheme.headlineSmall
-                                        ?.copyWith(fontSize: 15),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                      const SizedBox(height: 14),
+                      _buildActivityCard(
+                        title: 'Pre-Quiz',
+                        description: 'See what you already know',
+                        isCompleted: _lessonProgress!.isPreQuizComplete,
+                        isUnlocked: !_lessonProgress!.isPreQuizComplete,
+                        onTap: () => _startQuiz(_lesson!.preQuiz),
                       ),
-
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          left: 20,
-                          right: 20,
-                          top: 20,
-                        ),
-                        child: Text(
-                          'Lesson Activities',
-                          style: theme.textTheme.headlineSmall,
-                        ),
+                      const SizedBox(height: 12),
+                      _buildReadingCard(isUnlocked: _lessonProgress!.isPreQuizComplete),
+                      const SizedBox(height: 12),
+                      _buildActivityCard(
+                        title: 'Quiz',
+                        description: 'Test what you\'ve learned',
+                        isCompleted: _lessonProgress!.isPostQuizComplete(),
+                        isUnlocked: _lessonProgress!.isReadingComplete,
+                        onTap: () => _startQuiz(_lesson!.postQuiz),
                       ),
-
-                      // Existing content
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ...[
-                                _buildQuizCard(
-                                  // type: ActivityType.preQuiz,
-                                  title: 'Pre-Quiz',
-                                  description:
-                                      'Test your knowledge before starting',
-                                  onTap: () => _startQuiz(_lesson!.preQuiz),
-                                  icon: Icons.quiz,
-                                  color: theme.colorScheme.primary,
-                                  isCompleted:
-                                      _lessonProgress!.isPreQuizComplete,
-                                  score:
-                                      _lessonProgress!.preQuizAttempt?.score ??
-                                      0.0,
-                                  isUnlocked:
-                                      !_lessonProgress!
-                                          .isPreQuizComplete, // Only unlock when the pre-quiz is not completed, lock after
-                                ),
-                                const SizedBox(height: 20),
-                              ],
-                              _buildReadingCard(
-                                isUnlocked: _lessonProgress!.isPreQuizComplete,
-                              ),
-                              ...[
-                                const SizedBox(height: 20),
-                                _buildQuizCard(
-                                  title: 'Post-Quiz',
-                                  description: 'Test what you\'ve learned',
-                                  onTap: () => _startQuiz(_lesson!.postQuiz),
-                                  icon: FontAwesomeIcons.penRuler,
-                                  color: theme.colorScheme.primary,
-                                  isCompleted:
-                                      _lessonProgress!.isPostQuizComplete(),
-                                  score:
-                                      _lessonProgress!
-                                              .postQuizAttempts
-                                              .isNotEmpty
-                                          ? _lessonProgress!
-                                              .postQuizAttempts
-                                              .last
-                                              .score
-                                          : null,
-                                  isUnlocked:
-                                      _lessonProgress!.isReadingComplete,
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
+                      const SizedBox(height: 24),
+                      _buildNextLessonAndReviewSection(courseProvider),
+                      const SizedBox(height: 24),
                     ],
                   ),
+                ),
         );
       },
     );
   }
 
-  Widget _buildQuizCard({
+  Widget _buildLessonOverviewCard(DragonProvider dragonProvider) {
+    final theme = Theme.of(context);
+    final dragon = dragonProvider.getDragonByModuleId(widget.moduleId);
+    final phaseName = dragon != null
+        ? dragonProvider.getPhaseDisplayName(
+            dragonProvider.getDragonHighestPhase(dragon.id),
+          )
+        : 'Egg';
+    final growthCount = (_lessonProgress!.isPreQuizComplete ? 1 : 0) +
+        (_lessonProgress!.isReadingComplete ? 1 : 0) +
+        (_lessonProgress!.isPostQuizComplete() ? 1 : 0);
+    final bestScore = _lessonProgress!.getHighestPostQuizScore();
+    final hasPostQuizAttempts = _lessonProgress!.postQuizAttempts.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.12),
+          width: 1,
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final imageSize = constraints.maxWidth * 0.5;
+          return Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: imageSize,
+                  height: imageSize,
+                  child: DragonImageWidget(
+                    moduleId: widget.moduleId,
+                    size: imageSize,
+                  ),
+                ),
+              ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  phaseName,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      'Progress ',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    ...List.generate(3, (i) {
+                      final filled = i < growthCount;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: filled
+                                ? theme.colorScheme.primary
+                                    .withValues(alpha: 0.7)
+                                : theme.colorScheme.outline
+                                    .withValues(alpha: 0.25),
+                          ),
+                        ),
+                      );
+                    }),
+                    Text(
+                      '$growthCount/3',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    hasPostQuizAttempts
+                        ? 'Best: ${bestScore.toInt()}%'
+                        : 'Best: --',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+        },
+      ),
+    );
+  }
+
+  Widget _buildActivityCard({
     required String title,
     required String description,
-    required VoidCallback onTap,
-    required IconData icon,
-    required Color color,
     required bool isCompleted,
     required bool isUnlocked,
-    double? score,
+    required VoidCallback onTap,
   }) {
-    ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
+    final isLocked = !isUnlocked;
+
+    final bgColor = isLocked
+        ? theme.colorScheme.surfaceContainerLow
+        : theme.colorScheme.surfaceContainerLowest;
+    final borderColor = isLocked
+        ? theme.colorScheme.outline.withValues(alpha: 0.15)
+        : theme.colorScheme.outline.withValues(alpha: 0.2);
+    final iconBgColor = isLocked
+        ? theme.colorScheme.outline.withValues(alpha: 0.12)
+        : isCompleted
+            ? theme.colorScheme.primary.withValues(alpha: 0.12)
+            : theme.colorScheme.primary.withValues(alpha: 0.1);
+    final iconColor = isLocked
+        ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7)
+        : isCompleted
+            ? theme.colorScheme.primary.withValues(alpha: 0.9)
+            : theme.colorScheme.primary;
 
     return Container(
       decoration: BoxDecoration(
-        color:
-            isCompleted
-                ? theme.colorScheme.green.withValues(alpha: 0.1)
-                : theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color:
-              isCompleted
-                  ? theme.colorScheme.green
-                  : color.withValues(alpha: 0.5),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor, width: 1),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          onTap: isLocked ? null : onTap,
+          borderRadius: BorderRadius.circular(14),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: color.withValues(alpha: 0.1),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: iconBgColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   child: Icon(
-                    isCompleted ? Icons.check_circle : icon,
-                    size: 20,
-                    color: isCompleted ? theme.colorScheme.green : color,
+                    FontAwesomeIcons.dice,
+                    size: 18,
+                    color: iconColor,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -383,29 +348,37 @@ class _LessonScreenState extends State<LessonScreen> {
                     children: [
                       Text(
                         title,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontSize: 18,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: isLocked
+                              ? theme.colorScheme.onSurfaceVariant
+                              : theme.colorScheme.onSurface,
                         ),
                       ),
-
-                      const SizedBox(height: 5),
-                      Text(description, style: theme.textTheme.labelSmall),
+                      const SizedBox(height: 2),
+                      Text(
+                        description,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.9),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 15),
-                if (!isUnlocked)
-                  Image.asset(
-                    'assets/images/other/lock.png',
-                    width: 40,
-                    height: 40,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                if (isLocked)
+                  Icon(
+                    Icons.lock_outline,
+                    size: 20,
+                    color: theme.colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.5),
                   )
                 else
                   Icon(
                     Icons.arrow_forward_ios,
-                    size: 15,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    size: 14,
+                    color: theme.colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.6),
                   ),
               ],
             ),
@@ -415,240 +388,395 @@ class _LessonScreenState extends State<LessonScreen> {
     );
   }
 
-  Widget _buildReadingCard({required bool isUnlocked}) {
-    ThemeData theme = Theme.of(context);
-    final Color cardBg = theme.colorScheme.surface;
-    final Color textColor = theme.colorScheme.onSurface;
-    final Color primary = theme.colorScheme.primary;
+  Widget _buildNextLessonAndReviewSection(CourseProvider courseProvider) {
+    final theme = Theme.of(context);
+    final isLessonComplete = courseProvider.isLessonCompleted(widget.moduleId);
+    final nextLesson = courseProvider.getNextLesson(widget.moduleId);
+
+    if (!isLessonComplete) {
+      return Column(
+        children: [
+          Text(
+            'Complete all activities to unlock the next lesson and review',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildLockedActionCard(
+            title: 'Next Lesson',
+            subtitle: nextLesson?.title ?? 'Next Lesson Name',
+          ),
+          const SizedBox(height: 12),
+          _buildLockedActionCard(
+            title: 'Review this Lesson',
+            subtitle: 'Test what you\'ve learned',
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        _buildNextLessonButton(courseProvider, nextLesson),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: Divider(
+                color: theme.colorScheme.outline.withValues(alpha: 0.5),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'OR',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Divider(
+                color: theme.colorScheme.outline.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildReviewButton(),
+      ],
+    );
+  }
+
+  Widget _buildLockedActionCard({
+    required String title,
+    required String subtitle,
+  }) {
+    final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        color:
-            _lessonProgress!.isReadingComplete
-                ? theme.colorScheme.green.withValues(alpha: 0.1)
-                : cardBg,
-        borderRadius: BorderRadius.circular(12),
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color:
-              _lessonProgress!.isReadingComplete
-                  ? theme.colorScheme.green
-                  : primary.withValues(alpha: 0.5),
-          width: 2,
+          color: theme.colorScheme.outline.withValues(alpha: 0.15),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.outline.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              FontAwesomeIcons.dice,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.lock_outline,
+            size: 20,
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap:
-              _lessonProgress!.isPreQuizComplete
-                  ? () {
-                    // Navigate to reading activity screen
-                    setState(() {
-                      _isLoading = true; // Show loading state
-                    });
+    );
+  }
 
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => ReadingActivityScreen(
-                              moduleId: widget.moduleId,
-                            ),
-                      ),
-                    ).then((completed) async {
-                      if (completed == true) {
-                        // Show loading overlay
-                        if (mounted) {
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (BuildContext context) {
-                              return Center(
-                                child: Container(
-                                  padding: const EdgeInsets.all(32),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        Theme.of(context).colorScheme.surface,
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: theme.colorScheme.shadow
-                                            .withOpacity(0.1),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      // Title and close button row
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              'Updating progress...',
-                                              style:
-                                                  Theme.of(
-                                                    context,
-                                                  ).textTheme.bodyLarge,
-                                            ),
-                                          ),
-                                          IconButton(
-                                            icon: Icon(Icons.close),
-                                            onPressed:
-                                                () =>
-                                                    Navigator.of(context).pop(),
-                                            padding: EdgeInsets.zero,
-                                            constraints: BoxConstraints(),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      const CircularProgressIndicator(),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        }
+  Widget _buildNextLessonButton(
+    CourseProvider courseProvider,
+    Lesson? nextLesson,
+  ) {
+    final theme = Theme.of(context);
+    final nextLessonId = courseProvider.getNextLessonInSequence(widget.moduleId);
+    final canNavigate = nextLessonId != null;
 
-                        try {
-                          final courseProvider = Provider.of<CourseProvider>(
-                            context,
-                            listen: false,
-                          );
-                          await courseProvider.loadSingleLessonProgress(
-                            widget.moduleId,
-                          );
-
-                          await Provider.of<DragonProvider>(
-                            context,
-                            listen: false,
-                          ).updateAllDragonProgress();
-
-                          if (mounted) {
-                            setState(() {
-                              _lessonProgress =
-                                  courseProvider.lessonProgress[widget
-                                      .moduleId];
-                              _isLoading = false;
-                            });
-                            // Close loading dialog
-                            Navigator.of(context).pop();
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            // Close loading dialog
-                            Navigator.of(context).pop();
-                            // Show error snackbar
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error updating progress: $e'),
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.error,
-                              ),
-                            );
-                          }
-                        }
-                      } else {
-                        setState(() {
-                          _isLoading = false;
-                        });
-                      }
-                    });
-                  }
-                  : () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Please complete the Pre-Quiz activity first',
-                          style: TextStyle(
-                            color:
-                                Theme.of(context).colorScheme.onInverseSurface,
-                          ),
-                        ),
-                        backgroundColor:
-                            Theme.of(context).colorScheme.inverseSurface,
-                      ),
-                    );
-                    return;
-                  },
-          borderRadius: BorderRadius.circular(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: canNavigate
+            ? () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LessonScreen(
+                      moduleId: nextLessonId,
+                      topic: nextLesson?.title,
+                    ),
+                  ),
+                );
+              }
+            : null,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
             children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: primary.withValues(alpha: 0.1),
-                    child: Icon(
-                      _lessonProgress!.isReadingComplete
-                          ? Icons.check_circle
-                          : FontAwesomeIcons.book,
-                      size: 20,
-                      color:
-                          _lessonProgress!.isReadingComplete
-                              ? theme.colorScheme.green
-                              : primary,
+              Icon(
+                FontAwesomeIcons.dice,
+                color: theme.colorScheme.onPrimary,
+                size: 20,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Next Lesson',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Reading Activity',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontSize: 18,
-                          ),
-                        ),
-
-                        const SizedBox(height: 5),
-
-                        Text(
-                          'Learn about ${widget.topic ?? _lesson!.title}',
-                          style: theme.textTheme.labelSmall,
-                        ),
-                      ],
+                    const SizedBox(height: 2),
+                    Text(
+                      nextLesson?.title ?? 'Next Lesson Name',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onPrimary
+                            .withValues(alpha: 0.9),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  if (!isUnlocked)
-                    Image.asset(
-                      'assets/images/other/lock.png',
-                      width: 40,
-                      height: 40,
-                      color: textColor.withValues(alpha: 0.5),
-                    )
-                  else
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      size: 15,
-                      color: textColor.withValues(alpha: 0.5),
-                    ),
-                ],
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: theme.colorScheme.onPrimary,
+                size: 16,
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  void _navigateToReview() async {
+    final courseProvider = Provider.of<CourseProvider>(context, listen: false);
+    final questionSet =
+        await courseProvider.getReviewQuestionSetForLesson(widget.moduleId);
+
+    if (!mounted) return;
+
+    if (questionSet == null || questionSet.questions.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'The Teacher has not created a review set for this lesson',
+          ),
+          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
+        ),
+      );
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ReviewScreen(
+          questionSet: questionSet,
+          needToShowShop: true,
+        ),
+      ),
+    );
+
+    if (mounted) {
+      final cp = Provider.of<CourseProvider>(context, listen: false);
+      await cp.loadSingleLessonProgress(widget.moduleId);
+      setState(() {
+        _lessonProgress = cp.lessonProgress[widget.moduleId];
+      });
+    }
+  }
+
+  Widget _buildReviewButton() {
+    final theme = Theme.of(context);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _navigateToReview,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                FontAwesomeIcons.dice,
+                color: theme.colorScheme.onPrimaryContainer,
+                size: 20,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Review this Lesson',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Test what you\'ve learned',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer
+                            .withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: theme.colorScheme.onPrimaryContainer,
+                size: 16,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReadingCard({required bool isUnlocked}) {
+    return _buildActivityCard(
+      title: 'Reading',
+      description: 'Learn about ${widget.topic ?? _lesson!.title}',
+      isCompleted: _lessonProgress!.isReadingComplete,
+      isUnlocked: isUnlocked,
+      onTap: () => _navigateToReading(),
+    );
+  }
+
+  void _navigateToReading() async {
+    if (!_lessonProgress!.isPreQuizComplete) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Please complete the Pre-Quiz activity first',
+          ),
+          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final completed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ReadingActivityScreen(moduleId: widget.moduleId),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (completed == true) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => Center(
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Theme.of(dialogContext).colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                BoxShadow(
+                  color: Theme.of(dialogContext).colorScheme.shadow.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Updating progress...',
+                  style: Theme.of(dialogContext).textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 16),
+                const CircularProgressIndicator(),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      try {
+        final courseProvider = Provider.of<CourseProvider>(context, listen: false);
+        final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+        await courseProvider.loadSingleLessonProgress(widget.moduleId);
+        await dragonProvider.updateAllDragonProgress();
+
+        if (mounted) {
+          setState(() {
+            _lessonProgress = courseProvider.lessonProgress[widget.moduleId];
+            _isLoading = false;
+          });
+          Navigator.of(context).pop();
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error updating progress: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      }
+    } else {
+      setState(() => _isLoading = false);
+    }
   }
 
   void _startQuiz(QuestionSet quiz) {
@@ -718,7 +846,12 @@ class _LessonScreenState extends State<LessonScreen> {
       MaterialPageRoute(builder: (context) => quizScreen),
     ).then((completed) async {
       if (completed == true) {
+        if (!mounted) return;
         final courseProvider = Provider.of<CourseProvider>(
+          context,
+          listen: false,
+        );
+        final dragonProvider = Provider.of<DragonProvider>(
           context,
           listen: false,
         );
@@ -737,7 +870,8 @@ class _LessonScreenState extends State<LessonScreen> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Theme.of(context).colorScheme.shadow
+                            .withValues(alpha: 0.1),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -778,10 +912,7 @@ class _LessonScreenState extends State<LessonScreen> {
         try {
           // Load new progress
           await courseProvider.loadSingleLessonProgress(widget.moduleId);
-          await Provider.of<DragonProvider>(
-            context,
-            listen: false,
-          ).updateDragonPhases(widget.moduleId);
+          await dragonProvider.updateDragonPhases(widget.moduleId);
 
           if (mounted) {
             setState(() {
@@ -805,14 +936,13 @@ class _LessonScreenState extends State<LessonScreen> {
           }
         }
       } else {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     });
   }
 
-  Widget _getDragonImage(DragonProvider dragonProvider) {
-    return DragonImageWidget(moduleId: widget.moduleId, size: 220);
-  }
 }
