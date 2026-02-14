@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 // import 'package:page_flip/page_flip.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
 import 'package:safe_scales/models/reading_slide.dart';
 import 'package:safe_scales/ui/screens/reading/reading_results_screen.dart';
@@ -368,6 +369,9 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
         itemCount: _readingSlides.length,
         itemBuilder: (context, index) {
           final isBookmarked = _bookmarkedPages.contains(index);
+          final rawTitle = _readingSlides[index].title;
+          final stripped = rawTitle.stripImageLinksForToc();
+          final displayTitle = stripped.isEmpty ? 'Page ${index + 1}' : stripped;
           return ListTile(
             leading: IconButton(
               iconSize: 22,
@@ -383,7 +387,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
               },
             ),
             title: Text(
-              'P${index + 1}: ${_readingSlides[index].title ?? 'Page ${index + 1}'}',
+              'P${index + 1}: $displayTitle',
               style:
                   index == _currentSlideIndex
                       ? Theme.of(
@@ -401,9 +405,8 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen> {
   Widget _buildPageContentFor(int index) {
     final theme = Theme.of(context);
 
-    final headline = _readingSlides[index].title ?? 'Reading Content';
-    final content =
-        _readingSlides[index].content ?? 'No content for this slide';
+    final headline = _readingSlides[index].title;
+    final content = _readingSlides[index].content;
     final fullText = '$headline\n\n$content';
 
     return Column(
