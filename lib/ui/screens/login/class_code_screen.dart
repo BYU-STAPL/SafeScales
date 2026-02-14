@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
@@ -24,6 +26,64 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
     _classCodeController.dispose();
     _usernameController.dispose();
     super.dispose();
+  }
+
+  /// Parses default_habitat / default_item from the dashboard (JSON string or array).
+  /// Returns a list of asset ID strings.
+  static List<String> _parseDefaultIds(dynamic value) {
+    if (value == null) return [];
+    if (value is List) {
+      return value
+          .map((e) => e?.toString().trim())
+          .whereType<String>()
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    if (value is String) {
+      final s = value.trim();
+      if (s.isEmpty) return [];
+      try {
+        final decoded = jsonDecode(s);
+        if (decoded is List) {
+          return decoded
+              .map((e) => e?.toString().trim())
+              .whereType<String>()
+              .where((s) => s.isNotEmpty)
+              .toList();
+        }
+        return [s];
+      } catch (_) {
+        return [s];
+      }
+    }
+    return [];
+  }
+
+  /// Resolves parsed default ID lists to IDs that exist in class assets with the
+  /// correct type. Returns (environment IDs, accessory IDs) in dashboard order.
+  (List<String>, List<String>) _resolveDefaultIdsFromAssets(
+    List<Map<String, dynamic>> classAssets,
+    List<String> defaultHabitatIds,
+    List<String> defaultItemIds,
+  ) {
+    final assetIdsByType = <String, String>{};
+    for (final asset in classAssets) {
+      final id = asset['id']?.toString();
+      if (id == null || id.isEmpty) continue;
+      final type = asset['type']?.toString();
+      if (type != null && (type == 'environment' || type == 'accessory')) {
+        assetIdsByType[id] = type;
+      }
+    }
+
+    final envIds = defaultHabitatIds
+        .where((id) => assetIdsByType[id] == 'environment')
+        .toList();
+    final itemIds = defaultItemIds
+        .where((id) => assetIdsByType[id] == 'accessory')
+        .toList();
+
+    return (envIds, itemIds);
   }
 
   Future<void> _submitForm() async {
@@ -109,6 +169,67 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
               .update({'joined_classes': joinedClasses})
               .eq('id', existingUserResponse['id']);
 
+          // Grant the new class's default env/item if not already owned
+          final classDefaultsResponse =
+              await SupabaseConfig.client
+                  .from('classes')
+                  .select('assets, default_habitat, default_item')
+                  .eq('id', classId)
+                  .single();
+
+          final defaultsAssetList = List<Map<String, dynamic>>.from(
+            classDefaultsResponse['assets'] ?? [],
+          );
+          final defaultHabitatIds = _parseDefaultIds(classDefaultsResponse['default_habitat']);
+          final defaultItemIdsRaw = _parseDefaultIds(classDefaultsResponse['default_item']);
+          final (defaultEnvIds, defaultItemIds) = _resolveDefaultIdsFromAssets(
+            defaultsAssetList,
+            defaultHabitatIds,
+            defaultItemIdsRaw,
+          );
+
+          final userId = existingUserResponse['id'] as String;
+          final updates = <String, dynamic>{};
+
+          if (defaultEnvIds.isNotEmpty) {
+            final acquiredEnvsRaw = existingUserResponse['acquired_environments'];
+            List<dynamic> acquiredEnvs = acquiredEnvsRaw is Map
+                ? acquiredEnvsRaw.values.toList()
+                : List<dynamic>.from(acquiredEnvsRaw ?? []);
+            bool changed = false;
+            for (final id in defaultEnvIds) {
+              if (!acquiredEnvs.contains(id)) {
+                acquiredEnvs.add(id);
+                changed = true;
+              }
+            }
+            if (changed) updates['acquired_environments'] = acquiredEnvs;
+          }
+
+          if (defaultItemIds.isNotEmpty) {
+            final acquiredAccRaw = existingUserResponse['acquired_accessories'];
+            List<dynamic> acquiredAcc = acquiredAccRaw is Map
+                ? acquiredAccRaw.values.toList()
+                : List<dynamic>.from(acquiredAccRaw ?? []);
+            bool changed = false;
+            for (final id in defaultItemIds) {
+              if (!acquiredAcc.contains(id)) {
+                acquiredAcc.add(id);
+                changed = true;
+              }
+            }
+            if (changed) updates['acquired_accessories'] = acquiredAcc;
+          }
+
+          Map<String, dynamic> userProfile = Map<String, dynamic>.from(existingUserResponse);
+          if (updates.isNotEmpty) {
+            await SupabaseConfig.client
+                .from('Users')
+                .update(updates)
+                .eq('id', userId);
+            userProfile.addAll(updates);
+          }
+
           // Set the user as current user
           final supabaseUser = supabase.User(
             id: existingUserResponse['id'],
@@ -121,7 +242,7 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
           );
 
           _userState.setUser(supabaseUser);
-          _userState.setUserProfile(existingUserResponse);
+          _userState.setUserProfile(userProfile);
         } else {
           // User doesn't already exist
 
@@ -147,17 +268,23 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
             }
           }
 
-          // Initialize dragons for each module
+          // Load class assets and default_habitat / default_item from classes table
+          // so we can grant those habitats and items to the new user.
           final classAssetsResponse =
               await SupabaseConfig.client
                   .from('classes')
-                  .select('assets')
+                  .select('assets, default_habitat, default_item')
                   .eq('id', classId)
                   .single();
 
           final classAssetList = List<Map<String, dynamic>>.from(
             classAssetsResponse['assets'] ?? [],
           );
+
+          final defaultHabitatIds = _parseDefaultIds(classAssetsResponse['default_habitat']);
+          final defaultItemIds = _parseDefaultIds(classAssetsResponse['default_item']);
+          final (resolvedEnvIds, resolvedItemIds) =
+              _resolveDefaultIdsFromAssets(classAssetList, defaultHabitatIds, defaultItemIds);
 
           Map<String, dynamic> initialDragonData = {};
 
@@ -173,6 +300,16 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
             };
           }
 
+          final initialAcquiredEnvironments = List<String>.from(resolvedEnvIds);
+          final initialAcquiredAccessories = List<String>.from(resolvedItemIds);
+          final initialDragonEnvironments = <String, dynamic>{};
+          final firstDefaultEnvId = resolvedEnvIds.isNotEmpty ? resolvedEnvIds.first : null;
+          if (firstDefaultEnvId != null) {
+            for (final dragonId in initialDragonData.keys) {
+              initialDragonEnvironments[dragonId] = firstDefaultEnvId;
+            }
+          }
+
           // Create new user with initialized modules
           final newUserResponse =
               await SupabaseConfig.client
@@ -183,10 +320,10 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                     'joined_classes': [classId],
                     'settings': {"fontSize": 1.0, "isDarkMode": false},
                     'dragons': initialDragonData,
-                    'acquired_accessories': [],
-                    'acquired_environments': [],
+                    'acquired_accessories': initialAcquiredAccessories,
+                    'acquired_environments': initialAcquiredEnvironments,
                     'dragon_preferred_phases': {},
-                    'dragon_environments': {},
+                    'dragon_environments': initialDragonEnvironments,
                     'dragon_dressup': {},
                     'reading_progress': initialReadingProgress,
                   })
