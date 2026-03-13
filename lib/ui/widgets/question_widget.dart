@@ -31,6 +31,9 @@ class QuestionWidget extends StatefulWidget {
 class _QuestionWidgetState extends State<QuestionWidget> {
   final double optionPadding = 15;
   final double optionMargin = 10;
+
+  /// Font scale for quiz question and options (reduced from base for better fit)
+  static const double _quizFontScale = 0.88;
   late ScrollController _scrollController;
   final NotesService _notesService = NotesService();
   String? _savedNote;
@@ -186,21 +189,20 @@ class _QuestionWidgetState extends State<QuestionWidget> {
     final hasImageInQuestion = StyledMarkdown.containsImage(question.questionText);
     final hasImage = hasImageInText || hasImageInQuestion;
 
+    final instructionStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+      fontStyle: FontStyle.italic,
+      color: theme.colorScheme.outline,
+      fontSize: (theme.textTheme.bodySmall?.fontSize ?? 15) * _quizFontScale,
+    );
     Text instructionText = Text(
       'Choose one option:',
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-        fontStyle: FontStyle.italic,
-        color: theme.colorScheme.outline,
-      ),
+      style: instructionStyle,
     );
 
     if (question.isMultipleAnswer) {
       instructionText = Text(
         'Select all that apply:',
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          fontStyle: FontStyle.italic,
-          color: theme.colorScheme.outline,
-        ),
+        style: instructionStyle,
       );
     }
 
@@ -217,7 +219,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: StyledMarkdown(
                   data: question.text!,
-                  fontSizeScale: AppTheme.fontSizeScale,
+                  fontSizeScale: AppTheme.fontSizeScale * _quizFontScale,
                 ),
               ),
             ],
@@ -231,7 +233,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                   Expanded(
                     child: StyledMarkdown(
                       data: question.questionText,
-                      fontSizeScale: AppTheme.fontSizeScale,
+                      fontSizeScale: AppTheme.fontSizeScale * _quizFontScale,
                     ),
                   ),
                   PopupMenuButton<String>(
@@ -313,7 +315,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
               Expanded(
                 child: StyledMarkdown(
                   data: question.questionText,
-                  fontSizeScale: AppTheme.fontSizeScale,
+                  fontSizeScale: AppTheme.fontSizeScale * _quizFontScale,
                 ),
               ),
               PopupMenuButton<String>(
@@ -433,7 +435,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
             Expanded(
               child: StyledMarkdown(
                 data: option,
-                fontSizeScale: AppTheme.fontSizeScale,
+                fontSizeScale: AppTheme.fontSizeScale * _quizFontScale,
               ),
             ),
           ],
