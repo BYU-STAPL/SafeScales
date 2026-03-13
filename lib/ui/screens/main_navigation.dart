@@ -175,7 +175,7 @@ class _MainNavigationState extends State<MainNavigation> {
             items: const [
               BottomNavigationBarItem(
                 icon: FaIcon(FontAwesomeIcons.graduationCap),
-                label: 'Home',
+                label: 'Lessons',
               ),
               BottomNavigationBarItem(
                 icon: FaIcon(FontAwesomeIcons.bullseye),
