@@ -11,7 +11,6 @@ import 'package:safe_scales/ui/widgets/settings_drawer.dart';
 
 import 'package:safe_scales/ui/screens/home_screen.dart';
 import 'package:safe_scales/ui/screens/dragons_screen.dart';
-import 'package:safe_scales/ui/screens/items_screen.dart';
 import 'package:safe_scales/ui/screens/review_list/review_list_screen.dart';
 import 'package:safe_scales/ui/screens/shop_screen.dart';
 
@@ -19,8 +18,7 @@ import 'package:safe_scales/ui/screens/shop_screen.dart';
 const int kHomeTabIndex = 0;
 const int kReviewTabIndex = 1;
 const int kDragonsTabIndex = 2;
-const int kItemsTabIndex = 3;
-const int kShopTabIndex = 4;
+const int kShopTabIndex = 3;
 
 class MainNavigation extends StatefulWidget {
   final int initialIndex;
@@ -54,7 +52,6 @@ class _MainNavigationState extends State<MainNavigation> {
       ),
       const ReviewListScreen(),
       DragonsScreen(),
-      ItemsScreen(),
       ShopScreen(),
     ];
   }
@@ -67,8 +64,6 @@ class _MainNavigationState extends State<MainNavigation> {
         return 'Review';
       case kDragonsTabIndex:
         return 'Dragons';
-      case kItemsTabIndex:
-        return 'Items';
       case kShopTabIndex:
         return 'Shop';
       default:
@@ -184,10 +179,6 @@ class _MainNavigationState extends State<MainNavigation> {
               BottomNavigationBarItem(
                 icon: FaIcon(FontAwesomeIcons.dragon),
                 label: 'Dragons',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.extension),
-                label: 'Items',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.storefront),
