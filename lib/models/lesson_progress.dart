@@ -57,12 +57,16 @@ class LessonProgress {
   double getProgressPercent() {
     double progress = 0;
 
+    if (isPreQuizComplete) {
+      progress = progress + (1 / 3);
+    }
+
     if (isReadingComplete) {
-      progress = progress + 0.5;
+      progress = progress + (1 / 3);
     }
 
     if (isPostQuizComplete()) {
-      progress = progress + 0.5;
+      progress = progress + (1 / 3);
     }
 
     return progress * 100;

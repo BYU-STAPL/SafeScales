@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/models/question.dart';
+import 'package:safe_scales/ui/screens/lesson/lesson_screen.dart';
 
 import '../../widgets/dragon_image_widget.dart';
 
@@ -65,7 +66,14 @@ class PreQuizResultScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context, true);
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            LessonScreen(moduleId: moduleId),
+                      ),
+                      (route) => route.isFirst,
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.secondary,

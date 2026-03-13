@@ -8,6 +8,7 @@ import 'package:safe_scales/providers/dragon_provider.dart';
 import '../../models/lesson.dart';
 import '../widgets/learning_action_widget.dart';
 import 'lesson/lesson_screen.dart';
+import 'pre_quiz/pre_quiz_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.onNavigateToShop});
@@ -65,21 +66,52 @@ class _HomeScreenState extends State<HomeScreen> {
                 ?.getProgressPercent() ??
             0.0,
         onTap: () {
-          Navigator.push(
+          _navigateToLesson(
             context,
-            MaterialPageRoute(
-              builder: (context) => LessonScreen(moduleId: targetModule.lessonId),
-            ),
-          ).then((_) {
-            // Reload data when returning from lesson
-            courseProvider.loadUserProgress();
-            dragonProvider.updateAllDragonProgress();
-          });
+            courseProvider,
+            dragonProvider,
+            targetModule,
+          );
         },
       );
     }
 
     return SizedBox.shrink();
+  }
+
+  void _navigateToLesson(
+    BuildContext context,
+    CourseProvider courseProvider,
+    DragonProvider dragonProvider,
+    Lesson lesson,
+  ) {
+    final lessonProgress = courseProvider.lessonProgress[lesson.lessonId];
+    final preQuizComplete = lessonProgress?.isPreQuizComplete ?? false;
+
+    void onReturn() {
+      courseProvider.loadSingleLessonProgress(lesson.lessonId);
+      courseProvider.loadUserProgress();
+      dragonProvider.updateAllDragonProgress();
+    }
+
+    if (preQuizComplete) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LessonScreen(moduleId: lesson.lessonId),
+        ),
+      ).then((_) => onReturn());
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PreQuizScreen(
+            moduleId: lesson.lessonId,
+            questionSet: lesson.preQuiz,
+          ),
+        ),
+      ).then((_) => onReturn());
+    }
   }
 
   @override
@@ -243,20 +275,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 index > 0 ? 'Complete previous module' : null,
                             onTapCard: () {
                               if (shouldBeUnlocked) {
-                                Navigator.push(
+                                _navigateToLesson(
                                   context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (context) =>
-                                            LessonScreen(moduleId: lessonId),
-                                  ),
-                                ).then((_) {
-                                  // Reload data when returning from the lesson page
-                                  courseProvider.loadSingleLessonProgress(
-                                    lessonId,
-                                  );
-                                  dragonProvider.updateAllDragonProgress();
-                                });
+                                  courseProvider,
+                                  dragonProvider,
+                                  lesson,
+                                );
                               }
                             },
                           ),

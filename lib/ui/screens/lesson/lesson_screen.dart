@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_screen.dart';
+import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_screen.dart';
 import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
 import 'package:safe_scales/ui/screens/review_set/review_screen.dart';
 
@@ -139,7 +140,9 @@ class _LessonScreenState extends State<LessonScreen> {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      _buildReadingCard(isUnlocked: true),
+                      _buildReadingCard(
+                        isUnlocked: _lessonProgress!.isPreQuizComplete,
+                      ),
                       const SizedBox(height: 12),
                       _buildActivityCard(
                         title: 'Quiz',
@@ -167,7 +170,8 @@ class _LessonScreenState extends State<LessonScreen> {
             dragonProvider.getDragonHighestPhase(dragon.id),
           )
         : 'Egg';
-    final growthCount = (_lessonProgress!.isReadingComplete ? 1 : 0) +
+    final growthCount = (_lessonProgress!.isPreQuizComplete ? 1 : 0) +
+        (_lessonProgress!.isReadingComplete ? 1 : 0) +
         (_lessonProgress!.isPostQuizComplete() ? 1 : 0);
     final bestScore = _lessonProgress!.getHighestPostQuizScore();
     final hasPostQuizAttempts = _lessonProgress!.postQuizAttempts.isNotEmpty;
@@ -219,7 +223,7 @@ class _LessonScreenState extends State<LessonScreen> {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    ...List.generate(2, (i) {
+                    ...List.generate(3, (i) {
                       final filled = i < growthCount;
                       return Padding(
                         padding: const EdgeInsets.only(right: 6),
@@ -238,7 +242,7 @@ class _LessonScreenState extends State<LessonScreen> {
                       );
                     }),
                     Text(
-                      '$growthCount/2',
+                      '$growthCount/3',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -513,17 +517,34 @@ class _LessonScreenState extends State<LessonScreen> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: canNavigate
+        onTap: canNavigate && nextLesson != null
             ? () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LessonScreen(
-                      moduleId: nextLessonId,
-                      topic: nextLesson?.title,
+                final nextProgress = courseProvider
+                    .lessonProgress[nextLessonId];
+                final preQuizComplete =
+                    nextProgress?.isPreQuizComplete ?? false;
+
+                if (preQuizComplete) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => LessonScreen(
+                        moduleId: nextLessonId,
+                        topic: nextLesson.title,
+                      ),
                     ),
-                  ),
-                );
+                  );
+                } else {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PreQuizScreen(
+                        moduleId: nextLessonId,
+                        questionSet: nextLesson.preQuiz,
+                      ),
+                    ),
+                  );
+                }
               }
             : null,
         borderRadius: BorderRadius.circular(14),
