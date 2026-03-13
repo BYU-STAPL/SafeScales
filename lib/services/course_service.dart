@@ -553,7 +553,7 @@ class CourseService {
       questionText: questionText,
       options: filteredList,
       correctAnswerIndex: int.parse(questionData['answer']),
-      explanation: '',
+      explanation: (questionData['explanation'] ?? '').toString().trim(),
     );
   }
 
@@ -633,7 +633,7 @@ class CourseService {
           questionText: questionText,
           options: options,
           correctAnswerIndex: correctIndex,
-          explanation: '',
+          explanation: (q['explanation'] ?? '').toString().trim(),
         ),
       );
     }
