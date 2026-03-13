@@ -101,12 +101,35 @@ https://khalilfadi.github.io/safeScales-App/
 
 ## Building Locally
 
-### Android APK
+### Android (APK or App Bundle for Play Store)
 ```bash
 flutter build apk --release
+# or for Play Store upload:
+flutter build appbundle --release
 ```
 
-The APK will be at: `build/app/outputs/flutter-apk/app-release.apk`
+- **APK** output: `build/app/outputs/flutter-apk/app-release.apk`
+- **App Bundle** (Play Store): `build/app/outputs/bundle/release/app-release.aab`
+
+If no release keystore is configured, the release build uses the debug keystore so the build succeeds. **Play Store rejects debug-signed bundles**; you must sign in release mode.
+
+**Signing for Play Store (release mode):**
+
+1. **Create a release keystore (one-time).** From a terminal:
+   ```bash
+   keytool -genkey -v -keystore ~/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+   ```
+   Use a strong password and remember it; you need it for every future release of this app.
+
+2. **Create `android/key.properties`** (file is gitignored). Copy from `android/key.properties.example` and set:
+   - `storeFile`: absolute path to the keystore (e.g. `/Users/yourname/upload-keystore.jks`; use the real path, not `~`)
+   - `storePassword`, `keyAlias`, `keyPassword`: the values you used in step 1 (alias is often `upload`)
+
+3. **Rebuild and upload:**
+   ```bash
+   flutter build appbundle --release
+   ```
+   Upload `build/app/outputs/bundle/release/app-release.aab` to Play Console.
 
 ### iOS (requires Mac)
 ```bash

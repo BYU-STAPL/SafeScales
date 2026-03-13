@@ -118,20 +118,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Class Header with optional theme settings access
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            courseProvider.className,
-                            style: theme.textTheme.headlineMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
                     _buildContinueLearningSection(
                       courseProvider: courseProvider,
                       dragonProvider: dragonProvider,

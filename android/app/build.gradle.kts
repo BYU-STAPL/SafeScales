@@ -6,7 +6,11 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
-    id("com.google.gms.google-services")
+}
+
+// Apply Google Services only when google-services.json exists (e.g. after downloading from Firebase Console).
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }
 
 android {
@@ -38,30 +42,34 @@ android {
     signingConfigs {
         val keystoreProperties = Properties()
         val keystorePropertiesFile = rootProject.file("key.properties")
-        
         if (keystorePropertiesFile.exists()) {
-            // Load local keystore properties if available (for local builds)
             keystoreProperties.load(FileInputStream(keystorePropertiesFile))
         }
-        
-        create("release") {
-            // Use local keystore if available, otherwise use environment variables (for CI)
-            storeFile = file(
-                if (keystorePropertiesFile.exists()) {
-                    keystoreProperties["storeFile"] as String
-                } else {
-                    System.getenv("KEYSTORE_FILE") ?: "keystore.jks"
-                }
-            )
-            storePassword = keystoreProperties["storePassword"] as String? ?: System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias = keystoreProperties["keyAlias"] as String? ?: System.getenv("KEY_ALIAS") ?: ""
-            keyPassword = keystoreProperties["keyPassword"] as String? ?: System.getenv("KEY_PASSWORD") ?: ""
+        val keystorePath = if (keystorePropertiesFile.exists()) {
+            keystoreProperties["storeFile"] as? String
+        } else {
+            System.getenv("KEYSTORE_FILE")
+        } ?: "keystore.jks"
+        val keystoreFile = file(keystorePath)
+        val hasReleaseKeystore = keystoreFile.exists()
+
+        if (hasReleaseKeystore) {
+            create("release") {
+                storeFile = keystoreFile
+                storePassword = keystoreProperties["storePassword"] as String? ?: System.getenv("KEYSTORE_PASSWORD") ?: ""
+                keyAlias = keystoreProperties["keyAlias"] as String? ?: System.getenv("KEY_ALIAS") ?: ""
+                keyPassword = keystoreProperties["keyPassword"] as String? ?: System.getenv("KEY_PASSWORD") ?: ""
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (signingConfigs.findByName("release") != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }
