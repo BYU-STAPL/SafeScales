@@ -414,11 +414,9 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                   : null,
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Padding(
-              padding: EdgeInsets.only(top: 2),
-              child: Icon(
+            Icon(
                 question.isMultipleAnswer
                     ? (isSelected
                         ? Icons.check_box
@@ -431,7 +429,6 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                         ? theme.colorScheme.primary
                         : theme.colorScheme.onSurface.withValues(alpha: 0.4),
               ),
-            ),
             SizedBox(width: 12),
             Expanded(
               child: StyledMarkdown(
