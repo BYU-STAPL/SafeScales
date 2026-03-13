@@ -16,12 +16,16 @@ class PostQuizActionsScreen extends StatefulWidget {
     required this.moduleId,
     required this.passingScore,
     required this.score,
+    required this.correctAnswers,
+    required this.totalQuestions,
     required this.handleAction,
   });
 
   final String moduleId;
   final int passingScore;
   final int score;
+  final int correctAnswers;
+  final int totalQuestions;
   final Future<void> Function(QuizAction action) handleAction;
 
   @override
@@ -109,7 +113,7 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
             children: [
               Text('Quiz Score'),
               Text(
-                '${widget.score}%',
+                '${widget.correctAnswers} out of ${widget.totalQuestions}',
                 style: TextStyle(
                   fontSize: 40 * AppTheme.fontSizeScale,
                   fontWeight: FontWeight.bold,

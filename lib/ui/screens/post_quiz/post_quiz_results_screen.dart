@@ -159,7 +159,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        '$score%',
+                        '$correctAnswers out of $totalQuestions',
                         style: TextStyle(
                           fontSize: 48 * AppTheme.fontSizeScale,
                           fontWeight: FontWeight.bold,
@@ -185,15 +185,6 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 16),
-                      Text(
-                        '$correctAnswers out of $totalQuestions questions correct',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.7,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -212,6 +203,8 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                               (context) => PostQuizActionsScreen(
                                 moduleId: widget.moduleId,
                                 score: score,
+                                correctAnswers: correctAnswers,
+                                totalQuestions: totalQuestions,
                                 passingScore: widget.questionSet.passingScore,
                                 handleAction: _handleQuizAction,
                               ),
