@@ -394,7 +394,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
 
     AppBar appBar = AppBar(
       centerTitle: true,
-      title: Text('Post-Quiz'),
+      title: Text('Quiz'),
       actions:
           isStarted
               ? [

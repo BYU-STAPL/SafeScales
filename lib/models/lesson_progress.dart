@@ -57,21 +57,15 @@ class LessonProgress {
   double getProgressPercent() {
     double progress = 0;
 
-    if (isPreQuizComplete) {
-      progress = progress + (1 / 3);
-    }
-
     if (isReadingComplete) {
-      progress = progress + (1 / 3);
+      progress = progress + 0.5;
     }
 
     if (isPostQuizComplete()) {
-      progress = progress + (1 / 3);
+      progress = progress + 0.5;
     }
 
-    progress = progress * 100;
-
-    return progress;
+    return progress * 100;
   }
 
   String toDebugString() {

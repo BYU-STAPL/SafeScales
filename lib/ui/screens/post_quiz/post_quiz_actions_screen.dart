@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import '../../widgets/dragon_image_widget.dart';
 
@@ -69,33 +70,45 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
           style: theme.textTheme.bodyLarge,
         ),
         SizedBox(height: 30),
-
-        DragonImageWidget(moduleId: widget.moduleId, size: 300, phase: 'final',),
-
-        SizedBox(height: 30),
-        Text(
-          'Now you can play with your dragon by going to the dragon screen',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodyMedium,
+        DragonImageWidget(
+          moduleId: widget.moduleId,
+          size: 300,
+          phase: 'final',
         ),
-
         SizedBox(height: 30),
-
-        // TODO: Need to update quiz progress here if this button is clicked and user doesn't return to lesson
-        // SizedBox(
-        //   width: double.infinity,
-        //   child: ElevatedButton.icon(
-        //     onPressed: _handleGoToDragon,
-        //     icon: FaIcon(FontAwesomeIcons.dragon),
-        //     label: Text("GO TO DRAGON".toUpperCase()),
-        //     style: ElevatedButton.styleFrom(
-        //       backgroundColor: theme.colorScheme.primary,
-        //       foregroundColor: theme.colorScheme.onPrimary,
-        //       padding: EdgeInsets.symmetric(vertical: 12),
-        //     ),
-        //   ),
-        // ),
-
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _handleGoToDragon,
+            icon: FaIcon(FontAwesomeIcons.dragon),
+            label: Text('Play with dragon'.toUpperCase()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.green,
+              foregroundColor: theme.colorScheme.onPrimary,
+              padding: EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ),
+        SizedBox(height: 30),
+        Text('OR'.toUpperCase()),
+        SizedBox(height: 30),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: _handleReturnToLesson,
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: theme.colorScheme.primary),
+              foregroundColor: theme.colorScheme.primary,
+              padding: EdgeInsets.symmetric(vertical: 12),
+            ),
+            child: Text(
+              'Return to lesson'.toUpperCase(),
+              style: TextStyle(
+                fontSize: theme.textTheme.bodyMedium?.fontSize,
+              ),
+            ),
+          ),
+        ),
         SizedBox(height: 30),
       ],
     );
@@ -195,36 +208,40 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
+    final bool passed = widget.score >= widget.passingScore;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Results')),
+      appBar: AppBar(
+        title: Text(passed ? 'Quiz Complete' : 'Results'),
+      ),
       body: Center(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 30, vertical: 25),
           child: Column(
             children: [
-              // Show dragon action if passed, suggested action if failed
-              widget.score >= widget.passingScore
-                  ? _buildDragonAction(context)
-                  : _buildSuggestedAction(context),
-              Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _handleReturnToLesson,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.secondary,
-                    foregroundColor: theme.colorScheme.onSecondary,
-                  ),
-                  child: Text(
-                    'Return to lesson'.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: theme.textTheme.bodyMedium?.fontSize,
+              if (passed)
+                _buildDragonAction(context)
+              else ...[
+                _buildSuggestedAction(context),
+                Spacer(),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _handleReturnToLesson,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.secondary,
+                      foregroundColor: theme.colorScheme.onSecondary,
+                    ),
+                    child: Text(
+                      'Return to lesson'.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: theme.textTheme.bodyMedium?.fontSize,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(height: 30),
+                SizedBox(height: 30),
+              ],
             ],
           ),
         ),

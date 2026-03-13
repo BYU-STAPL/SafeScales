@@ -3,7 +3,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
 import 'package:safe_scales/models/question.dart';
-import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_screen.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_screen.dart';
 import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
 import 'package:safe_scales/ui/screens/review_set/review_screen.dart';
@@ -140,15 +139,7 @@ class _LessonScreenState extends State<LessonScreen> {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      _buildActivityCard(
-                        title: 'Pre-Quiz',
-                        description: 'See what you already know',
-                        isCompleted: _lessonProgress!.isPreQuizComplete,
-                        isUnlocked: !_lessonProgress!.isPreQuizComplete,
-                        onTap: () => _startQuiz(_lesson!.preQuiz),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildReadingCard(isUnlocked: _lessonProgress!.isPreQuizComplete),
+                      _buildReadingCard(isUnlocked: true),
                       const SizedBox(height: 12),
                       _buildActivityCard(
                         title: 'Quiz',
@@ -176,8 +167,7 @@ class _LessonScreenState extends State<LessonScreen> {
             dragonProvider.getDragonHighestPhase(dragon.id),
           )
         : 'Egg';
-    final growthCount = (_lessonProgress!.isPreQuizComplete ? 1 : 0) +
-        (_lessonProgress!.isReadingComplete ? 1 : 0) +
+    final growthCount = (_lessonProgress!.isReadingComplete ? 1 : 0) +
         (_lessonProgress!.isPostQuizComplete() ? 1 : 0);
     final bestScore = _lessonProgress!.getHighestPostQuizScore();
     final hasPostQuizAttempts = _lessonProgress!.postQuizAttempts.isNotEmpty;
@@ -229,7 +219,7 @@ class _LessonScreenState extends State<LessonScreen> {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    ...List.generate(3, (i) {
+                    ...List.generate(2, (i) {
                       final filled = i < growthCount;
                       return Padding(
                         padding: const EdgeInsets.only(right: 6),
@@ -248,7 +238,7 @@ class _LessonScreenState extends State<LessonScreen> {
                       );
                     }),
                     Text(
-                      '$growthCount/3',
+                      '$growthCount/2',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -693,18 +683,6 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   void _navigateToReading() async {
-    if (!_lessonProgress!.isPreQuizComplete) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Please complete the Pre-Quiz activity first',
-          ),
-          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
-        ),
-      );
-      return;
-    }
-
     setState(() => _isLoading = true);
 
     final completed = await Navigator.push<bool>(
@@ -796,24 +774,7 @@ class _LessonScreenState extends State<LessonScreen> {
       return;
     }
 
-    // Check if pre-quiz has already been completed
-    if (quiz.activityType == ActivityType.preQuiz &&
-        _lessonProgress!.isPreQuizComplete) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Pre-Quiz has already been completed',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onInverseSurface,
-            ),
-          ),
-          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
-        ),
-      );
-      return;
-    }
-
-    // Check if post-quiz is being attempted before reading is completed
+    // Check if quiz is being attempted before reading is completed
     if (quiz.activityType == ActivityType.postQuiz &&
         !_lessonProgress!.isReadingComplete) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -830,12 +791,7 @@ class _LessonScreenState extends State<LessonScreen> {
       return;
     }
 
-    Widget quizScreen;
-    if (quiz.activityType == ActivityType.preQuiz) {
-      quizScreen = PreQuizScreen(moduleId: widget.moduleId, questionSet: quiz);
-    } else {
-      quizScreen = PostQuizScreen(moduleId: widget.moduleId, questionSet: quiz);
-    }
+    final quizScreen = PostQuizScreen(moduleId: widget.moduleId, questionSet: quiz);
 
     setState(() {
       _isLoading = true; // Show loading state
