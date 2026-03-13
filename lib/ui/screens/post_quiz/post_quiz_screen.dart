@@ -5,7 +5,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:safe_scales/extensions/string_extensions.dart';
 import 'package:safe_scales/models/question.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_results_screen.dart';
 import 'package:safe_scales/services/user_state_service.dart';
@@ -320,9 +319,6 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
         itemCount: widget.questionSet.questions.length,
         itemBuilder: (context, index) {
           final isAnswered = userAnswers[index].isNotEmpty;
-          final rawText = widget.questionSet.questions[index].questionText;
-          final stripped = rawText.stripImageLinksForToc();
-          final displayText = stripped.isEmpty ? 'Question ${index + 1}' : stripped;
           return ListTile(
             leading: Icon(
               isAnswered
@@ -334,7 +330,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                       : theme.colorScheme.outline,
             ),
             title: Text(
-              'Q${index + 1}: $displayText',
+              'Question ${index + 1}',
               style:
                   index == currentQuestionIndex
                       ? Theme.of(
