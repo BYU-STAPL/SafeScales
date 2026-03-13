@@ -233,27 +233,15 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                       fontSizeScale: AppTheme.fontSizeScale * _quizFontScale,
                     ),
                   ),
-                  PopupMenuButton<String>(
+                  IconButton(
                     icon: Icon(
-                      Icons.more_vert,
+                      Icons.note_add,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       size: 20,
                     ),
-                    onSelected: (value) {
-                      _handleMenuAction(value);
-                    },
-                    itemBuilder: (BuildContext context) => [
-                      PopupMenuItem<String>(
-                        value: 'save_note',
-                        child: Row(
-                          children: [
-                            Icon(Icons.note_add, size: 18),
-                            SizedBox(width: 8),
-                            Text('Save Note'),
-                          ],
-                        ),
-                      ),
-                    ],
+                    onPressed: _showSaveNoteDialog,
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(),
                   ),
                 ],
               ),
@@ -305,27 +293,15 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                   fontSizeScale: AppTheme.fontSizeScale * _quizFontScale,
                 ),
               ),
-              PopupMenuButton<String>(
+              IconButton(
                 icon: Icon(
-                  Icons.more_vert,
+                  Icons.note_add,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   size: 20,
                 ),
-                onSelected: (value) {
-                  _handleMenuAction(value);
-                },
-                itemBuilder: (BuildContext context) => [
-                  PopupMenuItem<String>(
-                    value: 'save_note',
-                    child: Row(
-                      children: [
-                        Icon(Icons.note_add, size: 18),
-                        SizedBox(width: 8),
-                        Text('Save Note'),
-                      ],
-                    ),
-                  ),
-                ],
+                onPressed: _showSaveNoteDialog,
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(),
               ),
             ],
           ),
