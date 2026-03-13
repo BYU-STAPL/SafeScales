@@ -84,9 +84,6 @@ class _QuestionWidgetState extends State<QuestionWidget> {
 
   void _handleMenuAction(String action) {
     switch (action) {
-      case 'copy_question':
-        _copyToClipboard(widget.question.questionText);
-        break;
       case 'copy_explanation':
         _copyToClipboard(widget.question.explanation);
         break;
@@ -247,16 +244,6 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                     },
                     itemBuilder: (BuildContext context) => [
                       PopupMenuItem<String>(
-                        value: 'copy_question',
-                        child: Row(
-                          children: [
-                            Icon(Icons.copy, size: 18),
-                            SizedBox(width: 8),
-                            Text('Copy Question'),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem<String>(
                         value: 'save_note',
                         child: Row(
                           children: [
@@ -328,16 +315,6 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                   _handleMenuAction(value);
                 },
                 itemBuilder: (BuildContext context) => [
-                  PopupMenuItem<String>(
-                    value: 'copy_question',
-                    child: Row(
-                      children: [
-                        Icon(Icons.copy, size: 18),
-                        SizedBox(width: 8),
-                        Text('Copy Question'),
-                      ],
-                    ),
-                  ),
                   PopupMenuItem<String>(
                     value: 'save_note',
                     child: Row(
