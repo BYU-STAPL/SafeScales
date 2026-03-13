@@ -206,6 +206,7 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   Icons.check_circle,
@@ -213,10 +214,12 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
                   size: 24,
                 ),
                 SizedBox(width: 12),
-                Text(
-                  "Nice work! No missed questions.",
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.green,
+                Expanded(
+                  child: Text(
+                    "Nice work! No missed questions.",
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.green,
+                    ),
                   ),
                 ),
               ],
