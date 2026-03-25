@@ -213,7 +213,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                     ),
                     IconButton(
                       icon: Icon(Icons.help_outline, size: 28),
-                      tooltip: 'Tips from Dr. Page and Mia',
+                      tooltip: 'Decoration tips',
                       onPressed: _showHintsDialog,
                     ),
                   ],
@@ -1111,6 +1111,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
   void _showHintsDialog() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final maxDialogHeight = MediaQuery.sizeOf(context).height * 0.85;
 
     showDialog<void>(
       context: context,
@@ -1120,61 +1121,62 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
               borderRadius: BorderRadius.circular(24),
             ),
             backgroundColor: colorScheme.surface,
-            child: Container(
-              constraints: BoxConstraints(maxWidth: 400),
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.lightbulb_outline,
-                        color: colorScheme.primary,
-                        size: 28,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Tips from Dr. Page and Mia',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 400, maxHeight: maxDialogHeight),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline,
+                          color: colorScheme.primary,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Tips',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
                           ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildHintBullet(
+                      'Tap an item to select it, then move and resize it.',
+                    ),
+                    _buildHintBullet(
+                      'Use the arrow button to change layers (in front or behind your dragon).',
+                    ),
+                    _buildHintBullet(
+                      'Long press an item on the habitat to remove it.',
+                    ),
+                    _buildHintBullet(
+                      'Tap and hold an item in the tray, then drag it onto your dragon.',
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Got it!'),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Hi! Dr. Page and Mia here. Try these tips:',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface,
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildHintBullet(
-                    'Tap an item to select it, then move and resize it.',
-                  ),
-                  _buildHintBullet(
-                    'Use the arrow button to change layers (in front or behind your dragon).',
-                  ),
-                  _buildHintBullet(
-                    'Long press an item on the habitat to remove it.',
-                  ),
-                  _buildHintBullet(
-                    'Long press items in the tray below to drag them onto your dragon.',
-                  ),
-                  const SizedBox(height: 20),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('Got it!'),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

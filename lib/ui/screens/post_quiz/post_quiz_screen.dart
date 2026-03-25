@@ -388,6 +388,36 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     );
   }
 
+  Widget _buildStarterDetailRow({
+    required IconData icon,
+    required String text,
+    required ThemeData theme,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(
+            icon,
+            size: 22,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              height: 1.35,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
@@ -414,51 +444,108 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     );
 
     if (!isStarted) {
+      final int totalQuestions = widget.questionSet.questions.length;
+      final int neededToPass =
+          ((widget.questionSet.passingScore / 100) * totalQuestions).ceil();
+
       return Scaffold(
         appBar: appBar,
         body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 25),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                widget.questionSet.title,
-                style: theme.textTheme.headlineSmall,
-              ),
-
-              SizedBox(height: 15),
-
-              Card(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '${widget.questionSet.passingScore}% or higher is required to pass this quiz',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      SizedBox(height: 20),
-
-                      Row(
-                        children: [
-                          Text(
-                            '${widget.questionSet.questions.length} questions',
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 10),
-                    ],
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withValues(alpha: 0.25),
                   ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.questionSet.title,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$totalQuestions Multiple Choice Questions',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Details',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: theme.colorScheme.primary, width: 1),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'To Pass this Quiz',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'You need to get $neededToPass out of $totalQuestions questions right to pass.',
+                      style: theme.textTheme.bodyLarge?.copyWith(height: 1.35),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    _buildStarterDetailRow(
+                      icon: FontAwesomeIcons.listUl,
+                      text:
+                          'You can use the table of contents to return to previous questions',
+                      theme: theme,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildStarterDetailRow(
+                      icon: FontAwesomeIcons.volumeHigh,
+                      text:
+                          'You can use the audio feature to listen to the question instead of reading.',
+                      theme: theme,
+                    ),
+                  ],
                 ),
               ),
               Spacer(),
@@ -466,6 +553,12 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _startPostQuiz,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
                   child: Text(
                     'Start'.toUpperCase(),
                     style: TextStyle(

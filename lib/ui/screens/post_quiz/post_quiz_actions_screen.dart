@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:safe_scales/themes/app_theme.dart';
 import '../../widgets/dragon_image_widget.dart';
 
 // Define action types for better type safety
@@ -34,16 +32,7 @@ class PostQuizActionsScreen extends StatefulWidget {
 }
 
 class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  //TODO: Adjust so new screens can return to the suggested action
-  // Simple action handlers that just return the action type
   void _handleRetakeQuiz() {
-    // Navigator.pop(context, QuizAction.retake);
     widget.handleAction(QuizAction.retake);
   }
 
@@ -59,191 +48,187 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
     widget.handleAction(QuizAction.goToDragon);
   }
 
-  Widget _buildDragonAction(BuildContext context) {
-    ThemeData theme = Theme.of(context);
-
-    return Column(
+  Widget _buildDividerWithOr(ThemeData theme) {
+    return Row(
       children: [
-        Text(
-          'Your dragon is fully grown!',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodyLarge,
+        Expanded(
+          child: Divider(
+            thickness: 1,
+            color: theme.colorScheme.outline.withValues(alpha: 0.55),
+          ),
         ),
-        SizedBox(height: 30),
-        DragonImageWidget(
-          moduleId: widget.moduleId,
-          size: 300,
-          phase: 'final',
-        ),
-        SizedBox(height: 30),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: _handleGoToDragon,
-            icon: FaIcon(FontAwesomeIcons.dragon),
-            label: Text('Play with dragon'.toUpperCase()),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.green,
-              foregroundColor: theme.colorScheme.onPrimary,
-              padding: EdgeInsets.symmetric(vertical: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: Text(
+            'OR',
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              letterSpacing: 1.1,
             ),
           ),
         ),
-        SizedBox(height: 30),
-        Text('OR'.toUpperCase()),
-        SizedBox(height: 30),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: _handleReturnToLesson,
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: theme.colorScheme.primary),
-              foregroundColor: theme.colorScheme.primary,
-              padding: EdgeInsets.symmetric(vertical: 12),
-            ),
-            child: Text(
-              'Return to lesson'.toUpperCase(),
-              style: TextStyle(
-                fontSize: theme.textTheme.bodyMedium?.fontSize,
-              ),
-            ),
+        Expanded(
+          child: Divider(
+            thickness: 1,
+            color: theme.colorScheme.outline.withValues(alpha: 0.55),
           ),
         ),
-        SizedBox(height: 30),
       ],
     );
   }
 
-  Widget _buildSuggestedAction(BuildContext context) {
-    ThemeData theme = Theme.of(context);
+  Widget _buildPrimaryButton({
+    required ThemeData theme,
+    required String label,
+    required VoidCallback onPressed,
+    Color? backgroundColor,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          backgroundColor: backgroundColor ?? theme.colorScheme.primary,
+          foregroundColor: theme.colorScheme.onPrimary,
+          minimumSize: const Size.fromHeight(44),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+        child: Text(
+          label.toUpperCase(),
+          style: theme.textTheme.labelLarge?.copyWith(letterSpacing: 1),
+        ),
+      ),
+    );
+  }
 
+  Widget _buildSecondaryButton({
+    required ThemeData theme,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+          foregroundColor: theme.colorScheme.primary,
+          minimumSize: const Size.fromHeight(44),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+        child: Text(
+          label.toUpperCase(),
+          style: theme.textTheme.labelLarge?.copyWith(letterSpacing: 1),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPassedView(ThemeData theme) {
     return Column(
       children: [
-        SizedBox(height: 30),
-        Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Text('Quiz Score'),
-              Text(
-                '${widget.correctAnswers} out of ${widget.totalQuestions}',
-                style: TextStyle(
-                  fontSize: 40 * AppTheme.fontSizeScale,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.orange,
-                ),
-              ),
-            ],
+        const SizedBox(height: 18),
+        Text(
+          'Your Dragon is full grown!',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w500,
           ),
         ),
-        SizedBox(height: 30),
-        Text("Suggested Action", style: theme.textTheme.headlineMedium),
-        SizedBox(height: 30),
+        const SizedBox(height: 12),
+        DragonImageWidget(moduleId: widget.moduleId, size: 260, phase: 'final'),
+        const Spacer(),
+        _buildPrimaryButton(
+          theme: theme,
+          label: 'Play with dragon',
+          onPressed: _handleGoToDragon,
+          backgroundColor: const Color(0xFF07B464),
+        ),
+        const SizedBox(height: 24),
+        _buildDividerWithOr(theme),
+        const SizedBox(height: 24),
+        _buildSecondaryButton(
+          theme: theme,
+          label: 'Return to lesson',
+          onPressed: _handleReturnToLesson,
+        ),
+      ],
+    );
+  }
 
-        // Action buttons that delegate to parent
-        widget.score >= 50
-            ? Column(
-          children: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _handleRetakeQuiz,
-                icon: Icon(Icons.refresh),
-                label: Text("Retake Quiz".toUpperCase()),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
+  Widget _buildFailedView(ThemeData theme) {
+    final bool canRetake = widget.score >= 50;
 
-            SizedBox(height: 30),
-
-            Text('OR'.toUpperCase()),
-
-            SizedBox(height: 30),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _handleReReadLesson,
-                icon: Icon(Icons.menu_book),
-                label: Text("Re-read Lesson".toUpperCase()),
-                style: ElevatedButton.styleFrom(
-                  elevation: 0,
-                  side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.2), width: 2),
-                  backgroundColor: theme.colorScheme.surface, // optional: contrast background
-                  foregroundColor: theme.colorScheme.primary, // optional: text/icon color
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 12,),
-                ),
-              ),
-            ),
-
-
-
-          ],
-        )
-            : SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: _handleReReadLesson,
-            icon: Icon(Icons.menu_book),
-            label: Text("Re-read Lesson".toUpperCase()),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              padding: EdgeInsets.symmetric(vertical: 12),
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 18),
+        Text(
+          'Quiz Score',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        SizedBox(height: 30),
+        const SizedBox(height: 8),
+        Text(
+          '${widget.correctAnswers} out of ${widget.totalQuestions}',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineLarge?.copyWith(
+            color: theme.colorScheme.primary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 28),
+        Text(
+          'Suggested Action',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 22),
+        if (canRetake) ...[
+          _buildPrimaryButton(
+            theme: theme,
+            label: 'Retake quiz',
+            onPressed: _handleRetakeQuiz,
+          ),
+          const SizedBox(height: 18),
+          _buildDividerWithOr(theme),
+          const SizedBox(height: 18),
+        ],
+        _buildSecondaryButton(
+          theme: theme,
+          label: 'Re-read lesson',
+          onPressed: _handleReReadLesson,
+        ),
+        const Spacer(),
+        _buildSecondaryButton(
+          theme: theme,
+          label: 'Return to lesson',
+          onPressed: _handleReturnToLesson,
+        ),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    ThemeData theme = Theme.of(context);
+    final ThemeData theme = Theme.of(context);
     final bool passed = widget.score >= widget.passingScore;
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: Text(passed ? 'Quiz Complete' : 'Results'),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
-      body: Center(
+      body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 25),
-          child: Column(
-            children: [
-              if (passed)
-                _buildDragonAction(context)
-              else ...[
-                _buildSuggestedAction(context),
-                Spacer(),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _handleReturnToLesson,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.secondary,
-                      foregroundColor: theme.colorScheme.onSecondary,
-                    ),
-                    child: Text(
-                      'Return to lesson'.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: theme.textTheme.bodyMedium?.fontSize,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 30),
-              ],
-            ],
-          ),
+          padding: const EdgeInsets.fromLTRB(30, 4, 30, 24),
+          child: passed ? _buildPassedView(theme) : _buildFailedView(theme),
         ),
       ),
     );

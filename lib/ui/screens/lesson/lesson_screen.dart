@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
 import 'package:safe_scales/models/question.dart';
@@ -262,8 +261,8 @@ class _LessonScreenState extends State<LessonScreen> {
                   ),
                   child: Text(
                     hasPostQuizAttempts
-                        ? 'Best: ${bestScore.toInt()}%'
-                        : 'Best: --',
+                        ? 'Best Quiz: ${bestScore.toInt()}%'
+                        : 'Best Quiz: --',
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
@@ -289,6 +288,9 @@ class _LessonScreenState extends State<LessonScreen> {
   }) {
     final theme = Theme.of(context);
     final isLocked = !isUnlocked;
+    final IconData leadingIcon = title == 'Reading'
+        ? Icons.article_outlined
+        : Icons.quiz_outlined;
 
     final bgColor = isLocked
         ? theme.colorScheme.surfaceContainerLow
@@ -330,7 +332,7 @@ class _LessonScreenState extends State<LessonScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
-                    FontAwesomeIcons.dice,
+                    leadingIcon,
                     size: 18,
                     color: iconColor,
                   ),
@@ -449,6 +451,9 @@ class _LessonScreenState extends State<LessonScreen> {
     required String subtitle,
   }) {
     final theme = Theme.of(context);
+    final IconData leadingIcon = title == 'Next Lesson'
+        ? Icons.cast_for_education_outlined
+        : Icons.assignment_outlined;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -469,7 +474,7 @@ class _LessonScreenState extends State<LessonScreen> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
-              FontAwesomeIcons.dice,
+              leadingIcon,
               size: 18,
               color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
             ),
@@ -557,7 +562,7 @@ class _LessonScreenState extends State<LessonScreen> {
           child: Row(
             children: [
               Icon(
-                FontAwesomeIcons.dice,
+                Icons.cast_for_education_outlined,
                 color: theme.colorScheme.onPrimary,
                 size: 20,
               ),
@@ -654,7 +659,7 @@ class _LessonScreenState extends State<LessonScreen> {
           child: Row(
             children: [
               Icon(
-                FontAwesomeIcons.dice,
+                Icons.assignment_outlined,
                 color: theme.colorScheme.onPrimaryContainer,
                 size: 20,
               ),
