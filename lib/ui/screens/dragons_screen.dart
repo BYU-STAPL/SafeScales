@@ -141,8 +141,6 @@ class _DragonsScreenState extends State<DragonsScreen> {
         dragonImage: dragonImageWidget,
         species: dragon.speciesName,
         name: dragon.name,
-        favoriteItem: dragon.favoriteItem,
-        favoriteEnvironment: dragon.preferredEnvironment,
         isPlayUnlocked: isUnlocked,
         onTapPlayButton: () {
           navigateToDressUp(dragon.id);

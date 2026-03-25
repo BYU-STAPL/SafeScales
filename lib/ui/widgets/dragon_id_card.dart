@@ -12,8 +12,6 @@ class DragonIdCard extends StatefulWidget {
   final String name;
   // final String length; not in use currently
   // final String weight;
-  final String favoriteItem;
-  final String favoriteEnvironment;
 
   final bool isPlayUnlocked;
 
@@ -27,8 +25,6 @@ class DragonIdCard extends StatefulWidget {
     required this.dragonImage,
     required this.species,
     required this.name,
-    required this.favoriteItem,
-    required this.favoriteEnvironment,
     required this.isPlayUnlocked,
     this.onTapPlayButton,
     this.onNameChanged,
@@ -294,83 +290,9 @@ class _DragonIdCardState extends State<DragonIdCard> {
                 ),
               ),
 
-              // Details section
-              Container(
-                padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
-                child: Column(
-                  children: [
-
-                    // Divider
-                    Container(
-                      height: 1.5,
-                      margin: EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.transparent,
-                            theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // Stats grid
-
-                    //TODO: Maybe delete the weight and length
-                    // Row(
-                    //   children: [
-                    //     Expanded(
-                    //       child: _buildStatItem(
-                    //         context: context,
-                    //         icon: Icons.straighten,
-                    //         label: 'Length',
-                    //         value: widget.length,
-                    //       ),
-                    //     ),
-                    //     SizedBox(width: 16),
-                    //     Expanded(
-                    //       child: _buildStatItem(
-                    //         context: context,
-                    //         icon: Icons.monitor_weight,
-                    //         label: 'Weight',
-                    //         value: widget.weight,
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
-                    //
-                    // SizedBox(height: 16),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildStatItem(
-                            context: context,
-                            icon: Icons.favorite,
-                            label: 'Favorite Item',
-                            value: widget.favoriteItem,
-                          ),
-                        ),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: _buildStatItem(
-                            context: context,
-                            icon: Icons.landscape,
-                            label: 'Habitat',
-                            value: widget.favoriteEnvironment,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-
               // Play Button
               Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  padding: EdgeInsets.fromLTRB(20, 8, 20, 20),
                 child: ElevatedButton(
                     onPressed: _isPlayUnlocked ? widget.onTapPlayButton : null,
                     child: Row(
@@ -391,54 +313,5 @@ class _DragonIdCardState extends State<DragonIdCard> {
           ),
         ),
       );
-  }
-
-  Widget _buildStatItem({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-
-    ThemeData theme = Theme.of(context);
-
-
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1), //Colors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                icon,
-                color: theme.colorScheme.primary,
-                size: 15,
-              ),
-              SizedBox(width: 10),
-              Text(
-                label,
-                style: theme.textTheme.labelSmall,
-              ),
-            ],
-          ),
-          SizedBox(height: 6),
-          Text(
-            value,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontSize: 15,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
