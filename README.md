@@ -4,7 +4,8 @@ A gamified education app for teaching social media literacy and safety.
 
 ## Download
 
-📱 [Download for Android](https://khalilfadi.github.io/safeScales-App/) - Download the latest version directly to your Android device.
+- **GitHub Pages** (recommended for **public** repositories): enable Pages in the repo settings (see [Enabling GitHub Pages](#enabling-github-pages)), then share: [https://BYU-STAPL.github.io/SafeScales/](https://BYU-STAPL.github.io/SafeScales/). No tokens required; the page uses GitHub’s public API for the latest release and APK link.
+- **Vercel** (useful for **private** repos or custom domains): see [Hosting the download page on Vercel](#hosting-the-download-page-on-vercel).
 
 ## Development
 
@@ -18,8 +19,8 @@ A gamified education app for teaching social media literacy and safety.
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/khalilfadi/safeScales-App.git
-cd safeScales-App
+git clone https://github.com/BYU-STAPL/SafeScales.git
+cd SafeScales
 ```
 
 2. Install dependencies:
@@ -84,19 +85,43 @@ For automated releases, you need to configure these secrets in your GitHub repos
 - `KEY_ALIAS`: Your key alias (usually "upload")
 - `KEY_PASSWORD`: Your key password
 
+### Hosting the download page on Vercel
+
+Use this when the GitHub repository is **private** (or whenever you prefer Vercel over GitHub Pages). The static files in [`docs/`](docs/) are copied into `public/` at build time; serverless routes in [`api/`](api/) call the GitHub API with a secret token so release metadata and APK downloads work without making the repo public.
+
+1. Push the repository to GitHub and [import it on Vercel](https://vercel.com/new) using the GitHub integration (private repos are supported).
+2. Vercel picks up [`vercel.json`](vercel.json): install runs `npm install`, build runs `npm run build` (copies `docs/` to `public/`), and static output is served from `public/`.
+3. In the Vercel project, open **Settings → Environment Variables** and add:
+   - **`GITHUB_TOKEN`** — a [GitHub personal access token](https://github.com/settings/tokens) that can read this repository’s releases. For a private repo, a **classic** token with the `repo` scope is typical; a **fine-grained** token should include **Contents** and **Metadata** read access for this repository.
+4. Apply the variable to **Production** (and **Preview** if you want preview deployments to work), then trigger a new deployment.
+
+Optional variables if the defaults are wrong: **`GITHUB_REPO_OWNER`**, **`GITHUB_REPO_NAME`**, or **`GITHUB_REPOSITORY`** (`owner/name`). Otherwise the app uses `BYU-STAPL` / `SafeScales` or Vercel’s Git metadata when available.
+
+**Avoiding GitHub in the browser (recommended for a clean download UX):** Vercel cannot stream large APKs through a serverless function (response size limits), so the default flow redirects the browser to GitHub’s file URL after a server-side API call. To **never** send users to `github.com` for the file, host the APK on a **public URL** you control and set:
+
+- **`PUBLIC_APK_URL`** — full HTTPS URL to the `.apk` file (for example [Vercel Blob](https://vercel.com/docs/storage/vercel-blob), AWS S3, Cloudflare R2, or any static host). The download button and `/api/download-apk` will point there instead of GitHub.
+- **`RELEASE_TAG`** (optional) — e.g. `v0.9.3`, shown on the page as the version. If omitted, the server still uses **`GITHUB_TOKEN`** only to read the latest release tag (no GitHub URL in the user’s browser). If you set **`RELEASE_TAG`** and **`PUBLIC_APK_URL`** but omit **`GITHUB_TOKEN`**, the page shows the version without calling GitHub at all.
+
+**How it works (default):** `/api/latest-release` returns the release tag for the page. `/api/download-apk` uses the token server-side and responds with **302** to GitHub’s temporary asset URL so the APK is not streamed through Vercel’s function response size limit.
+
+**How it works (with `PUBLIC_APK_URL`):** The download link goes straight to your hosted file; GitHub is not involved in the browser request.
+
+Local preview: install the [Vercel CLI](https://vercel.com/docs/cli) and run `vercel dev` from the repo root (set `GITHUB_TOKEN` in `.env.local` for testing).
+
 ### Enabling GitHub Pages
 
-To host the download page:
+Repository maintainers enable hosting once (this cannot be done from git alone):
 
-1. Go to repository Settings → Pages
-2. Source: Deploy from a branch
-3. Branch: `main` (or `master`)
-4. Folder: `/docs`
-5. Save
+1. Go to repository **Settings** → **Pages**
+2. **Source:** Deploy from a branch
+3. **Branch:** `main` (or your default branch)
+4. **Folder:** `/docs`
+5. Save and wait for the site build to finish
 
 Your download page will be available at:
+
 ```
-https://khalilfadi.github.io/safeScales-App/
+https://BYU-STAPL.github.io/SafeScales/
 ```
 
 ## Building Locally

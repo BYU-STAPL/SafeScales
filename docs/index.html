@@ -88,6 +88,19 @@
         .download-button:active {
             transform: translateY(0);
         }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .actions .download-button {
+            margin: 0;
+        }
         
         .warning {
             background: #fff3cd;
@@ -199,31 +212,37 @@
 </head>
 <body>
     <div class="container">
-        <div class="app-icon">🛡️</div>
+        <div class="app-icon" aria-hidden="true">SS</div>
         <h1>Safe Scales</h1>
         <p class="subtitle">Gamified education app for teaching social media literacy and safety</p>
-        <p class="version">Version 0.9.3</p>
+        <p class="version">Latest release</p>
         
-        <a href="https://github.com/BYU-STAPL/SafeScales/releases/latest/download/app-release.apk" 
-           class="download-button" 
-           download="safe-scales.apk"
-           id="download-button">
-            📱 Download for Android
-        </a>
-        
-        <a href="#" 
-           class="download-button pwa-button" 
-           id="pwa-download-button"
-           style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); margin-left: 10px;">
-            🌐 Install Web App (PWA)
-        </a>
+        <div class="actions">
+            <a href="https://github.com/BYU-STAPL/SafeScales/releases/latest/download/app-release.apk" 
+               class="download-button" 
+               id="download-button">
+                Download for Android
+            </a>
+            <a href="./web/" 
+               class="download-button pwa-button" 
+               id="pwa-download-button"
+               style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);">
+                Open web app
+            </a>
+        </div>
+        <script>
+            (function () {
+                var btn = document.getElementById('download-button');
+                if (!btn) return;
+                if (!/\.github\.io$/i.test(window.location.hostname)) {
+                    btn.href = '/api/download-apk';
+                    btn.setAttribute('download', 'SafeScales.apk');
+                }
+            })();
+        </script>
         
         <div class="warning">
-            <strong>⚠️ Android Note:</strong> You may need to allow "Install from Unknown Sources" in your Android settings when installing the APK file.
-        </div>
-        
-        <div class="warning ios-warning" style="background: #e3f2fd; border-left-color: #2196F3; color: #1565C0; display: none;">
-            <strong>🍎 iOS Note:</strong> iOS distribution requires TestFlight or App Store. Click the iOS button for more information.
+            <strong>Android:</strong> You may need to allow &quot;Install from Unknown Sources&quot; (or install unknown apps for your browser) when installing the APK.
         </div>
         
         <div class="features">
@@ -253,73 +272,63 @@
     </div>
     
     <script>
-        // Replace placeholders with actual repository details
-        const repoOwner = 'BYU-STAPL';
-        const repoName = 'SafeScales';
-        
-        // Fetch latest release info
-        fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/releases/latest`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                return response.json();
-            })
-            .then(data => {
+        (async function () {
+            var repoOwner = 'BYU-STAPL';
+            var repoName = 'SafeScales';
+            var fallbackApkUrl =
+                'https://github.com/BYU-STAPL/SafeScales/releases/latest/download/app-release.apk';
+            var btn = document.getElementById('download-button');
+
+            function applyPublicRelease(data) {
                 if (data.tag_name) {
-                    document.querySelector('.version').textContent = `Version ${data.tag_name}`;
-                    
-                    // Find APK asset
-                    const apkAsset = data.assets.find(asset => asset.name.includes('.apk'));
-                    if (apkAsset) {
-                        const downloadLink = document.getElementById('download-button');
-                        downloadLink.href = apkAsset.browser_download_url;
-                        console.log('Updated download link to:', apkAsset.browser_download_url);
-                    } else {
-                        console.warn('No APK asset found in latest release');
-                        // Keep the default link which should work if releases exist
-                    }
+                    document.querySelector('.version').textContent = 'Version ' + data.tag_name;
                 }
-            })
-            .catch(error => {
-                console.error('Could not fetch release info:', error);
-                console.log('Using fallback download link');
-                // The default href should still work if there are releases
-                // If no releases exist, the user will see a 404, which is expected
-            });
-        
-        // Handle iOS download button
-        document.getElementById('ios-download-button').addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Show iOS warning
-            document.querySelector('.ios-warning').style.display = 'block';
-            
-            // Show iOS distribution options
-            const iosInfo = `
-                <div style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px; text-align: left;">
-                    <h4 style="color: #333; margin-bottom: 15px;">iOS Distribution Options:</h4>
-                    <ol style="color: #666; line-height: 1.6;">
-                        <li><strong>TestFlight (Recommended):</strong> Beta testing platform - requires Apple Developer Account ($99/year)</li>
-                        <li><strong>App Store:</strong> Official distribution - requires App Store review and Apple Developer Account</li>
-                        <li><strong>Enterprise:</strong> Internal distribution only - requires Enterprise Developer Account</li>
-                    </ol>
-                    <p style="margin-top: 15px; color: #666;">
-                        <strong>Current Status:</strong> iOS app builds successfully but requires code signing for distribution.
-                        <br><strong>Next Step:</strong> Set up Apple Developer Account and TestFlight for iOS distribution.
-                    </p>
-                </div>
-            `;
-            
-            // Insert iOS info after the warning
-            const warningDiv = document.querySelector('.ios-warning');
-            if (!warningDiv.nextElementSibling || !warningDiv.nextElementSibling.classList.contains('ios-info')) {
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'ios-info';
-                infoDiv.innerHTML = iosInfo;
-                warningDiv.parentNode.insertBefore(infoDiv, warningDiv.nextSibling);
+                var apkAsset = (data.assets || []).find(function (asset) {
+                    return asset.name && asset.name.indexOf('.apk') !== -1;
+                });
+                if (apkAsset && apkAsset.browser_download_url) {
+                    btn.href = apkAsset.browser_download_url;
+                    btn.removeAttribute('download');
+                }
             }
-        });
+
+            var isGitHubPages = /\.github\.io$/i.test(window.location.hostname);
+
+            if (!isGitHubPages) {
+                try {
+                    var vr = await fetch('/api/latest-release');
+                    if (vr.ok) {
+                        var vdata = await vr.json();
+                        if (vdata.tag_name) {
+                            document.querySelector('.version').textContent = 'Version ' + vdata.tag_name;
+                        }
+                        if (vdata.direct_download_url) {
+                            btn.href = vdata.direct_download_url;
+                            btn.removeAttribute('download');
+                            return;
+                        }
+                        if (vdata.download_via_proxy) {
+                            btn.href = '/api/download-apk';
+                            btn.setAttribute('download', 'SafeScales.apk');
+                            return;
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            try {
+                var pr = await fetch(
+                    'https://api.github.com/repos/' + repoOwner + '/' + repoName + '/releases/latest'
+                );
+                if (pr.ok) {
+                    applyPublicRelease(await pr.json());
+                    return;
+                }
+            } catch (e) {}
+
+            btn.href = fallbackApkUrl;
+            btn.removeAttribute('download');
+        })();
     </script>
 </body>
 </html>

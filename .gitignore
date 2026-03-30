@@ -114,3 +114,7 @@ android/app/key.properties
 *.tmp
 *.temp
 *.bak
+
+# Vercel build output (copied from docs/)
+public/
+.vercel

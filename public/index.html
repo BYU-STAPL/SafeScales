@@ -1,66 +1,313 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Download Safe Scales - A gamified education app for teaching social media literacy and safety">
+    <title>Download Safe Scales</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        
+        .app-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 36px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: 400;
+        }
+        
+        .version {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        .download-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px 50px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .download-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .download-button:active {
+            transform: translateY(0);
+        }
 
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
 
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
-  <base href="/">
-
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
-
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="safe_scales">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>Safe Scales</title>
-  <link rel="manifest" href="manifest.json">
-
-  <script>
-    // The value below is injected by flutter build, do not touch.
-    const serviceWorkerVersion = "2854099416";
-  </script>
-  <!-- This script adds the flutter initialization JS code -->
-  <script src="flutter.js" defer></script>
-  <script>
-    // Add your Supabase configuration here
-    window.env = {
-      SUPABASE_URL: 'https://mqeijlaukrmcirwadrhl.supabase.co',
-      SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xZWlqbGF1a3JtY2lyd2FkcmhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0ODQ5NzUsImV4cCI6MjA2NDA2MDk3NX0.rbpAhsFklDetVf0qaQ-6wJjbZnSKpRLmUsmyI8vn2wk'
-    };
-  </script>
+        .actions .download-button {
+            margin: 0;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            text-align: left;
+            color: #856404;
+            font-size: 14px;
+        }
+        
+        .instructions {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f0f0;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+            color: #666;
+            line-height: 2;
+            font-size: 15px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        
+        .github-link {
+            margin-top: 30px;
+            display: inline-block;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .github-link:hover {
+            color: #764ba2;
+        }
+        
+        .features {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: left;
+        }
+        
+        .features h4 {
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .features ul {
+            list-style: none;
+            padding: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .features li {
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 28px;
+            }
+            
+            .app-icon {
+                width: 100px;
+                height: 100px;
+                font-size: 40px;
+            }
+            
+            .download-button {
+                padding: 15px 40px;
+                font-size: 16px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <script>
-    window.addEventListener('load', function(ev) {
-      // Download main.dart.js
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            appRunner.runApp();
-          });
-        }
-      });
-    });
-  </script>
+    <div class="container">
+        <div class="app-icon" aria-hidden="true">SS</div>
+        <h1>Safe Scales</h1>
+        <p class="subtitle">Gamified education app for teaching social media literacy and safety</p>
+        <p class="version">Latest release</p>
+        
+        <div class="actions">
+            <a href="https://github.com/BYU-STAPL/SafeScales/releases/latest/download/app-release.apk" 
+               class="download-button" 
+               download="safe-scales.apk"
+               id="download-button">
+                Download for Android
+            </a>
+            <a href="./web/" 
+               class="download-button pwa-button" 
+               id="pwa-download-button"
+               style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);">
+                Open web app
+            </a>
+        </div>
+        
+        <div class="warning">
+            <strong>Android:</strong> You may need to allow &quot;Install from Unknown Sources&quot; (or install unknown apps for your browser) when installing the APK.
+        </div>
+        
+        <div class="features">
+            <h4>Features:</h4>
+            <ul>
+                <li>Interactive lessons on social media safety</li>
+                <li>Gamified learning experience</li>
+                <li>Progress tracking and achievements</li>
+                <li>Age-appropriate content for all users</li>
+            </ul>
+        </div>
+        
+        <div class="instructions">
+            <h3>Installation Steps:</h3>
+            <ol>
+                <li>Click the download button above</li>
+                <li>Open the downloaded APK file on your Android device</li>
+                <li>If prompted, allow "Install unknown apps" for your browser</li>
+                <li>Complete the installation</li>
+                <li>Open Safe Scales from your app drawer</li>
+            </ol>
+        </div>
+        
+        <a href="https://github.com/BYU-STAPL/SafeScales/releases" class="github-link">
+            View all releases on GitHub →
+        </a>
+    </div>
+    
+    <script>
+        (async function () {
+            var repoOwner = 'BYU-STAPL';
+            var repoName = 'SafeScales';
+            var fallbackApkUrl =
+                'https://github.com/BYU-STAPL/SafeScales/releases/latest/download/app-release.apk';
+            var btn = document.getElementById('download-button');
+
+            function applyPublicRelease(data) {
+                if (data.tag_name) {
+                    document.querySelector('.version').textContent = 'Version ' + data.tag_name;
+                }
+                var apkAsset = (data.assets || []).find(function (asset) {
+                    return asset.name && asset.name.indexOf('.apk') !== -1;
+                });
+                if (apkAsset && apkAsset.browser_download_url) {
+                    btn.href = apkAsset.browser_download_url;
+                }
+            }
+
+            try {
+                var vr = await fetch('/api/latest-release');
+                if (vr.ok) {
+                    var vdata = await vr.json();
+                    if (vdata.tag_name) {
+                        document.querySelector('.version').textContent = 'Version ' + vdata.tag_name;
+                    }
+                    if (vdata.download_via_proxy) {
+                        btn.href = '/api/download-apk';
+                        return;
+                    }
+                }
+            } catch (e) {}
+
+            try {
+                var pr = await fetch(
+                    'https://api.github.com/repos/' + repoOwner + '/' + repoName + '/releases/latest'
+                );
+                if (pr.ok) {
+                    applyPublicRelease(await pr.json());
+                    return;
+                }
+            } catch (e) {}
+
+            btn.href = fallbackApkUrl;
+        })();
+    </script>
 </body>
 </html>

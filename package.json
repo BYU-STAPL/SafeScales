@@ -1,0 +1,7 @@
+{
+  "name": "safescales",
+  "private": true,
+  "scripts": {
+    "build": "rm -rf public && mkdir -p public && cp -R docs/. public/"
+  }
+}
