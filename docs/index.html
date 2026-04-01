@@ -187,6 +187,45 @@
             color: #667eea;
             font-weight: bold;
         }
+
+        .when-no-apk {
+            display: none;
+        }
+
+        .container.no-apk-fallback .when-apk-available {
+            display: none;
+        }
+
+        .container.no-apk-fallback .when-no-apk {
+            display: block;
+        }
+
+        .info-panel {
+            background: #e8f4fc;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            text-align: left;
+            color: #1565c0;
+            font-size: 14px;
+            line-height: 1.55;
+        }
+
+        .info-panel strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #0d47a1;
+        }
+
+        .info-panel ol {
+            margin: 10px 0 0 0;
+            padding-left: 20px;
+        }
+
+        .info-panel li {
+            margin-bottom: 8px;
+        }
         
         @media (max-width: 600px) {
             .container {
@@ -211,7 +250,7 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" id="page-root">
         <div class="app-icon" aria-hidden="true">SS</div>
         <h1>Safe Scales</h1>
         <p class="subtitle">Gamified education app for teaching social media literacy and safety</p>
@@ -241,8 +280,22 @@
             })();
         </script>
         
+        <div class="when-apk-available">
         <div class="warning">
             <strong>Android:</strong> You may need to allow &quot;Install from Unknown Sources&quot; (or install unknown apps for your browser) when installing the APK.
+        </div>
+        </div>
+
+        <div class="when-no-apk">
+            <div class="info-panel">
+                <strong>No Android install file on GitHub yet</strong>
+                On the release page, <strong>Assets</strong> only lists source code (zip / tar.gz) until a signed <strong>APK</strong> is uploaded—usually <code>app-release.apk</code> from the project&rsquo;s release workflow.
+                <ol>
+                    <li>Use <strong>Open web app</strong> above for the full app in your browser (including on Android).</li>
+                    <li>Check <a href="https://github.com/BYU-STAPL/SafeScales/releases">Releases</a> again later for an APK under Assets.</li>
+                    <li>To build the APK yourself, follow <a href="https://github.com/BYU-STAPL/SafeScales#readme">the README</a> in the repository.</li>
+                </ol>
+            </div>
         </div>
         
         <div class="features">
@@ -255,14 +308,21 @@
             </ul>
         </div>
         
-        <div class="instructions">
-            <h3>Installation Steps:</h3>
+        <div class="instructions when-apk-available">
+            <h3>Install the Android app (APK):</h3>
             <ol>
-                <li>Click the download button above</li>
-                <li>Open the downloaded APK file on your Android device</li>
-                <li>If prompted, allow "Install unknown apps" for your browser</li>
-                <li>Complete the installation</li>
-                <li>Open Safe Scales from your app drawer</li>
+                <li>Click <strong>Download for Android</strong> above to get the APK file</li>
+                <li>Open the downloaded file on your Android device</li>
+                <li>If prompted, allow &quot;Install unknown apps&quot; for your browser or files app</li>
+                <li>Complete the installation and open Safe Scales from your app drawer</li>
+            </ol>
+        </div>
+
+        <div class="instructions when-no-apk">
+            <h3>Use the web app:</h3>
+            <ol>
+                <li>Tap <strong>Open web app</strong> above</li>
+                <li>Optionally add to your home screen from the browser menu for an app-like shortcut</li>
             </ol>
         </div>
         
@@ -291,9 +351,21 @@
                 }
                 var apkAsset = findApkAsset(data);
                 if (apkAsset && apkAsset.browser_download_url) {
+                    btn.textContent = 'Download for Android';
                     btn.href = apkAsset.browser_download_url;
                     btn.removeAttribute('download');
                 }
+            }
+
+            function applyNoApkFallback() {
+                var root = document.getElementById('page-root');
+                if (root) {
+                    root.classList.add('no-apk-fallback');
+                }
+                btn.textContent = 'View releases on GitHub';
+                btn.href =
+                    'https://github.com/BYU-STAPL/SafeScales/releases';
+                btn.removeAttribute('download');
             }
 
             async function resolveReleaseWithApk(owner, repo) {
@@ -355,10 +427,13 @@
                     applyPublicRelease(withApk);
                     return;
                 }
-            } catch (e) {}
+            } catch (e) {
+                btn.href = fallbackReleaseUrl;
+                btn.removeAttribute('download');
+                return;
+            }
 
-            btn.href = fallbackReleaseUrl;
-            btn.removeAttribute('download');
+            applyNoApkFallback();
         })();
     </script>
 </body>

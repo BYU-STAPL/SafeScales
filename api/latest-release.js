@@ -93,7 +93,7 @@ module.exports = async function handler(req, res) {
 
   return res.status(200).json({
     tag_name: data.tag_name,
-    download_via_proxy: true,
+    download_via_proxy: Boolean(apk),
     apk_name: apk ? apk.name : null,
   });
 };

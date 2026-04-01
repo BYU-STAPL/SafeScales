@@ -39,6 +39,19 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
       
+      # .env is gitignored but listed as a Flutter asset; the runner needs it on disk to bundle.
+      - name: Create .env for Android build
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
+            echo "SUPABASE_URL=$SUPABASE_URL" > .env
+            echo "SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" >> .env
+          else
+            bash setup_env.sh
+          fi
+      
       - name: Build APK
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
