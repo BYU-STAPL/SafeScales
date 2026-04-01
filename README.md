@@ -85,6 +85,14 @@ For automated releases, you need to configure these secrets in your GitHub repos
 - `KEY_ALIAS`: Your key alias (usually "upload")
 - `KEY_PASSWORD`: Your key password
 
+### Troubleshooting: 404 on the APK download link
+
+URLs like `https://github.com/ORG/REPO/releases/latest/download/app-release.apk` only work after there is a **published** GitHub Release whose assets include a file named **`app-release.apk`** (this repo’s workflow uploads that name when the build succeeds).
+
+If you see **404**, there is usually **no successful release** yet: the tag workflow did not run, failed (check **Actions**), or required secrets were missing so the APK was never uploaded.
+
+**What to do:** Push a version tag (`v1.0.0`, etc.), wait for **Build and Release APK** to finish green, then open **Releases** on the repo and confirm the APK appears under **Assets**. After that, the download page can resolve the correct link via the GitHub API.
+
 ### Hosting the download page on Vercel
 
 Use this when the GitHub repository is **private** (or whenever you prefer Vercel over GitHub Pages). The static files in [`docs/`](docs/) are copied into `public/` at build time; serverless routes in [`api/`](api/) call the GitHub API with a secret token so release metadata and APK downloads work without making the repo public.
@@ -110,13 +118,29 @@ Local preview: install the [Vercel CLI](https://vercel.com/docs/cli) and run `ve
 
 ### Enabling GitHub Pages
 
-Repository maintainers enable hosting once (this cannot be done from git alone):
+Repository maintainers enable hosting once (this cannot be done from git alone). Use **one** of these (not both):
 
-1. Go to repository **Settings** → **Pages**
-2. **Source:** Deploy from a branch
-3. **Branch:** `main` (or your default branch)
-4. **Folder:** `/docs`
-5. Save and wait for the site build to finish
+**Option A — Deploy from a branch**
+
+1. **Settings** → **Pages**
+2. **Build and deployment** → **Source:** **Deploy from a branch**
+3. **Branch:** `main`, **Folder:** `/docs`
+4. Save and wait a few minutes
+
+**Option B — GitHub Actions** (uses [`.github/workflows/pages.yml`](.github/workflows/pages.yml))
+
+1. **Settings** → **Pages**
+2. **Source:** **GitHub Actions**
+3. Push to `main` (or run the **Deploy GitHub Pages** workflow manually). The workflow uploads the [`docs/`](docs/) folder as the site root.
+
+If you switch sources, pick only one; leaving two mechanisms fighting each other can cause confusing results.
+
+**404 on the Pages URL?**
+
+- Confirm the URL includes the **repository name**: `https://byu-stapl.github.io/SafeScales/` (hostname is lowercase; trailing slash is fine).
+- Under **Pages**, check **Build and deployment** for errors and that the selected source matches how you deploy (`/docs` on `main` *or* the Actions workflow above).
+- Ensure `docs/index.html` exists on the branch you deploy (usually `main`).
+- After changing settings, wait a few minutes and try a private/incognito window (cached 404s happen).
 
 Your download page will be available at:
 

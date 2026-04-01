@@ -62,8 +62,34 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const data = await gh.json();
-  const apk = (data.assets || []).find((a) => a.name && a.name.endsWith('.apk'));
+  let data = await gh.json();
+  let apk = (data.assets || []).find((a) => a.name && a.name.endsWith('.apk'));
+
+  if (!apk) {
+    const listRes = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/releases?per_page=30`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+      }
+    );
+    if (listRes.ok) {
+      const releases = await listRes.json();
+      for (const r of releases) {
+        const candidate = (r.assets || []).find(
+          (a) => a.name && a.name.endsWith('.apk')
+        );
+        if (candidate) {
+          data = r;
+          apk = candidate;
+          break;
+        }
+      }
+    }
+  }
 
   return res.status(200).json({
     tag_name: data.tag_name,

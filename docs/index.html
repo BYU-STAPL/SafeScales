@@ -218,7 +218,7 @@
         <p class="version">Latest release</p>
         
         <div class="actions">
-            <a href="https://github.com/BYU-STAPL/SafeScales/releases/latest/download/app-release.apk" 
+            <a href="https://github.com/BYU-STAPL/SafeScales/releases/latest" 
                class="download-button" 
                id="download-button">
                 Download for Android
@@ -275,21 +275,54 @@
         (async function () {
             var repoOwner = 'BYU-STAPL';
             var repoName = 'SafeScales';
-            var fallbackApkUrl =
-                'https://github.com/BYU-STAPL/SafeScales/releases/latest/download/app-release.apk';
+            var fallbackReleaseUrl =
+                'https://github.com/BYU-STAPL/SafeScales/releases/latest';
             var btn = document.getElementById('download-button');
+
+            function findApkAsset(data) {
+                return (data.assets || []).find(function (asset) {
+                    return asset.name && /\.apk$/i.test(asset.name);
+                });
+            }
 
             function applyPublicRelease(data) {
                 if (data.tag_name) {
                     document.querySelector('.version').textContent = 'Version ' + data.tag_name;
                 }
-                var apkAsset = (data.assets || []).find(function (asset) {
-                    return asset.name && asset.name.indexOf('.apk') !== -1;
-                });
+                var apkAsset = findApkAsset(data);
                 if (apkAsset && apkAsset.browser_download_url) {
                     btn.href = apkAsset.browser_download_url;
                     btn.removeAttribute('download');
                 }
+            }
+
+            async function resolveReleaseWithApk(owner, repo) {
+                var latestRes = await fetch(
+                    'https://api.github.com/repos/' + owner + '/' + repo + '/releases/latest'
+                );
+                if (latestRes.ok) {
+                    var latestData = await latestRes.json();
+                    if (findApkAsset(latestData)) {
+                        return latestData;
+                    }
+                }
+                var listRes = await fetch(
+                    'https://api.github.com/repos/' +
+                        owner +
+                        '/' +
+                        repo +
+                        '/releases?per_page=30'
+                );
+                if (!listRes.ok) {
+                    return null;
+                }
+                var releases = await listRes.json();
+                for (var i = 0; i < releases.length; i++) {
+                    if (findApkAsset(releases[i])) {
+                        return releases[i];
+                    }
+                }
+                return null;
             }
 
             var isGitHubPages = /\.github\.io$/i.test(window.location.hostname);
@@ -317,16 +350,14 @@
             }
 
             try {
-                var pr = await fetch(
-                    'https://api.github.com/repos/' + repoOwner + '/' + repoName + '/releases/latest'
-                );
-                if (pr.ok) {
-                    applyPublicRelease(await pr.json());
+                var withApk = await resolveReleaseWithApk(repoOwner, repoName);
+                if (withApk) {
+                    applyPublicRelease(withApk);
                     return;
                 }
             } catch (e) {}
 
-            btn.href = fallbackApkUrl;
+            btn.href = fallbackReleaseUrl;
             btn.removeAttribute('download');
         })();
     </script>

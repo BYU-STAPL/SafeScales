@@ -36,10 +36,34 @@ module.exports = async function handler(req, res) {
     return res.status(relRes.status).send('Could not load latest release.');
   }
 
-  const release = await relRes.json();
-  const apk = (release.assets || []).find((a) => a.name && a.name.endsWith('.apk'));
+  let release = await relRes.json();
+  let apk = (release.assets || []).find((a) => a.name && a.name.endsWith('.apk'));
+
   if (!apk) {
-    return res.status(404).send('No APK asset on the latest release.');
+    const listRes = await fetch(`${base}/releases?per_page=30`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    });
+    if (listRes.ok) {
+      const releases = await listRes.json();
+      for (const r of releases) {
+        const candidate = (r.assets || []).find(
+          (a) => a.name && a.name.endsWith('.apk')
+        );
+        if (candidate) {
+          release = r;
+          apk = candidate;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!apk) {
+    return res.status(404).send('No APK asset found on recent releases.');
   }
 
   const assetUrl = `${base}/releases/assets/${apk.id}`;
