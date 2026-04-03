@@ -291,24 +291,32 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                       alignment: Alignment.center,
                       clipBehavior: Clip.hardEdge,
                       children: [
-                        // Environment background
-                        if (dragonDecorationProvider.getCurrentEnvironment() !=
-                            null)
-                          Positioned.fill(
+                        // Tap outside items to deselect; fill always so it works with or without habitat art
+                        Positioned.fill(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () =>
+                                dragonDecorationProvider.selectSticker(null),
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(24),
-                                image: DecorationImage(
-                                  image: NetworkImage(
+                                image:
                                     dragonDecorationProvider
-                                        .getCurrentEnvironment()!
-                                        .imageUrl,
-                                  ),
-                                  fit: BoxFit.cover,
-                                ),
+                                                .getCurrentEnvironment() !=
+                                            null
+                                        ? DecorationImage(
+                                          image: NetworkImage(
+                                            dragonDecorationProvider
+                                                .getCurrentEnvironment()!
+                                                .imageUrl,
+                                          ),
+                                          fit: BoxFit.cover,
+                                        )
+                                        : null,
                               ),
                             ),
                           ),
+                        ),
 
                         // Stickers behind the dragon
                         ...dragonDecorationProvider.placedStickers
@@ -1139,6 +1147,9 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                     const SizedBox(height: 16),
                     _buildHintBullet(
                       'Tap an item to select it, then move and resize it.',
+                    ),
+                    _buildHintBullet(
+                      'Tap an empty area of the habitat to deselect.',
                     ),
                     _buildHintBullet(
                       'Use the arrow button to change layers (in front or behind your dragon).',
