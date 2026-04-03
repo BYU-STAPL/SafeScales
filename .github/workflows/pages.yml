@@ -8,6 +8,12 @@ on:
       - main
       - master
   workflow_dispatch:
+    inputs:
+      skip_apk:
+        description: 'Skip Android APK build (faster; site falls back to GitHub Releases for the download link)'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -27,6 +33,64 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_apk }}
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.0'
+          channel: 'stable'
+
+      - name: Install Flutter dependencies
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_apk }}
+        run: flutter pub get
+
+      - name: Set up Java
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_apk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Decode keystore
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_apk }}
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > android/app/keystore.jks
+            echo "Keystore decoded successfully"
+          else
+            echo "No ANDROID_KEYSTORE_BASE64 secret; release signing falls back to debug if no keystore file."
+          fi
+
+      - name: Create .env for Android build
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_apk }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
+            echo "SUPABASE_URL=$SUPABASE_URL" > .env
+            echo "SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" >> .env
+          else
+            bash setup_env.sh
+          fi
+
+      - name: Build Android APK for Pages
+        id: build_apk
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_apk }}
+        continue-on-error: true
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -e
+          flutter build apk --release
+          cp build/app/outputs/flutter-apk/app-release.apk docs/app-release.apk
+          VERSION=$(grep '^version:' pubspec.yaml | head -1 | awk '{print $2}')
+          printf '{"version":"%s"}\n' "$VERSION" > docs/version.json
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

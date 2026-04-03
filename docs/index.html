@@ -399,6 +399,27 @@
 
             var isGitHubPages = /\.github\.io$/i.test(window.location.hostname);
 
+            if (isGitHubPages) {
+                try {
+                    var apkHead = await fetch('./app-release.apk', { method: 'HEAD' });
+                    if (apkHead.ok) {
+                        btn.href = './app-release.apk';
+                        btn.setAttribute('download', 'SafeScales.apk');
+                        try {
+                            var vrStatic = await fetch('./version.json');
+                            if (vrStatic.ok) {
+                                var vjStatic = await vrStatic.json();
+                                if (vjStatic.version) {
+                                    document.querySelector('.version').textContent =
+                                        'Version ' + vjStatic.version;
+                                }
+                            }
+                        } catch (e) {}
+                        return;
+                    }
+                } catch (e) {}
+            }
+
             if (!isGitHubPages) {
                 try {
                     var vr = await fetch('/api/latest-release');
