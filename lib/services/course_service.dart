@@ -15,10 +15,7 @@ class CourseService {
   CourseService({CourseRepository? repository})
     : _repository = repository ?? CourseRepository();
 
-
-
   // === Course Content Business Logic ===
-
 
   Future<String?> getUserCourseId(String userId) async {
     try {
@@ -29,7 +26,6 @@ class CourseService {
       }
 
       return classData['id'];
-
     } catch (e) {
       throw CourseServiceException('Failed to load course id: $e');
     }
@@ -84,7 +80,6 @@ class CourseService {
   /// Get single lesson from a class
   Future<Lesson> getLessonFromClass(String classId, String lessonId) async {
     try {
-
       final moduleData = await _repository.getModuleById(lessonId);
 
       if (moduleData == null) {
@@ -95,11 +90,11 @@ class CourseService {
 
       return lesson;
     } catch (e) {
-      throw CourseServiceException('Failed to load lesson ${lessonId} from class ${classId}: $e');
+      throw CourseServiceException(
+        'Failed to load lesson ${lessonId} from class ${classId}: $e',
+      );
     }
   }
-
-
 
   // === Progress Business Logic ===
 
@@ -131,19 +126,15 @@ class CourseService {
 
       // Get lessons in class to filter progress
       final lessonsInClass = await _repository.getLessonOrder(classData['id']);
-      final progressData = await _repository.getUserReadingProgress(userId);
-
-      if (progressData == null) {
-        return {};
-      }
 
       Map<String, LessonProgress> progress = {};
 
       // Process progress for each lesson in the class
       for (var lessonId in lessonsInClass) {
-
-
-        LessonProgress? lessonProgress = await getLessonProgress(userId, lessonId);
+        LessonProgress? lessonProgress = await getLessonProgress(
+          userId,
+          lessonId,
+        );
 
         if (lessonProgress != null) {
           progress[lessonId] = lessonProgress;
@@ -156,7 +147,10 @@ class CourseService {
     }
   }
 
-  Future<LessonProgress?> getLessonProgress(String userId, String lessonId,) async {
+  Future<LessonProgress?> getLessonProgress(
+    String userId,
+    String lessonId,
+  ) async {
     try {
       // Data needed
       QuizAttempt? preQuizAttempt;
@@ -171,27 +165,31 @@ class CourseService {
       }
       final String classId = classData['id'];
 
-
       final lessonsInClass = await _repository.getLessonOrder(classId);
       if (!lessonsInClass.contains(lessonId)) {
-        throw CourseServiceException('Lesson data for lesson $lessonId in class ${classId} is null');
+        throw CourseServiceException(
+          'Lesson data for lesson $lessonId in class ${classId} is null',
+        );
       }
-
 
       // Get the User's reading data
       //TODO: Replace with better reading data table access
       final progressData = await _repository.getUserReadingProgress(userId);
-      if (progressData == null || !progressData.containsKey(lessonId)) {
-        throw CourseServiceException('Lesson data for lesson $lessonId in class ${classId} is null or no matching lesson id');
-      }
-      Map<String, dynamic> lessonProgressData = progressData[lessonId];
-
+      final rawLessonProgress = progressData?[lessonId];
+      final lessonProgressData =
+          rawLessonProgress is Map
+              ? Map<String, dynamic>.from(rawLessonProgress)
+              : <String, dynamic>{};
 
       if (lessonProgressData.containsKey('reading')) {
-        final readingData = lessonProgressData['reading'] as Map<String, dynamic>;
+        final rawReadingData = lessonProgressData['reading'];
+        final readingData =
+            rawReadingData is Map
+                ? Map<String, dynamic>.from(rawReadingData)
+                : <String, dynamic>{};
 
         if (readingData.containsKey('bookmarks')) {
-          bookmarks = Set<int>.from(readingData['bookmarks'],);
+          bookmarks = Set<int>.from(readingData['bookmarks']);
         }
 
         isReadingComplete = readingData['completed'] ?? false;
@@ -204,30 +202,35 @@ class CourseService {
       final lessons = await getLessonsForClass(classId);
       final passingScore = lessons[lessonId]?.postQuiz.passingScore ?? 80;
 
-      if (quizAttempts['preQuiz'] != null && quizAttempts['preQuiz']!.isNotEmpty) {
+      if (quizAttempts['preQuiz'] != null &&
+          quizAttempts['preQuiz']!.isNotEmpty) {
         preQuizAttempt = quizAttempts['preQuiz']![0];
       }
 
       // Build Lesson Progress
       LessonProgress lessonProgress = LessonProgress(
-          lessonId: lessonId,
-          isReadingComplete: isReadingComplete,
-          bookmarks: bookmarks,
-          requiredPassingScore: passingScore,
-          postQuizAttempts: quizAttempts['postQuizAttempts'] ?? [],
-          preQuizAttempt: preQuizAttempt,
+        lessonId: lessonId,
+        isReadingComplete: isReadingComplete,
+        bookmarks: bookmarks,
+        requiredPassingScore: passingScore,
+        postQuizAttempts: quizAttempts['postQuizAttempts'] ?? [],
+        preQuizAttempt: preQuizAttempt,
       );
 
       // Return
       return lessonProgress;
-    }
-    catch (e) {
-      throw CourseServiceException('getLessonProgress: Failed to load lesson progress for user $userId for lesson $lessonId: $e');
+    } catch (e) {
+      throw CourseServiceException(
+        'getLessonProgress: Failed to load lesson progress for user $userId for lesson $lessonId: $e',
+      );
     }
   }
 
   /// Get User QuizAttempts
-  Future<Map<String, List<QuizAttempt>>> getUserQuizAttemptsForLesson(String userId, String lessonId) async {
+  Future<Map<String, List<QuizAttempt>>> getUserQuizAttemptsForLesson(
+    String userId,
+    String lessonId,
+  ) async {
     try {
       // Get Raw Data
       final rawData = await _repository.getUserQuizAttempts(userId, lessonId);
@@ -242,34 +245,30 @@ class CourseService {
 
       // Map to Model class
       for (final rawQuizAttempt in rawData) {
-
         if (rawQuizAttempt['quiz_type'] == 'post_quiz') {
-
           QuizAttempt quizAttempt = QuizAttempt(
             id: rawQuizAttempt['id'],
             quizId: rawQuizAttempt['quiz_id'],
             lessonId: rawQuizAttempt['quiz_id'].split('_')[0],
             type: ActivityType.postQuiz,
-            correctAnswers: rawQuizAttempt['num_correct_answers'],
-            totalQuestions: rawQuizAttempt['total_questions'],
+            correctAnswers: _asInt(rawQuizAttempt['num_correct_answers']),
+            totalQuestions: _asInt(rawQuizAttempt['total_questions']),
             responses: _parseResponses(rawQuizAttempt['question_responses']),
             startedAt: DateTime.parse(rawQuizAttempt['started_at']),
             completedAt: DateTime.parse(rawQuizAttempt['completed_at']),
           );
 
           postQuizAttempts.add(quizAttempt);
-
-        }
-        else if (rawQuizAttempt['quiz_type'] == 'pre_quiz' && preQuizAttempt.isEmpty) {
-
+        } else if (rawQuizAttempt['quiz_type'] == 'pre_quiz' &&
+            preQuizAttempt.isEmpty) {
           // Should only add 1 preQuizAttempt
           QuizAttempt quizAttempt = QuizAttempt(
             id: rawQuizAttempt['id'],
             quizId: rawQuizAttempt['quiz_id'],
             lessonId: rawQuizAttempt['quiz_id'].split('_')[0],
             type: ActivityType.preQuiz,
-            correctAnswers: rawQuizAttempt['num_correct_answers'],
-            totalQuestions: rawQuizAttempt['total_questions'],
+            correctAnswers: _asInt(rawQuizAttempt['num_correct_answers']),
+            totalQuestions: _asInt(rawQuizAttempt['total_questions']),
             responses: _parseResponses(rawQuizAttempt['question_responses']),
             startedAt: DateTime.parse(rawQuizAttempt['started_at']),
             completedAt: DateTime.parse(rawQuizAttempt['completed_at']),
@@ -286,14 +285,24 @@ class CourseService {
 
       // Return Attempts
       return quizAttempts;
-    }
-    catch (e) {
-      throw CourseServiceException('getUserQuizAttempts: Failed to get user quiz attempts: $e');
+    } catch (e) {
+      throw CourseServiceException(
+        'getUserQuizAttempts: Failed to get user quiz attempts: $e',
+      );
     }
   }
 
   /// Save quiz progress with business logic validation
-  Future<void> saveQuizProgress({required String userId, required String quizId, required ActivityType quizType, required List<List<int>> userAnswers, required int correctAnswers, required int totalQuestions, required DateTime startTime, required DateTime endTime,}) async {
+  Future<void> saveQuizProgress({
+    required String userId,
+    required String quizId,
+    required ActivityType quizType,
+    required List<List<int>> userAnswers,
+    required int correctAnswers,
+    required int totalQuestions,
+    required DateTime startTime,
+    required DateTime endTime,
+  }) async {
     try {
       // Business rule: Validate score calculation
       if (correctAnswers > totalQuestions) {
@@ -320,15 +329,17 @@ class CourseService {
         startTime: startTime,
         endTime: endTime,
       );
-
-
     } catch (e) {
       throw CourseServiceException('Failed to save quiz progress: $e');
     }
   }
 
   /// Save reading progress with business logic
-  Future<void> saveReadingProgress({required String userId, required String lessonId, required Set<int> bookmarks,}) async {
+  Future<void> saveReadingProgress({
+    required String userId,
+    required String lessonId,
+    required Set<int> bookmarks,
+  }) async {
     try {
       // Business rule: Validate lesson exists in user's class
       final classData = await _repository.getUserClass(userId);
@@ -354,7 +365,11 @@ class CourseService {
   // === Private Helper Methods ===
 
   /// Build a LessonProgress object from raw progress data
-  Future<LessonProgress?> _buildLessonProgress(String lessonId, Map<String, dynamic> moduleData, String classId,) async {
+  Future<LessonProgress?> _buildLessonProgress(
+    String lessonId,
+    Map<String, dynamic> moduleData,
+    String classId,
+  ) async {
     try {
       QuizAttempt? preQuizAttempt;
       List<QuizAttempt> postQuizAttempts = [];
@@ -370,7 +385,7 @@ class CourseService {
         final readingData = moduleData['reading'] as Map<String, dynamic>;
 
         if (readingData.containsKey('bookmarks')) {
-          bookmarks = Set<int>.from(readingData['bookmarks'],);
+          bookmarks = Set<int>.from(readingData['bookmarks']);
         }
 
         isReadingComplete = readingData['completed'] ?? false;
@@ -416,7 +431,6 @@ class CourseService {
       );
 
       return progress;
-
     } catch (e) {
       return null;
     }
@@ -451,14 +465,44 @@ class CourseService {
   //   );
   // }
 
-  /// Parse responses from dynamic data
-  List<List<int>> _parseResponses(List<dynamic> answers) {
-    List<List<int>> responses = [];
-    for (final answer in answers) {
+  int _asInt(dynamic value, {int fallback = 0}) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? fallback;
+    return fallback;
+  }
+
+  int? _asAnswerIndex(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim());
+    return null;
+  }
+
+  /// Parse responses from dynamic data without throwing on bad entries.
+  List<List<int>> _parseResponses(dynamic answers) {
+    dynamic decoded = answers;
+    if (decoded is String) {
+      try {
+        decoded = jsonDecode(decoded);
+      } catch (_) {
+        return [];
+      }
+    }
+    if (decoded is! List) return [];
+
+    final List<List<int>> responses = [];
+    for (final answer in decoded) {
       if (answer is List) {
-        responses.add(List<int>.from(answer));
+        final indices = <int>[];
+        for (final entry in answer) {
+          final index = _asAnswerIndex(entry);
+          if (index != null) indices.add(index);
+        }
+        responses.add(indices);
       } else {
-        responses.add([]);
+        final index = _asAnswerIndex(answer);
+        responses.add(index == null ? <int>[] : <int>[index]);
       }
     }
     return responses;
@@ -517,13 +561,14 @@ class CourseService {
     List<Question> questions = [];
     for (var q in questionsData) {
       final questionMap = Map<String, dynamic>.from(q as Map);
-      
+
       // Skip questions with empty questionText before processing
-      final String questionText = (questionMap['question'] ?? '').toString().trim();
+      final String questionText =
+          (questionMap['question'] ?? '').toString().trim();
       if (questionText.isEmpty) {
         continue; // Skip invalid questions
       }
-      
+
       final question = _createSingleQuestion(questionMap);
       if (question != null) {
         questions.add(question);
@@ -534,12 +579,15 @@ class CourseService {
 
   Question? _createSingleQuestion(Map<String, dynamic> questionData) {
     // Validate questionText is not empty
-    final String questionText = (questionData['question'] ?? '').toString().trim();
+    final String questionText =
+        (questionData['question'] ?? '').toString().trim();
     if (questionText.isEmpty) {
       return null; // Skip questions with empty questionText
     }
 
-    final List<String> choices = List<String>.from(questionData['choices'] ?? []);
+    final List<String> choices = List<String>.from(
+      questionData['choices'] ?? [],
+    );
 
     List<String> filteredList = choices.where((s) => s.isNotEmpty).toList();
 
@@ -548,11 +596,18 @@ class CourseService {
       return null;
     }
 
+    final int? correctIndex = _asAnswerIndex(questionData['answer']);
+    if (correctIndex == null ||
+        correctIndex < 0 ||
+        correctIndex >= filteredList.length) {
+      return null;
+    }
+
     return Question.singleAnswer(
       id: '',
       questionText: questionText,
       options: filteredList,
-      correctAnswerIndex: int.parse(questionData['answer']),
+      correctAnswerIndex: correctIndex,
       explanation: (questionData['explanation'] ?? '').toString().trim(),
     );
   }
@@ -577,59 +632,86 @@ class CourseService {
     return ReadingSlide(title: slideData['headline'], content: content);
   }
 
-  QuestionSet _createReviewSet(Map<String, dynamic> lessonMap,) {
+  QuestionSet _createReviewSet(Map<String, dynamic> lessonMap) {
     final String moduleId = lessonMap['id'].toString();
     final String title = (lessonMap['title'] ?? 'Module Review').toString();
     final String subject = 'General';
 
-    dynamic reviewSetData = lessonMap['revision_questions'];
-    if (reviewSetData is String) {
-      try {
-        reviewSetData = reviewSetData.isNotEmpty ? (reviewSetData == 'null' ? {} : jsonDecode(reviewSetData)) : {};
-      } catch (_) {
-        reviewSetData = {};
-      }
+    dynamic reviewSetQuestions = lessonMap['review_set_questions'];
+    if (reviewSetQuestions is String) {
+      reviewSetQuestions = jsonDecode(reviewSetQuestions);
     }
 
-    final List<dynamic> rawQuestions =
-    (reviewSetData is Map<String, dynamic>)
-        ? List<dynamic>.from(reviewSetData['questions'] ?? [])
-        : (reviewSetData is List)
-        ? reviewSetData
-        : <dynamic>[];
+    if (reviewSetQuestions == null) {
+      return QuestionSet.review(
+        id: 'rev_$moduleId',
+        title: '$title Review',
+        description: 'Answer the review questions to unlock your item.',
+        subject: subject,
+        questions: [],
+      );
+    }
+    if (reviewSetQuestions is! List || reviewSetQuestions.length != 5) {
+      throw CourseServiceException(
+        'Review set for module $moduleId must contain exactly five questions',
+      );
+    }
 
     final List<Question> questions = [];
-    for (int i = 0; i < rawQuestions.length; i++) {
-      final q = rawQuestions[i] as Map<String, dynamic>;
+    for (int i = 0; i < reviewSetQuestions.length; i++) {
+      final rawQuestion = reviewSetQuestions[i];
+      if (rawQuestion is! Map) {
+        throw CourseServiceException(
+          'Review set for module $moduleId contains an invalid question',
+        );
+      }
+      final q = Map<String, dynamic>.from(rawQuestion);
       final String questionText = (q['question'] ?? '').toString().trim();
-      
-      // Skip questions with empty questionText
+
       if (questionText.isEmpty) {
-        continue;
+        throw CourseServiceException(
+          'Review set for module $moduleId contains an empty question',
+        );
       }
-      
-      // Filter out empty options
-      final List<String> options = List<String>.from(
-        q['choices']?.map((c) => c.toString()) ?? [],
-      ).where((s) => s.isNotEmpty).toList();
-      
-      // Skip questions with no valid options
+
+      final rawChoices = q['choices'];
+      if (rawChoices is! List) {
+        throw CourseServiceException(
+          'Review set for module $moduleId contains a question without choices',
+        );
+      }
+      final options =
+          rawChoices
+              .map((choice) => choice.toString())
+              .where((choice) => choice.isNotEmpty)
+              .toList();
+
       if (options.isEmpty) {
-        continue;
+        throw CourseServiceException(
+          'Review set for module $moduleId contains a question without choices',
+        );
       }
-      
-      // answer could be a string index like "0" or an int
+
       final dynamic answerRaw = q['answer'];
-      int correctIndex = 0;
+      final int? correctIndex;
       if (answerRaw is int) {
         correctIndex = answerRaw;
       } else if (answerRaw is String) {
-        correctIndex = int.tryParse(answerRaw) ?? 0;
+        correctIndex = int.tryParse(answerRaw);
+      } else {
+        correctIndex = null;
+      }
+      if (correctIndex == null ||
+          correctIndex < 0 ||
+          correctIndex >= options.length) {
+        throw CourseServiceException(
+          'Review set for module $moduleId contains an invalid answer index',
+        );
       }
 
       questions.add(
         Question.singleAnswer(
-          id: 'q_$i',
+          id: '${moduleId}_review_$i',
           questionText: questionText,
           options: options,
           correctAnswerIndex: correctIndex,

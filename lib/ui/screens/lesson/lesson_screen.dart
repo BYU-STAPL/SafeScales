@@ -8,6 +8,7 @@ import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
 import 'package:safe_scales/ui/screens/review_set/review_screen.dart';
 
 import '../../../models/lesson.dart';
+import '../../../themes/app_theme.dart';
 import '../../../providers/course_provider.dart';
 import '../../../providers/dragon_provider.dart';
 import '../../widgets/dragon_image_widget.dart';
@@ -120,42 +121,43 @@ class _LessonScreenState extends State<LessonScreen> {
             foregroundColor: theme.colorScheme.onSurface,
             scrolledUnderElevation: 0,
           ),
-          body: courseProvider.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildLessonOverviewCard(dragonProvider),
-                      const SizedBox(height: 28),
-                      Text(
-                        'Activities',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurfaceVariant,
-                          letterSpacing: -0.2,
+          body:
+              courseProvider.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 20),
+                        _buildLessonOverviewCard(dragonProvider),
+                        const SizedBox(height: 28),
+                        Text(
+                          'Activities',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurfaceVariant,
+                            letterSpacing: -0.2,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 14),
-                      _buildReadingCard(
-                        isUnlocked: _lessonProgress!.isPreQuizComplete,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildActivityCard(
-                        title: 'Quiz',
-                        description: 'Test what you\'ve learned',
-                        isCompleted: _lessonProgress!.isPostQuizComplete(),
-                        isUnlocked: _lessonProgress!.isReadingComplete,
-                        onTap: () => _startQuiz(_lesson!.postQuiz),
-                      ),
-                      const SizedBox(height: 24),
-                      _buildNextLessonAndReviewSection(courseProvider),
-                      const SizedBox(height: 24),
-                    ],
+                        const SizedBox(height: 14),
+                        _buildReadingCard(
+                          isUnlocked: _lessonProgress!.isPreQuizComplete,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildActivityCard(
+                          title: 'Quiz',
+                          description: 'Test what you\'ve learned',
+                          isCompleted: _lessonProgress!.isPostQuizComplete(),
+                          isUnlocked: _lessonProgress!.isReadingComplete,
+                          onTap: () => _startQuiz(_lesson!.postQuiz),
+                        ),
+                        const SizedBox(height: 24),
+                        _buildNextLessonAndReviewSection(courseProvider),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
                   ),
-                ),
         );
       },
     );
@@ -164,12 +166,14 @@ class _LessonScreenState extends State<LessonScreen> {
   Widget _buildLessonOverviewCard(DragonProvider dragonProvider) {
     final theme = Theme.of(context);
     final dragon = dragonProvider.getDragonByModuleId(widget.moduleId);
-    final phaseName = dragon != null
-        ? dragonProvider.getPhaseDisplayName(
-            dragonProvider.getDragonHighestPhase(dragon.id),
-          )
-        : 'Egg';
-    final growthCount = (_lessonProgress!.isPreQuizComplete ? 1 : 0) +
+    final phaseName =
+        dragon != null
+            ? dragonProvider.getPhaseDisplayName(
+              dragonProvider.getDragonHighestPhase(dragon.id),
+            )
+            : 'Egg';
+    final growthCount =
+        (_lessonProgress!.isPreQuizComplete ? 1 : 0) +
         (_lessonProgress!.isReadingComplete ? 1 : 0) +
         (_lessonProgress!.isPostQuizComplete() ? 1 : 0);
     final bestScore = _lessonProgress!.getHighestPostQuizScore();
@@ -201,79 +205,82 @@ class _LessonScreenState extends State<LessonScreen> {
                   ),
                 ),
               ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  phaseName,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Progress ',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      phaseName,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
-                    ...List.generate(3, (i) {
-                      final filled = i < growthCount;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: filled
-                                ? theme.colorScheme.primary
-                                    .withValues(alpha: 0.7)
-                                : theme.colorScheme.outline
-                                    .withValues(alpha: 0.25),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          'Progress ',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
-                      );
-                    }),
-                    Text(
-                      '$growthCount/3',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                        ...List.generate(3, (i) {
+                          final filled = i < growthCount;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color:
+                                    filled
+                                        ? theme.colorScheme.primary.withValues(
+                                          alpha: 0.7,
+                                        )
+                                        : theme.colorScheme.outline.withValues(
+                                          alpha: 0.25,
+                                        ),
+                              ),
+                            ),
+                          );
+                        }),
+                        Text(
+                          '$growthCount/3',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        hasPostQuizAttempts
+                            ? 'Best Quiz: ${bestScore.toInt()}%'
+                            : 'Best Quiz: --',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    hasPostQuizAttempts
-                        ? 'Best Quiz: ${bestScore.toInt()}%'
-                        : 'Best Quiz: --',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
+              ),
+            ],
+          );
         },
       ),
     );
@@ -288,32 +295,39 @@ class _LessonScreenState extends State<LessonScreen> {
   }) {
     final theme = Theme.of(context);
     final isLocked = !isUnlocked;
-    final IconData leadingIcon = title == 'Reading'
-        ? Icons.article_outlined
-        : Icons.quiz_outlined;
+    final IconData leadingIcon =
+        title == 'Reading' ? Icons.article_outlined : Icons.quiz_outlined;
 
-    final bgColor = isLocked
-        ? theme.colorScheme.surfaceContainerLow
-        : theme.colorScheme.surfaceContainerLowest;
-    final borderColor = isLocked
-        ? theme.colorScheme.outline.withValues(alpha: 0.15)
-        : theme.colorScheme.outline.withValues(alpha: 0.2);
-    final iconBgColor = isLocked
-        ? theme.colorScheme.outline.withValues(alpha: 0.12)
-        : isCompleted
-            ? theme.colorScheme.primary.withValues(alpha: 0.12)
+    final bgColor =
+        isCompleted
+            ? theme.colorScheme.paleGreen
+            : isLocked
+            ? theme.colorScheme.surfaceContainerLow
+            : theme.colorScheme.surfaceContainerLowest;
+    final borderColor =
+        isCompleted
+            ? theme.colorScheme.green
+            : isLocked
+            ? theme.colorScheme.outline.withValues(alpha: 0.15)
+            : theme.colorScheme.outline.withValues(alpha: 0.2);
+    final iconBgColor =
+        isLocked
+            ? theme.colorScheme.outline.withValues(alpha: 0.12)
+            : isCompleted
+            ? theme.colorScheme.green
             : theme.colorScheme.primary.withValues(alpha: 0.1);
-    final iconColor = isLocked
-        ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7)
-        : isCompleted
-            ? theme.colorScheme.primary.withValues(alpha: 0.9)
+    final iconColor =
+        isLocked
+            ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7)
+            : isCompleted
+            ? theme.colorScheme.onPrimary
             : theme.colorScheme.primary;
 
     return Container(
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor, width: 1),
+        border: Border.all(color: borderColor, width: isCompleted ? 2 : 1),
       ),
       child: Material(
         color: Colors.transparent,
@@ -329,11 +343,13 @@ class _LessonScreenState extends State<LessonScreen> {
                   height: 44,
                   decoration: BoxDecoration(
                     color: iconBgColor,
-                    borderRadius: BorderRadius.circular(10),
+                    shape: isCompleted ? BoxShape.circle : BoxShape.rectangle,
+                    borderRadius:
+                        isCompleted ? null : BorderRadius.circular(10),
                   ),
                   child: Icon(
-                    leadingIcon,
-                    size: 18,
+                    isCompleted ? Icons.check_rounded : leadingIcon,
+                    size: isCompleted ? 25 : 18,
                     color: iconColor,
                   ),
                 ),
@@ -346,17 +362,19 @@ class _LessonScreenState extends State<LessonScreen> {
                         title,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: isLocked
-                              ? theme.colorScheme.onSurfaceVariant
-                              : theme.colorScheme.onSurface,
+                          color:
+                              isLocked
+                                  ? theme.colorScheme.onSurfaceVariant
+                                  : theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         description,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.9),
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.9,
+                          ),
                         ),
                       ),
                     ],
@@ -366,15 +384,17 @@ class _LessonScreenState extends State<LessonScreen> {
                   Icon(
                     Icons.lock_outline,
                     size: 20,
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.5),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.5,
+                    ),
                   )
                 else
                   Icon(
                     Icons.arrow_forward_ios,
                     size: 14,
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.6),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.6,
+                    ),
                   ),
               ],
             ),
@@ -451,9 +471,10 @@ class _LessonScreenState extends State<LessonScreen> {
     required String subtitle,
   }) {
     final theme = Theme.of(context);
-    final IconData leadingIcon = title == 'Next Lesson'
-        ? Icons.cast_for_education_outlined
-        : Icons.assignment_outlined;
+    final IconData leadingIcon =
+        title == 'Next Lesson'
+            ? Icons.cast_for_education_outlined
+            : Icons.assignment_outlined;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -516,42 +537,47 @@ class _LessonScreenState extends State<LessonScreen> {
     Lesson? nextLesson,
   ) {
     final theme = Theme.of(context);
-    final nextLessonId = courseProvider.getNextLessonInSequence(widget.moduleId);
+    final nextLessonId = courseProvider.getNextLessonInSequence(
+      widget.moduleId,
+    );
     final canNavigate = nextLessonId != null;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: canNavigate && nextLesson != null
-            ? () {
-                final nextProgress = courseProvider
-                    .lessonProgress[nextLessonId];
-                final preQuizComplete =
-                    nextProgress?.isPreQuizComplete ?? false;
+        onTap:
+            canNavigate && nextLesson != null
+                ? () {
+                  final nextProgress =
+                      courseProvider.lessonProgress[nextLessonId];
+                  final preQuizComplete =
+                      nextProgress?.isPreQuizComplete ?? false;
 
-                if (preQuizComplete) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => LessonScreen(
-                        moduleId: nextLessonId,
-                        topic: nextLesson.title,
+                  if (preQuizComplete) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => LessonScreen(
+                              moduleId: nextLessonId,
+                              topic: nextLesson.title,
+                            ),
                       ),
-                    ),
-                  );
-                } else {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PreQuizScreen(
-                        moduleId: nextLessonId,
-                        questionSet: nextLesson.preQuiz,
+                    );
+                  } else {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => PreQuizScreen(
+                              moduleId: nextLessonId,
+                              questionSet: nextLesson.preQuiz,
+                            ),
                       ),
-                    ),
-                  );
+                    );
+                  }
                 }
-              }
-            : null,
+                : null,
         borderRadius: BorderRadius.circular(14),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -582,8 +608,9 @@ class _LessonScreenState extends State<LessonScreen> {
                     Text(
                       nextLesson?.title ?? 'Next Lesson Name',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onPrimary
-                            .withValues(alpha: 0.9),
+                        color: theme.colorScheme.onPrimary.withValues(
+                          alpha: 0.9,
+                        ),
                       ),
                     ),
                   ],
@@ -603,8 +630,9 @@ class _LessonScreenState extends State<LessonScreen> {
 
   void _navigateToReview() async {
     final courseProvider = Provider.of<CourseProvider>(context, listen: false);
-    final questionSet =
-        await courseProvider.getReviewQuestionSetForLesson(widget.moduleId);
+    final questionSet = await courseProvider.getReviewQuestionSetForLesson(
+      widget.moduleId,
+    );
 
     if (!mounted) return;
 
@@ -623,10 +651,9 @@ class _LessonScreenState extends State<LessonScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ReviewScreen(
-          questionSet: questionSet,
-          needToShowShop: true,
-        ),
+        builder:
+            (context) =>
+                ReviewScreen(questionSet: questionSet, needToShowShop: true),
       ),
     );
 
@@ -679,8 +706,9 @@ class _LessonScreenState extends State<LessonScreen> {
                     Text(
                       'Test what you\'ve learned',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer
-                            .withValues(alpha: 0.85),
+                        color: theme.colorScheme.onPrimaryContainer.withValues(
+                          alpha: 0.85,
+                        ),
                       ),
                     ),
                   ],
@@ -722,41 +750,15 @@ class _LessonScreenState extends State<LessonScreen> {
 
     if (completed == true) {
       if (!mounted) return;
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) => Center(
-          child: Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: Theme.of(dialogContext).colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                BoxShadow(
-                  color: Theme.of(dialogContext).colorScheme.shadow.withValues(alpha: 0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Updating progress...',
-                  style: Theme.of(dialogContext).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 16),
-                const CircularProgressIndicator(),
-              ],
-            ),
-          ),
-        ),
-      );
-
       try {
-        final courseProvider = Provider.of<CourseProvider>(context, listen: false);
-        final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+        final courseProvider = Provider.of<CourseProvider>(
+          context,
+          listen: false,
+        );
+        final dragonProvider = Provider.of<DragonProvider>(
+          context,
+          listen: false,
+        );
         await courseProvider.loadSingleLessonProgress(widget.moduleId);
         await dragonProvider.updateAllDragonProgress();
 
@@ -765,11 +767,10 @@ class _LessonScreenState extends State<LessonScreen> {
             _lessonProgress = courseProvider.lessonProgress[widget.moduleId];
             _isLoading = false;
           });
-          Navigator.of(context).pop();
         }
       } catch (e) {
         if (mounted) {
-          Navigator.of(context).pop();
+          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error updating progress: $e'),
@@ -817,7 +818,10 @@ class _LessonScreenState extends State<LessonScreen> {
       return;
     }
 
-    final quizScreen = PostQuizScreen(moduleId: widget.moduleId, questionSet: quiz);
+    final quizScreen = PostQuizScreen(
+      moduleId: widget.moduleId,
+      questionSet: quiz,
+    );
 
     setState(() {
       _isLoading = true; // Show loading state
@@ -838,61 +842,7 @@ class _LessonScreenState extends State<LessonScreen> {
           listen: false,
         );
 
-        // Show loading overlay
-        if (mounted) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (BuildContext context) {
-              return Center(
-                child: Container(
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context).colorScheme.shadow
-                            .withValues(alpha: 0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Title and close button row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Updating progress...',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.close),
-                            onPressed: () => Navigator.of(context).pop(),
-                            padding: EdgeInsets.zero,
-                            constraints: BoxConstraints(),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      const CircularProgressIndicator(),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        }
-
         try {
-          // Load new progress
           await courseProvider.loadSingleLessonProgress(widget.moduleId);
           await dragonProvider.updateDragonPhases(widget.moduleId);
 
@@ -901,14 +851,10 @@ class _LessonScreenState extends State<LessonScreen> {
               _lessonProgress = courseProvider.lessonProgress[widget.moduleId];
               _isLoading = false;
             });
-            // Close loading dialog
-            Navigator.of(context).pop();
           }
         } catch (e) {
           if (mounted) {
-            // Close loading dialog
-            Navigator.of(context).pop();
-            // Show error snackbar
+            setState(() => _isLoading = false);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error updating progress: $e'),
@@ -926,5 +872,4 @@ class _LessonScreenState extends State<LessonScreen> {
       }
     });
   }
-
 }

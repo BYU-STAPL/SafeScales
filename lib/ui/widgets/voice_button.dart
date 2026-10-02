@@ -52,7 +52,7 @@ class _VoiceButtonState extends State<VoiceButton>
 
     // Register this instance for global speed updates
     _activeInstances.add(this);
-    
+
     // Apply speed from provider after widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -82,7 +82,10 @@ class _VoiceButtonState extends State<VoiceButton>
       case TtsState.stopped:
         // Apply current speed before speaking (subtract 0.5 so displayed 1.0x becomes backend 0.5)
         if (mounted) {
-          final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
+          final themeNotifier = Provider.of<ThemeNotifier>(
+            context,
+            listen: false,
+          );
           await _ttsService.setSpeechRate(themeNotifier.readingSpeed - 0.5);
         }
         await _ttsService.speak(widget.text, pageIndex: widget.pageIndex);
@@ -121,7 +124,9 @@ class _VoiceButtonState extends State<VoiceButton>
     try {
       final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
       final speed = themeNotifier.readingSpeed;
-      debugPrint('VoiceButton: Applying speed from provider: $speed (TTS: ${speed - 0.5})');
+      debugPrint(
+        'VoiceButton: Applying speed from provider: $speed (TTS: ${speed - 0.5})',
+      );
       await _ttsService.setSpeechRate(speed - 0.5);
     } catch (e) {
       debugPrint('VoiceButton: Error applying speed from provider: $e');
@@ -136,10 +141,10 @@ class _VoiceButtonState extends State<VoiceButton>
     themeNotifier.updateReadingSpeed(newSpeed);
     // Subtract 0.5 so displayed 1.0x becomes backend 0.5 for TTS
     await _ttsService.setSpeechRate(newSpeed - 0.5);
-    
+
     // Notify all active instances to update their UI
     _notifyAllInstances();
-    
+
     setState(() {});
   }
 
@@ -229,7 +234,7 @@ class _VoiceButtonState extends State<VoiceButton>
                       ),
                     ],
                   ),
-                  child: Icon(
+                  child: FaIcon(
                     FontAwesomeIcons.stop,
                     color: theme.colorScheme.onErrorContainer,
                     size: 16,
@@ -266,7 +271,7 @@ class _VoiceButtonState extends State<VoiceButton>
                           ),
                         ],
                       ),
-                      child: Icon(
+                      child: FaIcon(
                         _getIcon(),
                         color: _getColor(context),
                         size: size * 0.4,
@@ -285,13 +290,15 @@ class _VoiceButtonState extends State<VoiceButton>
             builder: (context, themeNotifier, child) {
               final currentSpeed = themeNotifier.readingSpeed;
               final currentIndex = _getSpeedIndex(currentSpeed);
-              
+
               return Container(
                 decoration: BoxDecoration(
                   color: theme.colorScheme.secondaryContainer,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: theme.colorScheme.onSecondaryContainer.withOpacity(0.3),
+                    color: theme.colorScheme.onSecondaryContainer.withOpacity(
+                      0.3,
+                    ),
                     width: 1,
                   ),
                   boxShadow: [
@@ -313,7 +320,7 @@ class _VoiceButtonState extends State<VoiceButton>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
+                        FaIcon(
                           FontAwesomeIcons.gauge,
                           size: 14,
                           color: theme.colorScheme.onSecondaryContainer,
@@ -476,7 +483,7 @@ class _VoiceControlsState extends State<VoiceControls> {
                   // Speech rate control
                   Row(
                     children: [
-                      Icon(
+                      FaIcon(
                         FontAwesomeIcons.gauge,
                         size: 16,
                         color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -504,7 +511,7 @@ class _VoiceControlsState extends State<VoiceControls> {
                   // Voice quality indicator
                   Row(
                     children: [
-                      Icon(
+                      FaIcon(
                         FontAwesomeIcons.microphone,
                         size: 16,
                         color: theme.colorScheme.primary,
@@ -518,7 +525,7 @@ class _VoiceControlsState extends State<VoiceControls> {
                         ),
                       ),
                       const Spacer(),
-                      Icon(
+                      FaIcon(
                         FontAwesomeIcons.checkCircle,
                         size: 16,
                         color: theme.colorScheme.primary,
@@ -531,7 +538,7 @@ class _VoiceControlsState extends State<VoiceControls> {
                   // Volume control
                   Row(
                     children: [
-                      Icon(
+                      FaIcon(
                         FontAwesomeIcons.volumeHigh,
                         size: 16,
                         color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -570,7 +577,7 @@ class _VoiceControlsState extends State<VoiceControls> {
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Icon(
+                child: FaIcon(
                   _showControls
                       ? FontAwesomeIcons.chevronUp
                       : FontAwesomeIcons.chevronDown,

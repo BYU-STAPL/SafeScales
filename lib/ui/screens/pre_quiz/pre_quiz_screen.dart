@@ -32,6 +32,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   int currentQuestionIndex = 0;
   List<List<int>> userAnswers = [];
   bool isStarted = false;
+  bool _isFinishing = false;
   final TtsService _ttsService = TtsService();
 
   late DateTime _quizStartTime;
@@ -76,7 +77,10 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   }
 
   void _finishPreQuiz() async {
+    if (_isFinishing || widget.questionSet.questions.isEmpty) return;
+
     setState(() {
+      _isFinishing = true;
       _quizEndTime = DateTime.now();
     });
 
@@ -109,8 +113,9 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
 
     if (!mounted) return;
 
-    // Show results screen and then return to previous screen
-    await Navigator.push(
+    // Results pops itself with true. Leave this quiz only then,
+    // so a dismissed results screen does not also pop the lesson.
+    final returned = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder:
@@ -125,9 +130,8 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
       ),
     );
 
-    if (!mounted) return;
+    if (!mounted || returned != true) return;
 
-    // Return to previous screen with completion status
     Navigator.pop(context, true);
   }
 
@@ -147,6 +151,8 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   }
 
   void _nextQuestion() {
+    if (_isFinishing || widget.questionSet.questions.isEmpty) return;
+
     _ttsService.stop(); // Stop TTS when changing questions
     if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
       setState(() {
@@ -198,7 +204,8 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
               TextButton.icon(
                 iconAlignment: IconAlignment.end,
                 onPressed:
-                    userAnswers[currentQuestionIndex].isNotEmpty
+                    !_isFinishing &&
+                            userAnswers[currentQuestionIndex].isNotEmpty
                         ? _nextQuestion
                         : null,
                 label: Text(
@@ -225,59 +232,83 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
     if (!isStarted) {
       return Scaffold(
         appBar: appBar,
-        body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 25),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.questionSet.title,
-                style: theme.textTheme.headlineSmall,
-              ),
-              SizedBox(height: 15),
-
-              Card(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Text(
-                            '${widget.questionSet.questions.length} questions',
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(child: Text(widget.questionSet.description)),
-                        ],
-                      ),
-                    ],
-                  ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(30, 25, 30, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.questionSet.title,
+                  style: theme.textTheme.titleMedium,
                 ),
-              ),
-              Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    _startPreQuiz();
-                  },
-                  child: Text(
-                    'Start'.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: theme.textTheme.bodyMedium?.fontSize,
-                      color: theme.colorScheme.onPrimary,
+                const SizedBox(height: 15),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Text(
+                              '${widget.questionSet.questions.length} questions',
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                widget.questionSet.description,
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
+                if (widget.questionSet.questions.isEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'This quiz has no available questions. Please try again later.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(30, 8, 30, 12),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed:
+                    widget.questionSet.questions.isEmpty
+                        ? null
+                        : () {
+                          _startPreQuiz();
+                        },
+                child: Text(
+                  'Start'.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: theme.textTheme.bodyMedium?.fontSize,
+                    color: theme.colorScheme.onPrimary,
+                  ),
+                ),
               ),
-
-              SizedBox(height: 30),
-            ],
+            ),
           ),
         ),
       );
@@ -304,7 +335,7 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
                 children: [
                   // Voice button for read aloud (spacing matches image-at-top layout)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 22),
+                    padding: const EdgeInsets.only(bottom: 8),
                     child: VoiceButton(
                       text: _buildQuestionTextForTTS(currentQuestionIndex),
                       pageIndex: currentQuestionIndex,

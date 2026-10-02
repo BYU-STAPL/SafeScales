@@ -34,6 +34,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   int currentQuestionIndex = 0;
   List<List<int>> userAnswers = [];
   bool isStarted = false;
+  bool _isFinishing = false;
   bool _showTableOfContents = false;
   final _userState = UserStateService();
   final TtsService _ttsService = TtsService();
@@ -83,7 +84,10 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   }
 
   void _finishPostQuiz() async {
+    if (_isFinishing || widget.questionSet.questions.isEmpty) return;
+
     setState(() {
+      _isFinishing = true;
       _quizEndTime = DateTime.now();
     });
 
@@ -121,8 +125,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
 
     if (!mounted) return;
 
-    // Show results screen and then return to previous screen
-    await Navigator.push(
+    final returned = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder:
@@ -138,9 +141,8 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
       ),
     );
 
-    if (!mounted) return;
+    if (!mounted || returned != true) return;
 
-    // Return to previous screen with completion status
     Navigator.pop(context, true);
   }
 
@@ -160,6 +162,8 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   }
 
   void _nextQuestion() {
+    if (_isFinishing || widget.questionSet.questions.isEmpty) return;
+
     _ttsService.stop(); // Stop TTS when changing questions
     if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
       setState(() {
@@ -223,7 +227,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                 ),
                 WidgetSpan(
                   alignment: PlaceholderAlignment.middle,
-                  child: Icon(
+                  child: FaIcon(
                     FontAwesomeIcons.list,
                     size: theme.textTheme.bodyLarge?.fontSize,
                     color: theme.colorScheme.primary,
@@ -283,7 +287,9 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
               TextButton.icon(
                 iconAlignment: IconAlignment.end,
                 onPressed:
-                    _isLastQuestion() && !_hasUserAnsweredAllQuestions()
+                    _isFinishing
+                        ? null
+                        : _isLastQuestion() && !_hasUserAnsweredAllQuestions()
                         ? _showIncompleteDialog
                         : _nextQuestion,
                 label: Text(_isLastQuestion() ? 'Complete' : 'Next'),
@@ -320,7 +326,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
         itemBuilder: (context, index) {
           final isAnswered = userAnswers[index].isNotEmpty;
           return ListTile(
-            leading: Icon(
+            leading: FaIcon(
               isAnswered
                   ? FontAwesomeIcons.solidCircleCheck
                   : FontAwesomeIcons.circle,
@@ -352,7 +358,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
         children: [
           // Voice button for read aloud (spacing matches image-at-top layout: 12 + 10)
           Padding(
-            padding: const EdgeInsets.only(bottom: 22),
+            padding: const EdgeInsets.only(bottom: 8),
             child: VoiceButton(
               text: _buildQuestionTextForTTS(currentQuestionIndex),
               pageIndex: currentQuestionIndex,
@@ -398,17 +404,13 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 2),
-          child: Icon(
-            icon,
-            size: 22,
-            color: theme.colorScheme.onSurface,
-          ),
+          child: FaIcon(icon, size: 22, color: theme.colorScheme.onSurface),
         ),
         const SizedBox(width: 14),
         Expanded(
           child: Text(
             text,
-            style: theme.textTheme.bodyLarge?.copyWith(
+            style: theme.textTheme.bodySmall?.copyWith(
               height: 1.35,
               color: theme.colorScheme.onSurface,
             ),
@@ -429,9 +431,10 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
           isStarted
               ? [
                 IconButton(
-                  icon: Icon(
-                    _showTableOfContents ? Icons.close : FontAwesomeIcons.list,
-                  ),
+                  icon:
+                      _showTableOfContents
+                          ? const Icon(Icons.close)
+                          : const FaIcon(FontAwesomeIcons.list),
                   iconSize: 25,
                   onPressed: () {
                     setState(() {
@@ -450,14 +453,22 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
 
       return Scaffold(
         appBar: appBar,
-        body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        body: SafeArea(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(18),
@@ -470,43 +481,60 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                   children: [
                     Text(
                       widget.questionSet.title,
-                      style: theme.textTheme.headlineSmall?.copyWith(
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       '$totalQuestions Multiple Choice Questions',
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         letterSpacing: 0.2,
                       ),
                     ),
+                    if (totalQuestions == 0) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'This quiz has no available questions. Please try again later.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
               const SizedBox(height: 20),
               Text(
                 'Details',
-                style: theme.textTheme.headlineSmall?.copyWith(
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 14),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.55),
+                  color: theme.colorScheme.primaryContainer.withValues(
+                    alpha: 0.55,
+                  ),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: theme.colorScheme.primary, width: 1),
+                  border: Border.all(
+                    color: theme.colorScheme.primary,
+                    width: 1,
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'To Pass this Quiz',
-                      style: theme.textTheme.titleLarge?.copyWith(
+                      style: theme.textTheme.titleMedium?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w700,
                       ),
@@ -514,7 +542,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                     const SizedBox(height: 10),
                     Text(
                       'You need to get $neededToPass out of $totalQuestions questions right to pass.',
-                      style: theme.textTheme.bodyLarge?.copyWith(height: 1.35),
+                      style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
                     ),
                   ],
                 ),
@@ -522,7 +550,10 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
               const SizedBox(height: 20),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(18),
@@ -548,28 +579,32 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                   ],
                 ),
               ),
-              Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _startPostQuiz,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                    ],
                   ),
-                  child: Text(
-                    'Start'.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: theme.textTheme.bodyMedium?.fontSize,
-                      color: theme.colorScheme.onPrimary,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: totalQuestions == 0 ? null : _startPostQuiz,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      'Start'.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: theme.textTheme.bodyMedium?.fontSize,
+                        color: theme.colorScheme.onPrimary,
+                      ),
                     ),
                   ),
                 ),
               ),
-
-              SizedBox(height: 30),
             ],
           ),
         ),

@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../widgets/dragon_image_widget.dart';
+import 'package:safe_scales/ui/widgets/dragon_image_widget.dart';
 
 // Define action types for better type safety
-enum QuizAction {
-  retake,
-  reread,
-  returnToLesson,
-  goToDragon,
-}
+enum QuizAction { retake, reread, returnToLesson, playWithDragon }
 
 class PostQuizActionsScreen extends StatefulWidget {
   const PostQuizActionsScreen({
@@ -42,10 +37,6 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
 
   void _handleReturnToLesson() {
     widget.handleAction(QuizAction.returnToLesson);
-  }
-
-  void _handleGoToDragon() {
-    widget.handleAction(QuizAction.goToDragon);
   }
 
   Widget _buildDividerWithOr(ThemeData theme) {
@@ -92,7 +83,9 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
           backgroundColor: backgroundColor ?? theme.colorScheme.primary,
           foregroundColor: theme.colorScheme.onPrimary,
           minimumSize: const Size.fromHeight(44),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
         child: Text(
           label.toUpperCase(),
@@ -115,7 +108,9 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
           side: BorderSide(color: theme.colorScheme.primary, width: 1.5),
           foregroundColor: theme.colorScheme.primary,
           minimumSize: const Size.fromHeight(44),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
         child: Text(
           label.toUpperCase(),
@@ -127,8 +122,9 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
 
   Widget _buildPassedView(ThemeData theme) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 18),
+        const SizedBox(height: 42),
         Text(
           'Your Dragon is full grown!',
           textAlign: TextAlign.center,
@@ -136,21 +132,28 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 12),
-        DragonImageWidget(moduleId: widget.moduleId, size: 260, phase: 'final'),
-        const Spacer(),
+        const SizedBox(height: 34),
+        SizedBox(
+          height: 300,
+          child: DragonImageWidget(
+            moduleId: widget.moduleId,
+            size: 300,
+            phase: 'final',
+          ),
+        ),
+        const SizedBox(height: 28),
         _buildPrimaryButton(
           theme: theme,
-          label: 'Play with dragon',
-          onPressed: _handleGoToDragon,
+          label: 'Play with Dragon',
+          onPressed: () => widget.handleAction(QuizAction.playWithDragon),
           backgroundColor: const Color(0xFF07B464),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
         _buildDividerWithOr(theme),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
         _buildSecondaryButton(
           theme: theme,
-          label: 'Return to lesson',
+          label: 'Return to Lesson',
           onPressed: _handleReturnToLesson,
         ),
       ],
@@ -184,7 +187,9 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
         Text(
           'Suggested Action',
           textAlign: TextAlign.center,
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 22),
         if (canRetake) ...[
@@ -202,7 +207,7 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
           label: 'Re-read lesson',
           onPressed: _handleReReadLesson,
         ),
-        const Spacer(),
+        const SizedBox(height: 24),
         _buildSecondaryButton(
           theme: theme,
           label: 'Return to lesson',
@@ -226,9 +231,23 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
         backgroundColor: Colors.transparent,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(30, 4, 30, 24),
-          child: passed ? _buildPassedView(theme) : _buildFailedView(theme),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(30, 4, 30, 24),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 28,
+                ),
+                child: IntrinsicHeight(
+                  child:
+                      passed
+                          ? _buildPassedView(theme)
+                          : _buildFailedView(theme),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

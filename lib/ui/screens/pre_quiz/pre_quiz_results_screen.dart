@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/models/question.dart';
-import 'package:safe_scales/ui/screens/lesson/lesson_screen.dart';
-
-import '../../widgets/dragon_image_widget.dart';
 
 class PreQuizResultScreen extends StatelessWidget {
   final String moduleId;
@@ -33,10 +30,9 @@ class PreQuizResultScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 25),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 25),
           child: Column(
-            // mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 'Great job completing the quiz!',
@@ -45,35 +41,24 @@ class PreQuizResultScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-
-              SizedBox(height: 30),
-
+              const SizedBox(height: 30),
               Text(
-                'Your new dragon egg hatched!',
+                'You are ready to begin this lesson.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyLarge,
               ),
-
-              SizedBox(height: 30),
-
-              DragonImageWidget(moduleId: moduleId, size: 300, phase: 'stage1'),
-
-              SizedBox(height: 30),
-
-              Spacer(),
-
+              const SizedBox(height: 30),
+              Icon(
+                Icons.check_circle_outline,
+                size: 180,
+                color: theme.colorScheme.secondary,
+              ),
+              const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            LessonScreen(moduleId: moduleId),
-                      ),
-                      (route) => route.isFirst,
-                    );
+                    Navigator.pop(context, true);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.secondary,
