@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:safe_scales/ui/screens/main_navigation.dart';
+import 'package:provider/provider.dart';
 import 'package:safe_scales/models/question.dart';
+import 'package:safe_scales/providers/dragon_decoration_provider.dart';
+import 'package:safe_scales/providers/dragon_provider.dart';
+import 'package:safe_scales/ui/screens/dragon_decoration/dragon_decoration_screen.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_actions_screen.dart';
 import 'package:safe_scales/ui/widgets/post_quiz_summary.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_screen.dart';
@@ -45,10 +48,43 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
       case QuizAction.returnToLesson:
         Navigator.pop(context, true);
         break;
-      case QuizAction.goToDragon:
-        _goToDragon();
+      case QuizAction.playWithDragon:
+        await _playWithDragon();
         break;
     }
+  }
+
+  Future<void> _playWithDragon() async {
+    final dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+    await dragonProvider.updateDragonPhases(widget.moduleId);
+
+    if (!mounted) return;
+
+    final dragon = dragonProvider.getDragonByModuleId(widget.moduleId);
+    if (dragon == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not find this lesson dragon.')),
+      );
+      return;
+    }
+
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => MultiProvider(
+              providers: [
+                ChangeNotifierProvider<DragonDecorationProvider>(
+                  create: (_) => DragonDecorationProvider(),
+                ),
+              ],
+              child: DragonDressUpPage(
+                dragonId: dragon.id,
+                currentPhase: 'final',
+              ),
+            ),
+      ),
+    );
   }
 
   Future<void> _retakeQuiz() async {
@@ -77,17 +113,6 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
       MaterialPageRoute(
         builder: (context) => ReadingActivityScreen(moduleId: widget.moduleId),
       ),
-    );
-  }
-
-  void _goToDragon() {
-    // Navigate to dragon screen
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MainNavigation(initialIndex: kDragonsTabIndex),
-      ),
-      (route) => false,
     );
   }
 
@@ -196,8 +221,8 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () async {
-                      final result = await Navigator.push(
-                        context,
+                      final navigator = Navigator.of(context);
+                      final result = await navigator.push(
                         MaterialPageRoute(
                           builder:
                               (context) => PostQuizActionsScreen(
@@ -211,11 +236,14 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                         ),
                       );
 
+                      if (!mounted) return;
+
                       // Handle the returned action
                       if (result is QuizAction) {
                         await _handleQuizAction(result);
+                        if (!mounted) return;
                       } else if (result == true) {
-                        Navigator.pop(context, true);
+                        navigator.pop(true);
                       }
                     },
                     style: ElevatedButton.styleFrom(

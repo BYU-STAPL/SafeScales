@@ -5,43 +5,64 @@ class DragonDecorationRepository {
   final SupabaseClient _supabase;
 
   DragonDecorationRepository({SupabaseClient? supabase})
-      : _supabase = supabase ?? SupabaseConfig.client;
+    : _supabase = supabase ?? SupabaseConfig.client;
 
   // ---------------- CREATE ----------------
-
 
   // ---------------- READ ----------------
 
   /// Load current user selected environment
-  Future<String> loadCurrentDragonEnvironment(String userId, String dragonId) async {
+  Future<({String? environmentId, bool hasSavedSelection})>
+  loadCurrentDragonEnvironment(String userId, String dragonId) async {
     try {
-      final response = await _supabase
-          .from('Users')
-          .select('dragon_environments')
-          .eq('id', userId)
-          .single();
+      final response =
+          await _supabase
+              .from('Users')
+              .select('dragon_environments')
+              .eq('id', userId)
+              .single();
 
-      return response['dragon_environments']?[dragonId] ?? "";
-    }
-    catch (e) {
-      print('❌ Error loading current dragon environment for dragon ${dragonId}: $e');
-      return "";
+      final rawSelections = response['dragon_environments'];
+      final selections =
+          rawSelections is Map
+              ? Map<String, dynamic>.from(rawSelections)
+              : <String, dynamic>{};
+      if (!selections.containsKey(dragonId)) {
+        return (environmentId: null, hasSavedSelection: false);
+      }
+
+      final rawEnvironmentId = selections[dragonId];
+      return (
+        environmentId:
+            rawEnvironmentId is String && rawEnvironmentId.isNotEmpty
+                ? rawEnvironmentId
+                : null,
+        hasSavedSelection: true,
+      );
+    } catch (e) {
+      throw DragonDecorationRepositoryException(
+        'Failed to load current dragon environment for $dragonId: $e',
+      );
     }
   }
 
   /// Load dragon dress-up data for a specific user and dragon
-  Future<Map<String, dynamic>?> loadDragonDressUp({required String userId, required String dragonId,}) async {
+  Future<Map<String, dynamic>?> loadDragonDressUp({
+    required String userId,
+    required String dragonId,
+  }) async {
     try {
-      final userResponse = await _supabase
-          .from('Users')
-          .select('dragon_dressup')
-          .eq('id', userId)
-          .single();
+      final userResponse =
+          await _supabase
+              .from('Users')
+              .select('dragon_dressup')
+              .eq('id', userId)
+              .single();
 
       final Map<String, dynamic>? dressUpData =
-      userResponse['dragon_dressup'] != null
-          ? Map<String, dynamic>.from(userResponse['dragon_dressup'])
-          : null;
+          userResponse['dragon_dressup'] != null
+              ? Map<String, dynamic>.from(userResponse['dragon_dressup'])
+              : null;
 
       if (dressUpData != null && dressUpData.containsKey(dragonId)) {
         return Map<String, dynamic>.from(dressUpData[dragonId]);
@@ -49,22 +70,27 @@ class DragonDecorationRepository {
 
       return null;
     } catch (e) {
-      print('❌ Error loading dragon dress-up: $e');
-      return null;
+      throw DragonDecorationRepositoryException(
+        'Failed to load dragon dress-up for $dragonId: $e',
+      );
     }
   }
-
 
   // ---------------- UPDATE ----------------
 
   /// Save the new chosen environment
-  Future<void> updateUserEnvironment(String userId, String environmentId, String dragonId) async {
+  Future<void> updateUserEnvironment(
+    String userId,
+    String environmentId,
+    String dragonId,
+  ) async {
     try {
-      final response = await _supabase
-          .from('Users')
-          .select('dragon_environments')
-          .eq('id', userId)
-          .single();
+      final response =
+          await _supabase
+              .from('Users')
+              .select('dragon_environments')
+              .eq('id', userId)
+              .single();
 
       if (response['dragon_environments'] == null) {
         response['dragon_environments'] = {};
@@ -72,8 +98,7 @@ class DragonDecorationRepository {
 
       if (environmentId == "") {
         response['dragon_environments'][dragonId] = null;
-      }
-      else {
+      } else {
         response['dragon_environments'][dragonId] = environmentId;
       }
 
@@ -81,9 +106,10 @@ class DragonDecorationRepository {
           .from('Users')
           .update({'dragon_environments': response['dragon_environments']})
           .eq('id', userId);
-
     } catch (e) {
-      throw DragonDecorationRepositoryException('Failed to update environment for $userId: $e');
+      throw DragonDecorationRepositoryException(
+        'Failed to update environment for $userId: $e',
+      );
     }
   }
 
@@ -95,16 +121,17 @@ class DragonDecorationRepository {
   }) async {
     try {
       // Get current dragon_dressup data
-      final userResponse = await _supabase
-          .from('Users')
-          .select('dragon_dressup')
-          .eq('id', userId)
-          .single();
+      final userResponse =
+          await _supabase
+              .from('Users')
+              .select('dragon_dressup')
+              .eq('id', userId)
+              .single();
 
       final Map<String, dynamic> dressUpData =
-      userResponse['dragon_dressup'] != null
-          ? Map<String, dynamic>.from(userResponse['dragon_dressup'])
-          : <String, dynamic>{};
+          userResponse['dragon_dressup'] != null
+              ? Map<String, dynamic>.from(userResponse['dragon_dressup'])
+              : <String, dynamic>{};
 
       // Update data for this dragon
       dressUpData[dragonId] = accessoriesData;
@@ -122,7 +149,6 @@ class DragonDecorationRepository {
     }
   }
 
-
   // ---------------- DELETE ----------------
 
   /// Clear all dress-up data for a specific dragon
@@ -132,19 +158,21 @@ class DragonDecorationRepository {
   }) async {
     try {
       // Get current dragon_dressup data
-      final userResponse = await _supabase
-          .from('Users')
-          .select('dragon_dressup')
-          .eq('id', userId)
-          .single();
+      final userResponse =
+          await _supabase
+              .from('Users')
+              .select('dragon_dressup')
+              .eq('id', userId)
+              .single();
 
       final Map<String, dynamic> dressUpData =
-      userResponse['dragon_dressup'] != null
-          ? Map<String, dynamic>.from(userResponse['dragon_dressup'])
-          : <String, dynamic>{};
+          userResponse['dragon_dressup'] != null
+              ? Map<String, dynamic>.from(userResponse['dragon_dressup'])
+              : <String, dynamic>{};
 
-      // Remove data for this dragon
-      dressUpData.remove(dragonId);
+      // Keep an empty record so a user's explicit clear is not mistaken for
+      // a dragon that has never had a decoration selection.
+      dressUpData[dragonId] = <String, dynamic>{};
 
       // Save back to database
       await _supabase
@@ -158,8 +186,6 @@ class DragonDecorationRepository {
       return false;
     }
   }
-
-
 }
 
 class DragonDecorationRepositoryException implements Exception {

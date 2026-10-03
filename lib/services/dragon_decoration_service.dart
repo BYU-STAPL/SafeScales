@@ -9,9 +9,9 @@ class DragonDecorationService {
 
   DragonDecorationService({
     DragonDecorationRepository? repository,
-    ItemService? itemService
+    ItemService? itemService,
   }) : _repository = repository ?? DragonDecorationRepository(),
-        _itemService = itemService ?? ItemService();
+       _itemService = itemService ?? ItemService();
 
   /// Convert sticker items to database format
   Map<String, dynamic> _stickersToAccessoriesData(List<StickerItem> stickers) {
@@ -41,11 +41,13 @@ class DragonDecorationService {
 
       // DEBUG: Print what we're looking for
       debugPrint('🔍 Looking for accessory ID: "$accId"');
-      debugPrint('🔍 Available user items: ${userItems.map((i) => '${i.id}:"${i.imageUrl}"').join(', ')}');
+      debugPrint(
+        '🔍 Available user items: ${userItems.map((i) => '${i.id}:"${i.imageUrl}"').join(', ')}',
+      );
 
       // Find accessory by ID - FIXED: Compare i.id instead of i.toString()
       final item = userItems.firstWhere(
-            (i) => i.id == accId.toString(), // This is the fix!
+        (i) => i.id == accId.toString(), // This is the fix!
         orElse: () {
           debugPrint('❌ Could not find item with ID: $accId');
           return Item(
@@ -65,7 +67,9 @@ class DragonDecorationService {
       if (item.imageUrl.isEmpty ||
           item.imageUrl.startsWith('file:') ||
           item.imageUrl == 'null') {
-        debugPrint('❌ Skipping item with invalid image URL: "${item.imageUrl}"');
+        debugPrint(
+          '❌ Skipping item with invalid image URL: "${item.imageUrl}"',
+        );
         return; // Skip this item
       }
 
@@ -99,7 +103,9 @@ class DragonDecorationService {
       // DEBUG: Print what we're saving
       debugPrint('🔍 Saving ${stickers.length} stickers for dragon $dragonId');
       for (final sticker in stickers) {
-        debugPrint('🔍 Saving sticker: ${sticker.name} (${sticker.accessoryId}) - URL: "${sticker.imageUrl}"');
+        debugPrint(
+          '🔍 Saving sticker: ${sticker.name} (${sticker.accessoryId}) - URL: "${sticker.imageUrl}"',
+        );
       }
 
       final accessoriesData = _stickersToAccessoriesData(stickers);
@@ -115,7 +121,8 @@ class DragonDecorationService {
   }
 
   /// Load dragon decoration
-  Future<List<StickerItem>> loadDragonDecoration({
+  Future<({List<StickerItem> stickers, bool hasSavedSelection})>
+  loadDragonDecoration({
     required String userId,
     required String dragonId,
     required List<Item> userItems,
@@ -129,16 +136,16 @@ class DragonDecorationService {
         dragonId: dragonId,
       );
 
-      if (accessoriesData == null || accessoriesData.isEmpty) {
-        debugPrint('🔍 No decoration data found');
-        return [];
+      if (accessoriesData == null) {
+        return (stickers: <StickerItem>[], hasSavedSelection: false);
       }
 
-      debugPrint('🔍 Found decoration data: $accessoriesData');
-
-      return await _accessoriesDataToStickers(
-        accessoriesData: accessoriesData,
-        userItems: userItems,
+      return (
+        stickers: await _accessoriesDataToStickers(
+          accessoriesData: accessoriesData,
+          userItems: userItems,
+        ),
+        hasSavedSelection: true,
       );
     } catch (e) {
       debugPrint('❌ Error loading dragon decoration: $e');
@@ -162,60 +169,73 @@ class DragonDecorationService {
   }
 
   // Load/get current environment
-  Future<String> loadCurrentDragonEnvironment(String userId, String dragonId) async {
+  Future<({String? environmentId, bool hasSavedSelection})>
+  loadCurrentDragonEnvironment(String userId, String dragonId) async {
     try {
       return await _repository.loadCurrentDragonEnvironment(userId, dragonId);
-    }
-    catch (e) {
-      throw DragonDecorationServiceException('Failed to load current dragon environment for ${dragonId}: $e');
+    } catch (e) {
+      throw DragonDecorationServiceException(
+        'Failed to load current dragon environment for $dragonId: $e',
+      );
     }
   }
 
   /// Save environment selection
-  Future<void> saveEnvironmentSelection(String userId, String environmentId, String dragonId,) async {
-    await _repository.updateUserEnvironment(
-      userId,
-      environmentId,
-      dragonId,
-    );
+  Future<void> saveEnvironmentSelection(
+    String userId,
+    String environmentId,
+    String dragonId,
+  ) async {
+    await _repository.updateUserEnvironment(userId, environmentId, dragonId);
   }
 
   /// Get user's available accessories
   Future<List<Item>> getUserItems(String userId, String classId) async {
     try {
-      List<Item> userItems = await _itemService.getUserAccessories(userId, classId);
+      List<Item> userItems = await _itemService.getUserAccessories(
+        userId,
+        classId,
+      );
 
       // DEBUG: Print loaded items
       debugPrint('🔍 Loaded ${userItems.length} user accessories');
       for (final item in userItems) {
-        debugPrint('🔍 Item: ${item.name} (${item.id}) - URL: "${item.imageUrl}"');
+        debugPrint(
+          '🔍 Item: ${item.name} (${item.id}) - URL: "${item.imageUrl}"',
+        );
       }
 
       return userItems;
-
     } catch (e) {
       debugPrint('❌ Error getting user accessories: $e');
-      throw DragonDecorationServiceException('Failed to get user accessories: $e');
+      throw DragonDecorationServiceException(
+        'Failed to get user accessories: $e',
+      );
     }
   }
 
   /// Get user's available environments
   Future<List<Item>> getUserEnvironments(String userId, String classId) async {
     try {
-      List<Item> userEnvs = await _itemService.getUserEnvironments(userId, classId);
+      List<Item> userEnvs = await _itemService.getUserEnvironments(
+        userId,
+        classId,
+      );
 
       // DEBUG: Print loaded environments
       debugPrint('🔍 Loaded ${userEnvs.length} user environments');
       for (final env in userEnvs) {
-        debugPrint('🔍 Environment: ${env.name} (${env.id}) - URL: "${env.imageUrl}"');
+        debugPrint(
+          '🔍 Environment: ${env.name} (${env.id}) - URL: "${env.imageUrl}"',
+        );
       }
 
       return userEnvs;
-
-    }
-    catch (e) {
+    } catch (e) {
       debugPrint('❌ Error getting user environments: $e');
-      throw DragonDecorationServiceException('Failed to get user environments: $e');
+      throw DragonDecorationServiceException(
+        'Failed to get user environments: $e',
+      );
     }
   }
 
@@ -227,14 +247,20 @@ class DragonDecorationService {
     bool isBehindDragon = false,
   }) {
     // DEBUG: Print item being used for sticker
-    debugPrint('🔍 Creating sticker from item: ${item.name} (${item.id}) - URL: "${item.imageUrl}"');
+    debugPrint(
+      '🔍 Creating sticker from item: ${item.name} (${item.id}) - URL: "${item.imageUrl}"',
+    );
 
     // Validate the image URL
     if (item.imageUrl.isEmpty ||
         item.imageUrl.startsWith('file:') ||
         item.imageUrl == 'null') {
-      debugPrint('❌ Cannot create sticker with invalid image URL: "${item.imageUrl}"');
-      throw DragonDecorationServiceException('Invalid image URL for item: ${item.name}');
+      debugPrint(
+        '❌ Cannot create sticker with invalid image URL: "${item.imageUrl}"',
+      );
+      throw DragonDecorationServiceException(
+        'Invalid image URL for item: ${item.name}',
+      );
     }
 
     return StickerItem(
@@ -254,8 +280,10 @@ class DragonDecorationService {
     required Size containerSize,
     required double stickerSize,
   }) {
-    final clampedX = newPosition.dx.clamp(0, containerSize.width - stickerSize,).toDouble();
-    final clampedY = newPosition.dy.clamp(0, containerSize.height - stickerSize,).toDouble();
+    final clampedX =
+        newPosition.dx.clamp(0, containerSize.width - stickerSize).toDouble();
+    final clampedY =
+        newPosition.dy.clamp(0, containerSize.height - stickerSize).toDouble();
 
     return Offset(clampedX, clampedY);
   }
@@ -274,7 +302,6 @@ class DragonDecorationService {
     required Offset dragonPosition,
     double stickerSize = 48.0,
   }) {
-
     /*
     // The details.offset is the position where the user dropped the sticker
     // We want the sticker to appear exactly where they dropped it
@@ -318,10 +345,7 @@ class DragonDecorationService {
     // so we pass the full containerSize
     return constrainStickerPosition(
       newPosition: screenOffset,
-      containerSize: Size(
-        environmentSize.width,
-        environmentSize.height,
-      ),
+      containerSize: Size(environmentSize.width, environmentSize.height),
       stickerSize: stickerSize,
     );
   }
