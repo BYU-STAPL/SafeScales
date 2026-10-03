@@ -6,6 +6,8 @@ workflows:
     integrations:
       app_store_connect: codemagic Key
     environment:
+      groups:
+        - supabase
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.safescales.byu
@@ -13,6 +15,9 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
+      - name: Create .env asset
+        script: |
+          printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\n' "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > .env
       - name: Set up code signing settings on Xcode project
         script: xcode-project use-profiles
       - name: Get Flutter packages
