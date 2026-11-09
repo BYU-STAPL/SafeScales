@@ -186,73 +186,35 @@ class UserStateService {
     }
   }
 
-  // Restore user session from device storage
+  // Restore user session from Supabase Auth (JWT), not a forged local user.
   Future<bool> restoreUserSession() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedUserId = prefs.getString(_keyUserId);
-      final savedUserEmail = prefs.getString(_keyUserEmail);
+      final session = SupabaseConfig.client.auth.currentSession;
+      final authUser = SupabaseConfig.client.auth.currentUser;
 
-      if (savedUserId == null) {
-        print('No saved session found');
-        return false;
-      }
-
-      print('🔄 Attempting to restore session for user: $savedUserId');
-
-      // Verify user still exists in database
-      try {
-        final response =
-            await SupabaseConfig.client
-                .from('Users')
-                .select()
-                .eq('id', savedUserId)
-                .single();
-
-        // Validate email matches if we have it saved
-        if (savedUserEmail != null &&
-            response['Email'] != null &&
-            response['Email'] != savedUserEmail) {
-          print('⚠️ Saved email does not match database, clearing session');
-          await clearUserSession();
-          return false;
-        }
-
-        // Create supabase user object from saved data
-        final userEmail = response['Email']?.toString() ?? savedUserEmail ?? '';
-        final createdAtStr = response['created_at']?.toString() ?? '';
-        final supabaseUser = supabase.User(
-          id: savedUserId,
-          email: userEmail,
-          createdAt: createdAtStr,
-          appMetadata: {},
-          userMetadata: {},
-          aud: 'authenticated',
-          role: 'authenticated',
-        );
-
-        // Restore user state
-        _supabaseUser = supabaseUser;
-        _currentUser = User.fromSupabaseUser(supabaseUser);
-        _userId = savedUserId;
-        _userProfile = response;
-
-        // Update current user with modules data
-        _currentUser = User.fromSupabaseUser(
-          supabaseUser,
-          modules: response['reading_progress'],
-        );
-
-        print('✅ User session restored successfully');
-        return true;
-      } catch (e) {
-        print('❌ Error verifying user in database: $e');
-        // User might not exist anymore, clear saved session
+      if (session == null || authUser == null) {
+        print('No Supabase Auth session found');
         await clearUserSession();
         return false;
       }
+
+      print('Attempting to restore Auth session for user: ${authUser.id}');
+
+      setUser(authUser);
+      await loadUserProfile();
+
+      if (_userProfile == null) {
+        print('Auth session present but profile load failed');
+        setUser(null);
+        await clearUserSession();
+        return false;
+      }
+
+      print('User session restored successfully from Auth');
+      return true;
     } catch (e) {
-      print('❌ Error restoring user session: $e');
+      print('Error restoring user session: $e');
+      await clearUserSession();
       return false;
     }
   }

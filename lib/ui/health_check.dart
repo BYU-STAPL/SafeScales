@@ -27,8 +27,10 @@ class _HealthCheckState extends State<HealthCheck> {
     });
 
     try {
-      // Try to make a simple query to check Supabase connection
-      await SupabaseConfig.client.from('Users').select('count').limit(1);
+      // Confirm the Supabase client is initialized. Do not probe Users —
+      // RLS blocks anonymous reads of that table.
+      final session = SupabaseConfig.client.auth.currentSession;
+      debugPrint('Health check Auth session present: ${session != null}');
 
       setState(() {
         _isChecking = false;

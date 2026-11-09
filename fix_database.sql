@@ -19,8 +19,8 @@ ORDER BY ordinal_position;
 CREATE TABLE IF NOT EXISTS "Users" (
     "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "Username" TEXT NOT NULL,
-    "Email" TEXT UNIQUE NOT NULL,
-    "password" TEXT NOT NULL,
+    "Email" TEXT UNIQUE,
+    -- Passwords live in auth.users (bcrypt). Do not store passwords here.
     "modules" JSONB DEFAULT '{}',
     "quizzes" JSONB DEFAULT '{}',
     "acquired_accessories" TEXT[] DEFAULT '{}',

@@ -11,49 +11,42 @@ class UserRepository {
 
   // ---------------- CREATE ----------------
 
-  Future<void> signUpUser(
+  /// Profile rows are created by the auth.users trigger. This only fills
+  /// username after signup when the caller has a real Auth session.
+  Future<void> ensureProfileAfterSignUp(
     String userId,
     String username,
     String email,
-    String password,
   ) async {
     try {
-      await _supabase.from('Users').insert({
-        'id': userId,
-        'Username': username,
-        'Email': email,
-        'password': password, // Store plain password
-      });
+      // Wait briefly for the trigger-created row, then set Username.
+      for (var attempt = 0; attempt < 5; attempt++) {
+        final existing =
+            await _supabase
+                .from('Users')
+                .select('id')
+                .eq('id', userId)
+                .maybeSingle();
+        if (existing != null) {
+          await _supabase
+              .from('Users')
+              .update({'Username': username})
+              .eq('id', userId);
+          return;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      }
+
+      throw UserRepositoryException(
+        'Profile was not created for $email. Try signing in again.',
+      );
     } catch (e) {
+      if (e is UserRepositoryException) rethrow;
       throw UserRepositoryException(e.toString());
     }
   }
 
   // ---------------- READ ----------------
-
-  Future<Map<String, String>> loginWithEmail(
-    String email,
-    String password,
-  ) async {
-    try {
-      final response =
-          await _supabase.from('Users').select().eq('Email', email).single();
-
-      // Check email again
-      // Check password after
-      if (response['Email'] == email && response['password'] == password) {
-        return {
-          'email': response['Email'].toString(),
-          'id': response['id'].toString(),
-          'created_at': response['created_at'].toString(),
-        };
-      }
-
-      return {};
-    } catch (e) {
-      throw UserRepositoryException(e.toString());
-    }
-  }
 
   Future<List<dynamic>> getUsersJoinedClasses(String userId) async {
     try {

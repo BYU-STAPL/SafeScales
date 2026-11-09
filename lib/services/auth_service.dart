@@ -18,22 +18,21 @@ class AuthService {
     required String password,
   }) async {
     try {
-      // First create the auth user
+      // Create Auth user; DB trigger creates the public Users profile row.
       final authResponse = await supabaseClient.auth.signUp(
         email: email,
         password: password,
+        data: {'username': username},
       );
 
       if (authResponse.user != null) {
-        // Add user to database
-        await userRepository.signUpUser(
+        // Ensure username/email are set on the profile (trigger may race).
+        await userRepository.ensureProfileAfterSignUp(
           authResponse.user!.id,
           username,
           email,
-          password,
         );
 
-        // Set the current user in UserStateService
         _userState.setUser(authResponse.user);
         await _userState.loadUserProfile();
       }
@@ -48,35 +47,21 @@ class AuthService {
 
   Future<bool> signIn({required String email, required String password}) async {
     try {
-      Map<String, String> userInfo = await userRepository.loginWithEmail(
-        email,
-        password,
+      final authResponse = await supabaseClient.auth.signInWithPassword(
+        email: email,
+        password: password,
       );
 
-      if (userInfo.isEmpty) {
+      final user = authResponse.user;
+      if (user == null) {
         return false;
-      } else {
-        final supabaseUser = supabase.User(
-          id: userInfo['id']!,
-          email: userInfo['email'],
-          createdAt: userInfo['created_at']!,
-          appMetadata: {},
-          userMetadata: {},
-          aud: 'authenticated',
-          role: 'authenticated',
-        );
-
-        // Set the current user in UserStateService
-        _userState.setUser(supabaseUser);
-        _userState.setUserProfile(userInfo);
-
-        return true;
       }
+
+      _userState.setUser(user);
+      await _userState.loadUserProfile();
+      return true;
     } catch (e) {
-      print('❌Error signing in: $e');
-      print('❌Error type: ${e.runtimeType}');
-      print('❌Error details: $e');
-      // Clear any existing user state on error
+      print('Error signing in: $e');
       _userState.setUser(null);
       _userState.setUserProfile(null);
       return false;
@@ -85,15 +70,11 @@ class AuthService {
 
   Future<void> signOut() async {
     try {
-      // Sign out from Supabase
       await supabaseClient.auth.signOut();
-
-      // Clear user state
       _userState.setUser(null);
       _userState.setUserProfile(null);
     } catch (e) {
-      print('❌Error signing out: $e');
-      // Even if there's an error, clear the local user state
+      print('Error signing out: $e');
       _userState.setUser(null);
       _userState.setUserProfile(null);
     }
