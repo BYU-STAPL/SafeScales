@@ -2,12 +2,17 @@
 // PRE-QUIZ SCREEN FLOW - Assessment focused, formal,
 // =============================================================================
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_results_screen.dart';
 import 'package:safe_scales/models/question.dart';
 
 import '../../../providers/course_provider.dart';
+import '../../../services/activity_event_service.dart';
+import '../../../themes/app_theme.dart';
 import '../../widgets/progress_bar.dart';
 import '../../widgets/question_widget.dart';
 import '../../widgets/tts_progress_bar.dart';
@@ -28,12 +33,20 @@ class PreQuizScreen extends StatefulWidget {
   _PreQuizScreenState createState() => _PreQuizScreenState();
 }
 
-class _PreQuizScreenState extends State<PreQuizScreen> {
+class _PreQuizScreenState extends State<PreQuizScreen>
+    with WidgetsBindingObserver {
   int currentQuestionIndex = 0;
   List<List<int>> userAnswers = [];
   bool isStarted = false;
   bool _isFinishing = false;
+  bool _showTableOfContents = false;
   final TtsService _ttsService = TtsService();
+  final ActivityEventService _activityEvents = ActivityEventService();
+  final List<int> _questionDurationsMs = [];
+  final Stopwatch _questionStopwatch = Stopwatch();
+  final Stopwatch _quizStopwatch = Stopwatch();
+  bool _isAppForeground = true;
+  String? _attemptId;
 
   late DateTime _quizStartTime;
   late DateTime _quizEndTime;
@@ -41,14 +54,33 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     userAnswers = List.generate(widget.questionSet.questions.length, (_) => []);
+    _questionDurationsMs.addAll(
+      List<int>.filled(widget.questionSet.questions.length, 0),
+    );
     _ttsService.initialize();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _questionStopwatch.stop();
+    _quizStopwatch.stop();
     _ttsService.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _isAppForeground = state == AppLifecycleState.resumed;
+    if (_isAppForeground && isStarted && !_isFinishing) {
+      _questionStopwatch.start();
+      _quizStopwatch.start();
+    } else {
+      _questionStopwatch.stop();
+      _quizStopwatch.stop();
+    }
   }
 
   String _buildQuestionTextForTTS(int questionIndex) {
@@ -70,18 +102,45 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   }
 
   void _startPreQuiz() {
+    final now = DateTime.now();
     setState(() {
       isStarted = true;
-      _quizStartTime = DateTime.now();
+      _quizStartTime = now;
     });
+    _attemptId = ActivityEventService.createEventId();
+    _questionStopwatch
+      ..reset()
+      ..start();
+    _quizStopwatch
+      ..reset()
+      ..start();
+    final userId =
+        Provider.of<CourseProvider>(context, listen: false).currentUser?.id;
+    if (userId != null) {
+      unawaited(
+        _recordActivity(() {
+          return _activityEvents.recordQuizAttemptStarted(
+            userId: userId,
+            attemptId: _attemptId!,
+            quizId: widget.questionSet.id,
+            quizType: 'pre_quiz',
+            questionCount: widget.questionSet.questions.length,
+          );
+        }),
+      );
+    }
   }
 
   void _finishPreQuiz() async {
     if (_isFinishing || widget.questionSet.questions.isEmpty) return;
 
+    final endTime = DateTime.now();
+    _recordQuestionVisit();
+    _questionStopwatch.stop();
+    _quizStopwatch.stop();
     setState(() {
       _isFinishing = true;
-      _quizEndTime = DateTime.now();
+      _quizEndTime = endTime;
     });
 
     int correctAnswers = 0;
@@ -91,6 +150,25 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
 
     int totalQuestions = widget.questionSet.questions.length;
     int scorePercentage = ((correctAnswers / totalQuestions) * 100).round();
+
+    final userId =
+        Provider.of<CourseProvider>(context, listen: false).currentUser?.id;
+    if (userId != null && _attemptId != null) {
+      await _recordActivity(() {
+        return _activityEvents.recordQuizAttemptCompleted(
+          userId: userId,
+          attemptId: _attemptId!,
+          quizId: widget.questionSet.id,
+          quizType: 'pre_quiz',
+          correctAnswers: correctAnswers,
+          totalQuestions: totalQuestions,
+          activeDurationMs: _quizStopwatch.elapsedMilliseconds,
+          startedAt: _quizStartTime,
+          completedAt: _quizEndTime,
+          questionResults: _buildQuestionResults(),
+        );
+      });
+    }
 
     // Save quiz progress
     try {
@@ -150,11 +228,43 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
     return true;
   }
 
+  List<Map<String, dynamic>> _buildQuestionResults() {
+    return List.generate(widget.questionSet.questions.length, (index) {
+      final question = widget.questionSet.questions[index];
+      return {
+        'question_index': index,
+        'question_id': question.id,
+        'response': userAnswers[index],
+        'is_correct': _isAnswerCorrect(index),
+        'duration_ms': _questionDurationsMs[index],
+      };
+    });
+  }
+
+  void _recordQuestionVisit() {
+    if (!isStarted) return;
+    _questionDurationsMs[currentQuestionIndex] +=
+        _questionStopwatch.elapsedMilliseconds;
+    _questionStopwatch.reset();
+    if (_isAppForeground && !_isFinishing) {
+      _questionStopwatch.start();
+    }
+  }
+
+  Future<void> _recordActivity(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (error) {
+      debugPrint('Pre-quiz activity logging failed: $error');
+    }
+  }
+
   void _nextQuestion() {
     if (_isFinishing || widget.questionSet.questions.isEmpty) return;
 
     _ttsService.stop(); // Stop TTS when changing questions
     if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
+      _recordQuestionVisit();
       setState(() {
         currentQuestionIndex++;
       });
@@ -166,10 +276,80 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   void _previousQuestion() {
     _ttsService.stop(); // Stop TTS when changing questions
     if (currentQuestionIndex > 0) {
+      _recordQuestionVisit();
       setState(() {
         currentQuestionIndex--;
       });
     }
+  }
+
+  void _jumpToPage(int index) {
+    _ttsService.stop();
+    if (index < 0 || index >= widget.questionSet.questions.length) return;
+
+    _recordQuestionVisit();
+    setState(() {
+      currentQuestionIndex = index;
+      _showTableOfContents = false;
+    });
+  }
+
+  Widget _buildTableOfContents() {
+    final theme = Theme.of(context);
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      itemCount: widget.questionSet.questions.length,
+      itemBuilder: (context, index) {
+        final isAnswered = userAnswers[index].isNotEmpty;
+        return ListTile(
+          leading: FaIcon(
+            isAnswered
+                ? FontAwesomeIcons.solidCircleCheck
+                : FontAwesomeIcons.circle,
+            color:
+                isAnswered
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.outline,
+          ),
+          title: Text(
+            'Question ${index + 1}',
+            style:
+                index == currentQuestionIndex
+                    ? theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    )
+                    : theme.textTheme.bodyMedium,
+          ),
+          onTap: () => _jumpToPage(index),
+        );
+      },
+    );
+  }
+
+  Widget _buildStarterDetailRow({
+    required IconData icon,
+    required String text,
+    required ThemeData theme,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: FaIcon(icon, size: 22, color: theme.colorScheme.onSurface),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodySmall?.copyWith(
+              height: 1.35,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildNavigationBar() {
@@ -227,56 +407,151 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
 
-    AppBar appBar = AppBar(centerTitle: true, title: Text('Pre-Quiz'));
+    AppBar appBar = AppBar(
+      centerTitle: true,
+      title: const Text('Survey'),
+      actions:
+          isStarted
+              ? [
+                IconButton(
+                  tooltip:
+                      _showTableOfContents
+                          ? 'Close table of contents'
+                          : 'Open table of contents',
+                  icon:
+                      _showTableOfContents
+                          ? const Icon(Icons.close)
+                          : const FaIcon(FontAwesomeIcons.list),
+                  onPressed: () {
+                    setState(() {
+                      _showTableOfContents = !_showTableOfContents;
+                    });
+                  },
+                ),
+              ]
+              : null,
+    );
 
     if (!isStarted) {
+      final totalQuestions = widget.questionSet.questions.length;
       return Scaffold(
         appBar: appBar,
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(30, 25, 30, 12),
+            padding: const EdgeInsets.fromLTRB(30, 20, 30, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.questionSet.title,
-                  style: theme.textTheme.titleMedium,
-                ),
-                const SizedBox(height: 15),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.25),
                     ),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Text(
-                              '${widget.questionSet.questions.length} questions',
-                              style: theme.textTheme.bodySmall,
-                            ),
-                          ],
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colorScheme.shadow.withValues(alpha: 0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.questionSet.title,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '$totalQuestions Multiple Choice Questions',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      if (widget.questionSet.description.trim().isNotEmpty) ...[
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                widget.questionSet.description,
-                                style: theme.textTheme.bodySmall,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          widget.questionSet.description,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Details',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.green.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.green),
+                  ),
+                  child: Text(
+                    'Give each question your best guess',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      height: 1.35,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                 ),
+                const SizedBox(height: 20),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildStarterDetailRow(
+                        icon: FontAwesomeIcons.listUl,
+                        text:
+                            'Use the table of contents to return to previous questions',
+                        theme: theme,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildStarterDetailRow(
+                        icon: FontAwesomeIcons.volumeHigh,
+                        text:
+                            'Use the audio feature to listen to questions instead of reading',
+                        theme: theme,
+                      ),
+                    ],
+                  ),
+                ),
                 if (widget.questionSet.questions.isEmpty) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   Text(
                     'This quiz has no available questions. Please try again later.',
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -300,6 +575,12 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
                         : () {
                           _startPreQuiz();
                         },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
                 child: Text(
                   'Start'.toUpperCase(),
                   style: TextStyle(
@@ -329,57 +610,73 @@ class _PreQuizScreenState extends State<PreQuizScreen> {
           ),
 
           Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-              child: Column(
-                children: [
-                  // Voice button for read aloud (spacing matches image-at-top layout)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: VoiceButton(
-                      text: _buildQuestionTextForTTS(currentQuestionIndex),
-                      pageIndex: currentQuestionIndex,
-                      size: 35,
-                      onStateChanged: () {
-                        setState(() {
-                          // Trigger rebuild to update UI state
-                        });
-                      },
-                      margin: EdgeInsets.zero,
-                    ),
-                  ),
-                  // Question widget
-                  Expanded(
-                    child: QuestionWidget(
-                      key: ValueKey(
-                        widget.questionSet.questions[currentQuestionIndex].id,
+            child:
+                _showTableOfContents
+                    ? _buildTableOfContents()
+                    : Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 30,
+                        vertical: 10,
                       ),
-                      question:
-                          widget.questionSet.questions[currentQuestionIndex],
-                      selectedAnswers: userAnswers[currentQuestionIndex],
-                      onAnswerChanged: (answers) {
-                        setState(() {
-                          userAnswers[currentQuestionIndex] = answers;
-                        });
-                      },
-                      showCorrectAnswer: widget.questionSet.showCorrectAnswers,
-                      showExplanation: widget.questionSet.showExplanations,
-                      isResponseLocked: false,
+                      child: Column(
+                        children: [
+                          // Voice button for read aloud (spacing matches image-at-top layout)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: VoiceButton(
+                              text: _buildQuestionTextForTTS(
+                                currentQuestionIndex,
+                              ),
+                              pageIndex: currentQuestionIndex,
+                              size: 35,
+                              onStateChanged: () {
+                                setState(() {
+                                  // Trigger rebuild to update UI state
+                                });
+                              },
+                              margin: EdgeInsets.zero,
+                            ),
+                          ),
+                          // Question widget
+                          Expanded(
+                            child: QuestionWidget(
+                              key: ValueKey(
+                                widget
+                                    .questionSet
+                                    .questions[currentQuestionIndex]
+                                    .id,
+                              ),
+                              question:
+                                  widget
+                                      .questionSet
+                                      .questions[currentQuestionIndex],
+                              selectedAnswers:
+                                  userAnswers[currentQuestionIndex],
+                              onAnswerChanged: (answers) {
+                                setState(() {
+                                  userAnswers[currentQuestionIndex] = answers;
+                                });
+                              },
+                              showCorrectAnswer:
+                                  widget.questionSet.showCorrectAnswers,
+                              showExplanation: false,
+                              isResponseLocked: false,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+          ),
+
+          if (!_showTableOfContents)
+            TtsProgressBar(
+              ttsService: _ttsService,
+              cleanText: TtsService.cleanTextForProgress(
+                _buildQuestionTextForTTS(currentQuestionIndex),
               ),
             ),
-          ),
 
-          TtsProgressBar(
-            ttsService: _ttsService,
-            cleanText: TtsService.cleanTextForProgress(
-              _buildQuestionTextForTTS(currentQuestionIndex),
-            ),
-          ),
-
-          _buildNavigationBar(),
+          if (!_showTableOfContents) _buildNavigationBar(),
         ],
       ),
     );

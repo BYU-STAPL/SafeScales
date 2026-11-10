@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class WelcomeScreens extends StatefulWidget {
   final VoidCallback onComplete;
 
-  const WelcomeScreens({Key? key, required this.onComplete}) : super(key: key);
+  const WelcomeScreens({super.key, required this.onComplete});
 
   @override
   State<WelcomeScreens> createState() => _WelcomeScreensState();
@@ -15,26 +15,26 @@ class _WelcomeScreensState extends State<WelcomeScreens> {
 
   final List<WelcomeScreenData> _screens = [
     WelcomeScreenData(
-      title: "Welcome to LearnQuest!",
-      description: "Transform your learning journey into an exciting adventure. Complete lessons, earn rewards, and level up your knowledge!",
+      title: "Welcome to SafeScales",
+      description: "Build strong social media literacy through focused lessons, guided practice, and clear feedback.",
       icon: Icons.school_outlined,
       color: Colors.blue,
     ),
     WelcomeScreenData(
-      title: "Learn Through Play",
-      description: "Every lesson you complete unlocks new challenges and rewards. The more you learn, the more you achieve!",
-      icon: Icons.games_outlined,
+      title: "Structured Learning",
+      description: "Work through lessons in sequence and practice with targeted review sets for each topic.",
+      icon: Icons.menu_book_outlined,
       color: Colors.green,
     ),
     WelcomeScreenData(
       title: "Track Your Progress",
-      description: "Watch your knowledge grow with detailed progress tracking, streaks, and achievements. Celebrate every milestone!",
+      description: "See your completion status and identify areas that need more practice.",
       icon: Icons.trending_up_outlined,
       color: Colors.orange,
     ),
     WelcomeScreenData(
       title: "Ready to Start?",
-      description: "Your learning adventure begins now. Let's dive into your first lesson and start earning those rewards!",
+      description: "Start your first lesson and begin building confidence through questions and answers.",
       icon: Icons.rocket_launch_outlined,
       color: Colors.purple,
     ),
@@ -191,7 +191,7 @@ class _WelcomeScreensState extends State<WelcomeScreens> {
 class WelcomeScreen extends StatelessWidget {
   final WelcomeScreenData data;
 
-  const WelcomeScreen({Key? key, required this.data}) : super(key: key);
+  const WelcomeScreen({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -247,9 +247,6 @@ class WelcomeScreen extends StatelessWidget {
 
           const SizedBox(height: 48),
 
-          // Optional: Add some visual elements for gamification
-          if (data.icon == Icons.games_outlined)
-            _buildGameElements(),
           if (data.icon == Icons.trending_up_outlined)
             _buildProgressElements(),
         ],
@@ -257,24 +254,13 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGameElements() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildMiniCard(Icons.star, "Earn Stars", Colors.amber),
-        _buildMiniCard(Icons.military_tech, "Unlock Badges", Colors.orange),
-        _buildMiniCard(Icons.emoji_events, "Win Trophies", Colors.yellow),
-      ],
-    );
-  }
-
   Widget _buildProgressElements() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildMiniCard(Icons.local_fire_department, "Daily Streaks", Colors.red),
-        _buildMiniCard(Icons.bar_chart, "Progress Charts", Colors.blue),
-        _buildMiniCard(Icons.grade, "Achievement Level", Colors.green),
+        _buildMiniCard(Icons.checklist, "Lesson Completion", Colors.blue),
+        _buildMiniCard(Icons.bar_chart, "Progress Tracking", Colors.green),
+        _buildMiniCard(Icons.quiz, "Review Performance", Colors.orange),
       ],
     );
   }
@@ -325,6 +311,8 @@ class WelcomeScreenData {
 
 // Example usage in your main app:
 class MainApp extends StatefulWidget {
+  const MainApp({super.key});
+
   @override
   State<MainApp> createState() => _MainAppState();
 }
@@ -335,7 +323,7 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LearnQuest',
+      title: 'SafeScales',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -356,10 +344,12 @@ class _MainAppState extends State<MainApp> {
 
 // Placeholder for your main app screen
 class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('LearnQuest - Home')),
+      appBar: AppBar(title: Text('SafeScales - Home')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

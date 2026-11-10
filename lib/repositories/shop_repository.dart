@@ -1,4 +1,5 @@
 import 'package:safe_scales/config/supabase_config.dart';
+import 'package:safe_scales/services/activity_event_service.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,14 +9,15 @@ class ShopRepository {
   final SupabaseClient _supabase;
 
   final _userState = UserStateService();
+  late final ActivityEventService _activityEvents;
   final CourseRepository _courseRepository = CourseRepository();
 
   ShopRepository({SupabaseClient? supabase})
-      : _supabase = supabase ?? SupabaseConfig.client;
-
+    : _supabase = supabase ?? SupabaseConfig.client {
+    _activityEvents = ActivityEventService(supabase: _supabase);
+  }
 
   // ---------------- CREATE ----------------
-
 
   // ---------------- READ ----------------
 
@@ -47,12 +49,12 @@ class ShopRepository {
           .where((asset) => asset['type'] == 'accessory')
           .map(
             (asset) => {
-          ...asset,
-          'image_url':
-          asset['imageUrl'], // Map imageUrl to image_url for compatibility
-          'cost': 1, // Default cost
-        },
-      )
+              ...asset,
+              'image_url':
+                  asset['imageUrl'], // Map imageUrl to image_url for compatibility
+              'cost': 1, // Default cost
+            },
+          )
           .toList();
     } catch (e) {
       print('❌Error fetching accessories: $e');
@@ -68,12 +70,12 @@ class ShopRepository {
           .where((asset) => asset['type'] == 'environment')
           .map(
             (asset) => {
-          ...asset,
-          'image_url':
-          asset['imageUrl'], // Map imageUrl to image_url for compatibility
-          'cost': 1, // Default cost
-        },
-      )
+              ...asset,
+              'image_url':
+                  asset['imageUrl'], // Map imageUrl to image_url for compatibility
+              'cost': 1, // Default cost
+            },
+          )
           .toList();
     } catch (e) {
       print('❌Error fetching environments: $e');
@@ -84,18 +86,18 @@ class ShopRepository {
   Future<List<String>> getUserAcquiredAccessories(String userId) async {
     try {
       final response =
-      await _supabase
-          .from('Users')
-          .select('acquired_accessories')
-          .eq('id', userId)
-          .single();
+          await _supabase
+              .from('Users')
+              .select('acquired_accessories')
+              .eq('id', userId)
+              .single();
 
       // Handle both Map and List formats
       List<dynamic> acquiredAccessories;
       if (response['acquired_accessories'] is Map) {
         // If it's a Map, convert it to a List of IDs
         final Map<String, dynamic> accessoriesMap =
-        response['acquired_accessories'];
+            response['acquired_accessories'];
         acquiredAccessories = accessoriesMap.values.toList();
       } else {
         // If it's already a List, use it directly
@@ -112,18 +114,18 @@ class ShopRepository {
   Future<List<String>> getUserAcquiredEnvironments(String userId) async {
     try {
       final response =
-      await _supabase
-          .from('Users')
-          .select('acquired_environments')
-          .eq('id', userId)
-          .single();
+          await _supabase
+              .from('Users')
+              .select('acquired_environments')
+              .eq('id', userId)
+              .single();
 
       // Handle both Map and List formats
       List<dynamic> acquiredEnvironments;
       if (response['acquired_environments'] is Map) {
         // If it's a Map, convert it to a List of IDs
         final Map<String, dynamic> environmentsMap =
-        response['acquired_environments'];
+            response['acquired_environments'];
         acquiredEnvironments = environmentsMap.values.toList();
       } else {
         // If it's already a List, use it directly
@@ -143,18 +145,18 @@ class ShopRepository {
     try {
       // First get the current user's acquired accessories
       final userResponse =
-      await _supabase
-          .from('Users')
-          .select('acquired_accessories')
-          .eq('id', userId)
-          .single();
+          await _supabase
+              .from('Users')
+              .select('acquired_accessories')
+              .eq('id', userId)
+              .single();
 
       // Handle both Map and List formats
       List<dynamic> acquiredAccessories;
       if (userResponse['acquired_accessories'] is Map) {
         // If it's a Map, convert it to a List of IDs
         final Map<String, dynamic> accessoriesMap =
-        userResponse['acquired_accessories'];
+            userResponse['acquired_accessories'];
         acquiredAccessories = accessoriesMap.values.toList();
       } else {
         // If it's already a List, use it directly
@@ -175,6 +177,13 @@ class ShopRepository {
           .update({'acquired_accessories': acquiredAccessories})
           .eq('id', userId);
 
+      await _activityEvents.recordBestEffort(
+        userId: userId,
+        eventType: 'item_unlocked',
+        contextType: 'item',
+        contextId: accessoryId,
+        details: {'item_type': 'accessory', 'unlock_method': 'shop_purchase'},
+      );
       return true;
     } catch (e) {
       print('❌Error purchasing accessory: $e');
@@ -186,18 +195,18 @@ class ShopRepository {
     try {
       // First get the current user's acquired environments
       final userResponse =
-      await _supabase
-          .from('Users')
-          .select('acquired_environments')
-          .eq('id', userId)
-          .single();
+          await _supabase
+              .from('Users')
+              .select('acquired_environments')
+              .eq('id', userId)
+              .single();
 
       // Handle both Map and List formats
       List<dynamic> acquiredEnvironments;
       if (userResponse['acquired_environments'] is Map) {
         // If it's a Map, convert it to a List of IDs
         final Map<String, dynamic> environmentsMap =
-        userResponse['acquired_environments'];
+            userResponse['acquired_environments'];
         acquiredEnvironments = environmentsMap.values.toList();
       } else {
         // If it's already a List, use it directly
@@ -218,6 +227,13 @@ class ShopRepository {
           .update({'acquired_environments': acquiredEnvironments})
           .eq('id', userId);
 
+      await _activityEvents.recordBestEffort(
+        userId: userId,
+        eventType: 'habitat_unlocked',
+        contextType: 'habitat',
+        contextId: environmentId,
+        details: {'unlock_method': 'shop_purchase'},
+      );
       return true;
     } catch (e) {
       print('❌Error purchasing environment: $e');
@@ -225,8 +241,5 @@ class ShopRepository {
     }
   }
 
-
   // ---------------- DELETE ----------------
-
-
 }

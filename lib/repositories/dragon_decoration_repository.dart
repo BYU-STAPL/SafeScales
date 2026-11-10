@@ -1,11 +1,15 @@
 import 'package:safe_scales/config/supabase_config.dart';
+import 'package:safe_scales/services/activity_event_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DragonDecorationRepository {
   final SupabaseClient _supabase;
+  late final ActivityEventService _activityEvents;
 
   DragonDecorationRepository({SupabaseClient? supabase})
-    : _supabase = supabase ?? SupabaseConfig.client;
+    : _supabase = supabase ?? SupabaseConfig.client {
+    _activityEvents = ActivityEventService(supabase: _supabase);
+  }
 
   // ---------------- CREATE ----------------
 
@@ -92,20 +96,34 @@ class DragonDecorationRepository {
               .eq('id', userId)
               .single();
 
-      if (response['dragon_environments'] == null) {
-        response['dragon_environments'] = {};
-      }
+      final rawSelections = response['dragon_environments'];
+      final selections =
+          rawSelections is Map
+              ? Map<String, dynamic>.from(rawSelections)
+              : <String, dynamic>{};
+      final previousEnvironment = selections[dragonId]?.toString();
 
       if (environmentId == "") {
-        response['dragon_environments'][dragonId] = null;
+        selections[dragonId] = null;
       } else {
-        response['dragon_environments'][dragonId] = environmentId;
+        selections[dragonId] = environmentId;
       }
 
       await _supabase
           .from('Users')
-          .update({'dragon_environments': response['dragon_environments']})
+          .update({'dragon_environments': selections})
           .eq('id', userId);
+
+      await _activityEvents.recordBestEffort(
+        userId: userId,
+        eventType: environmentId.isEmpty ? 'habitat_reset' : 'habitat_changed',
+        contextType: 'dragon',
+        contextId: dragonId,
+        details: {
+          'previous_habitat_id': previousEnvironment,
+          'habitat_id': environmentId.isEmpty ? null : environmentId,
+        },
+      );
     } catch (e) {
       throw DragonDecorationRepositoryException(
         'Failed to update environment for $userId: $e',
@@ -132,6 +150,14 @@ class DragonDecorationRepository {
           userResponse['dragon_dressup'] != null
               ? Map<String, dynamic>.from(userResponse['dragon_dressup'])
               : <String, dynamic>{};
+      final previousAccessoryIds =
+          dressUpData[dragonId] is Map
+              ? Map<String, dynamic>.from(dressUpData[dragonId]).keys.toList()
+              : <String>[];
+      final currentAccessoryIds = accessoriesData.keys.toList();
+      final accessorySetChanged =
+          previousAccessoryIds.length != currentAccessoryIds.length ||
+          !previousAccessoryIds.every(accessoriesData.containsKey);
 
       // Update data for this dragon
       dressUpData[dragonId] = accessoriesData;
@@ -141,6 +167,23 @@ class DragonDecorationRepository {
           .from('Users')
           .update({'dragon_dressup': dressUpData})
           .eq('id', userId);
+
+      if (accessorySetChanged) {
+        await _activityEvents.recordBestEffort(
+          userId: userId,
+          eventType:
+              accessoriesData.isEmpty
+                  ? 'habitat_decorations_reset'
+                  : 'dragon_decorations_changed',
+          contextType: 'dragon',
+          contextId: dragonId,
+          details: {
+            'previous_accessory_ids': previousAccessoryIds,
+            'accessory_ids': currentAccessoryIds,
+            'decoration_count': accessoriesData.length,
+          },
+        );
+      }
 
       return true;
     } catch (e) {
@@ -169,6 +212,10 @@ class DragonDecorationRepository {
           userResponse['dragon_dressup'] != null
               ? Map<String, dynamic>.from(userResponse['dragon_dressup'])
               : <String, dynamic>{};
+      final previousAccessoryIds =
+          dressUpData[dragonId] is Map
+              ? Map<String, dynamic>.from(dressUpData[dragonId]).keys.toList()
+              : <String>[];
 
       // Keep an empty record so a user's explicit clear is not mistaken for
       // a dragon that has never had a decoration selection.
@@ -179,6 +226,17 @@ class DragonDecorationRepository {
           .from('Users')
           .update({'dragon_dressup': dressUpData})
           .eq('id', userId);
+
+      await _activityEvents.recordBestEffort(
+        userId: userId,
+        eventType: 'habitat_decorations_reset',
+        contextType: 'dragon',
+        contextId: dragonId,
+        details: {
+          'previous_accessory_ids': previousAccessoryIds,
+          'decoration_count': 0,
+        },
+      );
 
       return true;
     } catch (e) {

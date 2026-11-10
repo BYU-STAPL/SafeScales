@@ -174,6 +174,7 @@ class _ShopScreenState extends State<ShopScreen> {
             builder:
                 (context) => ReviewScreen(
                   questionSet: questionSet,
+                  lessonId: lessonId,
                   image: selectedItem?.imageUrl,
                   needToShowShop: false,
                 ),
@@ -182,6 +183,13 @@ class _ShopScreenState extends State<ShopScreen> {
       }
 
       // ReviewScreen returns true on completion
+      if (result == true) {
+        try {
+          await courseProvider.loadReviewSetCompletionCount(lessonId);
+        } catch (error) {
+          debugPrint('Failed to refresh review-set progress: $error');
+        }
+      }
       return result == true;
     } catch (e) {
       debugPrint('Error starting review set: $e');
@@ -423,7 +431,6 @@ class _ShopScreenState extends State<ShopScreen> {
             ShopItemCard(
               image: items[i].imageUrl,
               name: items[i].name,
-              cost: items[i].cost.toString() ?? '1',
               highlight: highlight,
               onTap: () {
                 setState(() {

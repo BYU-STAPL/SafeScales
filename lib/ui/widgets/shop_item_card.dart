@@ -6,7 +6,6 @@ import '../../themes/app_theme.dart';
 class ShopItemCard extends StatelessWidget {
   final String? image;
   final String name;
-  final String cost;
   final bool isSelected;
   final Color highlight;
   final VoidCallback onTap;
@@ -14,7 +13,6 @@ class ShopItemCard extends StatelessWidget {
   const ShopItemCard({
     this.image,
     required this.name,
-    required this.cost,
     required this.isSelected,
     required this.highlight,
     required this.onTap,
@@ -24,8 +22,6 @@ class ShopItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
 
-    Color green = theme.colorScheme.secondary;
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -34,10 +30,12 @@ class ShopItemCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color:
-            isSelected ? highlight : theme.colorScheme.surfaceContainerHigh,
+                isSelected ? highlight : theme.colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2,), //isOwned ? green : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2,),
+              color: theme.colorScheme.onSurfaceVariant.withValues(
+                alpha: 0.2,
+              ), //isOwned ? green : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2,),
               width: 1.2, //isOwned ? 2 : 1.2,
             ),
             boxShadow: [
@@ -57,35 +55,35 @@ class ShopItemCard extends StatelessWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child:
-                    image != null
-                        ? Image.network(
-                      image!,
-                      width: 60 * AppTheme.fontSizeScale,
-                      height: 60 * AppTheme.fontSizeScale,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 60 * AppTheme.fontSizeScale,
-                          height: 60 * AppTheme.fontSizeScale,
-                          color: theme.colorScheme.surface,
-                          child: Icon(
-                            Icons.shopping_bag,
-                            size: 32 * AppTheme.fontSizeScale,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        );
-                      },
-                    )
-                        : Container(
-                      width: 60 * AppTheme.fontSizeScale,
-                      height: 60 * AppTheme.fontSizeScale,
-                      color: theme.colorScheme.surface,
-                      child: Icon(
-                        Icons.shopping_bag,
-                        size: 32 * AppTheme.fontSizeScale,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
+                        image != null
+                            ? Image.network(
+                              image!,
+                              width: 60 * AppTheme.fontSizeScale,
+                              height: 60 * AppTheme.fontSizeScale,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 60 * AppTheme.fontSizeScale,
+                                  height: 60 * AppTheme.fontSizeScale,
+                                  color: theme.colorScheme.surface,
+                                  child: Icon(
+                                    Icons.shopping_bag,
+                                    size: 32 * AppTheme.fontSizeScale,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                );
+                              },
+                            )
+                            : Container(
+                              width: 60 * AppTheme.fontSizeScale,
+                              height: 60 * AppTheme.fontSizeScale,
+                              color: theme.colorScheme.surface,
+                              child: Icon(
+                                Icons.shopping_bag,
+                                size: 32 * AppTheme.fontSizeScale,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
                   ),
                 ],
               ),
@@ -93,18 +91,11 @@ class ShopItemCard extends StatelessWidget {
               Text(
                 name.toTitleCase(),
                 style: theme.textTheme.headlineSmall?.copyWith(
-                  fontSize: 15 * AppTheme.fontSizeScale,
+                  fontSize: 13 * AppTheme.fontSizeScale,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Cost: $cost review set', //isOwned ? 'OWNED'.toUpperCase() : 'Cost: $cost review set',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant, //isOwned ? green : theme.colorScheme.onSurfaceVariant,
-                ),
               ),
             ],
           ),

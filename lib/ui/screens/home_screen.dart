@@ -53,9 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actionType: ActionType.review,
         title: 'Head over to the Shop',
         progress: 100,
-        onTap: () {
-          widget.onNavigateToShop();
-        },
+        onTap: widget.onNavigateToShop,
       );
     } else if (courseProvider.lessonOrder.isNotEmpty) {
       return LearningActionWidget(
@@ -105,10 +103,11 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => PreQuizScreen(
-            moduleId: lesson.lessonId,
-            questionSet: lesson.preQuiz,
-          ),
+          builder:
+              (context) => PreQuizScreen(
+                moduleId: lesson.lessonId,
+                questionSet: lesson.preQuiz,
+              ),
         ),
       ).then((_) => onReturn());
     }

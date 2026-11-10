@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:safe_scales/ui/widgets/dragon_image_widget.dart';
 
 class ReadingResultScreen extends StatefulWidget {
   const ReadingResultScreen({super.key, required this.modeuleId});
@@ -34,10 +33,9 @@ class _ReadingResultScreenState extends State<ReadingResultScreen> {
         backgroundColor: Colors.transparent,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 25),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 25),
           child: Column(
-            // mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 'Great job completing the reading!',
@@ -50,30 +48,28 @@ class _ReadingResultScreenState extends State<ReadingResultScreen> {
               SizedBox(height: 30),
 
               Text(
-                'Your new dragon is now a teenage dragon!',
+                'Reading complete. You are ready for the post-quiz.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyLarge,
               ),
 
               SizedBox(height: 30),
 
-              DragonImageWidget(
-                moduleId: widget.modeuleId,
-                phase: 'stage2',
-                size: 300,
+              Icon(
+                Icons.menu_book_outlined,
+                size: 180,
+                color: theme.colorScheme.secondary,
               ),
 
               SizedBox(height: 30),
 
               Text(
-                'Complete the Post-Quiz with a passing score for your dragon to become a full adult.',
+                'Complete the post-quiz to finish this module.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium,
               ),
 
-              SizedBox(height: 30),
-
-              Spacer(),
+              SizedBox(height: 24),
 
               SizedBox(
                 width: double.infinity,

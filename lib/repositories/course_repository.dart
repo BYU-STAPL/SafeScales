@@ -10,27 +10,36 @@ class CourseRepository {
   CourseRepository({SupabaseClient? supabase})
     : _supabase = supabase ?? SupabaseConfig.client;
 
-
   // ---------------- CREATE ----------------
 
-
   /// Save Quiz Attempt
-  Future<void> saveQuizAttempt({required String userId, required String quizId, required ActivityType quizType, required List<List<int>> answers, required int correctAnswers, required int totalQuestions, required DateTime startTime, required DateTime endTime,}) async {
+  Future<void> saveQuizAttempt({
+    required String userId,
+    required String quizId,
+    required ActivityType quizType,
+    required List<List<int>> answers,
+    required int correctAnswers,
+    required int totalQuestions,
+    required DateTime startTime,
+    required DateTime endTime,
+  }) async {
     try {
-
       if (quizType == ActivityType.postQuiz) {
-
         // Prep data
         final attemptData = {
           'user_id': userId,
           'quiz_id': quizId,
-          'lesson_id': quizId.split('_')[0], // Quiz id is just the lesson_id + preQuiz or postQuiz at end
+          'lesson_id':
+              quizId.split(
+                '_',
+              )[0], // Quiz id is just the lesson_id + preQuiz or postQuiz at end
           'quiz_type': 'post_quiz'.toLowerCase(),
-          'question_responses': answers, // Supabase will automatically convert to JSON
+          'question_responses':
+              answers, // Supabase will automatically convert to JSON
           'num_correct_answers': correctAnswers,
           'total_questions': totalQuestions,
           'started_at': startTime.toIso8601String(),
-          'completed_at': DateTime.now().toIso8601String(),
+          'completed_at': endTime.toIso8601String(),
           // created_at will be auto-generated if you have a default value
         };
 
@@ -40,9 +49,7 @@ class CourseRepository {
             .insert(attemptData)
             .select('id') // Return the ID of the created record
             .single();
-
-      }
-      else if (quizType == ActivityType.preQuiz) {
+      } else if (quizType == ActivityType.preQuiz) {
         // Check if an attempt for this pre-quiz already exists
         List<dynamic> response = await _supabase
             .from('quiz_attempts')
@@ -59,13 +66,17 @@ class CourseRepository {
         final attemptData = {
           'user_id': userId,
           'quiz_id': quizId,
-          'lesson_id': quizId.split('_')[0], // Quiz id is just the lesson_id + preQuiz or postQuiz at end
+          'lesson_id':
+              quizId.split(
+                '_',
+              )[0], // Quiz id is just the lesson_id + preQuiz or postQuiz at end
           'quiz_type': 'pre_quiz'.toLowerCase(),
-          'question_responses': answers, // Supabase will automatically convert to JSON
+          'question_responses':
+              answers, // Supabase will automatically convert to JSON
           'num_correct_answers': correctAnswers,
           'total_questions': totalQuestions,
           'started_at': startTime.toIso8601String(),
-          'completed_at': DateTime.now().toIso8601String(),
+          'completed_at': endTime.toIso8601String(),
         };
 
         // Insert into database
@@ -74,31 +85,29 @@ class CourseRepository {
             .insert(attemptData)
             .select('id') // Return the ID of the created record
             .single();
-      }
-      else {
+      } else {
         throw Exception('Missing pre_quiz or post_quiz type');
       }
-
-
     } catch (e) {
-      throw Exception('CourseRepository SaveQuizAttempt(): Failed to save quiz progress: $e');
+      throw Exception(
+        'CourseRepository SaveQuizAttempt(): Failed to save quiz progress: $e',
+      );
     }
   }
 
-
   // ---------------- READ ----------------
-
 
   // === User Class Operations ===
 
   /// Get the class that a user is enrolled in
   Future<Map<String, dynamic>?> getUserClass(String userId) async {
     try {
-      final userResponse = await _supabase
-          .from('Users')
-          .select('joined_classes')
-          .eq('id', userId)
-          .single();
+      final userResponse =
+          await _supabase
+              .from('Users')
+              .select('joined_classes')
+              .eq('id', userId)
+              .single();
 
       if (userResponse['joined_classes'] == null ||
           (userResponse['joined_classes'] as List).isEmpty) {
@@ -106,7 +115,7 @@ class CourseRepository {
       }
 
       final classId = (userResponse['joined_classes'] as List).first;
-      
+
       try {
         final classResponse =
             await _supabase.from('classes').select().eq('id', classId).single();
@@ -114,23 +123,29 @@ class CourseRepository {
       } catch (e) {
         // Check if the error is because the class doesn't exist (deleted class)
         final errorString = e.toString();
-        if (errorString.contains('PGRST116') || 
+        if (errorString.contains('PGRST116') ||
             errorString.contains('The result contains 0 rows') ||
             errorString.contains('multiple (or no) rows returned')) {
           // Class was deleted - remove it from user's joined_classes
-          print('⚠️ Class $classId was deleted, removing from user\'s joined classes');
-          
-          final joinedClasses = List<String>.from(userResponse['joined_classes'] as List);
+          print(
+            '⚠️ Class $classId was deleted, removing from user\'s joined classes',
+          );
+
+          final joinedClasses = List<String>.from(
+            userResponse['joined_classes'] as List,
+          );
           joinedClasses.remove(classId);
-          
+
           // Update user's joined_classes to remove the deleted class
           await _supabase
               .from('Users')
               .update({'joined_classes': joinedClasses})
               .eq('id', userId);
-          
+
           // Throw a specific exception that can be caught upstream
-          throw DeletedClassException('The class you were enrolled in has been deleted. Please join a new class.');
+          throw DeletedClassException(
+            'The class you were enrolled in has been deleted. Please join a new class.',
+          );
         }
         // Re-throw other errors
         rethrow;
@@ -148,11 +163,12 @@ class CourseRepository {
   /// Get all modules/lessons for a specific class
   Future<List<Map<String, dynamic>>> getClassModules(String classId) async {
     try {
-      final classResponse = await _supabase
-          .from('classes')
-          .select('course_modules')
-          .eq('id', classId)
-          .single();
+      final classResponse =
+          await _supabase
+              .from('classes')
+              .select('course_modules')
+              .eq('id', classId)
+              .single();
 
       if (classResponse['course_modules'] == null) {
         return [];
@@ -165,7 +181,8 @@ class CourseRepository {
           .inFilter('id', moduleIds)
           .order('created_at', ascending: true);
 
-      return List<Map<String, dynamic>>.from(modulesResponse);
+      final modules = List<Map<String, dynamic>>.from(modulesResponse);
+      return _attachReviewSets(modules);
     } catch (e) {
       throw Exception('Failed to get class modules: $e');
     }
@@ -174,11 +191,12 @@ class CourseRepository {
   /// Get lesson order for a class
   Future<List<String>> getLessonOrder(String classId) async {
     try {
-      final classResponse = await _supabase
-          .from('classes')
-          .select('course_modules')
-          .eq('id', classId)
-          .single();
+      final classResponse =
+          await _supabase
+              .from('classes')
+              .select('course_modules')
+              .eq('id', classId)
+              .single();
 
       if (classResponse['course_modules'] == null) {
         return [];
@@ -202,26 +220,50 @@ class CourseRepository {
   /// Get a specific module by ID
   Future<Map<String, dynamic>?> getModuleById(String moduleId) async {
     try {
-      final moduleResponse = await _supabase
-          .from('modules')
-          .select()
-          .eq('id', moduleId)
-          .single();
+      final moduleResponse =
+          await _supabase.from('modules').select().eq('id', moduleId).single();
 
-      return Map<String, dynamic>.from(moduleResponse);
+      final modules = await _attachReviewSets([
+        Map<String, dynamic>.from(moduleResponse),
+      ]);
+      return modules.single;
     } catch (e) {
       throw Exception('Failed to get module: $e');
     }
   }
 
+  Future<List<Map<String, dynamic>>> _attachReviewSets(
+    List<Map<String, dynamic>> modules,
+  ) async {
+    if (modules.isEmpty) return modules;
+
+    final moduleIds = modules.map((module) => module['id'].toString()).toList();
+    final reviewSets = await _supabase
+        .from('review_sets')
+        .select('module_id, questions')
+        .inFilter('module_id', moduleIds);
+    final questionsByModuleId = <String, dynamic>{
+      for (final reviewSet in reviewSets)
+        reviewSet['module_id'].toString(): reviewSet['questions'],
+    };
+
+    return modules.map((module) {
+      return {
+        ...module,
+        'review_set_questions': questionsByModuleId[module['id'].toString()],
+      };
+    }).toList();
+  }
+
   /// Get class assets
   Future<List<dynamic>?> getClassAssets(String classId) async {
     try {
-      final classResponse = await _supabase
-          .from('classes')
-          .select('assets')
-          .eq('id', classId)
-          .single();
+      final classResponse =
+          await _supabase
+              .from('classes')
+              .select('assets')
+              .eq('id', classId)
+              .single();
 
       return classResponse['assets'] != null
           ? List<dynamic>.from(classResponse['assets'])
@@ -234,11 +276,12 @@ class CourseRepository {
   /// Get all user progress data
   Future<Map<String, dynamic>?> getUserReadingProgress(String userId) async {
     try {
-      final response = await _supabase
-          .from('Users')
-          .select('reading_progress')
-          .eq('id', userId)
-          .single();
+      final response =
+          await _supabase
+              .from('Users')
+              .select('reading_progress')
+              .eq('id', userId)
+              .single();
 
       return response['reading_progress'];
     } catch (e) {
@@ -257,24 +300,38 @@ class CourseRepository {
           .order('completed_at', ascending: true); // oldest first
 
       return List<Map<String, dynamic>>.from(response);
-
     } catch (e) {
       throw Exception('Failed to fetch quiz attempts: $e');
     }
   }
 
+  /// Get the number of completed review sets for one lesson.
+  Future<int> getCompletedReviewSetCount(String userId, String lessonId) async {
+    try {
+      return await _supabase
+          .from('activity_events')
+          .count()
+          .eq('user_id', userId)
+          .eq('event_type', 'review_set_completed')
+          .eq('context_type', 'review_set')
+          .eq('context_id', 'rev_$lessonId')
+          .contains('details', {'lesson_id': lessonId});
+    } catch (e) {
+      throw Exception('Failed to get completed review set count: $e');
+    }
+  }
 
   // ---------------- UPDATE ----------------
-
 
   /// Save reading progress to database
   Future<void> saveReadingProgress({required String userId, required String lessonId, required Set<int> bookmarks,}) async {
     try {
-      final response = await _supabase
-          .from('Users')
-          .select('reading_progress')
-          .eq('id', userId)
-          .single();
+      final response =
+          await _supabase
+              .from('Users')
+              .select('reading_progress')
+              .eq('id', userId)
+              .single();
 
       Map<String, dynamic> readingData = {};
       if (response['reading_progress'] != null) {
@@ -287,7 +344,7 @@ class CourseRepository {
             'completed': false,
             'completed_at': null,
             'bookmarks': [],
-          }
+          },
         };
       }
 
@@ -308,13 +365,7 @@ class CourseRepository {
     }
   }
 
-
   // ---------------- DELETE ----------------
-
-
-
-
-
 }
 
 /// Exception thrown when a user's class has been deleted

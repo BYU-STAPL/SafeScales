@@ -1,9 +1,11 @@
-import 'dart:io';
+import 'dart:async';
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'package:safe_scales/services/user_state_service.dart';
+import 'package:safe_scales/services/activity_event_service.dart';
 import 'package:safe_scales/services/auth_service.dart';
 import 'package:safe_scales/ui/screens/login/selection_screen.dart';
 
@@ -11,8 +13,8 @@ import 'package:safe_scales/ui/widgets/settings_drawer.dart';
 
 import 'package:safe_scales/ui/screens/home_screen.dart';
 import 'package:safe_scales/ui/screens/dragons_screen.dart';
-import 'package:safe_scales/ui/screens/review_list/review_list_screen.dart';
 import 'package:safe_scales/ui/screens/shop_screen.dart';
+import 'package:safe_scales/ui/screens/review_list/review_list_screen.dart';
 
 /// Tab indices for main navigation. Used when navigating programmatically.
 const int kHomeTabIndex = 0;
@@ -29,31 +31,73 @@ class MainNavigation extends StatefulWidget {
   State<MainNavigation> createState() => _MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+class _MainNavigationState extends State<MainNavigation>
+    with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final _userState = UserStateService();
   final _authService = AuthService();
+  final ActivityEventService _activityEvents = ActivityEventService();
 
   int _selectedIndex = 0;
+  final Stopwatch _tabStopwatch = Stopwatch();
+  DateTime? _backgroundedAt;
 
   late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     _selectedIndex = widget.initialIndex;
+    _tabStopwatch.start();
+    unawaited(
+      _recordAppEvent(
+        eventType: 'app_session_started',
+        details: {'platform': defaultTargetPlatform.name},
+      ),
+    );
+    unawaited(_recordTabOpened(_selectedIndex));
 
     _pages = <Widget>[
-      HomeScreen(
-        onNavigateToShop: () {
-          _navigateToTab(kShopTabIndex);
-        },
-      ),
+      HomeScreen(onNavigateToShop: () => _navigateToTab(kShopTabIndex)),
       const ReviewListScreen(),
-      DragonsScreen(),
-      ShopScreen(),
+      const DragonsScreen(),
+      const ShopScreen(),
     ];
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _recordTabDuration();
+    _tabStopwatch.stop();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused && _backgroundedAt == null) {
+      final now = DateTime.now();
+      _recordTabDuration(occurredAt: now);
+      _tabStopwatch.stop();
+      _backgroundedAt = now;
+      unawaited(
+        _recordAppEvent(eventType: 'app_backgrounded', occurredAt: now),
+      );
+    } else if (state == AppLifecycleState.resumed && _backgroundedAt != null) {
+      final now = DateTime.now();
+      final awayDuration = now.difference(_backgroundedAt!).inMilliseconds;
+      _backgroundedAt = null;
+      _tabStopwatch.start();
+      unawaited(
+        _recordAppEvent(
+          eventType: 'app_resumed',
+          occurredAt: now,
+          details: {'background_duration_ms': awayDuration},
+        ),
+      );
+    }
   }
 
   String _getAppBarTitle(int index) {
@@ -72,9 +116,64 @@ class _MainNavigationState extends State<MainNavigation> {
   }
 
   void _navigateToTab(int index) {
+    _selectTab(index);
+  }
+
+  void _selectTab(int index) {
+    if (index == _selectedIndex) return;
+    _recordTabDuration();
     setState(() {
       _selectedIndex = index;
     });
+    _tabStopwatch..reset();
+    if (_backgroundedAt == null) {
+      _tabStopwatch.start();
+    }
+    unawaited(_recordTabOpened(index));
+  }
+
+  void _recordTabDuration({DateTime? occurredAt}) {
+    final durationMs = _tabStopwatch.elapsedMilliseconds;
+    if (durationMs <= 0) return;
+    _tabStopwatch
+      ..stop()
+      ..reset();
+    unawaited(
+      _recordAppEvent(
+        eventType: 'navigation_tab_duration',
+        occurredAt: occurredAt,
+        contextType: 'navigation_tab',
+        contextId: _getAppBarTitle(_selectedIndex),
+        details: {'duration_ms': durationMs},
+      ),
+    );
+  }
+
+  Future<void> _recordTabOpened(int index) {
+    return _recordAppEvent(
+      eventType: 'navigation_tab_opened',
+      contextType: 'navigation_tab',
+      contextId: _getAppBarTitle(index),
+    );
+  }
+
+  Future<void> _recordAppEvent({
+    required String eventType,
+    String? contextType,
+    String? contextId,
+    Map<String, dynamic> details = const {},
+    DateTime? occurredAt,
+  }) async {
+    final userId = _userState.currentUser?.id;
+    if (userId == null) return;
+    await _activityEvents.recordBestEffort(
+      userId: userId,
+      eventType: eventType,
+      contextType: contextType,
+      contextId: contextId,
+      details: details,
+      occurredAt: occurredAt,
+    );
   }
 
   Future<void> _handleLogout() async {
@@ -136,7 +235,7 @@ class _MainNavigationState extends State<MainNavigation> {
       body: _pages[_selectedIndex],
       bottomNavigationBar: SafeArea(
         top: false,
-        bottom: Platform.isAndroid, // Only apply bottom padding on Android
+        bottom: !kIsWeb && defaultTargetPlatform == TargetPlatform.android,
         child: Container(
           decoration: BoxDecoration(
             color: barColor,
@@ -155,9 +254,7 @@ class _MainNavigationState extends State<MainNavigation> {
           child: BottomNavigationBar(
             currentIndex: _selectedIndex,
             onTap: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
+              _selectTab(index);
             },
             backgroundColor: Colors.transparent,
             elevation: 0,

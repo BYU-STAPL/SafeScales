@@ -63,7 +63,7 @@ class _AppInitializationScreenState extends State<AppInitializationScreen> {
       await courseProvider.loadUserProgress();
 
       setState(() {
-        _loadingMessage = 'Loading your dragons...';
+        _loadingMessage = 'Loading learning profile...';
       });
 
       if (!dragonProvider.isInitialized) {
@@ -72,7 +72,7 @@ class _AppInitializationScreenState extends State<AppInitializationScreen> {
       await dragonProvider.loadUserDragons();
 
       setState(() {
-        _loadingMessage = 'Loading items...';
+        _loadingMessage = 'Preparing learning data...';
       });
 
       // Only initialize item provider if we have a class

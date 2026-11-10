@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/models/lesson_progress.dart';
 import 'package:safe_scales/models/question.dart';
+import 'package:safe_scales/services/activity_event_service.dart';
+import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/ui/screens/post_quiz/post_quiz_screen.dart';
 import 'package:safe_scales/ui/screens/pre_quiz/pre_quiz_screen.dart';
 import 'package:safe_scales/ui/screens/reading/reading_activity_screen.dart';
@@ -23,12 +27,22 @@ class LessonScreen extends StatefulWidget {
   State<LessonScreen> createState() => _LessonScreenState();
 }
 
-class _LessonScreenState extends State<LessonScreen> {
+class _LessonScreenState extends State<LessonScreen>
+    with WidgetsBindingObserver {
   Lesson? _lesson; // Make nullable
   LessonProgress? _lessonProgress; // Make nullable
   bool _isLoading = true; // Add loading state
-
   bool _initialized = false;
+  final ActivityEventService _activityEvents = ActivityEventService();
+  final Stopwatch _lessonPageStopwatch = Stopwatch();
+  DateTime? _lessonPageStartedAt;
+  bool _isForeground = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   @override
   void didChangeDependencies() {
@@ -83,7 +97,85 @@ class _LessonScreenState extends State<LessonScreen> {
       setState(() {
         _isLoading = false;
       });
+      _startLessonPageTracking();
     }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _finishLessonPageTracking();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _isForeground = false;
+      _pauseLessonPageTracking();
+    } else if (state == AppLifecycleState.resumed) {
+      _isForeground = true;
+      _resumeLessonPageTracking();
+    }
+  }
+
+  void _startLessonPageTracking() {
+    if (_lessonPageStartedAt != null) return;
+    _lessonPageStartedAt = DateTime.now();
+    if (_isForeground) _lessonPageStopwatch.start();
+    unawaited(
+      _recordLessonPageEvent(
+        'lesson_page_opened',
+        details: {'lesson_title': _lesson?.title},
+        occurredAt: _lessonPageStartedAt,
+      ),
+    );
+  }
+
+  void _pauseLessonPageTracking() {
+    if (_lessonPageStopwatch.isRunning) _lessonPageStopwatch.stop();
+  }
+
+  void _resumeLessonPageTracking() {
+    if (_lessonPageStartedAt != null &&
+        _isForeground &&
+        !_lessonPageStopwatch.isRunning) {
+      _lessonPageStopwatch.start();
+    }
+  }
+
+  void _finishLessonPageTracking() {
+    final startedAt = _lessonPageStartedAt;
+    if (startedAt == null) return;
+    _pauseLessonPageTracking();
+    unawaited(
+      _recordLessonPageEvent(
+        'lesson_page_duration',
+        occurredAt: DateTime.now(),
+        details: {
+          'started_at': startedAt.toUtc().toIso8601String(),
+          'active_duration_ms': _lessonPageStopwatch.elapsedMilliseconds,
+        },
+      ),
+    );
+    _lessonPageStartedAt = null;
+  }
+
+  Future<void> _recordLessonPageEvent(
+    String eventType, {
+    required Map<String, dynamic> details,
+    DateTime? occurredAt,
+  }) async {
+    final userId = UserStateService().currentUser?.id;
+    if (userId == null) return;
+    await _activityEvents.recordBestEffort(
+      userId: userId,
+      eventType: eventType,
+      contextType: 'lesson',
+      contextId: widget.moduleId,
+      details: details,
+      occurredAt: occurredAt,
+    );
   }
 
   @override
@@ -648,18 +740,29 @@ class _LessonScreenState extends State<LessonScreen> {
       return;
     }
 
+    _pauseLessonPageTracking();
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder:
             (context) =>
-                ReviewScreen(questionSet: questionSet, needToShowShop: true),
+                ReviewScreen(
+                  questionSet: questionSet,
+                  lessonId: widget.moduleId,
+                  needToShowShop: true,
+                ),
       ),
     );
+    _resumeLessonPageTracking();
 
     if (mounted) {
       final cp = Provider.of<CourseProvider>(context, listen: false);
       await cp.loadSingleLessonProgress(widget.moduleId);
+      try {
+        await cp.loadReviewSetCompletionCount(widget.moduleId);
+      } catch (error) {
+        debugPrint('Failed to refresh review-set progress: $error');
+      }
       setState(() {
         _lessonProgress = cp.lessonProgress[widget.moduleId];
       });
@@ -739,12 +842,14 @@ class _LessonScreenState extends State<LessonScreen> {
   void _navigateToReading() async {
     setState(() => _isLoading = true);
 
+    _pauseLessonPageTracking();
     final completed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (context) => ReadingActivityScreen(moduleId: widget.moduleId),
       ),
     );
+    _resumeLessonPageTracking();
 
     if (!mounted) return;
 
@@ -827,10 +932,12 @@ class _LessonScreenState extends State<LessonScreen> {
       _isLoading = true; // Show loading state
     });
 
+    _pauseLessonPageTracking();
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => quizScreen),
     ).then((completed) async {
+      _resumeLessonPageTracking();
       if (completed == true) {
         if (!mounted) return;
         final courseProvider = Provider.of<CourseProvider>(

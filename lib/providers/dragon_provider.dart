@@ -209,6 +209,7 @@ class DragonProvider extends ChangeNotifier {
 
   /// Update dragon name
   Future<void> updateDragonName(String dragonId, String newName) async {
+    _clearError();
     try {
       final user = _userState.currentUser;
       if (user == null) {

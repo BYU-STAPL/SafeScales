@@ -3,6 +3,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/models/review_set_entry.dart';
 import 'package:safe_scales/providers/course_provider.dart';
+import 'package:safe_scales/services/user_state_service.dart';
+import 'package:safe_scales/services/activity_event_service.dart';
 import 'package:safe_scales/ui/screens/review_set/review_screen.dart';
 
 class ReviewListScreen extends StatelessWidget {
@@ -20,6 +22,31 @@ class ReviewListScreen extends StatelessWidget {
           );
         }
 
+        if (!courseProvider.isReviewSetProgressLoaded) {
+          return Scaffold(
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Unable to load review-set progress: '
+                      '${courseProvider.error ?? 'Please try again.'}',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: courseProvider.loadCourseContent,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
         final entries = courseProvider.getReviewSetEntries();
 
         return Scaffold(
@@ -30,7 +57,7 @@ class ReviewListScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Complete review sets from finished lessons and earn an item or habitat for your dragon.',
+                    'Complete review sets from finished lessons to reinforce key concepts and improve retention.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
@@ -92,7 +119,7 @@ class ReviewListScreen extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
-            'The Teacher has not created a review set for this lesson',
+            'A five-question review set is not available for this lesson.',
           ),
           backgroundColor: Theme.of(context).colorScheme.inverseSurface,
         ),
@@ -100,21 +127,47 @@ class ReviewListScreen extends StatelessWidget {
       return;
     }
 
+    final userId = UserStateService().currentUser?.id;
+    if (userId != null) {
+      try {
+        await ActivityEventService().record(
+          userId: userId,
+          eventType: 'review_lesson_selected',
+          contextType: 'lesson',
+          contextId: entry.lessonId,
+          details: {
+            'review_set_id': questionSet.id,
+            'lesson_title': entry.title,
+          },
+        );
+      } catch (error) {
+        debugPrint('Failed to log selected review lesson: $error');
+      }
+    }
+
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder:
-            (context) =>
-                ReviewScreen(questionSet: questionSet, needToShowShop: true),
+            (context) => ReviewScreen(
+              questionSet: questionSet,
+              lessonId: entry.lessonId,
+              needToShowShop: false,
+            ),
       ),
     );
 
-    if (context.mounted && entry.lessonId != null) {
+    if (context.mounted) {
       final courseProvider = Provider.of<CourseProvider>(
         context,
         listen: false,
       );
-      await courseProvider.loadSingleLessonProgress(entry.lessonId!);
+      await courseProvider.loadSingleLessonProgress(entry.lessonId);
+      try {
+        await courseProvider.loadReviewSetCompletionCount(entry.lessonId);
+      } catch (error) {
+        debugPrint('Failed to refresh review-set progress: $error');
+      }
     }
   }
 }
@@ -135,10 +188,7 @@ class _ReviewSetCard extends StatelessWidget {
     String subtitle;
     if (entry.isUnlocked && entry.questionSet != null) {
       final count = entry.questionSet!.questions.length;
-      subtitle =
-          entry.isRandom
-              ? '$count questions (Mixed Topics)'
-              : '$count questions';
+      subtitle = '$count questions';
     } else {
       subtitle = 'Complete this lesson to unlock';
     }
@@ -167,10 +217,8 @@ class _ReviewSetCard extends StatelessWidget {
               CircleAvatar(
                 radius: 20,
                 backgroundColor: primary.withValues(alpha: 0.1),
-                child: Icon(
-                  entry.isRandom
-                      ? FontAwesomeIcons.dice
-                      : FontAwesomeIcons.repeat,
+                child: FaIcon(
+                  FontAwesomeIcons.repeat,
                   size: 20,
                   color: primary,
                 ),

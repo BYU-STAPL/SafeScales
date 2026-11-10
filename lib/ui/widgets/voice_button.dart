@@ -31,9 +31,10 @@ class _VoiceButtonState extends State<VoiceButton>
   late Animation<double> _scaleAnimation;
   TtsState _currentState = TtsState.stopped;
 
-  // Global speed control - shared across all VoiceButton instances
-  // Display options from 1.0 to 2.5 with 0.5 intervals (backend receives -0.5)
-  static final List<double> speedOptions = [1.0, 1.5, 2.0, 2.5];
+  // Global speed control - shared across all VoiceButton instances.
+  // Keep the UI values aligned with the TTS engine so the displayed rate matches
+  // the spoken rate instead of subtracting a hidden offset.
+  static final List<double> speedOptions = [0.8, 1.0, 1.2, 1.4];
   static final Set<_VoiceButtonState> _activeInstances = <_VoiceButtonState>{};
 
   @override
@@ -80,13 +81,12 @@ class _VoiceButtonState extends State<VoiceButton>
 
     switch (_currentState) {
       case TtsState.stopped:
-        // Apply current speed before speaking (subtract 0.5 so displayed 1.0x becomes backend 0.5)
         if (mounted) {
           final themeNotifier = Provider.of<ThemeNotifier>(
             context,
             listen: false,
           );
-          await _ttsService.setSpeechRate(themeNotifier.readingSpeed - 0.5);
+          await _ttsService.setSpeechRate(themeNotifier.readingSpeed);
         }
         await _ttsService.speak(widget.text, pageIndex: widget.pageIndex);
         break;
@@ -124,14 +124,11 @@ class _VoiceButtonState extends State<VoiceButton>
     try {
       final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
       final speed = themeNotifier.readingSpeed;
-      debugPrint(
-        'VoiceButton: Applying speed from provider: $speed (TTS: ${speed - 0.5})',
-      );
-      await _ttsService.setSpeechRate(speed - 0.5);
+      debugPrint('VoiceButton: Applying speed from provider: $speed');
+      await _ttsService.setSpeechRate(speed);
     } catch (e) {
       debugPrint('VoiceButton: Error applying speed from provider: $e');
-      // Fallback to default speed (0.5 = 1.0 - 0.5)
-      await _ttsService.setSpeechRate(0.5);
+      await _ttsService.setSpeechRate(0.8);
     }
   }
 
@@ -139,8 +136,7 @@ class _VoiceButtonState extends State<VoiceButton>
     if (!mounted) return;
     final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
     themeNotifier.updateReadingSpeed(newSpeed);
-    // Subtract 0.5 so displayed 1.0x becomes backend 0.5 for TTS
-    await _ttsService.setSpeechRate(newSpeed - 0.5);
+    await _ttsService.setSpeechRate(newSpeed);
 
     // Notify all active instances to update their UI
     _notifyAllInstances();
@@ -172,11 +168,7 @@ class _VoiceButtonState extends State<VoiceButton>
   }
 
   String _getSpeedText(double speed) {
-    if (speed == speed.toInt()) {
-      return '${speed.toInt()}x';
-    } else {
-      return '${speed}x';
-    }
+    return '${speed.toStringAsFixed(1)}x';
   }
 
   IconData _getIcon() {
@@ -421,8 +413,7 @@ class _VoiceControlsState extends State<VoiceControls> {
       final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
       themeNotifier.updateReadingSpeed(closestSpeed);
     }
-    // Subtract 0.5 so displayed 1.0x becomes backend 0.5 for TTS
-    await _ttsService.setSpeechRate(closestSpeed - 0.5);
+    await _ttsService.setSpeechRate(closestSpeed);
 
     // Notify all VoiceButton instances to update their UI
     _VoiceButtonState._notifyAllInstances();
@@ -435,7 +426,7 @@ class _VoiceControlsState extends State<VoiceControls> {
       final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
       return themeNotifier.readingSpeed;
     }
-    return 1.0; // Default fallback (displays as 1.0, backend gets 0.5)
+    return 0.8;
   }
 
   void _updateVolume(double volume) async {
@@ -493,8 +484,8 @@ class _VoiceControlsState extends State<VoiceControls> {
                       Expanded(
                         child: Slider(
                           value: _speechRate,
-                          min: 1.0,
-                          max: 2.5,
+                          min: 0.8,
+                          max: 1.4,
                           divisions: 3,
                           onChanged: _updateSpeechRate,
                         ),

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
 
-import 'dragon_image_widget.dart';
-
 class LessonCard extends StatelessWidget {
   const LessonCard({
     super.key,
@@ -104,8 +102,14 @@ class LessonCard extends StatelessWidget {
                     ),
                   // Icon in circle
                   shouldBeUnlocked && moduleId != 'settings'
-                      ? Positioned(top: 35, child: DragonImageWidget(moduleId: moduleId, size: 65),
-                  )
+                      ? Positioned(
+                          top: 35,
+                          child: Icon(
+                            Icons.school_outlined,
+                            size: 56,
+                            color: theme.colorScheme.secondary,
+                          ),
+                        )
                       : Positioned(
                           top: 10,
                           child: Image.asset(

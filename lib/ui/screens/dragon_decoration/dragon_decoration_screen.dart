@@ -1,4 +1,6 @@
 // --- Dragon Dress Up Page ---
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -6,6 +8,8 @@ import 'package:safe_scales/providers/dragon_decoration_provider.dart';
 import 'package:safe_scales/ui/widgets/dragon_image_widget.dart';
 import 'package:safe_scales/ui/widgets/sticker_collection_widget.dart';
 import 'package:safe_scales/models/sticker_item_model.dart';
+import 'package:safe_scales/services/activity_event_service.dart';
+import 'package:safe_scales/services/user_state_service.dart';
 import '../../../providers/dragon_provider.dart';
 
 class DragonDressUpPage extends StatefulWidget {
@@ -22,19 +26,74 @@ class DragonDressUpPage extends StatefulWidget {
   _DragonDressUpPageState createState() => _DragonDressUpPageState();
 }
 
-class _DragonDressUpPageState extends State<DragonDressUpPage> {
+class _DragonDressUpPageState extends State<DragonDressUpPage>
+    with WidgetsBindingObserver {
   String selectedPhase = '';
   final GlobalKey _habitatKey = GlobalKey();
+  final ActivityEventService _activityEvents = ActivityEventService();
+  final Stopwatch _gameStopwatch = Stopwatch();
+  String? _userId;
+  DateTime? _gameStartedAt;
+  bool _isAppForeground = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     selectedPhase = widget.currentPhase;
+    _userId = UserStateService().currentUser?.id;
+    _gameStartedAt = DateTime.now();
+    _gameStopwatch.start();
+    if (_userId != null) {
+      unawaited(
+        _activityEvents.recordBestEffort(
+          userId: _userId!,
+          eventType: 'dragon_game_session_started',
+          contextType: 'dragon',
+          contextId: widget.dragonId,
+          occurredAt: _gameStartedAt,
+          details: {'phase': selectedPhase},
+        ),
+      );
+    }
 
     // Use addPostFrameCallback to ensure initialization happens after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeData();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _gameStopwatch.stop();
+    final userId = _userId;
+    final startedAt = _gameStartedAt;
+    if (userId != null && startedAt != null) {
+      unawaited(
+        _activityEvents.recordBestEffort(
+          userId: userId,
+          eventType: 'dragon_game_session_ended',
+          contextType: 'dragon',
+          contextId: widget.dragonId,
+          details: {
+            'phase': selectedPhase,
+            'active_duration_ms': _gameStopwatch.elapsedMilliseconds,
+          },
+        ),
+      );
+    }
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _isAppForeground = state == AppLifecycleState.resumed;
+    if (_isAppForeground) {
+      _gameStopwatch.start();
+    } else {
+      _gameStopwatch.stop();
+    }
   }
 
   Future<void> _initializeData() async {
@@ -1109,6 +1168,17 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                   );
                 }
               },
+              onPanEnd: (_) {
+                final updatedSticker = provider.placedStickers.firstWhere(
+                  (candidate) => candidate.id == sticker.id,
+                  orElse: () => sticker,
+                );
+                _recordDecorationEvent('dragon_decoration_moved', {
+                  'accessory_id': updatedSticker.accessoryId,
+                  'position_x': updatedSticker.position.dx,
+                  'position_y': updatedSticker.position.dy,
+                });
+              },
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
@@ -1139,6 +1209,16 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                     final newSize = sticker.size + details.delta.dx;
                     provider.updateStickerSize(sticker.id, newSize);
                   },
+                  onPanEnd: (_) {
+                    final updatedSticker = provider.placedStickers.firstWhere(
+                      (candidate) => candidate.id == sticker.id,
+                      orElse: () => sticker,
+                    );
+                    _recordDecorationEvent('dragon_decoration_resized', {
+                      'accessory_id': updatedSticker.accessoryId,
+                      'size': updatedSticker.size,
+                    });
+                  },
                   child: Container(
                     width: 48,
                     height: 48,
@@ -1161,6 +1241,10 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
                 child: GestureDetector(
                   onTap: () {
                     provider.toggleStickerLayer(sticker.id);
+                    _recordDecorationEvent('dragon_decoration_layer_changed', {
+                      'accessory_id': sticker.accessoryId,
+                      'is_behind_dragon': !sticker.isBehindDragon,
+                    });
                   },
                   child: Container(
                     width: 48,
@@ -1188,6 +1272,20 @@ class _DragonDressUpPageState extends State<DragonDressUpPage> {
 
   void _removeSticker(String id, DragonDecorationProvider provider) {
     provider.removeSticker(id);
+  }
+
+  void _recordDecorationEvent(String eventType, Map<String, dynamic> details) {
+    final userId = UserStateService().currentUser?.id;
+    if (userId == null) return;
+    unawaited(
+      _activityEvents.recordBestEffort(
+        userId: userId,
+        eventType: eventType,
+        contextType: 'dragon',
+        contextId: widget.dragonId,
+        details: details,
+      ),
+    );
   }
 
   void _clearAllStickers() {

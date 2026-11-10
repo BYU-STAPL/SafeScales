@@ -44,7 +44,7 @@ class SettingsDrawer extends StatelessWidget {
             ),
           ),
           child: SafeArea(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,17 +71,24 @@ class SettingsDrawer extends StatelessWidget {
 
                   // Color mode toggle
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 10,
+                    ),
                     child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                            color: colorScheme.primaryContainer.withValues(
+                              alpha: 0.3,
+                            ),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
-                            themeNotifier.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                            themeNotifier.isDarkMode
+                                ? Icons.dark_mode
+                                : Icons.light_mode,
                             color: colorScheme.primary,
                             size: 20,
                           ),
@@ -101,7 +108,9 @@ class SettingsDrawer extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                themeNotifier.isDarkMode ? 'Dark theme enabled' : 'Light theme enabled',
+                                themeNotifier.isDarkMode
+                                    ? 'Dark theme enabled'
+                                    : 'Light theme enabled',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: colorScheme.onSurfaceVariant,
@@ -112,12 +121,14 @@ class SettingsDrawer extends StatelessWidget {
                         ),
                         Switch.adaptive(
                           value: themeNotifier.isDarkMode,
-                          onChanged: (value) => themeNotifier.updateTheme(value),
+                          onChanged:
+                              (value) => themeNotifier.updateTheme(value),
                           activeColor: colorScheme.primary,
                           activeTrackColor: colorScheme.primaryContainer,
                           inactiveThumbColor: colorScheme.outline,
                           inactiveTrackColor: colorScheme.surfaceContainerHigh,
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
                         ),
                       ],
                     ),
@@ -125,7 +136,10 @@ class SettingsDrawer extends StatelessWidget {
 
                   // App Theme Selector
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 10,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -138,11 +152,7 @@ class SettingsDrawer extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        _buildThemeGrid(
-                          context,
-                          colorScheme,
-                          themeNotifier,
-                        ),
+                        _buildThemeGrid(context, colorScheme, themeNotifier),
                       ],
                     ),
                   ),
@@ -176,14 +186,15 @@ class SettingsDrawer extends StatelessWidget {
                   //   ),
                   //   onTap: onHelp,
                   // ),
-                  const Spacer(),
-
                   FutureBuilder<PackageInfo>(
                     future: PackageInfo.fromPlatform(),
                     builder: (context, snapshot) {
                       if (snapshot.hasData) {
                         return Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 5,
+                          ),
                           child: Text(
                             'App Version: ${snapshot.data!.version} + ${snapshot.data!.buildNumber}',
                             style: Theme.of(context).textTheme.labelLarge,
@@ -197,8 +208,11 @@ class SettingsDrawer extends StatelessWidget {
 
                   // Logout
                   ListTile(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-                    leading: Icon(
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 5,
+                    ),
+                    leading: FaIcon(
                       FontAwesomeIcons.rightFromBracket,
                       color: colorScheme.error,
                     ),
@@ -217,14 +231,78 @@ class SettingsDrawer extends StatelessWidget {
     );
   }
 
-  static final List<({AppThemeType type, String name, List<Color> colors})> _themeOptions = [
-    (type: AppThemeType.classicBlue, name: 'Classic', colors: [const Color(0xff2E83E8), const Color(0xff0DB563), const Color(0xff93C5FD), const Color(0xffDBEAFE)]),
-    (type: AppThemeType.forestGreen, name: 'Forest Green', colors: [const Color(0xff059669), const Color(0xff10B981), const Color(0xffD1FAE5), const Color(0xffA7F3D0)]),
-    (type: AppThemeType.sunsetOrange, name: 'Sunset Orange', colors: [const Color(0xffEA580C), const Color(0xffF97316), const Color(0xffFED7AA), const Color(0xffFEF9C3)]),
-    (type: AppThemeType.oceanTeal, name: 'Ocean Teal', colors: [const Color(0xff0891B2), const Color(0xff06B6D4), const Color(0xffCFFAFE), const Color(0xffA5F3FC)]),
-    (type: AppThemeType.royalPurple, name: 'Royal Purple', colors: [const Color(0xff7C3AED), const Color(0xff8B5CF6), const Color(0xffEDE9FE), const Color(0xffDDD6FE)]),
-    (type: AppThemeType.rosePink, name: 'Rose Pink', colors: [const Color(0xffE11D48), const Color(0xffF43F5E), const Color(0xffFCE7F3), const Color(0xffFDF2F8)]),
-    (type: AppThemeType.sepiaNeutral, name: 'Sepia', colors: [const Color(0xff6B5B4F), const Color(0xff8B7355), const Color(0xffE8E2DB), const Color(0xffDED6CC)]),
+  static final List<({AppThemeType type, String name, List<Color> colors})>
+  _themeOptions = [
+    (
+      type: AppThemeType.classicBlue,
+      name: 'Classic',
+      colors: [
+        const Color(0xff2E83E8),
+        const Color(0xff0DB563),
+        const Color(0xff93C5FD),
+        const Color(0xffDBEAFE),
+      ],
+    ),
+    (
+      type: AppThemeType.forestGreen,
+      name: 'Forest Green',
+      colors: [
+        const Color(0xff059669),
+        const Color(0xff10B981),
+        const Color(0xffD1FAE5),
+        const Color(0xffA7F3D0),
+      ],
+    ),
+    (
+      type: AppThemeType.sunsetOrange,
+      name: 'Sunset Orange',
+      colors: [
+        const Color(0xffEA580C),
+        const Color(0xffF97316),
+        const Color(0xffFED7AA),
+        const Color(0xffFEF9C3),
+      ],
+    ),
+    (
+      type: AppThemeType.oceanTeal,
+      name: 'Ocean Teal',
+      colors: [
+        const Color(0xff0891B2),
+        const Color(0xff06B6D4),
+        const Color(0xffCFFAFE),
+        const Color(0xffA5F3FC),
+      ],
+    ),
+    (
+      type: AppThemeType.royalPurple,
+      name: 'Royal Purple',
+      colors: [
+        const Color(0xff7C3AED),
+        const Color(0xff8B5CF6),
+        const Color(0xffEDE9FE),
+        const Color(0xffDDD6FE),
+      ],
+    ),
+    (
+      type: AppThemeType.rosePink,
+      name: 'Rose Pink',
+      colors: [
+        const Color(0xffE11D48),
+        const Color(0xffF43F5E),
+        const Color(0xffFCE7F3),
+        const Color(0xffFDF2F8),
+      ],
+    ),
+    (
+      type: AppThemeType.sepiaNeutral,
+      name: 'Sepia',
+      colors: [
+        const Color(0xff6B5B4F),
+        const Color(0xff8B7355),
+        const Color(0xffE8E2DB),
+        const Color(0xffDED6CC),
+      ],
+    ),
   ];
 
   Widget _buildThemeGrid(
@@ -243,8 +321,18 @@ class SettingsDrawer extends StatelessWidget {
           rowChildren.add(
             Expanded(
               child: Padding(
-                padding: EdgeInsets.only(right: j == 0 ? 6 : 0, left: j == 1 ? 6 : 0),
-                child: _buildThemeOption(context, colorScheme, themeNotifier, opt.type, opt.name, opt.colors),
+                padding: EdgeInsets.only(
+                  right: j == 0 ? 6 : 0,
+                  left: j == 1 ? 6 : 0,
+                ),
+                child: _buildThemeOption(
+                  context,
+                  colorScheme,
+                  themeNotifier,
+                  opt.type,
+                  opt.name,
+                  opt.colors,
+                ),
               ),
             ),
           );
@@ -252,7 +340,12 @@ class SettingsDrawer extends StatelessWidget {
           rowChildren.add(const Expanded(child: SizedBox.shrink()));
         }
       }
-      rows.add(Row(crossAxisAlignment: CrossAxisAlignment.start, children: rowChildren));
+      rows.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: rowChildren,
+        ),
+      );
       if (i + columns < _themeOptions.length) {
         rows.add(const SizedBox(height: 12));
       }
@@ -273,7 +366,7 @@ class SettingsDrawer extends StatelessWidget {
     List<Color> previewColors,
   ) {
     final isSelected = themeNotifier.themeType == themeType;
-    
+
     return GestureDetector(
       onTap: () {
         themeNotifier.updateThemeType(themeType);
@@ -281,25 +374,26 @@ class SettingsDrawer extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
         decoration: BoxDecoration(
-          color: isSelected
-              ? colorScheme.primaryContainer.withValues(alpha: 0.5)
-              : colorScheme.surfaceContainerHigh,
+          color:
+              isSelected
+                  ? colorScheme.primaryContainer.withValues(alpha: 0.5)
+                  : colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? colorScheme.primary
-                : colorScheme.outlineVariant,
+            color:
+                isSelected ? colorScheme.primary : colorScheme.outlineVariant,
             width: isSelected ? 3 : 1,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: colorScheme.primary.withValues(alpha: 0.25),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
+          boxShadow:
+              isSelected
+                  ? [
+                    BoxShadow(
+                      color: colorScheme.primary.withValues(alpha: 0.25),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                  : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -313,16 +407,36 @@ class SettingsDrawer extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildSwatch(colorScheme, previewColors.length > 0 ? previewColors[0] : colorScheme.primary),
-                    _buildSwatch(colorScheme, previewColors.length > 1 ? previewColors[1] : colorScheme.secondary),
+                    _buildSwatch(
+                      colorScheme,
+                      previewColors.length > 0
+                          ? previewColors[0]
+                          : colorScheme.primary,
+                    ),
+                    _buildSwatch(
+                      colorScheme,
+                      previewColors.length > 1
+                          ? previewColors[1]
+                          : colorScheme.secondary,
+                    ),
                   ],
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildSwatch(colorScheme, previewColors.length > 2 ? previewColors[2] : colorScheme.primary),
-                    _buildSwatch(colorScheme, previewColors.length > 3 ? previewColors[3] : colorScheme.secondary),
+                    _buildSwatch(
+                      colorScheme,
+                      previewColors.length > 2
+                          ? previewColors[2]
+                          : colorScheme.primary,
+                    ),
+                    _buildSwatch(
+                      colorScheme,
+                      previewColors.length > 3
+                          ? previewColors[3]
+                          : colorScheme.secondary,
+                    ),
                   ],
                 ),
               ],
@@ -334,9 +448,10 @@ class SettingsDrawer extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant,
+                color:
+                    isSelected
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
               maxLines: 2,
@@ -356,10 +471,7 @@ class SettingsDrawer extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
-        border: Border.all(
-          color: colorScheme.outlineVariant,
-          width: 0.5,
-        ),
+        border: Border.all(color: colorScheme.outlineVariant, width: 0.5),
       ),
     );
   }

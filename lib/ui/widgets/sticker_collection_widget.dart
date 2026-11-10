@@ -22,8 +22,8 @@ class StickerCollectionWidget extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.only(
-        top: 20,
-        bottom: 20 + bottomPadding,
+        top: 14,
+        bottom: bottomPadding,
         left: 20,
         right: 20,
       ),
@@ -52,109 +52,108 @@ class StickerCollectionWidget extends StatelessWidget {
               ? const Center(child: CircularProgressIndicator())
               : userAccessories.isEmpty
               ? GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ShopScreen(),
-                ),
-              );
-            },
-            child: Center(
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.shopping_bag_outlined,
-                    size: 48,
-                    color: colorScheme.primary.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    'No items yet.\nTap to visit the shop!',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 5),
-                ],
-              ),
-            ),
-          )
-              : LayoutBuilder(
-            builder: (context, constraints) {
-              // Make height responsive based on screen size
-              final screenHeight = MediaQuery.of(context).size.height;
-              final gridHeight = (screenHeight * 0.12).clamp(85.0, 120.0);
-              return SizedBox(
-                height: gridHeight,
-                child: GridView.builder(
-              scrollDirection: Axis.vertical,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 5, // 4 items per row
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 1, // Square items
-              ),
-              itemCount: userAccessories.length,
-              itemBuilder: (context, index) {
-                final item = userAccessories[index];
-                return
-                  LongPressDraggable<Map<String, dynamic>>(
-                    data: {
-                      'id': item.id,
-                      'image': item.imageUrl,
-                      'name': item.name,
-                    },
-                    feedback: Material(
-                      color: Colors.transparent,
-                      child: Image.network(
-                        item.imageUrl,
-                        width: 48,
-                        height: 48,
-                        fit: BoxFit.contain,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ShopScreen()),
+                  );
+                },
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.shopping_bag_outlined,
+                        size: 48,
+                        color: colorScheme.primary.withValues(alpha: 0.5),
                       ),
-                    ),
-                    childWhenDragging: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Image.network(
-                        item.imageUrl,
-                        width: 36,
-                        height: 36,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: colorScheme.primary.withValues(
-                            alpha: 0.3,
-                          ),
-                          width: 2,
+                      const SizedBox(height: 5),
+                      Text(
+                        'No items yet.\nTap to visit the shop!',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colorScheme.onSurfaceVariant,
                         ),
+                        textAlign: TextAlign.center,
                       ),
-                      child: Image.network(
-                        item.imageUrl,
-                        width: 36,
-                        height: 36,
-                        fit: BoxFit.contain,
-                      ),
+                      const SizedBox(height: 5),
+                    ],
+                  ),
+                ),
+              )
+              : LayoutBuilder(
+                builder: (context, constraints) {
+                  // Make height responsive based on screen size
+                  final screenHeight = MediaQuery.of(context).size.height;
+                  final gridHeight = (screenHeight * 0.1).clamp(76.0, 105.0);
+                  return SizedBox(
+                    height: gridHeight,
+                    child: GridView.builder(
+                      scrollDirection: Axis.vertical,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 5, // 4 items per row
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                            childAspectRatio: 1, // Square items
+                          ),
+                      itemCount: userAccessories.length,
+                      itemBuilder: (context, index) {
+                        final item = userAccessories[index];
+                        return LongPressDraggable<Map<String, dynamic>>(
+                          data: {
+                            'id': item.id,
+                            'image': item.imageUrl,
+                            'name': item.name,
+                          },
+                          feedback: Material(
+                            color: Colors.transparent,
+                            child: Image.network(
+                              item.imageUrl,
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          childWhenDragging: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.outline.withValues(
+                                alpha: 0.3,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Image.network(
+                              item.imageUrl,
+                              width: 36,
+                              height: 36,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: colorScheme.primary.withValues(
+                                  alpha: 0.3,
+                                ),
+                                width: 2,
+                              ),
+                            ),
+                            child: Image.network(
+                              item.imageUrl,
+                              width: 36,
+                              height: 36,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   );
-              },
-            ),
-              );
-            },
-          ),
-          const SizedBox(height: 15),
+                },
+              ),
         ],
       ),
     );

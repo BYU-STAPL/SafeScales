@@ -26,6 +26,8 @@ class CourseProvider extends ChangeNotifier {
 
   // === Progress Data ===
   Map<String, LessonProgress> _lessonProgress = {};
+  Map<String, int> _reviewSetCompletionCounts = {};
+  bool _reviewSetProgressLoaded = false;
 
   // === Constructor ===
   CourseProvider({
@@ -56,6 +58,7 @@ class CourseProvider extends ChangeNotifier {
   bool _isInitialized = false;
 
   bool get isInitialized => _isInitialized;
+  bool get isReviewSetProgressLoaded => _reviewSetProgressLoaded;
 
   // === Public Methods ===
 
@@ -116,8 +119,17 @@ class CourseProvider extends ChangeNotifier {
         lessonId,
       );
 
-      // Extract the persisted review set for the lesson.
-      return _extractReviewQuestionSet(lesson);
+      final questionBank = _extractReviewQuestionSet(lesson);
+      if (questionBank == null || questionBank.questions.isEmpty) {
+        return questionBank;
+      }
+
+      final completedSetCount = await _courseService.getCompletedReviewSetCount(
+        currentUser.id,
+        lessonId,
+      );
+      _reviewSetCompletionCounts[lessonId] = completedSetCount;
+      return questionBank.reviewBatchForCompletionCount(completedSetCount);
     } catch (e) {
       debugPrint('Error getting review question set: $e');
       return null;
@@ -151,6 +163,18 @@ class CourseProvider extends ChangeNotifier {
       if (progress != null) {
         _lessonProgress[lessonId] = progress;
       }
+    });
+  }
+
+  /// Reload the completed review set count for a lesson.
+  Future<void> loadReviewSetCompletionCount(String lessonId) async {
+    if (!isUserLoggedIn) return;
+
+    _reviewSetProgressLoaded = false;
+    await _executeWithErrorHandling(() async {
+      _reviewSetCompletionCounts[lessonId] = await _courseService
+          .getCompletedReviewSetCount(currentUser!.id, lessonId);
+      _reviewSetProgressLoaded = true;
     });
   }
 
@@ -266,6 +290,7 @@ class CourseProvider extends ChangeNotifier {
         _description = courseData.description;
         _lessons = courseData.lessons;
         _lessonOrder = courseData.lessonOrder;
+        await _loadReviewSetCompletionCounts();
       } else {
         _clearData();
       }
@@ -277,6 +302,29 @@ class CourseProvider extends ChangeNotifier {
       // For other errors, let _executeWithErrorHandling handle it
       rethrow;
     }
+  }
+
+  Future<void> _loadReviewSetCompletionCounts() async {
+    _reviewSetProgressLoaded = false;
+    final currentUser = _userStateService.currentUser;
+    if (currentUser == null) {
+      _reviewSetProgressLoaded = true;
+      return;
+    }
+
+    final lessonIds =
+        _lessonOrder.where((lessonId) {
+          final questions = _lessons[lessonId]?.review?.questions;
+          return questions != null && questions.isNotEmpty;
+        }).toList();
+    final completionCounts = await Future.wait(
+      lessonIds.map(
+        (lessonId) =>
+            _courseService.getCompletedReviewSetCount(currentUser.id, lessonId),
+      ),
+    );
+    _reviewSetCompletionCounts = Map.fromIterables(lessonIds, completionCounts);
+    _reviewSetProgressLoaded = true;
   }
 
   /// Set loading state and notify listeners
@@ -308,6 +356,8 @@ class CourseProvider extends ChangeNotifier {
     _lessons.clear();
     _lessonOrder.clear();
     _lessonProgress.clear();
+    _reviewSetCompletionCounts.clear();
+    _reviewSetProgressLoaded = true;
     _clearError();
     _isInitialized = false;
     notifyListeners();
@@ -386,7 +436,13 @@ class CourseProvider extends ChangeNotifier {
       final lesson = _lessons[lessonId];
       if (lesson == null) continue;
 
-      final questionSet = _extractReviewQuestionSet(lesson);
+      final questionBank = _extractReviewQuestionSet(lesson);
+      final questionSet =
+          questionBank == null || questionBank.questions.isEmpty
+              ? questionBank
+              : questionBank.reviewBatchForCompletionCount(
+                _reviewSetCompletionCounts[lessonId] ?? 0,
+              );
       final isUnlocked = _isPostQuizCompleteForLesson(lessonId);
 
       if (questionSet != null && questionSet.questions.isNotEmpty) {

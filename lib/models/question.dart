@@ -77,7 +77,6 @@ class Question {
   }
 }
 
-
 class QuestionSet {
   final String id;
   final String title;
@@ -106,11 +105,11 @@ class QuestionSet {
   });
 
   factory QuestionSet.preQuiz({
-    required id,
-    required title,
-    required description,
-    required subject,
-    required questions,
+    required String id,
+    required String title,
+    required String description,
+    required String subject,
+    required List<Question> questions,
   }) {
     return QuestionSet(
       id: id,
@@ -118,7 +117,7 @@ class QuestionSet {
       description: description,
       activityType: ActivityType.preQuiz,
       subject: subject,
-      questions: [],
+      questions: questions,
       passingScore: 0,
       showResults: false,
       showCorrectAnswers: false,
@@ -128,11 +127,11 @@ class QuestionSet {
   }
 
   factory QuestionSet.postQuiz({
-    required id,
-    required title,
-    required description,
-    required subject,
-    required questions,
+    required String id,
+    required String title,
+    required String description,
+    required String subject,
+    required List<Question> questions,
   }) {
     return QuestionSet(
       id: id,
@@ -140,7 +139,7 @@ class QuestionSet {
       description: description,
       activityType: ActivityType.postQuiz,
       subject: subject,
-      questions: [],
+      questions: questions,
       passingScore: 80,
       showResults: true,
       showCorrectAnswers: false,
@@ -150,11 +149,11 @@ class QuestionSet {
   }
 
   factory QuestionSet.review({
-    required id,
-    required title,
-    required description,
-    required subject,
-    required questions,
+    required String id,
+    required String title,
+    required String description,
+    required String subject,
+    required List<Question> questions,
   }) {
     return QuestionSet(
       id: id,
@@ -162,12 +161,54 @@ class QuestionSet {
       description: description,
       activityType: ActivityType.review,
       subject: subject,
-      questions: [],
+      questions: questions,
       passingScore: 0,
       showResults: true,
       showCorrectAnswers: true,
       showExplanations: true,
       allowRetakes: true,
+    );
+  }
+
+  QuestionSet reviewBatchForCompletionCount(int completedSetCount) {
+    if (activityType != ActivityType.review) {
+      throw ArgumentError.value(
+        activityType,
+        'activityType',
+        'Only review question sets can be batched',
+      );
+    }
+    if (questions.isEmpty) {
+      throw StateError('Cannot select a batch from an empty question bank');
+    }
+    if (completedSetCount < 0) {
+      throw ArgumentError.value(
+        completedSetCount,
+        'completedSetCount',
+        'Must not be negative',
+      );
+    }
+
+    const batchSize = 5;
+    final batchCount = (questions.length + batchSize - 1) ~/ batchSize;
+    final batchStart = (completedSetCount % batchCount) * batchSize;
+    final batchEnd =
+        batchStart + batchSize < questions.length
+            ? batchStart + batchSize
+            : questions.length;
+
+    return QuestionSet(
+      id: id,
+      title: title,
+      description: description,
+      activityType: activityType,
+      subject: subject,
+      passingScore: passingScore,
+      showResults: showResults,
+      showCorrectAnswers: showCorrectAnswers,
+      showExplanations: showExplanations,
+      allowRetakes: allowRetakes,
+      questions: questions.sublist(batchStart, batchEnd),
     );
   }
 }

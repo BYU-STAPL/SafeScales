@@ -18,7 +18,7 @@ class PostQuizSummary extends StatefulWidget {
 }
 
 class _PostQuizSummaryState extends State<PostQuizSummary> {
-  bool _isExpanded = false;
+  bool _isExpanded = true;
 
   @override
   void initState() {
@@ -238,6 +238,7 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
             'Correct Questions',
             style: theme.textTheme.headlineSmall,
           ),
+          initiallyExpanded: true,
           trailing: Icon(
             _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
             color: theme.colorScheme.primary,

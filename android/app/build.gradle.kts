@@ -33,7 +33,7 @@ android {
         applicationId = "edu.byu.safe_scales"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21 // Explicitly set minimum SDK version
+        minSdk = flutter.minSdkVersion // Explicitly set minimum SDK version
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

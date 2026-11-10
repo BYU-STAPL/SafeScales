@@ -1,9 +1,28 @@
+import 'question.dart';
+
 class ReadingSlide {
   final String title;
   final String content;
-  // final List<SlideContent> content; // This will contain the order that text and images need to appear
+  final Question? checkpointQuestion;
 
-  ReadingSlide({required this.title, required this.content});
+  ReadingSlide({
+    required this.title,
+    required this.content,
+    this.checkpointQuestion,
+  });
+
+  factory ReadingSlide.checkpoint({
+    required String title,
+    required Question question,
+  }) {
+    return ReadingSlide(
+      title: title,
+      content: '',
+      checkpointQuestion: question,
+    );
+  }
+
+  bool get isCheckpoint => checkpointQuestion != null;
 }
 
 // abstract class SlideContent {}

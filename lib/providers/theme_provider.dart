@@ -3,11 +3,14 @@ import '../services/user_state_service.dart';
 import '../themes/app_theme.dart';
 
 class ThemeNotifier extends ChangeNotifier {
+  static const double _defaultReadingSpeed = 0.8;
+  static const double _minReadingSpeed = 0.8;
+  static const double _maxReadingSpeed = 1.4;
+
   bool _isDarkMode = false;
   double _fontSize = 1.0;
   double _readingFontSize = 1.0;
-  double _readingSpeed =
-      1.0; // Default speed (displays as 1.0, backend receives 0.5)
+  double _readingSpeed = _defaultReadingSpeed;
   AppThemeType _themeType = AppThemeType.classicBlue;
   final UserStateService _userState;
 
@@ -49,10 +52,15 @@ class ThemeNotifier extends ChangeNotifier {
     }
   }
 
+  double _normalizeReadingSpeed(double speed) {
+    return speed.clamp(_minReadingSpeed, _maxReadingSpeed);
+  }
+
   // Update reading speed
   void updateReadingSpeed(double speed) {
-    if (_readingSpeed != speed) {
-      _readingSpeed = speed;
+    final normalizedSpeed = _normalizeReadingSpeed(speed);
+    if (_readingSpeed != normalizedSpeed) {
+      _readingSpeed = normalizedSpeed;
       notifyListeners(); // This triggers UI updates
       _saveSettings(); // Persist the change
     }
@@ -84,12 +92,8 @@ class ThemeNotifier extends ChangeNotifier {
       _readingSpeed =
           (settings['readingSpeed'] != null)
               ? (settings['readingSpeed'] as num).toDouble()
-              : 1.0; // Default to 1.0 if not set (displays as 1.0, backend receives 0.5)
-
-      // Migrate old values (< 1.0) to new display format by adding 0.5
-      if (_readingSpeed < 1.0) {
-        _readingSpeed = _readingSpeed + 0.5;
-      }
+              : _defaultReadingSpeed;
+      _readingSpeed = _normalizeReadingSpeed(_readingSpeed);
 
       // Load theme type
       if (settings['themeType'] != null) {

@@ -2,6 +2,8 @@
 // PRE-QUIZ SCREEN FLOW - Assessment focused, formal,
 // =============================================================================
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +12,7 @@ import 'package:safe_scales/ui/screens/post_quiz/post_quiz_results_screen.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 
 import '../../../providers/course_provider.dart';
+import '../../../services/activity_event_service.dart';
 import '../../widgets/progress_bar.dart';
 import '../../widgets/question_widget.dart';
 import '../../widgets/tts_progress_bar.dart';
@@ -30,7 +33,8 @@ class PostQuizScreen extends StatefulWidget {
   _PostQuizScreenState createState() => _PostQuizScreenState();
 }
 
-class _PostQuizScreenState extends State<PostQuizScreen> {
+class _PostQuizScreenState extends State<PostQuizScreen>
+    with WidgetsBindingObserver {
   int currentQuestionIndex = 0;
   List<List<int>> userAnswers = [];
   bool isStarted = false;
@@ -38,6 +42,12 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   bool _showTableOfContents = false;
   final _userState = UserStateService();
   final TtsService _ttsService = TtsService();
+  final ActivityEventService _activityEvents = ActivityEventService();
+  final List<int> _questionDurationsMs = [];
+  final Stopwatch _questionStopwatch = Stopwatch();
+  final Stopwatch _quizStopwatch = Stopwatch();
+  bool _isAppForeground = true;
+  String? _attemptId;
 
   late DateTime _quizStartTime;
   late DateTime _quizEndTime;
@@ -48,14 +58,33 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     userAnswers = List.generate(widget.questionSet.questions.length, (_) => []);
+    _questionDurationsMs.addAll(
+      List<int>.filled(widget.questionSet.questions.length, 0),
+    );
     _ttsService.initialize();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _questionStopwatch.stop();
+    _quizStopwatch.stop();
     _ttsService.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _isAppForeground = state == AppLifecycleState.resumed;
+    if (_isAppForeground && isStarted && !_isFinishing) {
+      _questionStopwatch.start();
+      _quizStopwatch.start();
+    } else {
+      _questionStopwatch.stop();
+      _quizStopwatch.stop();
+    }
   }
 
   String _buildQuestionTextForTTS(int questionIndex) {
@@ -77,18 +106,44 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   }
 
   void _startPostQuiz() {
+    final now = DateTime.now();
     setState(() {
       isStarted = true;
-      _quizStartTime = DateTime.now();
+      _quizStartTime = now;
     });
+    _attemptId = ActivityEventService.createEventId();
+    _questionStopwatch
+      ..reset()
+      ..start();
+    _quizStopwatch
+      ..reset()
+      ..start();
+    final userId = _userState.currentUser?.id;
+    if (userId != null) {
+      unawaited(
+        _recordActivity(() {
+          return _activityEvents.recordQuizAttemptStarted(
+            userId: userId,
+            attemptId: _attemptId!,
+            quizId: widget.questionSet.id,
+            quizType: 'post_quiz',
+            questionCount: widget.questionSet.questions.length,
+          );
+        }),
+      );
+    }
   }
 
   void _finishPostQuiz() async {
     if (_isFinishing || widget.questionSet.questions.isEmpty) return;
 
+    final endTime = DateTime.now();
+    _recordQuestionVisit();
+    _questionStopwatch.stop();
+    _quizStopwatch.stop();
     setState(() {
       _isFinishing = true;
-      _quizEndTime = DateTime.now();
+      _quizEndTime = endTime;
     });
 
     int correctAnswers = 0;
@@ -98,6 +153,24 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
 
     int totalQuestions = widget.questionSet.questions.length;
     int scorePercentage = ((correctAnswers / totalQuestions) * 100).round();
+
+    final userId = _userState.currentUser?.id;
+    if (userId != null && _attemptId != null) {
+      await _recordActivity(() {
+        return _activityEvents.recordQuizAttemptCompleted(
+          userId: userId,
+          attemptId: _attemptId!,
+          quizId: widget.questionSet.id,
+          quizType: 'post_quiz',
+          correctAnswers: correctAnswers,
+          totalQuestions: totalQuestions,
+          activeDurationMs: _quizStopwatch.elapsedMilliseconds,
+          startedAt: _quizStartTime,
+          completedAt: _quizEndTime,
+          questionResults: _buildQuestionResults(),
+        );
+      });
+    }
 
     // Save quiz progress
     try {
@@ -161,11 +234,43 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
     return true;
   }
 
+  List<Map<String, dynamic>> _buildQuestionResults() {
+    return List.generate(widget.questionSet.questions.length, (index) {
+      final question = widget.questionSet.questions[index];
+      return {
+        'question_index': index,
+        'question_id': question.id,
+        'response': userAnswers[index],
+        'is_correct': _isAnswerCorrect(index),
+        'duration_ms': _questionDurationsMs[index],
+      };
+    });
+  }
+
+  void _recordQuestionVisit() {
+    if (!isStarted) return;
+    _questionDurationsMs[currentQuestionIndex] +=
+        _questionStopwatch.elapsedMilliseconds;
+    _questionStopwatch.reset();
+    if (_isAppForeground && !_isFinishing) {
+      _questionStopwatch.start();
+    }
+  }
+
+  Future<void> _recordActivity(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (error) {
+      debugPrint('Post-quiz activity logging failed: $error');
+    }
+  }
+
   void _nextQuestion() {
     if (_isFinishing || widget.questionSet.questions.isEmpty) return;
 
     _ttsService.stop(); // Stop TTS when changing questions
     if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
+      _recordQuestionVisit();
       setState(() {
         _isForward = true;
         _isFirstLoad = false;
@@ -181,6 +286,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   void _previousQuestion() {
     _ttsService.stop(); // Stop TTS when changing questions
     if (currentQuestionIndex > 0) {
+      _recordQuestionVisit();
       setState(() {
         _isForward = false;
         _isFirstLoad = false;
@@ -305,6 +411,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
   void _jumpToPage(int index) {
     _ttsService.stop(); // Stop TTS when jumping to a question
     if (index >= 0 && index < widget.questionSet.questions.length) {
+      _recordQuestionVisit();
       setState(() {
         _isForward = index > currentQuestionIndex;
         _isFirstLoad = false;
@@ -385,7 +492,7 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                 });
               },
               showCorrectAnswer: widget.questionSet.showCorrectAnswers,
-              showExplanation: widget.questionSet.showExplanations,
+              showExplanation: false,
               isResponseLocked: false,
             ),
           ),
@@ -463,122 +570,128 @@ class _PostQuizScreenState extends State<PostQuizScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.questionSet.title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '$totalQuestions Multiple Choice Questions',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                    if (totalQuestions == 0) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'This quiz has no available questions. Please try again later.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.error,
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: theme.colorScheme.outline.withValues(
+                              alpha: 0.25,
+                            ),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.questionSet.title,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '$totalQuestions Multiple Choice Questions',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                            if (totalQuestions == 0) ...[
+                              const SizedBox(height: 12),
+                              Text(
+                                'This quiz has no available questions. Please try again later.',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.error,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Details',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer.withValues(
-                    alpha: 0.55,
-                  ),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: theme.colorScheme.primary,
-                    width: 1,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'To Pass this Quiz',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w700,
+                      const SizedBox(height: 20),
+                      Text(
+                        'Details',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'You need to get $neededToPass out of $totalQuestions questions right to pass.',
-                      style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    _buildStarterDetailRow(
-                      icon: FontAwesomeIcons.listUl,
-                      text:
-                          'You can use the table of contents to return to previous questions',
-                      theme: theme,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildStarterDetailRow(
-                      icon: FontAwesomeIcons.volumeHigh,
-                      text:
-                          'You can use the audio feature to listen to the question instead of reading.',
-                      theme: theme,
-                    ),
-                  ],
-                ),
-              ),
+                      const SizedBox(height: 14),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer.withValues(
+                            alpha: 0.55,
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: theme.colorScheme.primary,
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'To Pass this Quiz',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'You need to get $neededToPass out of $totalQuestions questions right to pass.',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: theme.colorScheme.outline.withValues(
+                              alpha: 0.3,
+                            ),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildStarterDetailRow(
+                              icon: FontAwesomeIcons.listUl,
+                              text:
+                                  'You can use the table of contents to return to previous questions',
+                              theme: theme,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildStarterDetailRow(
+                              icon: FontAwesomeIcons.volumeHigh,
+                              text:
+                                  'You can use the audio feature to listen to the question instead of reading.',
+                              theme: theme,
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),

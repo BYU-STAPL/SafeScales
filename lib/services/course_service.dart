@@ -96,6 +96,10 @@ class CourseService {
     }
   }
 
+  Future<int> getCompletedReviewSetCount(String userId, String lessonId) async {
+    return _repository.getCompletedReviewSetCount(userId, lessonId);
+  }
+
   // === Progress Business Logic ===
 
   /// Get complete progress data for a user with business logic applied
@@ -627,9 +631,31 @@ class CourseService {
   }
 
   ReadingSlide _createSingleReadingSlide(Map<String, dynamic> slideData) {
-    final content = slideData['content'];
+    final type =
+        (slideData['type'] ?? 'content').toString().trim().toLowerCase();
+    final title = (slideData['headline'] ?? '').toString();
 
-    return ReadingSlide(title: slideData['headline'], content: content);
+    if (type == 'checkpoint') {
+      final question = _createSingleQuestion(slideData);
+      if (question == null) {
+        throw CourseServiceException(
+          'Invalid reading checkpoint: ${slideData['question'] ?? 'missing question'}',
+        );
+      }
+      return ReadingSlide.checkpoint(
+        title: title.isEmpty ? 'Checkpoint Question' : title,
+        question: question,
+      );
+    }
+
+    if (type != 'content') {
+      throw CourseServiceException('Unsupported reading slide type: $type');
+    }
+
+    return ReadingSlide(
+      title: title,
+      content: (slideData['content'] ?? '').toString(),
+    );
   }
 
   QuestionSet _createReviewSet(Map<String, dynamic> lessonMap) {
@@ -651,9 +677,9 @@ class CourseService {
         questions: [],
       );
     }
-    if (reviewSetQuestions is! List || reviewSetQuestions.length != 5) {
+    if (reviewSetQuestions is! List || reviewSetQuestions.length < 5) {
       throw CourseServiceException(
-        'Review set for module $moduleId must contain exactly five questions',
+        'Review question bank for module $moduleId must contain at least five questions',
       );
     }
 

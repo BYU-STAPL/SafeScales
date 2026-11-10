@@ -6,15 +6,19 @@ class ItemService {
   final ItemRepository _repository;
 
   ItemService({ItemRepository? repository})
-      : _repository = repository ?? ItemRepository();
+    : _repository = repository ?? ItemRepository();
 
   // === Data Processing ===
 
   /// Process and return user's items organized by type
-  Future<Map<String, List<Item>>> processUserItems(String userId, String classId) async {
+  Future<Map<String, List<Item>>> processUserItems(
+    String userId,
+    String classId,
+  ) async {
     try {
-
-      final List<dynamic> acquiredItems = await _repository.fetchUserItemIDList(userId);
+      final List<dynamic> acquiredItems = await _repository.fetchUserItemIDList(
+        userId,
+      );
 
       final assets = await _repository.fetchClassAssets(classId);
 
@@ -24,7 +28,6 @@ class ItemService {
       // Find accessories with matching IDs
       for (var asset in assets) {
         if (asset['type'] != 'dragon' && acquiredItems.contains(asset['id'])) {
-
           final Item item = _createItemFromAsset(asset);
 
           switch (item.type) {
@@ -39,10 +42,7 @@ class ItemService {
         }
       }
 
-      return {
-        'accessories': items,
-        'environments': environments,
-      };
+      return {'accessories': items, 'environments': environments};
     } catch (e) {
       throw ItemServiceException('Failed to process user items: $e');
     }
@@ -71,7 +71,6 @@ class ItemService {
   /// Check if user has a specific item
   Future<bool> userHasItem(String userId, String classId, String itemId) async {
     try {
-
       final userItems = await _repository.fetchUserItemIDList(userId);
       return userItems.contains(itemId);
     } catch (e) {
@@ -98,7 +97,6 @@ class ItemService {
 
   Item _createItemFromAsset(Map<String, dynamic> asset) {
     try {
-
       ItemType type;
       switch (asset['type']) {
         case 'accessory':
@@ -121,7 +119,6 @@ class ItemService {
         imageUrl: asset['imageUrl'],
         cost: asset['cost'] ?? 1,
       );
-
     } catch (e) {
       throw ItemServiceException('Error creating item from asset: $e');
     }
@@ -137,16 +134,21 @@ class ItemService {
   }
 
   /// Filter items based on criteria
-  List<Item> filterItems(List<Item> items, {
+  List<Item> filterItems(
+    List<Item> items, {
     String? nameFilter,
     bool Function(Item)? customFilter,
   }) {
     var filtered = items;
 
     if (nameFilter != null && nameFilter.isNotEmpty) {
-      filtered = filtered
-          .where((item) => item.name.toLowerCase().contains(nameFilter.toLowerCase()))
-          .toList();
+      filtered =
+          filtered
+              .where(
+                (item) =>
+                    item.name.toLowerCase().contains(nameFilter.toLowerCase()),
+              )
+              .toList();
     }
 
     if (customFilter != null) {
@@ -159,9 +161,9 @@ class ItemService {
   /// Sort items by name
   List<Item> sortItemsByName(List<Item> items, {bool ascending = true}) {
     final sorted = List<Item>.from(items);
-    sorted.sort((a, b) => ascending
-        ? a.name.compareTo(b.name)
-        : b.name.compareTo(a.name));
+    sorted.sort(
+      (a, b) => ascending ? a.name.compareTo(b.name) : b.name.compareTo(a.name),
+    );
     return sorted;
   }
 

@@ -1,24 +1,31 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:safe_scales/extensions/string_extensions.dart';
+import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/ui/screens/review_set/review_results_screen.dart';
 
+import '../../../services/activity_event_service.dart';
 import '../../../providers/shop_provider.dart';
 import '../../widgets/progress_bar.dart';
 import '../../../models/question.dart';
 import '../../widgets/question_widget.dart';
+import '../../widgets/styled_markdown.dart';
 import '../../widgets/tts_progress_bar.dart';
 import '../../widgets/voice_button.dart';
 import '../../../services/tts_service.dart';
 
 class ReviewScreen extends StatefulWidget {
   final QuestionSet questionSet;
+  final String? lessonId;
   String? image;
   final bool needToShowShop;
 
   ReviewScreen({
     super.key,
     required this.questionSet,
+    this.lessonId,
     this.image,
     required this.needToShowShop,
   });
@@ -27,7 +34,8 @@ class ReviewScreen extends StatefulWidget {
   _ReviewScreenState createState() => _ReviewScreenState();
 }
 
-class _ReviewScreenState extends State<ReviewScreen> {
+class _ReviewScreenState extends State<ReviewScreen>
+    with WidgetsBindingObserver {
   int currentQuestionIndex = 0;
   List<List<int>> userAnswers = [];
   bool isStarted = false;
@@ -39,12 +47,26 @@ class _ReviewScreenState extends State<ReviewScreen> {
   bool isResponseLocked = false;
 
   bool _isInitialized = false;
+  bool _isCompleted = false;
+  final UserStateService _userState = UserStateService();
+  final ActivityEventService _activityEvents = ActivityEventService();
+  final List<int> _questionDurationsMs = [];
+  final Stopwatch _questionStopwatch = Stopwatch();
+  final Stopwatch _responseStopwatch = Stopwatch();
+  final Stopwatch _reviewStopwatch = Stopwatch();
+  bool _isAppForeground = true;
+  DateTime? _reviewStartTime;
+  String? _attemptId;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     userAnswers = List.generate(widget.questionSet.questions.length, (_) => []);
     attempts = List.generate(widget.questionSet.questions.length, (_) => []);
+    _questionDurationsMs.addAll(
+      List<int>.filled(widget.questionSet.questions.length, 0),
+    );
     _ttsService.initialize();
 
     // Use addPostFrameCallback to ensure initialization happens after build
@@ -55,8 +77,51 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _questionStopwatch.stop();
+    _responseStopwatch.stop();
+    _reviewStopwatch.stop();
     _ttsService.dispose();
+    if (isStarted && !_isCompleted) {
+      final userId = _userState.currentUser?.id;
+      if (userId != null && _attemptId != null) {
+        unawaited(
+          _recordActivity(() {
+            return _activityEvents.record(
+              userId: userId,
+              eventType: 'review_set_abandoned',
+              contextType: 'review_set',
+              contextId: widget.questionSet.id,
+              details: {
+                'attempt_id': _attemptId,
+                'lesson_id': widget.lessonId,
+                'answered_questions':
+                    attempts
+                        .where(
+                          (questionAttempts) => questionAttempts.isNotEmpty,
+                        )
+                        .length,
+              },
+            );
+          }),
+        );
+      }
+    }
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _isAppForeground = state == AppLifecycleState.resumed;
+    if (_isAppForeground && isStarted && !_isCompleted) {
+      _questionStopwatch.start();
+      _responseStopwatch.start();
+      _reviewStopwatch.start();
+    } else {
+      _questionStopwatch.stop();
+      _responseStopwatch.stop();
+      _reviewStopwatch.stop();
+    }
   }
 
   String _buildQuestionTextForTTS(int questionIndex) {
@@ -96,13 +161,81 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   void _startReview() {
+    final now = DateTime.now();
     setState(() {
       isStarted = true;
     });
+    _reviewStartTime = now;
+    _questionStopwatch
+      ..reset()
+      ..start();
+    _responseStopwatch
+      ..reset()
+      ..start();
+    _reviewStopwatch
+      ..reset()
+      ..start();
+    _attemptId = ActivityEventService.createEventId();
+    final userId = _userState.currentUser?.id;
+    if (userId != null) {
+      unawaited(
+        _recordActivity(() {
+          return _activityEvents.record(
+            userId: userId,
+            eventType: 'review_set_started',
+            contextType: 'review_set',
+            contextId: widget.questionSet.id,
+            occurredAt: now,
+            details: {
+              'attempt_id': _attemptId,
+              'lesson_id': widget.lessonId,
+              'question_count': widget.questionSet.questions.length,
+            },
+          );
+        }),
+      );
+    }
   }
 
   void _finishReview() async {
     if (!mounted) return;
+    final completedAt = DateTime.now();
+    _recordQuestionTime();
+    _isCompleted = true;
+    _questionStopwatch.stop();
+    _responseStopwatch.stop();
+    _reviewStopwatch.stop();
+    final userId = _userState.currentUser?.id;
+    if (userId != null && _attemptId != null) {
+      await _recordActivity(() async {
+        await _recordQuestionDurationEvent(
+          userId: userId,
+          questionIndex: currentQuestionIndex,
+          occurredAt: completedAt,
+        );
+        await _activityEvents.record(
+          userId: userId,
+          eventType: 'review_set_completed',
+          contextType: 'review_set',
+          contextId: widget.questionSet.id,
+          occurredAt: completedAt,
+          details: {
+            'attempt_id': _attemptId,
+            'lesson_id': widget.lessonId,
+            'question_count': widget.questionSet.questions.length,
+            'response_attempt_count': attempts.fold<int>(
+              0,
+              (total, questionAttempts) => total + questionAttempts.length,
+            ),
+            'duration_ms':
+                completedAt
+                    .difference(_reviewStartTime ?? completedAt)
+                    .inMilliseconds,
+            'active_duration_ms': _reviewStopwatch.elapsedMilliseconds,
+          },
+        );
+      });
+    }
 
     // if (widget.isComingFromShopRoute) {
     // Show results screen and then return to previous screen
@@ -207,11 +340,45 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   void _checkQuestion() {
+    final now = DateTime.now();
+    final responseDuration = _responseStopwatch.elapsedMilliseconds;
+    _recordQuestionTime();
     setState(() {
-      attempts[currentQuestionIndex].add(userAnswers[currentQuestionIndex]);
+      attempts[currentQuestionIndex].add(
+        List<int>.from(userAnswers[currentQuestionIndex]),
+      );
     });
 
-    if (_isAnswerCorrect(currentQuestionIndex)) {
+    final isCorrect = _isAnswerCorrect(currentQuestionIndex);
+    final userId = _userState.currentUser?.id;
+    if (userId != null && _attemptId != null) {
+      final question = widget.questionSet.questions[currentQuestionIndex];
+      _recordActivity(() {
+        return _activityEvents.record(
+          userId: userId,
+          eventType: 'review_question_response',
+          contextType: 'review_set',
+          contextId: widget.questionSet.id,
+          occurredAt: now,
+          details: {
+            'attempt_id': _attemptId,
+            'lesson_id': widget.lessonId,
+            'question_id': question.id,
+            'question_index': currentQuestionIndex,
+            'response': List<int>.from(userAnswers[currentQuestionIndex]),
+            'is_correct': isCorrect,
+            'attempt_number': attempts[currentQuestionIndex].length,
+            'response_duration_ms': responseDuration,
+          },
+        );
+      });
+    }
+    _responseStopwatch..reset();
+    if (_isAppForeground) {
+      _responseStopwatch.start();
+    }
+
+    if (isCorrect) {
       setState(() {
         isCurrentQuestionCorrect = true;
         // showAnswerMessage = true; // Currently using snack-bar function: showAnswerCheckMessage
@@ -232,14 +399,71 @@ class _ReviewScreenState extends State<ReviewScreen> {
   void _nextQuestion() {
     _ttsService.stop(); // Stop TTS when changing questions
     if (currentQuestionIndex < widget.questionSet.questions.length - 1) {
+      final now = DateTime.now();
+      _recordQuestionTime();
+      final userId = _userState.currentUser?.id;
+      if (userId != null && _attemptId != null) {
+        _recordActivity(() {
+          return _recordQuestionDurationEvent(
+            userId: userId,
+            questionIndex: currentQuestionIndex,
+            occurredAt: now,
+          );
+        });
+      }
       setState(() {
         currentQuestionIndex++;
         isCurrentQuestionCorrect = false;
         // showAnswerMessage = false;
         isResponseLocked = false;
       });
+      _responseStopwatch.reset();
+      if (_isAppForeground) {
+        _responseStopwatch.start();
+      }
     } else {
       _finishReview();
+    }
+  }
+
+  void _recordQuestionTime() {
+    if (!isStarted) return;
+    _questionDurationsMs[currentQuestionIndex] +=
+        _questionStopwatch.elapsedMilliseconds;
+    _questionStopwatch.reset();
+    if (_isAppForeground && !_isCompleted) {
+      _questionStopwatch.start();
+    }
+  }
+
+  Future<void> _recordQuestionDurationEvent({
+    required String userId,
+    required int questionIndex,
+    required DateTime occurredAt,
+  }) {
+    final question = widget.questionSet.questions[questionIndex];
+    return _activityEvents.record(
+      userId: userId,
+      eventType: 'review_question_duration',
+      contextType: 'review_set',
+      contextId: widget.questionSet.id,
+      occurredAt: occurredAt,
+      details: {
+        'attempt_id': _attemptId,
+        'lesson_id': widget.lessonId,
+        'question_id': question.id,
+        'question_index': questionIndex,
+        'attempt_count': attempts[questionIndex].length,
+        'duration_ms': _questionDurationsMs[questionIndex],
+      },
+    );
+  }
+
+  Future<void> _recordActivity(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (error) {
+      debugPrint('Review activity logging failed: $error');
     }
   }
 
@@ -425,7 +649,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                           },
                           showCorrectAnswer:
                               widget.questionSet.showCorrectAnswers,
-                          showExplanation: widget.questionSet.showExplanations,
+                          showExplanation: false,
                           isResponseLocked: isResponseLocked,
                         ),
                       ),
@@ -454,11 +678,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
   void showAnswerCheckMessage() {
     ThemeData theme = Theme.of(context);
 
-    // Secondary Color is green, so correct -> green
-    Color color =
-        isCurrentQuestionCorrect
-            ? theme.colorScheme.secondary
-            : theme.colorScheme.error;
     Color bgColor =
         isCurrentQuestionCorrect
             ? theme.colorScheme.secondaryContainer
@@ -466,27 +685,18 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              isCurrentQuestionCorrect ? Icons.check_circle : Icons.error,
-              color: color,
-            ),
-            SizedBox(width: 10),
-            Text(
-              isCurrentQuestionCorrect ? 'Correct!' : 'Incorrect, try again.',
-              style: theme.textTheme.labelLarge?.copyWith(color: color),
-            ),
-          ],
+        content: ReviewAnswerFeedback(
+          isCorrect: isCurrentQuestionCorrect,
+          explanation:
+              widget.questionSet.questions[currentQuestionIndex].explanation,
         ),
-        duration: Duration(seconds: 1),
+        duration: const Duration(seconds: 5),
         backgroundColor: bgColor,
         // behavior: SnackBarBehavior.floating,
       ),
     );
   }
 
-  // Might keep and add explanation here???
   // Card _buildAnswerCheckCard() {
   //   ThemeData theme = Theme.of(context);
   //
@@ -523,4 +733,53 @@ class _ReviewScreenState extends State<ReviewScreen> {
   //         ),
   //       );
   // }
+}
+
+class ReviewAnswerFeedback extends StatelessWidget {
+  const ReviewAnswerFeedback({
+    super.key,
+    required this.isCorrect,
+    required this.explanation,
+  });
+
+  final bool isCorrect;
+  final String explanation;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color =
+        isCorrect ? theme.colorScheme.secondary : theme.colorScheme.error;
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 200),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  isCorrect ? Icons.check_circle : Icons.error,
+                  color: color,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    isCorrect ? 'Correct!' : 'Incorrect, try again.',
+                    style: theme.textTheme.labelLarge?.copyWith(color: color),
+                  ),
+                ),
+              ],
+            ),
+            if (explanation.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              StyledMarkdown(data: explanation),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }

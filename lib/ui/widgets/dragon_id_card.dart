@@ -18,7 +18,6 @@ class DragonIdCard extends StatefulWidget {
   final VoidCallback? onTapPlayButton;
   final Function(String)? onNameChanged; // Add this callback
 
-
   const DragonIdCard({
     super.key,
     required this.dragonId,
@@ -32,11 +31,9 @@ class DragonIdCard extends StatefulWidget {
 
   @override
   State<DragonIdCard> createState() => _DragonIdCardState();
-
 }
 
 class _DragonIdCardState extends State<DragonIdCard> {
-
   bool _isPlayUnlocked = false;
 
   @override
@@ -46,10 +43,11 @@ class _DragonIdCardState extends State<DragonIdCard> {
     _isPlayUnlocked = widget.isPlayUnlocked;
   }
 
-
   void _showNameDialog() {
-
-    DragonProvider dragonProvider = Provider.of<DragonProvider>(context, listen: false);
+    DragonProvider dragonProvider = Provider.of<DragonProvider>(
+      context,
+      listen: false,
+    );
 
     final TextEditingController nameController = TextEditingController(
       text: dragonProvider.getDragonById(widget.dragonId)?.name ?? '',
@@ -71,11 +69,13 @@ class _DragonIdCardState extends State<DragonIdCard> {
                     decoration: InputDecoration(
                       // labelText: 'Dragon Name',
                       hintText: 'Enter Your Dragon\'s Name',
-                      counterText: '${nameController.text.length}/${dragonProvider.maxNameLength}',
+                      counterText:
+                          '${nameController.text.length}/${dragonProvider.maxNameLength}',
                       errorText:
-                      nameController.text.length > dragonProvider.maxNameLength
-                          ? 'Name cannot be longer than ${dragonProvider.maxNameLength} characters'
-                          : null,
+                          nameController.text.length >
+                                  dragonProvider.maxNameLength
+                              ? 'Name cannot be longer than ${dragonProvider.maxNameLength} characters'
+                              : null,
                     ),
                     autofocus: true,
                     maxLength: dragonProvider.maxNameLength,
@@ -92,24 +92,25 @@ class _DragonIdCardState extends State<DragonIdCard> {
                 ),
                 TextButton(
                   onPressed:
-                  nameController.text.trim().isEmpty ||
-                      nameController.text.length > dragonProvider.maxNameLength
-                      ? null // Disable button if name is empty or too long
-                      : () async {
-                    try {
-                      await dragonProvider.updateDragonName(
-                        widget.dragonId,
-                        nameController.text,
-                      );
-                      if (mounted) Navigator.pop(context);
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(e.toString())),
-                        );
-                      }
-                    }
-                  },
+                      nameController.text.trim().isEmpty ||
+                              nameController.text.length >
+                                  dragonProvider.maxNameLength
+                          ? null // Disable button if name is empty or too long
+                          : () async {
+                            try {
+                              await dragonProvider.updateDragonName(
+                                widget.dragonId,
+                                nameController.text,
+                              );
+                              if (mounted) Navigator.pop(context);
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString())),
+                                );
+                              }
+                            }
+                          },
                   child: const Text('Save'),
                 ),
               ],
@@ -123,7 +124,9 @@ class _DragonIdCardState extends State<DragonIdCard> {
   void openEditNameDialog() {
     // TODO: Add Backend to saving dragon name
 
-    final TextEditingController controller = TextEditingController(text: widget.name);
+    final TextEditingController controller = TextEditingController(
+      text: widget.name,
+    );
 
     showDialog(
       context: context,
@@ -162,156 +165,152 @@ class _DragonIdCardState extends State<DragonIdCard> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
-
     ThemeData theme = Theme.of(context);
 
     return Container(
-        margin: EdgeInsets.symmetric(horizontal: 0, vertical: 15),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              theme.colorScheme.surfaceDim.withValues(alpha: 0.9), // Darker royal blue
-              theme.colorScheme.surfaceDim, // Royal blue
-            ],
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.shadow.withValues(alpha: 0.2),
-              blurRadius: 15,
-              offset: Offset(0, 8),
-            ),
+      margin: EdgeInsets.symmetric(horizontal: 0, vertical: 15),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.surfaceDim.withValues(
+              alpha: 0.9,
+            ), // Darker royal blue
+            theme.colorScheme.surfaceDim, // Royal blue
           ],
         ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.shadow.withValues(alpha: 0.2),
+            blurRadius: 15,
+            offset: Offset(0, 8),
           ),
-          child: Column(
-            children: [
-              // Header with dragon image and name
-              Container(
-                padding: EdgeInsets.all(20),
-                child: Row(
-                  children: [
-
-                    // Dragon image
-                    Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
-                          width: 2,
-                        ),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
+        child: Column(
+          children: [
+            // Header with dragon image and name
+            Container(
+              padding: EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  // Dragon image
+                  Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer.withValues(
+                        alpha: 0.2,
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(13),
-                        child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                            child: widget.dragonImage,
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.2,
                         ),
+                        width: 2,
                       ),
                     ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(13),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 10,
+                        ),
+                        child: widget.dragonImage,
+                      ),
+                    ),
+                  ),
 
-                    SizedBox(width: 20),
+                  SizedBox(width: 20),
 
-                    // Name and species
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                  // Name and species
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Name'.toTitleCase(),
+                              style: theme.textTheme.labelLarge,
+                            ),
 
-                          Row(
+                            //TODO: Enable when dragon names can be saved
+                            IconButton(
+                              onPressed: _showNameDialog,
+                              icon: FaIcon(FontAwesomeIcons.pencil, size: 15),
+                            ),
+                          ],
+                        ),
+
+                        // SizedBox(height: 2),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: Row(
                             children: [
                               Text(
-                                'Name'.toTitleCase(),
-                                style: theme.textTheme.labelLarge,
-                              ),
-
-                              //TODO: Enable when dragon names can be saved
-                              IconButton(
-                                onPressed: _showNameDialog,
-                                icon: Icon(
-                                  FontAwesomeIcons.pencil,
-                                  size: 15,
+                                widget.name,
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontSize:
+                                      theme.textTheme.bodyMedium?.fontSize,
                                 ),
                               ),
                             ],
                           ),
+                        ),
 
+                        SizedBox(height: 7),
 
-                          // SizedBox(height: 2),
+                        Text(
+                          'Species'.toTitleCase(),
+                          style: theme.textTheme.labelMedium,
+                        ),
 
-                          Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 12),
-                            child: Row(
-                              children: [
-                                Text(
-                                  widget.name,
-                                  style: theme.textTheme.headlineSmall?.copyWith(
-                                    fontSize: theme.textTheme.bodyMedium?.fontSize,
-                                  )
-                                ),
+                        SizedBox(height: 3),
 
-                              ],
-                            )
-                          ),
-
-                          SizedBox(height: 7),
-
-                          Text(
-                            'Species'.toTitleCase(),
-                            style: theme.textTheme.labelMedium,
-                          ),
-
-                          SizedBox(height: 3),
-
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 12),
-                            child: Text(
-                              widget.species,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontStyle: FontStyle.italic,
-                              ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            widget.species,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontStyle: FontStyle.italic,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Play Button
+            Padding(
+              padding: EdgeInsets.fromLTRB(20, 8, 20, 20),
+              child: ElevatedButton(
+                onPressed: _isPlayUnlocked ? widget.onTapPlayButton : null,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    FaIcon(FontAwesomeIcons.gamepad),
+
+                    SizedBox(width: 20),
+
+                    Text('Play with Dragon'.toUpperCase()),
                   ],
                 ),
               ),
-
-              // Play Button
-              Padding(
-                  padding: EdgeInsets.fromLTRB(20, 8, 20, 20),
-                child: ElevatedButton(
-                    onPressed: _isPlayUnlocked ? widget.onTapPlayButton : null,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(FontAwesomeIcons.gamepad),
-
-                        SizedBox(width: 20,),
-
-                        Text(
-                            'Play with Dragon'.toUpperCase()
-                        ),
-                      ],
-                    )
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }

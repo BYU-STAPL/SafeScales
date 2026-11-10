@@ -118,3 +118,4 @@ android/app/key.properties
 # Vercel build output (copied from docs/)
 public/
 .vercel
+.env*

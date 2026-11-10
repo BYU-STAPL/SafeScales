@@ -194,8 +194,13 @@ class DragonService {
         phaseImages: images,
         phaseOrder: phaseOrder,
         preferredEnvironment:
-            asset['favorite_item']?.toString() ?? 'Unknown', // Default value
-        favoriteItem: asset['favorite_item']?.toString() ?? 'Unknown',
+            asset['default_habitat']?.toString() ??
+            asset['preferred_environment']?.toString() ??
+            'Unknown',
+        favoriteItem:
+            asset['default_item']?.toString() ??
+            asset['favorite_item']?.toString() ??
+            'Unknown',
         name: dragonName,
       );
     } catch (e) {
@@ -243,8 +248,13 @@ class DragonService {
         phaseImages: images,
         phaseOrder: phaseOrder,
         preferredEnvironment:
-            dragonData['preferred_environment']?.toString() ?? 'Unknown',
-        favoriteItem: dragonData['favorite_item']?.toString() ?? 'Unknown',
+            dragonData['default_habitat']?.toString() ??
+            dragonData['preferred_environment']?.toString() ??
+            'Unknown',
+        favoriteItem:
+            dragonData['default_item']?.toString() ??
+            dragonData['favorite_item']?.toString() ??
+            'Unknown',
         name: dragonName,
       );
 
