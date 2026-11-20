@@ -3,9 +3,9 @@ import '../services/user_state_service.dart';
 import '../themes/app_theme.dart';
 
 class ThemeNotifier extends ChangeNotifier {
-  static const double _defaultReadingSpeed = 0.8;
-  static const double _minReadingSpeed = 0.8;
-  static const double _maxReadingSpeed = 1.4;
+  static const double _defaultReadingSpeed = 1.1;
+  static const double _minReadingSpeed = 0.9;
+  static const double _maxReadingSpeed = 1.2;
 
   bool _isDarkMode = false;
   double _fontSize = 1.0;

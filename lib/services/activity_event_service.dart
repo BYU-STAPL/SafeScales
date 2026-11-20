@@ -13,9 +13,17 @@ class ActivityEventService {
 
   static String createEventId() => _createId();
 
+  /// Builds a unique id from UTC micros + 32 bits of randomness.
+  ///
+  /// Avoids `Random.nextInt(1 << 32)`: on dart2js / Flutter web, `1 << 32`
+  /// evaluates to `0`, which throws
+  /// `RangeError: max must be in range 0 < max ≤ 2^32, was 0`.
   static String _createId() {
-    final random = Random.secure().nextInt(1 << 32);
-    return '${DateTime.now().toUtc().microsecondsSinceEpoch}-$random';
+    final rng = Random.secure();
+    // Compose a full unsigned 32-bit value from two safe nextInt bounds
+    // (each bound must stay in 1..2^32 inclusive on every Dart platform).
+    final value = (rng.nextInt(1 << 16) << 16) | rng.nextInt(1 << 16);
+    return '${DateTime.now().toUtc().microsecondsSinceEpoch}-$value';
   }
 
   Future<void> record({

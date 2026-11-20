@@ -410,6 +410,9 @@ class _PreQuizScreenState extends State<PreQuizScreen>
     AppBar appBar = AppBar(
       centerTitle: true,
       title: const Text('Survey'),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      scrolledUnderElevation: 0,
       actions:
           isStarted
               ? [
@@ -434,11 +437,17 @@ class _PreQuizScreenState extends State<PreQuizScreen>
 
     if (!isStarted) {
       final totalQuestions = widget.questionSet.questions.length;
+      final cardBorder = Border.all(
+        color: theme.colorScheme.outline.withValues(alpha: 0.35),
+      );
+      final cardRadius = BorderRadius.circular(16);
+
       return Scaffold(
+        backgroundColor: theme.colorScheme.surfaceContainerLowest,
         appBar: appBar,
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(30, 20, 30, 12),
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -449,18 +458,9 @@ class _PreQuizScreenState extends State<PreQuizScreen>
                     vertical: 16,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: theme.colorScheme.outline.withValues(alpha: 0.25),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: theme.colorScheme.shadow.withValues(alpha: 0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    color: theme.colorScheme.surfaceContainerLowest,
+                    borderRadius: cardRadius,
+                    border: cardBorder,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -469,14 +469,14 @@ class _PreQuizScreenState extends State<PreQuizScreen>
                         widget.questionSet.title,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         '$totalQuestions Multiple Choice Questions',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
-                          letterSpacing: 0.5,
                         ),
                       ),
                       if (widget.questionSet.description.trim().isNotEmpty) ...[
@@ -491,23 +491,24 @@ class _PreQuizScreenState extends State<PreQuizScreen>
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 Text(
                   'Details',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
-                    vertical: 16,
+                    vertical: 14,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.green.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(18),
+                    color: AppColors.paleGreen,
+                    borderRadius: cardRadius,
                     border: Border.all(color: AppColors.green),
                   ),
                   child: Text(
@@ -518,7 +519,7 @@ class _PreQuizScreenState extends State<PreQuizScreen>
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
@@ -526,25 +527,23 @@ class _PreQuizScreenState extends State<PreQuizScreen>
                     vertical: 16,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                    ),
+                    color: theme.colorScheme.surfaceContainerLowest,
+                    borderRadius: cardRadius,
+                    border: cardBorder,
                   ),
                   child: Column(
                     children: [
                       _buildStarterDetailRow(
                         icon: FontAwesomeIcons.listUl,
                         text:
-                            'Use the table of contents to return to previous questions',
+                            'You can use the table of contents to return to previous questions',
                         theme: theme,
                       ),
                       const SizedBox(height: 16),
                       _buildStarterDetailRow(
                         icon: FontAwesomeIcons.volumeHigh,
                         text:
-                            'Use the audio feature to listen to questions instead of reading',
+                            'You can use the audio feature to listen to the question instead of reading.',
                         theme: theme,
                       ),
                     ],
@@ -565,7 +564,7 @@ class _PreQuizScreenState extends State<PreQuizScreen>
         ),
         bottomNavigationBar: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(30, 8, 30, 12),
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -576,15 +575,17 @@ class _PreQuizScreenState extends State<PreQuizScreen>
                           _startPreQuiz();
                         },
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: Text(
                   'Start'.toUpperCase(),
                   style: TextStyle(
                     fontSize: theme.textTheme.bodyMedium?.fontSize,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
                     color: theme.colorScheme.onPrimary,
                   ),
                 ),

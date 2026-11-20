@@ -1028,6 +1028,19 @@ class AppTheme {
     );
   }
 
+  /// Button label metrics without a baked-in color so [ButtonStyle.foregroundColor] wins.
+  static TextStyle _buttonLabelTextStyle(ColorScheme colorScheme) {
+    final TextStyle base = getTextTheme(colorScheme).labelMedium!;
+    return TextStyle(
+      fontFamily: base.fontFamily,
+      fontFamilyFallback: base.fontFamilyFallback,
+      fontSize: base.fontSize,
+      fontWeight: base.fontWeight,
+      letterSpacing: base.letterSpacing,
+      height: base.height,
+    );
+  }
+
   static ThemeData buildLightAppTheme() {
     final colorScheme = getColorScheme(false);
     return ThemeData(
@@ -1060,10 +1073,10 @@ class AppTheme {
         actionsPadding: EdgeInsets.only(right: 20),
       ),
 
-      // Button themes
+      // Button themes — omit textStyle color so foregroundColor controls label contrast
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          textStyle: getTextTheme(colorScheme).labelMedium,
+          textStyle: _buttonLabelTextStyle(colorScheme),
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -1071,6 +1084,23 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12),
           ),
           shadowColor: colorScheme.shadow,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          textStyle: _buttonLabelTextStyle(colorScheme),
+          foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.primary, width: 1.5),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          textStyle: _buttonLabelTextStyle(colorScheme),
+          foregroundColor: colorScheme.primary,
         ),
       ),
 
@@ -1156,10 +1186,10 @@ class AppTheme {
         actionsPadding: EdgeInsets.only(right: 20),
       ),
 
-      // Button themes
+      // Button themes — omit textStyle color so foregroundColor controls label contrast
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          textStyle: getTextTheme(colorScheme).labelMedium,
+          textStyle: _buttonLabelTextStyle(colorScheme),
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -1167,6 +1197,23 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12),
           ),
           shadowColor: colorScheme.shadow,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          textStyle: _buttonLabelTextStyle(colorScheme),
+          foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.primary, width: 1.5),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          textStyle: _buttonLabelTextStyle(colorScheme),
+          foregroundColor: colorScheme.primary,
         ),
       ),
 

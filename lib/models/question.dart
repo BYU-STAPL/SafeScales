@@ -75,6 +75,16 @@ class Question {
     }
     return true;
   }
+
+  String get correctAnswerLabel =>
+      correctAnswerIndices.map((index) => options[index]).join(', ');
+
+  /// Authored explanation when present; otherwise a correct-answer fallback.
+  String explanationForDisplay() {
+    final authored = explanation.trim();
+    if (authored.isNotEmpty) return authored;
+    return 'Correct answer: $correctAnswerLabel';
+  }
 }
 
 class QuestionSet {

@@ -6,8 +6,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/dependencies/app_dependencies.dart';
+import 'package:safe_scales/navigation/app_navigator.dart';
+import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/ui/screens/login/selection_screen.dart';
+import 'package:safe_scales/ui/screens/set_password_screen.dart';
 
 void main() {
   print("🔵 [MAIN] Starting main()");
@@ -59,6 +62,8 @@ class _InitializingAppState extends State<InitializingApp> {
       print("🟢 [INIT] Step 2: About to initialize Supabase");
       // Initialize Supabase
       await SupabaseConfig.initialize();
+      // Defer async auth work outside onAuthStateChange to avoid GoTrue lock deadlocks.
+      UserStateService().startAuthListener();
       print("🟢 [INIT] Step 2: Supabase initialized successfully");
 
       print("🟢 [INIT] Step 3: About to create app dependencies");
@@ -156,20 +161,62 @@ class _InitializingAppState extends State<InitializingApp> {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final AppDependencies appDeps;
 
   const MyApp({super.key, required this.appDeps});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final UserStateService _userState;
+  bool _openedSetPasswordForRecovery = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _userState = UserStateService();
+    _userState.passwordRecoveryNotifier.addListener(_onPasswordRecovery);
+  }
+
+  @override
+  void dispose() {
+    _userState.passwordRecoveryNotifier.removeListener(_onPasswordRecovery);
+    super.dispose();
+  }
+
+  void _onPasswordRecovery() {
+    if (!_userState.passwordRecoveryNotifier.value) {
+      _openedSetPasswordForRecovery = false;
+      return;
+    }
+    if (_openedSetPasswordForRecovery) return;
+    _openedSetPasswordForRecovery = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final nav = appNavigatorKey.currentState;
+      if (nav == null) return;
+      nav.push(
+        MaterialPageRoute(
+          settings: const RouteSettings(name: SetPasswordScreen.routeName),
+          builder: (_) => const SetPasswordScreen(),
+        ),
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     print("🟣 [MYAPP] MyApp.build() called");
     return MultiProvider(
-      providers: appDeps.getProviders(),
+      providers: widget.appDeps.getProviders(),
       child: Consumer<ThemeNotifier>(
         builder: (context, themeNotifier, child) {
           print("🟣 [MYAPP] Consumer builder called");
           return MaterialApp(
+            navigatorKey: appNavigatorKey,
             title: 'SafeScales',
             theme: AppTheme.buildLightAppTheme(),
             darkTheme: AppTheme.buildDarkAppTheme(),

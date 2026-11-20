@@ -30,6 +30,11 @@ class DragonDecorationProvider extends ChangeNotifier {
   bool isNoEnvironmentSelected = true;
   String _currentDragonId = '';
 
+  /// Chains decoration saves so overlapping read-modify-write calls cannot
+  /// overwrite newer sticker state with a stale snapshot.
+  Future<void> _saveChain = Future<void>.value();
+  int _saveGeneration = 0;
+
   DragonDecorationProvider({
     DragonDecorationService? service,
     UserStateService? userStateService,
@@ -393,7 +398,6 @@ class DragonDecorationProvider extends ChangeNotifier {
       );
 
       notifyListeners();
-      _saveDecoration();
     } catch (e) {
       _setError('Failed to update sticker position: $e');
     }
@@ -418,7 +422,6 @@ class DragonDecorationProvider extends ChangeNotifier {
       );
 
       notifyListeners();
-      _saveDecoration();
     } catch (e) {
       _setError('Failed to update sticker size: $e');
     }
@@ -499,28 +502,50 @@ class DragonDecorationProvider extends ChangeNotifier {
   }
 
   // === SAVE OPERATIONS ===
-  Future<void> _saveDecoration() async {
-    final user = _userStateService.currentUser;
-    if (user == null) return;
 
-    _setSaving(true);
-    _clearError();
+  /// Persist the current decoration layout (call after move/resize gestures).
+  Future<void> persistDecoration() => _saveDecoration();
 
-    try {
-      final success = await _service.saveDragonDecoration(
-        userId: user.id,
-        dragonId: _currentDragonId,
-        stickers: _placedStickers,
-      );
+  Future<void> _saveDecoration() {
+    final generation = ++_saveGeneration;
+    final stickersSnapshot = List<StickerItem>.from(_placedStickers);
+    final dragonId = _currentDragonId;
 
-      if (!success) {
-        _setError('Failed to save decoration');
+    _saveChain = _saveChain.then((_) async {
+      // Skip superseded saves; only the latest snapshot needs to hit the DB.
+      if (generation != _saveGeneration) return;
+
+      final user = _userStateService.currentUser;
+      if (user == null || dragonId.isEmpty) return;
+
+      _setSaving(true);
+      _clearError();
+
+      try {
+        final success = await _service.saveDragonDecoration(
+          userId: user.id,
+          dragonId: dragonId,
+          stickers: stickersSnapshot,
+        );
+
+        if (!success) {
+          _setError('Failed to save decoration');
+        }
+      } catch (e) {
+        _setError('Error saving decoration: $e');
+      } finally {
+        if (generation == _saveGeneration) {
+          _setSaving(false);
+        }
       }
-    } catch (e) {
+    }).catchError((Object e) {
       _setError('Error saving decoration: $e');
-    } finally {
-      _setSaving(false);
-    }
+      if (generation == _saveGeneration) {
+        _setSaving(false);
+      }
+    });
+
+    return _saveChain;
   }
 
   // === UTILITY METHODS FOR UI ===

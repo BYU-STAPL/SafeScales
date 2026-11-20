@@ -114,16 +114,21 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
 
       if (lesson == null || lessonProgress == null) {
         throw Exception("No Lesson Found for ${widget.moduleId}");
-      } else {
+      }
+
+      // Assign slides before activity telemetry so a logging failure cannot
+      // leave the reading UI stuck on the empty-content state.
+      setState(() {
+        _readingSlides = lesson.reading;
+        _bookmarkedPages = lessonProgress.bookmarks;
+        _isLoading = false;
+      });
+
+      try {
         final startedAt = DateTime.now();
         _readingSessionId = ActivityEventService.createEventId();
         _readingStartedAt = startedAt;
         _readingUserId = courseProvider.currentUser?.id;
-        setState(() {
-          _readingSlides = lesson.reading;
-          _bookmarkedPages = lessonProgress.bookmarks;
-          _isLoading = false;
-        });
         _pageStopwatch.start();
         _readingStopwatch.start();
         final userId = _readingUserId;
@@ -151,6 +156,8 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
             ),
           );
         }
+      } catch (e) {
+        debugPrint('Failed to start reading activity tracking: $e');
       }
     } catch (e) {
       print('❌Error loading slides: $e');
@@ -224,7 +231,7 @@ class _ReadingActivityScreenState extends State<ReadingActivityScreen>
           context,
           MaterialPageRoute(
             builder:
-                (context) => ReadingResultScreen(modeuleId: widget.moduleId),
+                (context) => ReadingResultScreen(moduleId: widget.moduleId),
           ),
         );
 

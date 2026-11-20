@@ -73,6 +73,8 @@ class _ReviewResultsScreen extends State<ReviewResultsScreen> {
                   'Return'.toUpperCase(),
                   style: TextStyle(
                     fontSize: theme.textTheme.bodyMedium?.fontSize,
+                    color: theme.colorScheme.onSecondary,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),

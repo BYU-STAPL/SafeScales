@@ -95,4 +95,73 @@ void main() {
     expect(find.text('Incorrect, try again.'), findsOneWidget);
     expect(find.text(explanation), findsNWidgets(2));
   });
+
+  testWidgets('question widget shows correct-answer fallback explanation', (
+    tester,
+  ) async {
+    final blankExplanationQuestion = Question.singleAnswer(
+      id: 'blank',
+      questionText: 'Question blank?',
+      options: const ['Correct', 'Incorrect'],
+      correctAnswerIndex: 0,
+      explanation: '',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: QuestionWidget(
+            question: blankExplanationQuestion,
+            selectedAnswers: const [0],
+            onAnswerChanged: (_) {},
+            showCorrectAnswer: true,
+            showExplanation: true,
+            isResponseLocked: true,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Explanation:'), findsOneWidget);
+    expect(find.text('Correct answer: Correct'), findsOneWidget);
+  });
+
+  testWidgets(
+    'post-quiz summary uses correct-answer fallback when explanation empty',
+    (tester) async {
+      final questionSet = QuestionSet.postQuiz(
+        id: 'post',
+        title: 'Post-quiz',
+        description: '',
+        subject: '',
+        questions: [
+          Question.singleAnswer(
+            id: 'empty',
+            questionText: 'Question empty?',
+            options: const ['Yes', 'No'],
+            correctAnswerIndex: 0,
+            explanation: '',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: PostQuizSummary(
+                questionSet: questionSet,
+                userAnswers: const [
+                  [1],
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Explanation:'), findsOneWidget);
+      expect(find.text('Correct answer: Yes'), findsOneWidget);
+    },
+  );
 }

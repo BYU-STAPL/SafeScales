@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:safe_scales/services/auth_service.dart';
+import 'package:safe_scales/services/user_state_service.dart';
 import 'package:safe_scales/themes/app_theme.dart';
-import 'login/class_selection_screen.dart';
+import 'package:safe_scales/ui/screens/login/class_selection_screen.dart';
+import 'package:safe_scales/ui/screens/set_password_screen.dart';
+import 'package:safe_scales/utils/supabase_errors.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -13,12 +16,16 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   bool isLogin = true;
   bool isLoading = false;
+  bool _setupLoading = false;
   bool _obscurePassword = true;
+  bool _showLegacyHelp = false;
+  String? _formError;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
   final _authService = AuthService();
+  final _userState = UserStateService();
 
   @override
   void dispose() {
@@ -29,79 +36,116 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        isLoading = true;
-      });
+    if (!_formKey.currentState!.validate()) return;
 
-      try {
-        if (isLogin) {
-          final success = await _authService.signIn(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
+    setState(() {
+      isLoading = true;
+      _formError = null;
+    });
+
+    try {
+      if (isLogin) {
+        await _authService.signIn(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+
+        if (!mounted) return;
+
+        if (_userState.needsPasswordSetup() || _userState.passwordRecovery) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const SetPasswordScreen()),
           );
-
-          if (!success) {
-            if (mounted) {
-              final theme = Theme.of(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Invalid email or password'),
-                  backgroundColor: theme.colorScheme.errorContainer,
-                ),
-              );
-              setState(() {
-                isLoading = false;
-              });
-            }
-            return;
-          }
-
-          // Navigate to class selection screen after successful login
-          if (mounted) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => const ClassSelectionScreen(),
-              ),
-            );
-          }
-        } else {
-          await _authService.signUp(
-            username: _nameController.text.trim(),
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          );
-
-          if (mounted) {
-            // Switch to login mode after successful signup
-            setState(() {
-              isLogin = true;
-            });
-            final theme = Theme.of(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Account created successfully! Please log in.'),
-                backgroundColor: theme.colorScheme.secondaryContainer,
-              ),
-            );
-          }
+          return;
         }
-      } catch (e) {
-        if (mounted) {
-          final theme = Theme.of(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString()),
-              backgroundColor: theme.colorScheme.errorContainer,
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const ClassSelectionScreen(),
+          ),
+        );
+      } else {
+        await _authService.signUp(
+          username: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+
+        if (!mounted) return;
+
+        setState(() {
+          isLogin = true;
+        });
+        final theme = Theme.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Account created successfully! Please log in.',
             ),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            isLoading = false;
-          });
-        }
+            backgroundColor: theme.colorScheme.secondaryContainer,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      final message = getErrorMessage(e, isLogin ? 'Login failed' : 'Sign up failed');
+      setState(() {
+        _formError = message;
+        _showLegacyHelp = isLogin;
+      });
+      final theme = Theme.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: theme.colorScheme.errorContainer,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _requestPasswordSetupEmail() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() {
+        _formError =
+            'Enter your email above, then request a password setup link.';
+      });
+      return;
+    }
+
+    setState(() {
+      _setupLoading = true;
+      _formError = null;
+    });
+
+    try {
+      await _authService.requestPasswordSetupEmail(email);
+      if (!mounted) return;
+      final theme = Theme.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Check your email for a link to set a new password.',
+          ),
+          backgroundColor: theme.colorScheme.secondaryContainer,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _formError = getErrorMessage(e, 'Could not send password setup email');
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _setupLoading = false;
+        });
       }
     }
   }
@@ -111,14 +155,6 @@ class _AuthScreenState extends State<AuthScreen> {
     ThemeData theme = Theme.of(context);
 
     return Scaffold(
-      // appBar: AppBar(
-      //   backgroundColor: Colors.transparent,
-      //   elevation: 0,
-      //   leading: IconButton(
-      //     icon: const Icon(Icons.arrow_back),
-      //     onPressed: () => Navigator.of(context).pop(),
-      //   ),
-      // ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -127,7 +163,6 @@ class _AuthScreenState extends State<AuthScreen> {
             colors: [
               Theme.of(context).colorScheme.primary,
               theme.colorScheme.lightBlue,
-              //Theme.of(context).colorScheme.secondary,
             ],
           ),
         ),
@@ -135,9 +170,6 @@ class _AuthScreenState extends State<AuthScreen> {
           child: Center(
             child: Stack(
               children: [
-                // Add back button at the top
-                // Not using app bar, so that the linear gradient takes up whole screen
-                // More aesthetic
                 _authService.currentUser == null
                     ? Align(
                       alignment: Alignment.topLeft,
@@ -152,8 +184,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       ),
                     )
-                    : SizedBox.shrink(),
-
+                    : const SizedBox.shrink(),
                 Center(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(24.0),
@@ -175,6 +206,23 @@ class _AuthScreenState extends State<AuthScreen> {
                                 style: theme.textTheme.headlineMedium,
                               ),
                               const SizedBox(height: 24),
+                              if (_formError != null) ...[
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.errorContainer,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    _formError!,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onErrorContainer,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                              ],
                               if (!isLogin)
                                 TextFormField(
                                   style: theme.textTheme.labelLarge,
@@ -272,7 +320,35 @@ class _AuthScreenState extends State<AuthScreen> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 24),
+                              if (isLogin) ...[
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed:
+                                        _setupLoading
+                                            ? null
+                                            : _requestPasswordSetupEmail,
+                                    child:
+                                        _setupLoading
+                                            ? const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                            : Text(
+                                              'Forgot / set up password',
+                                              style: TextStyle(
+                                                fontSize:
+                                                    14 * AppTheme.fontSizeScale,
+                                              ),
+                                            ),
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 16),
                               SizedBox(
                                 width: double.infinity,
                                 height: 50,
@@ -285,22 +361,59 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ),
                                   child:
                                       isLoading
-                                          ? const CircularProgressIndicator()
+                                          ? CircularProgressIndicator(
+                                            color:
+                                                theme.colorScheme.onPrimary,
+                                          )
                                           : Text(
                                             isLogin ? 'Login' : 'Sign Up',
                                             style: TextStyle(
                                               fontSize:
                                                   16 * AppTheme.fontSizeScale,
+                                              color:
+                                                  theme.colorScheme.onPrimary,
                                             ),
                                           ),
                                 ),
                               ),
+                              if (_showLegacyHelp && isLogin) ...[
+                                const SizedBox(height: 16),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.tertiaryContainer,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Text(
+                                        'Had an account before Auth migration? Your old password may no longer work. Enter your email above and send a setup link.',
+                                        style: theme.textTheme.bodySmall,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      OutlinedButton(
+                                        onPressed:
+                                            _setupLoading
+                                                ? null
+                                                : _requestPasswordSetupEmail,
+                                        child: const Text(
+                                          'Email me a password setup link',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                               const SizedBox(height: 20),
-
                               TextButton(
                                 onPressed: () {
                                   setState(() {
                                     isLogin = !isLogin;
+                                    _formError = null;
+                                    _showLegacyHelp = false;
                                   });
                                 },
                                 child: Text(

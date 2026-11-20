@@ -254,30 +254,14 @@ class _DragonDressUpPageState extends State<DragonDressUpPage>
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             actions: [
-              PopupMenuButton<String>(
+              IconButton(
+                tooltip: 'Tips',
+                onPressed: _showHintsDialog,
                 icon: Icon(
-                  Icons.more_vert,
+                  Icons.help_outline_rounded,
                   size: 24,
                   color: colorScheme.primary,
                 ),
-                onSelected: (value) {
-                  if (value == 'clear') {
-                    _clearAllStickers();
-                  } else if (value == 'select') {
-                    _showPlacedItemsSheet(dragonDecorationProvider);
-                  }
-                },
-                itemBuilder:
-                    (context) => [
-                      PopupMenuItem(
-                        value: 'select',
-                        child: Text('Select item...'),
-                      ),
-                      PopupMenuItem(
-                        value: 'clear',
-                        child: Text('Clear All Items'),
-                      ),
-                    ],
               ),
             ],
           ),
@@ -301,82 +285,70 @@ class _DragonDressUpPageState extends State<DragonDressUpPage>
                 ),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  child: Row(
                     children: [
-                      Text(
-                        'Choose a phase or habitat',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          letterSpacing: 0.1,
+                      Expanded(
+                        child: _decorationQuickAction(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          label: 'Clear',
+                          detail: 'Items',
+                          iconBuilder:
+                              (color) => Icon(
+                                Icons.cancel_outlined,
+                                size: 20,
+                                color: color,
+                              ),
+                          onTap: _clearAllStickers,
+                          active: true,
+                          destructive: true,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _decorationQuickAction(
-                              theme: theme,
-                              colorScheme: colorScheme,
-                              label: 'Phase',
-                              detail: dragonProvider.getPhaseDisplayName(
-                                selectedPhase,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _decorationQuickAction(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          label: 'Phase',
+                          detail: dragonProvider.getPhaseDisplayName(
+                            selectedPhase,
+                          ),
+                          iconBuilder:
+                              (color) => FaIcon(
+                                FontAwesomeIcons.dragon,
+                                size: 20,
+                                color: color,
                               ),
-                              iconBuilder:
-                                  (color) => FaIcon(
-                                    FontAwesomeIcons.dragon,
-                                    size: 20,
-                                    color: color,
-                                  ),
-                              onTap: _showPhaseDialog,
-                              active: true,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _decorationQuickAction(
-                              theme: theme,
-                              colorScheme: colorScheme,
-                              label: 'Habitat',
-                              iconBuilder:
-                                  (color) => Icon(
-                                    Icons.cottage_outlined,
-                                    size: 20,
-                                    color: color,
-                                  ),
-                              onTap: _showEnvironmentDialog,
-                              active:
-                                  dragonDecorationProvider
-                                      .getCurrentEnvironment() !=
-                                  null,
-                              detail:
-                                  dragonDecorationProvider
-                                              .getCurrentEnvironment() !=
-                                          null
-                                      ? _getEnvironmentDisplayName(
-                                        dragonDecorationProvider,
-                                      )
-                                      : null,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _decorationQuickAction(
-                              theme: theme,
-                              colorScheme: colorScheme,
-                              label: 'Help',
-                              iconBuilder:
-                                  (color) => Icon(
-                                    Icons.help_outline_rounded,
-                                    size: 20,
-                                    color: color,
-                                  ),
-                              onTap: _showHintsDialog,
-                              active: true,
-                            ),
-                          ),
-                        ],
+                          onTap: _showPhaseDialog,
+                          active: true,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _decorationQuickAction(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          label: 'Habitat',
+                          iconBuilder:
+                              (color) => Icon(
+                                Icons.cottage_outlined,
+                                size: 20,
+                                color: color,
+                              ),
+                          onTap: _showEnvironmentDialog,
+                          active:
+                              dragonDecorationProvider
+                                  .getCurrentEnvironment() !=
+                              null,
+                          detail:
+                              dragonDecorationProvider
+                                          .getCurrentEnvironment() !=
+                                      null
+                                  ? _getEnvironmentDisplayName(
+                                    dragonDecorationProvider,
+                                  )
+                                  : null,
+                        ),
                       ),
                     ],
                   ),
@@ -600,26 +572,46 @@ class _DragonDressUpPageState extends State<DragonDressUpPage>
     required VoidCallback onTap,
     required bool active,
     String? detail,
+    bool destructive = false,
   }) {
     final isLight = theme.brightness == Brightness.light;
-    final borderColor =
-        active
-            ? (isLight
-                ? colorScheme.primary.withValues(alpha: 0.48)
-                : colorScheme.primary.withValues(alpha: 0.32))
-            : colorScheme.outline.withValues(alpha: 0.28);
-    final fillColor =
-        active
-            ? (isLight
-                ? colorScheme.primary.withValues(alpha: 0.1)
-                : colorScheme.primaryContainer.withValues(alpha: 0.55))
-            : (isLight
-                ? colorScheme.surface.withValues(alpha: 0.92)
-                : colorScheme.surfaceContainerHigh);
-    final foreground =
-        active
-            ? (isLight ? colorScheme.primary : colorScheme.onPrimaryContainer)
-            : colorScheme.onSurfaceVariant;
+    final Color borderColor;
+    final Color fillColor;
+    final Color foreground;
+
+    if (destructive) {
+      borderColor =
+          isLight
+              ? colorScheme.error.withValues(alpha: 0.35)
+              : colorScheme.error.withValues(alpha: 0.45);
+      fillColor =
+          isLight
+              ? colorScheme.errorContainer.withValues(alpha: 0.7)
+              : colorScheme.errorContainer.withValues(alpha: 0.45);
+      foreground =
+          isLight ? colorScheme.onErrorContainer : colorScheme.error;
+    } else {
+      borderColor =
+          active
+              ? (isLight
+                  ? colorScheme.primary.withValues(alpha: 0.48)
+                  : colorScheme.primary.withValues(alpha: 0.32))
+              : colorScheme.outline.withValues(alpha: 0.28);
+      fillColor =
+          active
+              ? (isLight
+                  ? colorScheme.primary.withValues(alpha: 0.1)
+                  : colorScheme.primaryContainer.withValues(alpha: 0.55))
+              : (isLight
+                  ? colorScheme.surface.withValues(alpha: 0.92)
+                  : colorScheme.surfaceContainerHigh);
+      foreground =
+          active
+              ? (isLight ? colorScheme.primary : colorScheme.onPrimaryContainer)
+              : colorScheme.onSurfaceVariant;
+    }
+
+    final showEditIcon = !destructive && detail != null && detail.isNotEmpty;
 
     return Material(
       color: Colors.transparent,
@@ -654,15 +646,31 @@ class _DragonDressUpPageState extends State<DragonDressUpPage>
                   ),
                   if (detail != null && detail.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text(
-                      detail,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: foreground.withValues(alpha: 0.85),
-                        fontWeight: FontWeight.w500,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            detail,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: foreground.withValues(alpha: 0.85),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        if (showEditIcon) ...[
+                          const SizedBox(width: 2),
+                          Icon(
+                            Icons.edit_outlined,
+                            size: 12,
+                            color: foreground.withValues(alpha: 0.85),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ],
@@ -1168,7 +1176,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage>
                   );
                 }
               },
-              onPanEnd: (_) {
+              onPanEnd: (_) async {
                 final updatedSticker = provider.placedStickers.firstWhere(
                   (candidate) => candidate.id == sticker.id,
                   orElse: () => sticker,
@@ -1178,6 +1186,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage>
                   'position_x': updatedSticker.position.dx,
                   'position_y': updatedSticker.position.dy,
                 });
+                await provider.persistDecoration();
               },
               child: Container(
                 decoration: BoxDecoration(
@@ -1209,7 +1218,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage>
                     final newSize = sticker.size + details.delta.dx;
                     provider.updateStickerSize(sticker.id, newSize);
                   },
-                  onPanEnd: (_) {
+                  onPanEnd: (_) async {
                     final updatedSticker = provider.placedStickers.firstWhere(
                       (candidate) => candidate.id == sticker.id,
                       orElse: () => sticker,
@@ -1218,6 +1227,7 @@ class _DragonDressUpPageState extends State<DragonDressUpPage>
                       'accessory_id': updatedSticker.accessoryId,
                       'size': updatedSticker.size,
                     });
+                    await provider.persistDecoration();
                   },
                   child: Container(
                     width: 48,
@@ -1400,76 +1410,6 @@ class _DragonDressUpPageState extends State<DragonDressUpPage>
           ),
         ],
       ),
-    );
-  }
-
-  void _showPlacedItemsSheet(DragonDecorationProvider provider) {
-    if (provider.placedStickers.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No items placed yet. Drag items from the tray below.'),
-        ),
-      );
-      return;
-    }
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Select an item',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: provider.placedStickers.length,
-                  itemBuilder: (context, index) {
-                    final sticker = provider.placedStickers[index];
-                    final isSelected = provider.selectedStickerId == sticker.id;
-                    return ListTile(
-                      leading: Image.network(
-                        sticker.imageUrl,
-                        width: 40,
-                        height: 40,
-                        fit: BoxFit.contain,
-                        errorBuilder:
-                            (_, __, ___) => Icon(Icons.image_not_supported),
-                      ),
-                      title: Text(sticker.name),
-                      subtitle: Text(
-                        sticker.isBehindDragon ? 'Behind dragon' : 'In front',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      trailing:
-                          isSelected
-                              ? Icon(Icons.check, color: colorScheme.primary)
-                              : null,
-                      onTap: () {
-                        provider.selectSticker(sticker.id);
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 

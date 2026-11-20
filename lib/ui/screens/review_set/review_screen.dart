@@ -649,7 +649,8 @@ class _ReviewScreenState extends State<ReviewScreen>
                           },
                           showCorrectAnswer:
                               widget.questionSet.showCorrectAnswers,
-                          showExplanation: false,
+                          showExplanation:
+                              widget.questionSet.showExplanations,
                           isResponseLocked: isResponseLocked,
                         ),
                       ),
@@ -683,12 +684,18 @@ class _ReviewScreenState extends State<ReviewScreen>
             ? theme.colorScheme.secondaryContainer
             : theme.colorScheme.errorContainer;
 
+    final question = widget.questionSet.questions[currentQuestionIndex];
+    // Reveal the correct-answer fallback only after a correct lock; keep retries unspoiled.
+    final explanation =
+        isCurrentQuestionCorrect
+            ? question.explanationForDisplay()
+            : question.explanation.trim();
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: ReviewAnswerFeedback(
           isCorrect: isCurrentQuestionCorrect,
-          explanation:
-              widget.questionSet.questions[currentQuestionIndex].explanation,
+          explanation: explanation,
         ),
         duration: const Duration(seconds: 5),
         backgroundColor: bgColor,

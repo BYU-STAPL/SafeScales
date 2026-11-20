@@ -85,7 +85,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
   void _handleMenuAction(String action) {
     switch (action) {
       case 'copy_explanation':
-        _copyToClipboard(widget.question.explanation);
+        _copyToClipboard(widget.question.explanationForDisplay());
         break;
       case 'save_note':
         _showSaveNoteDialog();
@@ -181,7 +181,9 @@ class _QuestionWidgetState extends State<QuestionWidget> {
     ThemeData theme = Theme.of(context);
 
     Question question = widget.question;
-    
+
+    final shouldShowExplanation = _shouldShowExplanation(question);
+
     final hasImageInText = StyledMarkdown.containsImage(question.text ?? '');
     final hasImageInQuestion = StyledMarkdown.containsImage(question.questionText);
     final hasImage = hasImageInText || hasImageInQuestion;
@@ -258,10 +260,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
               _buildSavedNoteSection(),
 
             // Show explanation after user answers (when response is locked or we have answers)
-            if (widget.showExplanation &&
-                question.explanation.isNotEmpty &&
-                (widget.isResponseLocked || widget.selectedAnswers.isNotEmpty))
-              _buildExplanationSection(),
+            if (shouldShowExplanation) _buildExplanationSection(),
           ],
         ),
       );
@@ -317,15 +316,20 @@ class _QuestionWidgetState extends State<QuestionWidget> {
             _buildSavedNoteSection(),
 
           // Show explanation after user answers (when response is locked or we have answers)
-          if (widget.showExplanation &&
-              question.explanation.isNotEmpty &&
-              (widget.isResponseLocked || widget.selectedAnswers.isNotEmpty))
-            _buildExplanationSection(),
+          if (shouldShowExplanation) _buildExplanationSection(),
         ],
       ),
     );
     //   ),
     // );
+  }
+
+  bool _shouldShowExplanation(Question question) {
+    if (!widget.showExplanation) return false;
+    // Only reveal after the response is locked so learners cannot peek mid-attempt.
+    if (!widget.isResponseLocked) return false;
+    // Prefer authored text; fall back to correct-answer label when revealing.
+    return question.explanation.trim().isNotEmpty || widget.showCorrectAnswer;
   }
 
   GestureDetector buildOption(
@@ -336,6 +340,33 @@ class _QuestionWidgetState extends State<QuestionWidget> {
     String option,
   ) {
     ThemeData theme = Theme.of(context);
+    final revealAnswers =
+        widget.showCorrectAnswer && widget.isResponseLocked;
+    final isCorrectOption = question.correctAnswerIndices.contains(index);
+
+    Color? backgroundColor;
+    Color iconColor;
+    if (revealAnswers) {
+      if (isCorrectOption) {
+        backgroundColor = theme.colorScheme.green.withValues(alpha: 0.18);
+        iconColor = theme.colorScheme.green;
+      } else if (isSelected) {
+        backgroundColor = theme.colorScheme.red.withValues(alpha: 0.18);
+        iconColor = theme.colorScheme.red;
+      } else {
+        backgroundColor = theme.colorScheme.surfaceDim;
+        iconColor = theme.colorScheme.onSurface.withValues(alpha: 0.4);
+      }
+    } else if (isSelected) {
+      backgroundColor = theme.colorScheme.primaryContainer;
+      iconColor = theme.colorScheme.primary;
+    } else if (widget.isResponseLocked) {
+      backgroundColor = theme.colorScheme.surfaceDim;
+      iconColor = theme.colorScheme.onSurface.withValues(alpha: 0.4);
+    } else {
+      backgroundColor = null;
+      iconColor = theme.colorScheme.primary;
+    }
 
     return GestureDetector(
       onTap:
@@ -361,11 +392,10 @@ class _QuestionWidgetState extends State<QuestionWidget> {
         padding: EdgeInsets.all(optionPadding),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          color:
-              isSelected
-                  ? theme.colorScheme.primaryContainer
-                  : widget.isResponseLocked
-                  ? theme.colorScheme.surfaceDim
+          color: backgroundColor,
+          border:
+              revealAnswers && isCorrectOption
+                  ? Border.all(color: theme.colorScheme.green, width: 1.5)
                   : null,
         ),
         child: Row(
@@ -373,16 +403,13 @@ class _QuestionWidgetState extends State<QuestionWidget> {
           children: [
             Icon(
                 question.isMultipleAnswer
-                    ? (isSelected
+                    ? (isSelected || (revealAnswers && isCorrectOption)
                         ? Icons.check_box
                         : Icons.check_box_outline_blank_rounded)
-                    : (isSelected
+                    : (isSelected || (revealAnswers && isCorrectOption)
                         ? Icons.radio_button_checked
                         : Icons.radio_button_unchecked),
-                color:
-                    isSelected || !widget.isResponseLocked
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                color: iconColor,
               ),
             SizedBox(width: 12),
             Expanded(
@@ -497,7 +524,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
           ),
           const SizedBox(height: 8),
           StyledMarkdown(
-            data: widget.question.explanation,
+            data: widget.question.explanationForDisplay(),
             fontSizeScale: AppTheme.fontSizeScale,
           ),
         ],

@@ -177,21 +177,29 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                       Text(
                         'Quiz Score',
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.7,
-                          ),
+                          color: readinessColor,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       SizedBox(height: 8),
                       Text(
-                        '$correctAnswers out of $totalQuestions',
+                        '$score%',
                         style: TextStyle(
                           fontSize: 48 * AppTheme.fontSizeScale,
                           fontWeight: FontWeight.bold,
-                          color: readinessColor,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      SizedBox(height: 4),
+                      Text(
+                        '$correctAnswers out of $totalQuestions',
+                        style: TextStyle(
+                          fontSize: 18 * AppTheme.fontSizeScale,
+                          fontWeight: FontWeight.w400,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      SizedBox(height: 12),
                       Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: 16,
@@ -257,6 +265,7 @@ class _PostQuizResultScreenState extends State<PostQuizResultScreen> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onPrimary,
                       ),
                     ),
                   ),

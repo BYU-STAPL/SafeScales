@@ -170,12 +170,16 @@ class CourseProvider extends ChangeNotifier {
   Future<void> loadReviewSetCompletionCount(String lessonId) async {
     if (!isUserLoggedIn) return;
 
-    _reviewSetProgressLoaded = false;
-    await _executeWithErrorHandling(() async {
+    // Do not flip the global Review-tab gate off for a single-lesson refresh;
+    // a failure here should leave previously loaded entries available.
+    try {
       _reviewSetCompletionCounts[lessonId] = await _courseService
           .getCompletedReviewSetCount(currentUser!.id, lessonId);
       _reviewSetProgressLoaded = true;
-    });
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Failed to refresh review-set progress for $lessonId: $e');
+    }
   }
 
   /// Save quiz progress

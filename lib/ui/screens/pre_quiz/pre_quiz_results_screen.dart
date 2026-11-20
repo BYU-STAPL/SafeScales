@@ -106,27 +106,36 @@ class _PreQuizResultScreenState extends State<PreQuizResultScreen> {
   Widget _buildNameCard(ThemeData theme) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: theme.colorScheme.outline),
+        color: theme.colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.35),
+          width: 1,
+        ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             'Give your dragon a name',
+            textAlign: TextAlign.center,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
+              color: theme.colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           Text(
-            'You can also name your dragon later in the Dragons tab',
-            style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
+            'You can also name your dragon later in the Dragons Tab',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              height: 1.35,
+              color: theme.colorScheme.onSurface,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           TextField(
             controller: _nameController,
             maxLength:
@@ -134,15 +143,19 @@ class _PreQuizResultScreenState extends State<PreQuizResultScreen> {
                   context,
                   listen: false,
                 ).maxNameLength,
+            textAlign: TextAlign.center,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
               hintText: 'Type a name...',
+              hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               counterText: '',
               filled: true,
-              fillColor: theme.colorScheme.surfaceContainerHigh,
+              fillColor: theme.colorScheme.surfaceContainerLow,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 10,
+                horizontal: 16,
+                vertical: 12,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(24),
@@ -163,120 +176,150 @@ class _PreQuizResultScreenState extends State<PreQuizResultScreen> {
     );
   }
 
+  Widget _buildHeroContent(ThemeData theme) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Meet your new dragon!',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w500,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Consumer<DragonProvider>(
+          builder: (context, dragonProvider, child) {
+            final dragon = dragonProvider.getDragonByModuleId(widget.moduleId);
+            return DragonImageWidget(
+              moduleId: widget.moduleId,
+              phase:
+                  dragon == null
+                      ? null
+                      : dragonProvider.getUserPreferredPhase(dragon.id),
+              size: 200,
+            );
+          },
+        ),
+        const SizedBox(height: 20),
+        _buildNameCard(theme),
+      ],
+    );
+  }
+
+  Widget _buildActions(ThemeData theme) {
+    final buttonRadius = BorderRadius.circular(12);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _playWithDragon,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: buttonRadius),
+            ),
+            child: Text(
+              'PLAY WITH DRAGON',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: Divider(
+                color: theme.colorScheme.outline.withValues(alpha: 0.4),
+                endIndent: 14,
+              ),
+            ),
+            Text(
+              'OR',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Expanded(
+              child: Divider(
+                color: theme.colorScheme.outline.withValues(alpha: 0.4),
+                indent: 14,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: _goToLesson,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: theme.colorScheme.primary,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              side: BorderSide(color: theme.colorScheme.primary, width: 2),
+              shape: RoundedRectangleBorder(borderRadius: buttonRadius),
+            ),
+            child: Text(
+              'GO TO LESSON',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         title: const Text('Survey Complete'),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.transparent,
+        scrolledUnderElevation: 0,
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(30, 18, 30, 18),
-                child: Column(
-                  children: [
-                    Text(
-                      'Meet your new dragon!',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w400,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+          child: Column(
+            children: [
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: Center(child: _buildHeroContent(theme)),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    Consumer<DragonProvider>(
-                      builder: (context, dragonProvider, child) {
-                        final dragon = dragonProvider.getDragonByModuleId(
-                          widget.moduleId,
-                        );
-                        return DragonImageWidget(
-                          moduleId: widget.moduleId,
-                          phase:
-                              dragon == null
-                                  ? null
-                                  : dragonProvider.getUserPreferredPhase(
-                                    dragon.id,
-                                  ),
-                          size: 200,
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    _buildNameCard(theme),
-                  ],
+                    );
+                  },
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(30, 8, 30, 12),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _playWithDragon,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text('PLAY WITH DRAGON'),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: theme.colorScheme.outline,
-                          endIndent: 14,
-                        ),
-                      ),
-                      Text(
-                        'OR',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color: theme.colorScheme.outline,
-                          indent: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: _goToLesson,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(
-                          color: theme.colorScheme.primary,
-                          width: 2,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text('GO TO LESSON'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              _buildActions(theme),
+            ],
+          ),
         ),
       ),
     );

@@ -170,146 +170,118 @@ class _DragonIdCardState extends State<DragonIdCard> {
     ThemeData theme = Theme.of(context);
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 0, vertical: 15),
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.surfaceDim.withValues(
-              alpha: 0.9,
-            ), // Darker royal blue
-            theme.colorScheme.surfaceDim, // Royal blue
-          ],
-        ),
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.shadow.withValues(alpha: 0.2),
-            blurRadius: 15,
-            offset: Offset(0, 8),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Container(
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
-        child: Column(
-          children: [
-            // Header with dragon image and name
-            Container(
-              padding: EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  // Dragon image
-                  Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withValues(
-                        alpha: 0.2,
+      child: Column(
+        children: [
+          // Header with dragon image and name
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                // Dragon image
+                Container(
+                  width: 140,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
                       ),
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.2,
-                        ),
-                        width: 2,
-                      ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(13),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 10,
-                        ),
-                        child: widget.dragonImage,
-                      ),
+                      child: widget.dragonImage,
                     ),
                   ),
+                ),
 
-                  SizedBox(width: 20),
+                const SizedBox(width: 20),
 
-                  // Name and species
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'Name'.toTitleCase(),
-                              style: theme.textTheme.labelLarge,
-                            ),
-
-                            //TODO: Enable when dragon names can be saved
-                            IconButton(
-                              onPressed: _showNameDialog,
-                              icon: FaIcon(FontAwesomeIcons.pencil, size: 15),
-                            ),
-                          ],
-                        ),
-
-                        // SizedBox(height: 2),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 12),
-                          child: Row(
-                            children: [
-                              Text(
-                                widget.name,
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontSize:
-                                      theme.textTheme.bodyMedium?.fontSize,
-                                ),
-                              ),
-                            ],
+                // Name and species
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Name'.toTitleCase(),
+                            style: theme.textTheme.labelLarge,
                           ),
-                        ),
-
-                        SizedBox(height: 7),
-
-                        Text(
-                          'Species'.toTitleCase(),
-                          style: theme.textTheme.labelMedium,
-                        ),
-
-                        SizedBox(height: 3),
-
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            widget.species,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontStyle: FontStyle.italic,
+                          IconButton(
+                            onPressed: _showNameDialog,
+                            icon: FaIcon(
+                              FontAwesomeIcons.pencil,
+                              size: 15,
+                              color: theme.colorScheme.primary,
+                            ),
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.only(left: 6),
+                            constraints: const BoxConstraints(
+                              minWidth: 28,
+                              minHeight: 28,
                             ),
                           ),
+                        ],
+                      ),
+                      Text(
+                        widget.name,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontSize: theme.textTheme.bodyMedium?.fontSize,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Species'.toTitleCase(),
+                        style: theme.textTheme.labelMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.species,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
 
-            // Play Button
-            Padding(
-              padding: EdgeInsets.fromLTRB(20, 8, 20, 20),
+          // Design Habitat Button
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: SizedBox(
+              width: double.infinity,
               child: ElevatedButton(
                 onPressed: _isPlayUnlocked ? widget.onTapPlayButton : null,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    FaIcon(FontAwesomeIcons.gamepad),
-
-                    SizedBox(width: 20),
-
-                    Text('Play with Dragon'.toUpperCase()),
-                  ],
+                child: Text(
+                  'Design Habitat'.toUpperCase(),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

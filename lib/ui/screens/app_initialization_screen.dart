@@ -235,14 +235,30 @@ class _AppInitializationScreenState extends State<AppInitializationScreen> {
                       children: [
                         ElevatedButton(
                           onPressed: _retry,
-                          child: const Text('Retry'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.surface,
+                            foregroundColor: theme.colorScheme.primary,
+                          ),
+                          child: Text(
+                            'Retry',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                         TextButton(
                           onPressed: _navigateToSelection,
                           style: TextButton.styleFrom(
-                            foregroundColor: theme.colorScheme.onPrimary,
+                            foregroundColor: Colors.white,
                           ),
-                          child: const Text('Back to Login'),
+                          child: Text(
+                            'Back to Login',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ],
                     ),

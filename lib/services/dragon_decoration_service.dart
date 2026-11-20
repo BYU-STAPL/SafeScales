@@ -13,11 +13,17 @@ class DragonDecorationService {
   }) : _repository = repository ?? DragonDecorationRepository(),
        _itemService = itemService ?? ItemService();
 
-  /// Convert sticker items to database format
-  Map<String, dynamic> _stickersToAccessoriesData(List<StickerItem> stickers) {
+  /// Convert sticker items to database format.
+  ///
+  /// Keys are unique instance IDs so multiple placements of the same accessory
+  /// can be stored. Each value includes `accessoryId` for item lookup on load.
+  static Map<String, dynamic> stickersToAccessoriesData(
+    List<StickerItem> stickers,
+  ) {
     final Map<String, dynamic> accessoriesForDragon = {};
     for (final sticker in stickers) {
-      accessoriesForDragon[sticker.accessoryId] = {
+      accessoriesForDragon[sticker.id] = {
+        'accessoryId': sticker.accessoryId,
         'position': {'x': sticker.position.dx, 'y': sticker.position.dy},
         'size': sticker.size,
         'isBehindDragon': sticker.isBehindDragon,
@@ -26,44 +32,54 @@ class DragonDecorationService {
     return accessoriesForDragon;
   }
 
-  /// Convert database format to sticker items
-  Future<List<StickerItem>> _accessoriesDataToStickers({
+  /// Convert database format to sticker items.
+  ///
+  /// Supports the current instance-keyed format and the legacy format where
+  /// the map key was the accessory ID and `accessoryId` was omitted.
+  static Future<List<StickerItem>> accessoriesDataToStickers({
     required Map<String, dynamic> accessoriesData,
     required List<Item> userItems,
   }) async {
     final List<StickerItem> restored = [];
 
-    accessoriesData.forEach((accId, data) {
+    accessoriesData.forEach((instanceKey, data) {
       final Map<String, dynamic> d = Map<String, dynamic>.from(data);
       final Map<String, dynamic> pos = Map<String, dynamic>.from(
         d['position'] ?? {},
       );
 
-      // DEBUG: Print what we're looking for
-      debugPrint('🔍 Looking for accessory ID: "$accId"');
+      // New format stores accessoryId in the value; legacy used the map key.
+      final rawAccessoryId = d['accessoryId'];
+      final isLegacyFormat =
+          rawAccessoryId == null || rawAccessoryId.toString().isEmpty;
+      final accessoryId =
+          isLegacyFormat
+              ? instanceKey.toString()
+              : rawAccessoryId.toString();
+      final instanceId =
+          isLegacyFormat ? 'acc_$accessoryId' : instanceKey.toString();
+
+      debugPrint('🔍 Looking for accessory ID: "$accessoryId"');
       debugPrint(
         '🔍 Available user items: ${userItems.map((i) => '${i.id}:"${i.imageUrl}"').join(', ')}',
       );
 
-      // Find accessory by ID - FIXED: Compare i.id instead of i.toString()
       final item = userItems.firstWhere(
-        (i) => i.id == accId.toString(), // This is the fix!
+        (i) => i.id == accessoryId,
         orElse: () {
-          debugPrint('❌ Could not find item with ID: $accId');
+          debugPrint('❌ Could not find item with ID: $accessoryId');
           return Item(
-            id: accId.toString(),
+            id: accessoryId,
             type: ItemType.item,
             name: 'Missing Item',
-            imageUrl: '', // This will cause the file:/// error
+            imageUrl: '',
             cost: 0,
           );
         },
       );
 
-      // DEBUG: Print the found item
       debugPrint('🔍 Found item: ${item.name}, URL: "${item.imageUrl}"');
 
-      // Validate the image URL before creating the sticker
       if (item.imageUrl.isEmpty ||
           item.imageUrl.startsWith('file:') ||
           item.imageUrl == 'null') {
@@ -75,7 +91,7 @@ class DragonDecorationService {
 
       restored.add(
         StickerItem(
-          id: 'acc_$accId',
+          id: instanceId,
           imageUrl: item.imageUrl,
           name: item.name,
           accessoryId: item.id,
@@ -108,7 +124,9 @@ class DragonDecorationService {
         );
       }
 
-      final accessoriesData = _stickersToAccessoriesData(stickers);
+      final accessoriesData = DragonDecorationService.stickersToAccessoriesData(
+        stickers,
+      );
       return await _repository.saveDragonDressUp(
         userId: userId,
         dragonId: dragonId,
@@ -141,7 +159,7 @@ class DragonDecorationService {
       }
 
       return (
-        stickers: await _accessoriesDataToStickers(
+        stickers: await DragonDecorationService.accessoriesDataToStickers(
           accessoriesData: accessoriesData,
           userItems: userItems,
         ),

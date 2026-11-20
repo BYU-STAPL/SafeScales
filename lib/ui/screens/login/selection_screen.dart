@@ -3,6 +3,7 @@ import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/ui/screens/auth_screen.dart';
 import 'package:safe_scales/ui/screens/login/class_code_screen.dart';
 import 'package:safe_scales/ui/screens/app_initialization_screen.dart';
+import 'package:safe_scales/ui/screens/set_password_screen.dart';
 import 'package:safe_scales/services/user_state_service.dart';
 
 class SelectionScreen extends StatefulWidget {
@@ -27,15 +28,26 @@ class _SelectionScreenState extends State<SelectionScreen> {
       final restored = await userState.restoreUserSession();
 
       if (restored && userState.isLoggedIn) {
-        // Session restored successfully, navigate to app initialization
-        if (mounted) {
+        if (!mounted) return;
+
+        // Password recovery / first-time Auth setup must complete first.
+        if (userState.passwordRecovery || userState.needsPasswordSetup()) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (context) => const AppInitializationScreen(),
+              settings: const RouteSettings(name: SetPasswordScreen.routeName),
+              builder: (context) => const SetPasswordScreen(),
             ),
           );
           return;
         }
+
+        // Session restored successfully, navigate to app initialization
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const AppInitializationScreen(),
+          ),
+        );
+        return;
       }
     } catch (e) {
       print('❌ Error checking session: $e');

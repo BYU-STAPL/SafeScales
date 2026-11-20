@@ -155,32 +155,30 @@ class _PostQuizSummaryState extends State<PostQuizSummary> {
 
               const SizedBox(height: 5),
 
-              if (question.explanation.isNotEmpty) ...[
-                SizedBox(height: 10),
-                Container(
-                  padding: EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainer,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Explanation:",
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontSize: 15 * AppTheme.fontSizeScale,
-                        ),
-                      ),
-                      SizedBox(height: 5),
-                      StyledMarkdown(
-                        data: question.explanation,
-                        fontSizeScale: AppTheme.fontSizeScale,
-                      ),
-                    ],
-                  ),
+              SizedBox(height: 10),
+              Container(
+                padding: EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(5),
                 ),
-              ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Explanation:",
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontSize: 15 * AppTheme.fontSizeScale,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    StyledMarkdown(
+                      data: question.explanationForDisplay(),
+                      fontSizeScale: AppTheme.fontSizeScale,
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

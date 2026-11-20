@@ -398,7 +398,14 @@ class _ShopScreenState extends State<ShopScreen> {
                                             _completePurchase();
                                           }
                                           : null,
-                                  child: Text('SELECT'.toUpperCase()),
+                                  child: Text(
+                                    'SELECT'.toUpperCase(),
+                                    style: theme.textTheme.labelMedium
+                                        ?.copyWith(
+                                          color: theme.colorScheme.onPrimary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
                                 ),
                               ],
                             ),

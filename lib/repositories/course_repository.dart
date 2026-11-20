@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:safe_scales/models/question.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
@@ -248,11 +250,43 @@ class CourseRepository {
     };
 
     return modules.map((module) {
+      final moduleId = module['id'].toString();
+      // Prefer the saved review_sets row; fall back to dashboard-authored
+      // modules.revision_questions so instructor edits remain takeable in-app.
+      final reviewSetQuestions =
+          questionsByModuleId[moduleId] ??
+          _questionsFromRevisionPool(module['revision_questions']);
       return {
         ...module,
-        'review_set_questions': questionsByModuleId[module['id'].toString()],
+        'review_set_questions': reviewSetQuestions,
       };
     }).toList();
+  }
+
+  /// Normalize dashboard `revision_questions` ({questions: [...] } or a bare list)
+  /// into the array shape expected by [CourseService._createReviewSet].
+  dynamic _questionsFromRevisionPool(dynamic revisionQuestions) {
+    if (revisionQuestions == null) return null;
+
+    dynamic value = revisionQuestions;
+    if (value is String) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) return null;
+      try {
+        value = jsonDecode(trimmed);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    if (value is Map) {
+      final nested = value['questions'];
+      if (nested is List && nested.isNotEmpty) return nested;
+      return null;
+    }
+
+    if (value is List && value.isNotEmpty) return value;
+    return null;
   }
 
   /// Get class assets
@@ -306,6 +340,7 @@ class CourseRepository {
   }
 
   /// Get the number of completed review sets for one lesson.
+  /// Returns 0 if history is unavailable so app startup is not blocked.
   Future<int> getCompletedReviewSetCount(String userId, String lessonId) async {
     try {
       return await _supabase
@@ -317,7 +352,9 @@ class CourseRepository {
           .eq('context_id', 'rev_$lessonId')
           .contains('details', {'lesson_id': lessonId});
     } catch (e) {
-      throw Exception('Failed to get completed review set count: $e');
+      // Missing table / RLS / schema cache 404 should not hard-fail course load.
+      print('Failed to get completed review set count: $e');
+      return 0;
     }
   }
 

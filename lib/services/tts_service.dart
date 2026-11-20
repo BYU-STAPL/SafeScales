@@ -13,7 +13,7 @@ class TtsService extends ChangeNotifier {
   String? _currentText;
   String? _originalText; // Store original text before cleaning
   int? _currentPageIndex;
-  double _currentSpeechRate = 0.8; // Default speed
+  double _currentSpeechRate = 1.1; // Default speed
 
   // Word position tracking for scrubbing
   int? _currentWordStart;

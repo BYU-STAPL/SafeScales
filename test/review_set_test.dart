@@ -32,7 +32,7 @@ void main() {
     );
     expect(review.showResults, isFalse);
     expect(review.showCorrectAnswers, isTrue);
-    expect(review.showExplanations, isFalse);
+    expect(review.showExplanations, isTrue);
   });
 
   test(
@@ -92,7 +92,7 @@ void main() {
   });
 
   test(
-    'does not fall back to the source pool when no saved set exists',
+    'falls back to revision_questions when no saved review_sets row exists',
     () async {
       final service = CourseService(
         repository: _InMemoryCourseRepository([
@@ -105,22 +105,24 @@ void main() {
 
       final lessons = await service.getLessonsForClass('class-1');
 
-      expect(lessons['module-1']!.review!.questions, isEmpty);
+      expect(lessons['module-1']!.review!.questions, hasLength(15));
     },
   );
 
-  test('rejects a question bank that contains fewer than five items', () {
-    final service = CourseService(
-      repository: _InMemoryCourseRepository([
-        _module(reviewSetQuestions: questions.take(4).toList()),
-      ]),
-    );
+  test(
+    'omits incomplete banks with fewer than five questions instead of failing',
+    () async {
+      final service = CourseService(
+        repository: _InMemoryCourseRepository([
+          _module(reviewSetQuestions: questions.take(4).toList()),
+        ]),
+      );
 
-    expect(
-      () => service.getLessonsForClass('class-1'),
-      throwsA(isA<CourseServiceException>()),
-    );
-  });
+      final lessons = await service.getLessonsForClass('class-1');
+
+      expect(lessons['module-1']!.review!.questions, isEmpty);
+    },
+  );
 }
 
 Map<String, dynamic> _module({

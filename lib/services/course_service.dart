@@ -538,6 +538,11 @@ class CourseService {
       activityType: ActivityType.preQuiz,
       subject: '',
       questions: questions,
+      passingScore: 0,
+      showResults: false,
+      showCorrectAnswers: false,
+      showExplanations: false,
+      allowRetakes: false,
     );
   }
 
@@ -558,6 +563,11 @@ class CourseService {
       subject: '',
       questions: questions,
       passingScore: lessonMap['minimum_passing_grade'],
+      showResults: true,
+      // Reveal answers/explanations on the results summary, not while taking.
+      showCorrectAnswers: false,
+      showExplanations: false,
+      allowRetakes: true,
     );
   }
 
@@ -607,12 +617,14 @@ class CourseService {
       return null;
     }
 
+    final explanation =
+        (questionData['explanation'] ?? '').toString().trim();
     return Question.singleAnswer(
       id: '',
       questionText: questionText,
       options: filteredList,
       correctAnswerIndex: correctIndex,
-      explanation: (questionData['explanation'] ?? '').toString().trim(),
+      explanation: explanation,
     );
   }
 
@@ -667,6 +679,11 @@ class CourseService {
     if (reviewSetQuestions is String) {
       reviewSetQuestions = jsonDecode(reviewSetQuestions);
     }
+    // Dashboard still authors modules.revision_questions; use it when no
+    // review_sets row was attached for this module.
+    reviewSetQuestions ??= _unwrapRevisionQuestions(
+      lessonMap['revision_questions'],
+    );
 
     if (reviewSetQuestions == null) {
       return QuestionSet.review(
@@ -677,9 +694,15 @@ class CourseService {
         questions: [],
       );
     }
+    // Incomplete banks are omitted from the Review tab rather than failing
+    // the entire course load (dashboard drafts often have fewer than five).
     if (reviewSetQuestions is! List || reviewSetQuestions.length < 5) {
-      throw CourseServiceException(
-        'Review question bank for module $moduleId must contain at least five questions',
+      return QuestionSet.review(
+        id: 'rev_$moduleId',
+        title: '$title Review',
+        description: 'Answer the review questions to unlock your item.',
+        subject: subject,
+        questions: [],
       );
     }
 
@@ -735,13 +758,14 @@ class CourseService {
         );
       }
 
+      final explanation = (q['explanation'] ?? '').toString().trim();
       questions.add(
         Question.singleAnswer(
           id: '${moduleId}_review_$i',
           questionText: questionText,
           options: options,
           correctAnswerIndex: correctIndex,
-          explanation: (q['explanation'] ?? '').toString().trim(),
+          explanation: explanation,
         ),
       );
     }
@@ -755,10 +779,35 @@ class CourseService {
       passingScore: 0,
       showResults: false,
       showCorrectAnswers: true,
-      showExplanations: false,
+      showExplanations: true,
       allowRetakes: true,
       questions: questions,
     );
+  }
+
+  /// Normalize dashboard `revision_questions` into a question list.
+  dynamic _unwrapRevisionQuestions(dynamic revisionQuestions) {
+    if (revisionQuestions == null) return null;
+
+    dynamic value = revisionQuestions;
+    if (value is String) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) return null;
+      try {
+        value = jsonDecode(trimmed);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    if (value is Map) {
+      final nested = value['questions'];
+      if (nested is List && nested.isNotEmpty) return nested;
+      return null;
+    }
+
+    if (value is List && value.isNotEmpty) return value;
+    return null;
   }
 }
 

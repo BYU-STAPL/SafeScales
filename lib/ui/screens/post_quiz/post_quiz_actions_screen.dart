@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/ui/widgets/dragon_image_widget.dart';
 
 // Define action types for better type safety
@@ -73,15 +74,19 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
     required String label,
     required VoidCallback onPressed,
     Color? backgroundColor,
+    Color? foregroundColor,
   }) {
+    final Color bg = backgroundColor ?? theme.colorScheme.primary;
+    final Color fg = foregroundColor ?? theme.colorScheme.onPrimary;
+
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          backgroundColor: backgroundColor ?? theme.colorScheme.primary,
-          foregroundColor: theme.colorScheme.onPrimary,
+          backgroundColor: bg,
+          foregroundColor: fg,
           minimumSize: const Size.fromHeight(44),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -89,7 +94,11 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
         ),
         child: Text(
           label.toUpperCase(),
-          style: theme.textTheme.labelLarge?.copyWith(letterSpacing: 1),
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: fg,
+            letterSpacing: 1,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -100,13 +109,15 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
     required String label,
     required VoidCallback onPressed,
   }) {
+    final Color fg = theme.colorScheme.primary;
+
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: theme.colorScheme.primary, width: 1.5),
-          foregroundColor: theme.colorScheme.primary,
+          side: BorderSide(color: fg, width: 1.5),
+          foregroundColor: fg,
           minimumSize: const Size.fromHeight(44),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -114,7 +125,11 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
         ),
         child: Text(
           label.toUpperCase(),
-          style: theme.textTheme.labelLarge?.copyWith(letterSpacing: 1),
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: fg,
+            letterSpacing: 1,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -146,7 +161,8 @@ class _PostQuizActionsScreenState extends State<PostQuizActionsScreen> {
           theme: theme,
           label: 'Play with Dragon',
           onPressed: () => widget.handleAction(QuizAction.playWithDragon),
-          backgroundColor: const Color(0xFF07B464),
+          backgroundColor: AppColors.green,
+          foregroundColor: Colors.white,
         ),
         const SizedBox(height: 28),
         _buildDividerWithOr(theme),

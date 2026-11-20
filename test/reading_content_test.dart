@@ -6,7 +6,7 @@ import 'package:safe_scales/ui/widgets/progress_bar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
-  testWidgets('reading progress marks correctly answered checkpoints', (
+  testWidgets('reading progress shows circles only for checkpoints', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -25,8 +25,35 @@ void main() {
 
     expect(find.byIcon(Icons.check), findsOneWidget);
     expect(find.text('3 of 4 pages'), findsOneWidget);
+    expect(find.byTooltip('Checkpoint complete'), findsOneWidget);
     expect(find.byTooltip('Checkpoint'), findsOneWidget);
+    expect(find.byTooltip('Current page'), findsNothing);
+    expect(find.byTooltip('Page reached'), findsNothing);
   });
+
+  testWidgets('reading progress shows no circles without checkpoints', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ReadingProgressBar(
+            progress: 0.5,
+            currentSlideIndex: 1,
+            slideLength: 4,
+            checkpointIndices: [],
+            completedCheckpoints: {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.check), findsNothing);
+    expect(find.byTooltip('Checkpoint'), findsNothing);
+    expect(find.byTooltip('Checkpoint complete'), findsNothing);
+    expect(find.text('2 of 4 pages'), findsOneWidget);
+  });
+
   test(
     'parses prose and checkpoint entries in their persisted order',
     () async {

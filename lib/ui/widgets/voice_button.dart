@@ -33,8 +33,9 @@ class _VoiceButtonState extends State<VoiceButton>
 
   // Global speed control - shared across all VoiceButton instances.
   // Keep the UI values aligned with the TTS engine so the displayed rate matches
-  // the spoken rate instead of subtracting a hidden offset.
-  static final List<double> speedOptions = [0.8, 1.0, 1.2, 1.4];
+  // the spoken rate. Steps stay tight around natural pace: 1.0 feels slow,
+  // 1.2+ feels rushed, so 1.1 is the comfortable default.
+  static final List<double> speedOptions = [0.9, 1.0, 1.1, 1.2];
   static final Set<_VoiceButtonState> _activeInstances = <_VoiceButtonState>{};
 
   @override
@@ -128,7 +129,7 @@ class _VoiceButtonState extends State<VoiceButton>
       await _ttsService.setSpeechRate(speed);
     } catch (e) {
       debugPrint('VoiceButton: Error applying speed from provider: $e');
-      await _ttsService.setSpeechRate(0.8);
+      await _ttsService.setSpeechRate(1.1);
     }
   }
 
@@ -215,6 +216,7 @@ class _VoiceButtonState extends State<VoiceButton>
                 child: Container(
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.errorContainer,
                     borderRadius: BorderRadius.circular(20),
@@ -251,6 +253,7 @@ class _VoiceButtonState extends State<VoiceButton>
                     child: Container(
                       width: size,
                       height: size,
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: theme.colorScheme.surface,
                         borderRadius: BorderRadius.circular(size / 2),
@@ -426,7 +429,7 @@ class _VoiceControlsState extends State<VoiceControls> {
       final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
       return themeNotifier.readingSpeed;
     }
-    return 0.8;
+    return 1.1;
   }
 
   void _updateVolume(double volume) async {
@@ -484,8 +487,8 @@ class _VoiceControlsState extends State<VoiceControls> {
                       Expanded(
                         child: Slider(
                           value: _speechRate,
-                          min: 0.8,
-                          max: 1.4,
+                          min: 0.9,
+                          max: 1.2,
                           divisions: 3,
                           onChanged: _updateSpeechRate,
                         ),

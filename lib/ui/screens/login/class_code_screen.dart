@@ -3,6 +3,7 @@ import 'package:safe_scales/themes/app_theme.dart';
 import 'package:safe_scales/config/supabase_config.dart';
 import 'package:safe_scales/ui/screens/app_initialization_screen.dart';
 import 'package:safe_scales/services/user_state_service.dart';
+import 'package:safe_scales/utils/supabase_errors.dart';
 
 class ClassCodeScreen extends StatefulWidget {
   const ClassCodeScreen({super.key});
@@ -110,7 +111,7 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
         final theme = Theme.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(getErrorMessage(e, 'Class code sign-in failed')),
             backgroundColor: theme.colorScheme.errorContainer,
           ),
         );
@@ -230,12 +231,16 @@ class _ClassCodeScreenState extends State<ClassCodeScreen> {
                                 ),
                                 child:
                                     isLoading
-                                        ? const CircularProgressIndicator()
+                                        ? CircularProgressIndicator(
+                                          color: theme.colorScheme.onPrimary,
+                                        )
                                         : Text(
                                           'Join Class',
                                           style: TextStyle(
                                             fontSize:
                                                 16 * AppTheme.fontSizeScale,
+                                            color:
+                                                theme.colorScheme.onPrimary,
                                           ),
                                         ),
                               ),

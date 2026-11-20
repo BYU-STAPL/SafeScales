@@ -82,7 +82,7 @@ class _DragonsScreenState extends State<DragonsScreen> {
                         const SizedBox(height: 10),
                         // Subtitle
                         Text(
-                          'These are your dragons from this course. Complete their associated lessons to play with them.',
+                          'These are your dragons from this course. You can design their habitats.',
                           style: theme.textTheme.labelMedium,
                         ),
                         const SizedBox(height: 5),

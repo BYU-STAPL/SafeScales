@@ -82,6 +82,8 @@ class ReadingProgressBar extends StatelessWidget {
   final List<int> checkpointIndices;
   final Set<int> completedCheckpoints;
 
+  static const double _nodeSize = 18;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -108,12 +110,13 @@ class ReadingProgressBar extends StatelessWidget {
                 final trackWidth = constraints.maxWidth;
                 final completedWidth = trackWidth * safeProgress;
                 double markerLeftFor(int index) {
-                  final maxLeft = trackWidth > 20 ? trackWidth - 20 : 0.0;
+                  final maxLeft =
+                      trackWidth > _nodeSize ? trackWidth - _nodeSize : 0.0;
                   final center =
                       slideLength <= 0
-                          ? 10.0
+                          ? _nodeSize / 2
                           : ((index + 0.5) / slideLength) * trackWidth;
-                  return (center - 10).clamp(0.0, maxLeft).toDouble();
+                  return (center - _nodeSize / 2).clamp(0.0, maxLeft).toDouble();
                 }
 
                 return Stack(
@@ -184,8 +187,8 @@ class _CheckpointProgressMarker extends StatelessWidget {
     return Tooltip(
       message: isComplete ? 'Checkpoint complete' : 'Checkpoint',
       child: Container(
-        width: 20,
-        height: 20,
+        width: ReadingProgressBar._nodeSize,
+        height: ReadingProgressBar._nodeSize,
         decoration: BoxDecoration(
           color: isComplete ? color : backgroundColor,
           shape: BoxShape.circle,
@@ -193,7 +196,7 @@ class _CheckpointProgressMarker extends StatelessWidget {
         ),
         child:
             isComplete
-                ? const Icon(Icons.check, size: 13, color: Colors.white)
+                ? const Icon(Icons.check, size: 12, color: Colors.white)
                 : null,
       ),
     );

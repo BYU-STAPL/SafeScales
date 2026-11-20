@@ -31,18 +31,13 @@ class DragonService {
     'final': 'Adult',
   };
 
-  // Progress thresholds for dragon phase unlocking
-  // Note: Progress uses full percent not decimals
-  // - egg: Always unlocked (0%)
-  // - stage1 (baby): Unlocks at pre-quiz completion (33.33%)
-  // - stage2 (teen): Unlocks at reading completion (66.67%)
-  // - final (adult): Unlocks at quiz completion (100%)
-  static const Map<String, double> phaseThresholds = {
-    'egg': 0.0,
-    'stage1': 33.33,
-    'stage2': 66.67,
-    'final': 100.0,
-  };
+  // Dragon growth maps to lesson milestones (not rounded percent labels):
+  // - egg: Always unlocked
+  // - stage1 (baby): Pre-quiz complete
+  // - stage2 (teen): Reading complete
+  // - final (adult): Post-quiz passed
+  // Percent comparisons like 66.67 are unsafe because getProgressPercent()
+  // returns (2/3)*100 ≈ 66.666..., which is less than 66.67 in float math.
 
   // === Phase Utilities ===
 
@@ -56,15 +51,18 @@ class DragonService {
     return phaseDisplayNames[normalizePhase(phase)] ?? 'Unknown';
   }
 
-  /// Calculate unlocked phases based on progress percentage
-  List<String> calculateUnlockedPhases(double progressPercent) {
-    final unlockedPhases = <String>[];
+  /// Calculate unlocked phases from completed lesson milestones.
+  static List<String> calculateUnlockedPhases(LessonProgress progress) {
+    final unlockedPhases = <String>['egg'];
 
-    for (final phase in phaseOrder) {
-      final threshold = phaseThresholds[phase] ?? 100.0;
-      if (progressPercent >= threshold) {
-        unlockedPhases.add(phase);
-      }
+    if (progress.isPreQuizComplete) {
+      unlockedPhases.add('stage1');
+    }
+    if (progress.isReadingComplete) {
+      unlockedPhases.add('stage2');
+    }
+    if (progress.isPostQuizComplete()) {
+      unlockedPhases.add('final');
     }
 
     return unlockedPhases;
@@ -349,8 +347,7 @@ class DragonService {
       );
     }
 
-    final progressPercent = lessonProgress.getProgressPercent();
-    final newPhases = calculateUnlockedPhases(progressPercent);
+    final newPhases = DragonService.calculateUnlockedPhases(lessonProgress);
 
     await _repository.updateUserDragonPhases(userId, dragonId, newPhases);
   }

@@ -233,7 +233,15 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
                                   trailing: ElevatedButton(
                                     onPressed:
                                         () => _joinClass(classData['id']),
-                                    child: Text('Join Class'.toUpperCase()),
+                                    child: Text(
+                                      'Join Class'.toUpperCase(),
+                                      style: theme.textTheme.labelMedium
+                                          ?.copyWith(
+                                            color:
+                                                theme.colorScheme.onPrimary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
                                   ),
                                 ),
                               );
